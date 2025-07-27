@@ -1,0 +1,304 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>白化Kubernetes网络 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引自：http:&#x2F;&#x2F;www.10tiao.com&#x2F;html&#x2F;217&#x2F;201708&#x2F;2649694873&#x2F;1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清">
+<meta property="og:type" content="article">
+<meta property="og:title" content="白化Kubernetes网络">
+<meta property="og:url" content="https://xhua.eu.org/openshift/%E7%99%BD%E5%8C%96Kubernetes%E7%BD%91%E7%BB%9C/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引自：http:&#x2F;&#x2F;www.10tiao.com&#x2F;html&#x2F;217&#x2F;201708&#x2F;2649694873&#x2F;1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-07-27T14:04:23.466Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png"><link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.png"><link rel="canonical" href="https://xhua.eu.org/openshift/%E7%99%BD%E5%8C%96Kubernetes%E7%BD%91%E7%BB%9C/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '白化Kubernetes网络',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2025-07-27 22:04:23'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">244</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">53</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Michael Blog"><span class="site-name">Michael Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">白化Kubernetes网络</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-07-27T14:04:23.466Z" title="更新于 2025-07-27 22:04:23">2025-07-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="白化Kubernetes网络"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>引自：<a target="_blank" rel="noopener" href="http://www.10tiao.com/html/217/201708/2649694873/1.html">http://www.10tiao.com/html/217/201708/2649694873/1.html</a></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-d9b812b1ffbe27a8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="林帆"></p>
+<p>容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清本质，用形象的例子展示Weave、Flannel、Calico和Romana等网络解决方案背后的原理。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-759fd12c6ae54de3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>这次讲一讲容器集群中的网络。其实不同的容器集群解决方案，在网络方面的核心原理都是相似的，只不过这次我们将以Kubernetes为线索，来窥斑见豹的一睹容器网络的发展过程。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-b8441b7c9dc0d459.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>我是来自ThoughtWorks的林帆，我们从Docker的0.x版本开始就在对容器的应用场景进行探索，积累了一线的容器运用经验。这次分享会用简洁易懂的方式告诉大家我们对容器网络方面的一些知识归纳。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-a81a65144e8fdf3a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>初入容器集群的人往往会发现，和单节点的容器运用相比，容器的网络和存储是两个让人望而却步的领域。在这些领域里，存在大量的技术名词和术语，就像是一道道拒人于门外的高门槛。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-faf663ee6055657c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>为了便于理解，我们将这些名称简单的分个类别，从简单到复杂，依次递增。今天的话题会涉及的深度大致在这个大池子的中间，希望大家看完以后会对目标线以上的内容不再陌生，目标线以下的内容我们也会依据需要适当的提及。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-65777471221b0c00.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>此外，这个话题会按照Kubernetes的网络发现过程作为时间主线，其中重点介绍CNI标准和它的主流实现。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-f06c7e472a6e491d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>在早期的Kubernetes中，对网络是没有什么标准的。文档中对网络的描述只有很简单的几句话，其实就是让用户在部署Kubernetes之前，预先准备好容器互联的网络解决方案。Kubernetes只对网络提出设计假设，这三条假设总结起来就是：所有容器都可以和集群里任意其他容器或者主机通信，并且通信双方看到的对方IP地址就是实际的地址（即不经过网络地址转换）。</p>
+<p>基于这样的底层网络，Kubernetes设计了Pod - Deployment - Service的经典三层服务访问机制。</p>
+<p>既然Kubernetes不提供底层网络实现，在业界就出现了很多企业级的以及开源的第三方解决方案，其中下面这页图中展示了这个时期的主流开源方案。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-8563a905a92275b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>我们将这些方案依据配置的复杂度，分为“全自动”和“半自动”两类，就像是汽车中的自动挡和手动挡的差别。</p>
+<p>“全自动”的解决方案使用起来简单，适用于标准网络环境的容器跨节点通信。</p>
+<p>“半自动”的解决方案实际上是对底层协议和内核模块功能的封装，提供了选择十分丰富的网络连接方法，但对使用者的网络原理知识有一定要求。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-145a11e88ce64617.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>在Kubernetes的1.1版本中，发生了一件很重要的变化，那就是Kubernetes全面采纳CNI网络标准。</p>
+<p>CNI诞生于2015年4月，Kubernetes的1.1版本诞生于2015年9月，之间仅隔5个月。在这个时期，Docker也设计了一套网络标准，称为CNM（即Libnetwork）。Kubernetes采用CNI而非CNM，这背后有很长的一段故事，核心的原因就是CNI对开发者的约束更少，更开放，不依赖于Docker工具，而CNM对Docker有非常强的依赖，无法作为通用的容器网络标准。在Kubernetes的官方博客里有一篇博文详细讨论了个中细节，InfoQ上有一篇该博客的翻译，有兴趣的读者不妨一读。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-2a6171359c5dd7bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>几乎在Kubernetes宣布采纳CNI以后的1个月，之前提到的“全自动”网络方案就悉数实现了CNI的插件，这也间接说明了CNI的简单。</p>
+<p>那么CNI到底有多简单呢？举几个数字。</p>
+<p>实现一个CNI插件需要的内容包括一个Json配置文件和一个可执行的文件（脚本或程序），配置文件描述插件的版本、名称、描述等基本信息，可执行文件就是CNI插件本身会在容器需要建立网络和需要销毁容器的时候被调用。</p>
+<p>当一个CNI插件被调用时，它能够通过6个环境变量以及1个命令行参数（Json格式文本）来获得需要执行的操作、目标网络Namespace、容器的网卡必要信息，每个CNI插件只需实现两种基本操作：创建网络的ADD操作，和删除网络的DEL操作（以及一个可选的VERSION查看版本操作）。</p>
+<p>最新的CNI规范可以通过上图中的链接访问，只有一页网页的内容而已。同时Kuberntes社区也提供了一个利用“docker network”命令实现的简单CNI插件例子，只用了几十行Bash脚本。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-b173914c99163c95.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>那么面对这么多的社区CNI插件，我们怎样选择呢？</p>
+<p>直观的说，既然是网络插件，在功能差不多的情况下，我们当然先关心哪个的速度快。</p>
+<p>为此我此前专门做过一次对比测试，不过由于使用了公有云的网络环境（云上环境的不同主机之间相对位置不固定），在汇总数据的时候才发现测试结果偏离理论情况过于明显。</p>
+<p>这个数据大家且当娱乐，不过对于同一种插件的不同工作模式（比如Flannel的三种模型）之间，由于是使用的相同的虚拟机测试，还是具有一定可参考性。</p>
+<p>先抛开测试结果，从理论上说，这些CNI工具的网络速度应该可以分为3个速度等级。</p>
+<p>最快的是Romana、Gateway模式的Flannel、BGP模式的Calico。</p>
+<p>次一级的是IPIP模式的Calico、Swarm的Overlay网络、VxLan模式的Flannel、Fastpath模式的Weave。</p>
+<p>最慢的是UDP模式的Flannel、Sleeve模式的Weave。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-80ac8c48838c0f36.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>这里我也提供出测试容器网络速度的具体方法，以便大家重复这个测试。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-193dbbfa923fd4ef.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>要解释这些网络插件和模式速度不同的原因，我们需要先回到这些工具最初要解决的问题上来。那就是跨节点的网络不通。</p>
+<p>如果仔细观察，会发现在3种网络速度模式中都有Flannel的身影。因此我们不妨先以Flannel为例来看这些网络工具（和相应的CNI插件）是如何解决网络不通问题的。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-056b3cdd605d52c9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>跨节点网络不同有几个方面的原因，首先是容器的地址重复。</p>
+<p>由于Docker等容器工具只是利用内核的网络Namespace实现了网络隔离，各个节点上的容器是在所属节点上自动分配IP地址的，从全局来看，这种局部地址就像是不同小区里的门牌号，一旦拿到一个更大的范围上看，就可能是会重复的。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-3ab314f16420040e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>为了解决这个问题，Flannel设计了一种全局的网络地址分配机制，即使用Etcd来存储网段和节点之间的关系，然后Flannel配置各个节点上的Docker（或其他容器工具），只在分配到当前节点的网段里选择容器IP地址。</p>
+<p>这样就确保了IP地址分配的全局唯一性。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-5110168412e8690a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>是不是地址不重复网络就可以联通了呢？</p>
+<p>这里还有一个问题，是对于不同的主机、以及网络上的路由设备之间，并不知道这些IP容器网段的地址是如何分配的，因此数据包即使被发送到了网络中，也会因为无法进行路由而被丢掉。</p>
+<p>虽然地址唯一了，依然无法实现真正的网络通信。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-f1ca324b6d089bc8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>为此，Flannel采用了几种处理方法（也就是Flannel的几种网络模式）。</p>
+<p>早期时候用的比较多的一种方式是Overlay网络。</p>
+<p>在这种方式下，所有被发送到网络中的数据包会被添加上额外的包头封装。这些包头里通常包含了主机本身的IP地址，因为只有主机的IP地址是原本就可以在网络里路由传播的。</p>
+<p>根据不同的封包方式，Flannel提供了UDP和Vxlan两种传输方法。</p>
+<p>UDP封包使用了Flannel自定义的一种包头协议，数据是在Linux的用户态进行封包和解包的，因此当数据进入主机后，需要经历两次内核态到用户态的转换。</p>
+<p>VxLAN封包采用的是内置在Linux内核里的标准协议，因此虽然它的封包结构比UDP模式复杂，但由于所有数据装、解包过程均在内核中完成，实际的传输速度要比UDP模式快许多。</p>
+<p>但比较不幸的是，在Flannel开始流行的时候，大概2014年，主流的Linux系统还是Ubuntu 14.04或者CentOS 6.x，这些发行版的内核比较低，没有包含VxLAN的内核模块。因此多数人在开始接触Flannel时候，都只能使用它的UDP模式，因此Flanned一不小心落得了一个“速度慢”的名声，特别是在之后的Calico出来以后（其实Flannel的Gateway模式与Calico速度相当，甚至理论上还要快一点点，稍后解释）。</p>
+<p>这是第一种解决网络无法路由的方法。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-8ef1794959aaeec0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>第二种思路是，既然在无法进行路由是因为网络中的节点之间没有路由信息，但Flannel是知道这个信息的，能不能把这个信息告诉网络上的节点呢？</p>
+<p>这就是Flannel的Host-Gateway模式，在这种模式下，Flannel通过在各个节点上的Agent进程，将容器网络的路由信息刷到主机的路由表上，这样一来所有的主机就都有整个容器网络的路由数据了。</p>
+<p>Host-Gateway的方式没有引入像Overlay中的额外装包解包操作，完全是普通的网络路由机制，它的效率与虚拟机直接的通信相差无几。</p>
+<p>然而，由于Flannel只能够修改各个主机的路由表，一旦主机直接隔了个其他路由设备，比如三层路由器，这个包就会在路由设备上被丢掉。</p>
+<p>这样一来，Host-Gateway的模式就只能用于二层直接可达的网络，由于广播风暴的问题，这种网络通常是比较小规模的，但近年来也出现了一些专门的设备能够构建出大规模的二层网络（就是我们经常听到的“大二层”网络）。</p>
+<p>那么其他的CNI插件呢？</p>
+<p>由于Flannel几乎是最早的跨网络通信解决方案，其他的方案都可以被看做是Fannel的某种改进版。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-87c4c15ab0eb3d06.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>比如Weave的工作模式与Flannel是很相似的，它最早只提供了UDP（称为sleeve模式）的网络方式，后来又加上了fastpass方式（基于VxLAN），不过Weave消除了Flannel中用来存储网络地址的额外组件，自己集成了高可用的数据存储功能。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-298a145a73bcfb4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>Calico的设计比较新颖，之前提到Flannel的Host-Gateway模式之所以不能跨二层网络，是因为它只能修改主机的路由，Calico把改路由表的做法换成了标准的BGP路由协议。</p>
+<p>相当于在每个节点上模拟出一个额外的路由器，由于采用的是标准协议，Calico模拟路由器的路由表信息就可以被传播到网络的其他路由设备中，这样就实现了在三层网络上的高速跨节点网络。</p>
+<p>不过在现实中的网络并不总是支持BGP路由的，因此Calico也设计了一种IPIP模式，使用Overlay的方式来传输数据。IPIP的包头非常小，而且也是内置在内核中的，因此它的速度理论上比VxLAN快一点点，但安全性更差。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-e7692ebd3b7c68a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>Cannal将Calico和Flannel做了一下组合，同时支持两者的特性。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-6a391283b463abf4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>Romana只支持与Flannel相同的Host-Gateway模式，但它在网络策略方面做了比较多的增强，通过额外引入的租户概念简化了网络策略所需的IPtables规则数量。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-cc51f5d2f098689d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>这是几种主流CNI工具的横向对比。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-9c383bd99470d92f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>在Kubernetes的1.2版本以后开始引入了一个新的工具，叫做 kubernet，它实现了内置的网络地址分配功能。结合一些云平台上的内网路由表功能，就能够直接执行跨网络通信，相当于把跨网络功能内建到Kubernetes里面了。</p>
+<p>这是一个从“只做假设”到“设定标准”到“内置实现”的很大的改变。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-51a9a62433ada415.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>在Kubernetes的1.3版本以后，开始加入网络策略相关的支持。并且在1.7版本后结束了Beta阶段，成为正式API的一部分。</p>
+<p>值得一说的是，Kubernetes的网络策略采用了比较严格的单向流控制，即假如允许服务A访问服务B，反过来服务B并不一定能访问服务A。这与Docker内置的Network命令实现的隔离有很大不同。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-aeb2601f5a0932a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>纵向的对比一下主流的容器集群对今天提到的这些网络特性的支持情况和时间点。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-0e125aaca128c0ba.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240"></p>
+<p>Q：Kubernetes的网络策略采用了比较严格的单向流控制，即假如允许服务A访问服务B，反过来服务B并不一定能访问服务A。为什么要设计成严格单向流呢？A：主要是安全性的原因，这是一种更精细的权限控制策略，除了方向，Kuberetes还允许对可访问的端口进行控制。</p>
+<p>Q：Open vSwitch有测过么？</p>
+<p>A：没有测试，Open vSwitch同样可以配置成Overlay网络或者Macvlan网络等不同的通信模式，速度也会落到相应的档位上。那个测试例子只是为了说明网络速度与采用的通信原理有关，同时引出几种主流的通信模式原理，测试数据是不准确的，建议以在自己的实际环境中测试结果为准。</p>
+<p>Q：Calico怎么做网段间的隔离？</p>
+<p>A：各种网络工具的网络策略基本上都是基于内核的Iptables模块实现的。比如Calico只是根据用户配置，自动管理各个节点上的Iptables规则。其他有些改进的，比如Romana设计了一种基于“租户”的规则管理机制，可以用更少的Iptables规则实现网络隔离。</p>
+<p>Q：如果在Kubernetes里面需要做到平行网络，让每一个Pod获取一个业务IP，除了Bridge+Vlan的方式，还有更好的建议么？</p>
+<p>A：这次讲的这些CNI插件都会让每一个Pod获得一个独立业务IP。可以根据实际网络情况和对速度的需求选择。</p>
+<p>Q：Calico BGP IPIP NAT三种模式分别怎么配置？原理是怎样的？其中IPIP还有两种模式，区别在哪？</p>
+<p>A：在Calico的配置中设置spec.ipip.enabled: ture就会开启IPIP模式，否则默认是纯BGP模式。IPIP的两种模式其实是指纯IPIP（ipip always模式）或者混合IPIP和BGP（ipip cross-subnet），后者指的是“同子网内路由采用BGP，跨子网路由采用IPIP”，主要用于即想在内网获得高速，又想在跨公网时能保持联通的情况。这种模式需要每个节点启动时用–ip参数预先配置节点的子网，并且所有节点版本都在v2.1以上。</p>
+<p>Q：能麻烦具体介绍一下kube-proxy这种网络模式的优缺点吗，在测试过程中发现很不稳定，但是又没发现足够的证据。</p>
+<p>A：kube-proxy是Kubernetes的一个组件，提供通过Service到Pod的路由，并不是一种网络模式，不同的网络插件都会使用到这个组件。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/%E7%99%BD%E5%8C%96Kubernetes%E7%BD%91%E7%BB%9C/">https://xhua.eu.org/openshift/%E7%99%BD%E5%8C%96Kubernetes%E7%BD%91%E7%BB%9C/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/openshift/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E8%AF%A6%E7%BB%86%E4%BB%8B%E7%BB%8D%E2%80%94%E2%80%94Netflix%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%AE%9E%E8%B7%B5%E6%8E%A2%E5%AF%BB/" title="混沌工程详细介绍——Netflix持续交付实践探寻"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/c87bd7a75f171c9fd0475e71c902ce41e36880b5e5166386bad715cca2f08bfb.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">混沌工程详细介绍——Netflix持续交付实践探寻</div></div></a></div><div class="next-post pull-right"><a href="/openshift/%E7%A0%94%E5%8F%91%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86%E5%AE%9E%E8%B7%B5/" title="研发项目管理实践"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">研发项目管理实践</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/openshift/Openshift-%E5%B8%B8%E8%A7%81%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%8F%8A%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" title="Openshift-常见运维脚本及问题解决"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/80ad677abfc8210c0f9eb91a5e2465d9f40dd419ca0f2937a12ed348f15ef874.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-22</div><div class="title">Openshift-常见运维脚本及问题解决</div></div></a></div><div><a href="/openshift/OpenShift%E5%8E%8B%E6%B5%8B%E5%B7%A5%E4%BD%9C%E5%BF%85%E4%B8%8D%E5%8F%AF%E5%B0%91%EF%BC%8C%E4%BD%BF%E7%94%A8Jmeter%E6%90%9E%E8%B5%B7%E6%9D%A5/" title="OpenShift压测工作必不可少，使用Jmeter搞起来"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/512fcb2e6bfc0f403c4fb13abdcd4e8887f67e51fd96f5cccec18af22370b029.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="title">OpenShift压测工作必不可少，使用Jmeter搞起来</div></div></a></div><div><a href="/openshift/Ansible%E7%9A%84k8s%E6%A8%A1%E5%9D%97%E5%AE%8C%E5%85%A8%E5%85%BC%E5%AE%B9OpenShift%E8%B5%84%E6%BA%90/" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="title">Ansible的k8s模块完全兼容OpenShift资源</div></div></a></div><div><a href="/openshift/CentOS%E4%B8%8AOpenLDAP-Server%E4%BD%BF%E7%94%A8cn=config%E6%96%B9%E5%BC%8F%E9%85%8D%E7%BD%AE/" title="CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="title">CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置</div></div></a></div><div><a href="/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/" title="Calico-BGP集群外部与集群网络打通"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="title">Calico-BGP集群外部与集群网络打通</div></div></a></div><div><a href="/openshift/CentOS%E4%B8%8A%E6%90%AD%E5%BB%BA%E5%8F%8C%E4%B8%BB%E9%AB%98%E5%8F%AF%E7%94%A8OpenLDAP-Server/" title="CentOS上搭建双主高可用OpenLDAP-Server"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="title">CentOS上搭建双主高可用OpenLDAP-Server</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Michael Pan</div><div class="author-info__description">日积硅步以致千里，记录日常工作与学习</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">244</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">53</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Cursor%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AApython%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%89%80%E6%9C%89%E4%BA%A4%E4%BA%92/" title="Cursor创建一个python项目的所有交互">Cursor创建一个python项目的所有交互</a><time datetime="2025-07-27T02:00:00.000Z" title="发表于 2025-07-27 10:00:00">2025-07-27</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/GPT-4.1%E6%8F%90%E7%A4%BA%E6%8C%87%E5%8D%97%EF%BC%88%E7%BF%BB%E8%AF%91%EF%BC%89/" title="GPT-4.1 提示指南（翻译）">GPT-4.1 提示指南（翻译）</a><time datetime="2025-07-21T09:00:00.000Z" title="发表于 2025-07-21 17:00:00">2025-07-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/Argo-Rollouts%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9AKubernetes%E9%AB%98%E7%BA%A7%E9%83%A8%E7%BD%B2%E7%AD%96%E7%95%A5%E8%AF%A6%E8%A7%A3/" title="Argo Rollouts使用指南：Kubernetes高级部署策略详解">Argo Rollouts使用指南：Kubernetes高级部署策略详解</a><time datetime="2025-07-19T08:25:00.000Z" title="发表于 2025-07-19 16:25:00">2025-07-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/SRE%20MCP%20Tools%EF%BC%9A%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%88%E7%9A%84AI%E5%8A%A9%E6%89%8B%E5%B7%A5%E5%85%B7%E7%AE%B1/" title="SRE MCP Tools：运维工程师的AI助手工具箱">SRE MCP Tools：运维工程师的AI助手工具箱</a><time datetime="2025-07-03T02:00:00.000Z" title="发表于 2025-07-03 10:00:00">2025-07-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/DevOps/Mac%E9%85%8D%E7%BD%AEwindows%E9%95%9C%E5%83%8F%E4%B8%8E%E9%BC%A0%E6%A0%87/" title="Mac配置Windows键盘与鼠标：让你的Mac体验更像Windows">Mac配置Windows键盘与鼠标：让你的Mac体验更像Windows</a><time datetime="2025-06-09T12:30:00.000Z" title="发表于 2025-06-09 20:30:00">2025-06-09</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.png')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Michael Pan</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk(Object.assign({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      id: 'b7fc156f6b6a2349e326b416fd5fcd49',
+      updateCountCallback: commentCount
+    },{"language":"zh-CN"}))
+
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+    getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.textContent= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !false) {
+  if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
