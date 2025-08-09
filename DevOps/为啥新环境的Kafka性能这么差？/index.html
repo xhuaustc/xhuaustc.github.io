@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>为啥新环境的Kafka性能这么差？ | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本故事纯属虚构，如有雷同，纯属巧合，一笑了之。公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。A信心满满，认认真真地按照之">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为啥新环境的Kafka性能这么差？">
+<meta property="og:url" content="https://xhua.eu.org/DevOps/%E4%B8%BA%E5%95%A5%E6%96%B0%E7%8E%AF%E5%A2%83%E7%9A%84Kafka%E6%80%A7%E8%83%BD%E8%BF%99%E4%B9%88%E5%B7%AE%EF%BC%9F/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="本故事纯属虚构，如有雷同，纯属巧合，一笑了之。公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。A信心满满，认认真真地按照之">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.png">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-08-09T08:43:45.131Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.png"><link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.png"><link rel="canonical" href="https://xhua.eu.org/DevOps/%E4%B8%BA%E5%95%A5%E6%96%B0%E7%8E%AF%E5%A2%83%E7%9A%84Kafka%E6%80%A7%E8%83%BD%E8%BF%99%E4%B9%88%E5%B7%AE%EF%BC%9F/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '为啥新环境的Kafka性能这么差？',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2025-08-09 16:43:45'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">62</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Michael Blog"><span class="site-name">Michael Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">为啥新环境的Kafka性能这么差？</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-09T08:43:45.131Z" title="更新于 2025-08-09 16:43:45">2025-08-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="为啥新环境的Kafka性能这么差？"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p><strong>本故事纯属虚构，如有雷同，纯属巧合，一笑了之。</strong><br>公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。<br>现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。<br>A信心满满，认认真真地按照之前B写的文档操作。可测试结果让他大吃一惊，新机器的性能竟然不到老机器的一半。</p>
+<blockquote>
+<p>网络问题？</p>
+</blockquote>
+<p>A：这个Kafka集群压测数据怎么这么差？会不会是网络问题呢？<br>B：之前我们用的是万M网卡，你这个是多少？<br>A：网卡速度怎么看？<br>B：<strong>用ethtool命令，后面加对应的网络接口名，看Speed值，就能知道是万M还是千M网卡了。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ethtool eth0</span></span><br><span class="line">Settings for em0:</span><br><span class="line">Supported ports: [ TP ]</span><br><span class="line">...</span><br><span class="line">Speed: 1000Mb/s</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>A：这是千M网卡，怪不得性能会这么差呢。<br>B：你确定是网卡的问题吗？你压测的时候用nload命令查看一下网络的带宽有没有跑满。<br>A：nload?这个怎么用？<br>B：<strong>nload命令使用非常简单，后面加对应网络接口名就能查看网卡的出入流量了。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">nload eth0</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/f40fce0c8c2a75bf13878de6b64200d2b51082c19b23904b4f41ff60c1de3d1c.png" alt="nload命令结果">  </p>
+<p>A：离跑满还远着呢。那应该不是网卡带宽的问题了。</p>
+<blockquote>
+<p>容器问题</p>
+</blockquote>
+<p>A：我想会不会跟容器相关呀？容器的SDN什么的那么复杂，又加包头，解包头，会不会对Kafka有影响了呀？<br>B：<strong>你直接搭一个单机版的Kafka运行在一台主机上，不做容器化，就在那台机器上测试，不走网络看下性能如何。</strong><br>A：Good Idea！<br>半小时后<br>A：性能还是没上去，看来可以排除容器和网络的因素了。</p>
+<blockquote>
+<p>磁盘问题？</p>
+</blockquote>
+<p>A：那磁盘呢，Kafka数据可是会落盘的，压测时磁盘的IO应该比较大吧？<br>B：我们之前测的时候使用的是机械盘接SAS口，8k的写能达到200M&#x2F;s。你测下你的IO是多少。<br>A：怎么测？<br>B：<strong>磁盘的IO简单测试使用dd命令就可以，测试写时记得添加oflag&#x3D;direct，要更仔细测试就使用用fio命令。</strong></p>
+<p>dd</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">time <span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=test.dbf bs=8k count=300000 oflag=direct <span class="comment">#测试写性能</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=test.dbf bs=8k count=300000 of=/dev/null  <span class="comment">#测试读性能</span></span></span><br></pre></td></tr></table></figure>
+<p>fio</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k顺序写</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32,64,128&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=libaio -direct=1 -rw=write -bs=4k -size=50G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=10 -runtime=60 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_write --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_write.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k顺序读</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32,64,128&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=libaio -direct=1 -rw=<span class="built_in">read</span> -bs=4k -size=50G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=10 -runtime=60 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_read --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_read.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k随机写</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32,64,128&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=libaio -direct=1 -rw=randwrite -bs=4k -size=50G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=10 -runtime=60 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_write --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_write.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k随机读</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32,64,128&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=libaio -direct=1 -rw=randread -bs=4k -size=50G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=10 -runtime=60 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_read --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_read.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k混合顺序读写</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=psync -direct=1 -rw=readwrite -bs=4k -size=100G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=30 -runtime=120 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_read_write --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_seq_read_write.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#4k混合随机读写</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> dep <span class="keyword">in</span> &#123;1,2,4,8,16,32&#125;;<span class="keyword">do</span> fio -filename=/dev/vdb --ioengine=psync -direct=1 -rw=randrw -bs=4k -size=100G -iodepth=<span class="variable">$dep</span> -group_reporting -ramp_time=30 -runtime=120 -name=model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_read_write --output=/home/model_4K_<span class="variable">$&#123;dep&#125;</span>_100SAS_rand_read_write.<span class="built_in">log</span> -numjobs=1; <span class="keyword">done</span></span></span><br></pre></td></tr></table></figure>
+<p>A：结果出来了，性能好差，写才70M&#x2F;s，算下来IOPS才8000左右，之前环境IOPS有20000多呢。看来这个磁盘性能真的有问题呀。<br>B：你确认下它是不是SSD盘，部署机器的C跟我说挂载的是SSD盘。<br>A：肯定不是呀，这么差。我到机房去看一看吧。<br>B：不用去机房，<strong>你查看下系统的磁盘参数&#x2F;sys&#x2F;block&#x2F;*&#x2F;queue&#x2F;rotational，如果是0的话就是SSD。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">grep ^ /sys/block/*/queue/rotational</span></span><br></pre></td></tr></table></figure>
+<p>A：竟然值是0，那这么差的盘竟然是SSD！别当我无知就好欺负呀。我去机房拔下来看。<br>半小时后<br>A：上面挂载的还真是SSD盘，但接的是SATA口。<br>B：<strong>磁盘性能并不只跟磁盘有关，跟接口的关系也非常大，PCIE卡&gt;SAS&gt;SATA，如果有做Raid的话，性能也会有不一样。PCIE卡不能做Raid。</strong><br>A：怪不得，那现在是磁盘有问题？<br>B：你可以在压测的时候看下磁盘的实时IOPS是多少。<br>A：怎么看？<br>B：<strong>用iostat命令，后面可以接需要观察的盘符名，看结果中的w&#x2F;s，与r&#x2F;s值就能知道实时的IOPS了。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">iostat /dev/vdb -x 1</span></span><br></pre></td></tr></table></figure>
+<p>A：结果显示这两个值都很低呀，最高不到1000，有的时候才几十，远远没有到瓶颈呀。<br>B：要排除磁盘问题，你还可以不用磁盘，直接把内存挂载到对应的目录下，再压测，看结果有没有变化。<br>A：把内存挂载到对应目录？这个又是么高科技？（抓头）<br>B：不算什么高科技，其实很简单啦。<strong>linux系统的目录&#x2F;dev&#x2F;shm是在内存上，你把kafka的数据目录指向这个目录下就好了。</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">linux系统的目录/dev/shm是在内存上</span><br></pre></td></tr></table></figure>
+<p>A：这样呀，我测试下。。。性能还是很低呀。<br>B：嗯，又排除了磁盘的影响。</p>
+<blockquote>
+<p>系统问题？</p>
+</blockquote>
+<p>A：我想会不会是系统的配置问题？之前环境用的是rh 7.3，而这次我们装的是rh 7.5。<br>B：那给现在这台机器重装下系统，使用同样的rh 7.3，再压测下试试。<br>A：好，就这么干。<br>半个小时后<br>A：测试结果出来了，还是很低呀。并没有任何改进。<br>B：看来跟系统也没有关系。</p>
+<blockquote>
+<p>CPU问题？</p>
+</blockquote>
+<p>B：我们看下CPU的信息。<strong>查看&#x2F;proc&#x2F;cpuinfo能查看cpu的详情。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> /proc/cpuinfo</span></span><br><span class="line">......</span><br><span class="line">model name	: Intel(R) Xeon(R) Gold 6138 CPU @ 2.00GHZ</span><br><span class="line">cpu MHz		: 1995.381</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>A：原先主机的CPU频率我也查到了，3.00GHZ，整整大了50%<br>B：现在两个环境系统是完全一样的，我们可以使用计算圆周率的办法测下单核cpu的能力。<br>A：计算圆周率，我要去研究下算法了。（抓头）<br>B：不用，<strong>使用bc命令直接计算圆周率。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">time <span class="built_in">echo</span> <span class="string">&quot;scale=5000;4*a(1)&quot;</span> | bc -l -q</span></span><br></pre></td></tr></table></figure>
+<p>A：好吧。（一会后）新机器计算花了80s，而老机器才18s，差距这么大！<br>B：最后我们用unixbench工具对主机性能做下全面测试，看看结果如何。<br>A：unixbench？怎么又来了个新工具。。。这个怎么测？<br>B：<strong>unixbench测试非常简单，它不仅能测试单核性能，还可以测试多核性能。代码在<a target="_blank" rel="noopener" href="https://github.com/kdlucas/byte-unixbench">https://github.com/kdlucas/byte-unixbench</a>，直接运行<code>Run</code>就可以了。</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">Run</span></span><br><span class="line">......</span><br><span class="line">80 CPUs in system; running 1 parallel copies of tests</span><br><span class="line"></span><br><span class="line">System Benchmarks Index Score                                        4678.5</span><br><span class="line">......</span><br><span class="line">80 CPUs in system; running 80 parallel copies of tests</span><br><span class="line"></span><br><span class="line">System Benchmarks Index Score                                        8820.4</span><br></pre></td></tr></table></figure>
+<p>一个小时后<br>A：终于运行好了，新的机器测试的分数连之前机器分数的一半都不到。这不是逗我吗，测的可是新机器呀！<br>……<br>A：到底是哪有问题呀？！我找厂商去。</p>
+<p>评价：把问题死磕到底，你会有非常多的收获。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/DevOps/%E4%B8%BA%E5%95%A5%E6%96%B0%E7%8E%AF%E5%A2%83%E7%9A%84Kafka%E6%80%A7%E8%83%BD%E8%BF%99%E4%B9%88%E5%B7%AE%EF%BC%9F/">https://xhua.eu.org/DevOps/%E4%B8%BA%E5%95%A5%E6%96%B0%E7%8E%AF%E5%A2%83%E7%9A%84Kafka%E6%80%A7%E8%83%BD%E8%BF%99%E4%B9%88%E5%B7%AE%EF%BC%9F/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/DevOps/%E3%80%8A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%8F%91%E5%B8%83%E5%8F%AF%E9%9D%A0%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%96%B9%E6%B3%95%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" title="《持续交付发布可靠软件的系统方法》读书笔记"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/9aceae35b4b34c39894b12d393be17b9ed54961d4bfee66801c81a7302460e69.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">《持续交付发布可靠软件的系统方法》读书笔记</div></div></a></div><div class="next-post pull-right"><a href="/DevOps/%E5%88%9B%E5%BB%BA%E8%87%AA%E7%AD%BE%E8%AF%81%E4%B9%A6%E6%AD%A5%E9%AA%A4/" title="创建自签证书步骤"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">创建自签证书步骤</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/DevOps/Mac%E9%85%8D%E7%BD%AEwindows%E9%95%9C%E5%83%8F%E4%B8%8E%E9%BC%A0%E6%A0%87/" title="Mac配置Windows键盘与鼠标：让你的Mac体验更像Windows"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/d81be9a354500433194f18fbc62a25d2074b9419a6da62b0ad9b52e3f1a5e53d.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-06-09</div><div class="title">Mac配置Windows键盘与鼠标：让你的Mac体验更像Windows</div></div></a></div><div><a href="/DevOps/rclone%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" title="rclone使用教程"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/332c57aefdbdef51b6cdb74f116e0ed00b3986e4fae5fe4d5ea3f3e1714ee45c.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-14</div><div class="title">rclone使用教程</div></div></a></div><div><a href="/DevOps/%E4%BD%BF%E7%94%A8NSSM%E5%B0%86%E7%A8%8B%E5%BA%8F%E6%B3%A8%E5%86%8C%E4%B8%BAWindows%E6%9C%8D%E5%8A%A1/" title="使用NSSM将程序注册为Windows服务"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/88ad7211da4e3599c4a8dae59a774a98a9a1c63b082aaa4b58e781f29ad00f7e.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-03-24</div><div class="title">使用NSSM将程序注册为Windows服务</div></div></a></div><div><a href="/DevOps/vault%E5%B8%B8%E8%A7%81%E6%93%8D%E4%BD%9C/" title="Vault常见操作"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/22bd752feb248ccfbbd20c97decca74d0662979cb9c8c40b8b20bf0cc338fc1a.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-15</div><div class="title">Vault常见操作</div></div></a></div><div><a href="/DevOps/Lego%E7%AD%BESSL%E8%AF%81%E4%B9%A6/" title="Lego签SSL证书"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/eba62c951952f299eeedb3f6702830b357fc69cd5bdc99b18c79decb952f06e7.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-16</div><div class="title">Lego签SSL证书</div></div></a></div><div><a href="/DevOps/selenium+Xvfb+ffmpeg%E5%AE%9E%E7%8E%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BD%95%E5%B1%8F/" title="selenium+Xvfb+ffmpeg实现服务器录屏"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3699f0dc0039aa39a20cdf12a48352920020a72ece5829eadc646dc32f50f9e2.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-28</div><div class="title">selenium+Xvfb+ffmpeg实现服务器录屏</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Michael Pan</div><div class="author-info__description">日积硅步以致千里，记录日常工作与学习</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">62</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/LangChain%E6%A1%86%E6%9E%B6%E5%85%A5%E9%97%A8%E4%B8%8E%E5%AE%9E%E8%B7%B5%EF%BC%9A%E7%BB%84%E4%BB%B6%E8%AF%A6%E8%A7%A3%E3%80%81%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E4%B8%8E%E7%A4%BA%E4%BE%8B/" title="LangChain框架入门与实践：组件详解、使用场景与示例">LangChain框架入门与实践：组件详解、使用场景与示例</a><time datetime="2025-08-09T08:37:33.000Z" title="发表于 2025-08-09 16:37:33">2025-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/vLLM%E9%AB%98%E6%80%A7%E8%83%BD%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="vLLM高性能大模型推理引擎使用指南">vLLM高性能大模型推理引擎使用指南</a><time datetime="2025-08-05T02:30:00.000Z" title="发表于 2025-08-05 10:30:00">2025-08-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Cursor%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AApython%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%89%80%E6%9C%89%E4%BA%A4%E4%BA%92/" title="Cursor创建一个python项目的所有交互">Cursor创建一个python项目的所有交互</a><time datetime="2025-07-27T02:00:00.000Z" title="发表于 2025-07-27 10:00:00">2025-07-27</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/GPT-4.1%E6%8F%90%E7%A4%BA%E6%8C%87%E5%8D%97%EF%BC%88%E7%BF%BB%E8%AF%91%EF%BC%89/" title="GPT-4.1 提示指南（翻译）">GPT-4.1 提示指南（翻译）</a><time datetime="2025-07-21T09:00:00.000Z" title="发表于 2025-07-21 17:00:00">2025-07-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/Argo-Rollouts%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9AKubernetes%E9%AB%98%E7%BA%A7%E9%83%A8%E7%BD%B2%E7%AD%96%E7%95%A5%E8%AF%A6%E8%A7%A3/" title="Argo Rollouts使用指南：Kubernetes高级部署策略详解">Argo Rollouts使用指南：Kubernetes高级部署策略详解</a><time datetime="2025-07-19T08:25:00.000Z" title="发表于 2025-07-19 16:25:00">2025-07-19</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.png')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Michael Pan</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk(Object.assign({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      id: 'db3b8f214393d7be1f6d78770643de5b',
+      updateCountCallback: commentCount
+    },{"language":"zh-CN"}))
+
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+    getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.textContent= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !false) {
+  if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

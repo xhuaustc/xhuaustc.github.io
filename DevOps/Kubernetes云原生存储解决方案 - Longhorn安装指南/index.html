@@ -1,0 +1,449 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubernetes云原生存储解决方案 - Longhorn安装指南 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="简介Longhorn 是一个轻量级、可靠且功能强大的分布式块存储系统，专为 Kubernetes 而设计。它实现了可靠的持久化存储，支持快照、备份和跨集群灾难恢复等企业级功能。 主要特性 企业级分布式块存储 跨节点数据复制和自动重建 无中心化架构 非侵入式架构 图形化管理界面 快照和备份支持 跨集群灾备能力  环境要求在安装 Longhorn 之前，请确保您的环境满足以下要求： 环境检查在部署 L">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes云原生存储解决方案 - Longhorn安装指南">
+<meta property="og:url" content="https://xhua.eu.org/DevOps/Kubernetes%E4%BA%91%E5%8E%9F%E7%94%9F%E5%AD%98%E5%82%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%20-%20Longhorn%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="简介Longhorn 是一个轻量级、可靠且功能强大的分布式块存储系统，专为 Kubernetes 而设计。它实现了可靠的持久化存储，支持快照、备份和跨集群灾难恢复等企业级功能。 主要特性 企业级分布式块存储 跨节点数据复制和自动重建 无中心化架构 非侵入式架构 图形化管理界面 快照和备份支持 跨集群灾备能力  环境要求在安装 Longhorn 之前，请确保您的环境满足以下要求： 环境检查在部署 L">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.png">
+<meta property="article:published_time" content="2025-04-24T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-08-09T08:43:45.129Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="存储">
+<meta property="article:tag" content="Longhorn">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.png"><link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.png"><link rel="canonical" href="https://xhua.eu.org/DevOps/Kubernetes%E4%BA%91%E5%8E%9F%E7%94%9F%E5%AD%98%E5%82%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%20-%20Longhorn%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubernetes云原生存储解决方案 - Longhorn安装指南',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-08-09 16:43:45'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">62</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Michael Blog"><span class="site-name">Michael Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes云原生存储解决方案 - Longhorn安装指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-04-24T16:00:00.000Z" title="发表于 2025-04-25 00:00:00">2025-04-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-09T08:43:45.129Z" title="更新于 2025-08-09 16:43:45">2025-08-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/DevOps/">DevOps</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/DevOps/Kubernetes/">Kubernetes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Kubernetes云原生存储解决方案 - Longhorn安装指南"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Longhorn 是一个轻量级、可靠且功能强大的分布式块存储系统，专为 Kubernetes 而设计。它实现了可靠的持久化存储，支持快照、备份和跨集群灾难恢复等企业级功能。</p>
+<h3 id="主要特性"><a href="#主要特性" class="headerlink" title="主要特性"></a>主要特性</h3><ul>
+<li>企业级分布式块存储</li>
+<li>跨节点数据复制和自动重建</li>
+<li>无中心化架构</li>
+<li>非侵入式架构</li>
+<li>图形化管理界面</li>
+<li>快照和备份支持</li>
+<li>跨集群灾备能力</li>
+</ul>
+<h2 id="环境要求"><a href="#环境要求" class="headerlink" title="环境要求"></a>环境要求</h2><p>在安装 Longhorn 之前，请确保您的环境满足以下要求：</p>
+<h3 id="环境检查"><a href="#环境检查" class="headerlink" title="环境检查"></a>环境检查</h3><p>在部署 Longhorn 之前，强烈建议运行环境检查脚本来验证您的环境是否满足所有必要条件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载环境检查脚本</span></span><br><span class="line">curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash</span><br></pre></td></tr></table></figure>
+
+<p>这个脚本会检查：</p>
+<ul>
+<li>操作系统依赖</li>
+<li>内核模块</li>
+<li>挂载点</li>
+<li>系统工具</li>
+<li>网络配置</li>
+<li>SELinux 状态</li>
+<li>iscsi 服务状态</li>
+</ul>
+<h3 id="硬件要求"><a href="#硬件要求" class="headerlink" title="硬件要求"></a>硬件要求</h3><ul>
+<li>CPU: 最低 1 核</li>
+<li>内存: 最低 1GB</li>
+<li>磁盘: 每个节点至少 20GB 可用空间</li>
+</ul>
+<h3 id="软件要求"><a href="#软件要求" class="headerlink" title="软件要求"></a>软件要求</h3><ul>
+<li>Kubernetes v1.21+</li>
+<li>所有节点已安装 open-iscsi</li>
+<li>所有节点已安装 curl、findmnt、grep、awk、blkid、lsblk 等工具</li>
+</ul>
+<h3 id="节点要求"><a href="#节点要求" class="headerlink" title="节点要求"></a>节点要求</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在所有节点执行以下命令安装必要组件</span></span><br><span class="line">apt-get install open-iscsi curl util-linux grep awk -y</span><br><span class="line">systemctl <span class="built_in">enable</span> iscsid</span><br><span class="line">systemctl start iscsid</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装方法"><a href="#安装方法" class="headerlink" title="安装方法"></a>安装方法</h2><h3 id="方法一：使用-Helm-安装（推荐）"><a href="#方法一：使用-Helm-安装（推荐）" class="headerlink" title="方法一：使用 Helm 安装（推荐）"></a>方法一：使用 Helm 安装（推荐）</h3><ol>
+<li>添加 Longhorn 的 Helm 仓库：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">helm repo add longhorn https://charts.longhorn.io</span><br><span class="line">helm repo update</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>创建 longhorn-system 命名空间：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace longhorn-system</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>安装 Longhorn：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.8.1</span><br></pre></td></tr></table></figure>
+<p>默认数据目录是&#x2F;var&#x2F;lib&#x2F;longhorn, 可以通过配置values.yaml按照自己的存储规划要求设置自定义的目录。 如: –set defaultSettings.defaultDataPath&#x3D;”&#x2F;data&#x2F;longhorn”</p>
+<h3 id="方法二：使用-kubectl-安装"><a href="#方法二：使用-kubectl-安装" class="headerlink" title="方法二：使用 kubectl 安装"></a>方法二：使用 kubectl 安装</h3><ol>
+<li>直接应用官方的安装清单：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.5.3/deploy/longhorn.yaml</span><br></pre></td></tr></table></figure>
+
+<h3 id="方法三：使用-ArgoCD-安装"><a href="#方法三：使用-ArgoCD-安装" class="headerlink" title="方法三：使用 ArgoCD 安装"></a>方法三：使用 ArgoCD 安装</h3><p>如果您的集群使用 ArgoCD 进行 GitOps 管理，可以通过以下方式部署 Longhorn：</p>
+<ol>
+<li>创建 Application 配置文件 <code>longhorn-application.yaml</code>：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">argoproj.io/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Application</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">longhorn</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">argocd</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">project:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">source:</span></span><br><span class="line">    <span class="attr">chart:</span> <span class="string">longhorn</span></span><br><span class="line">    <span class="attr">repoURL:</span> <span class="string">https://charts.longhorn.io</span></span><br><span class="line">    <span class="attr">targetRevision:</span> <span class="number">1.8</span><span class="number">.1</span></span><br><span class="line">    <span class="attr">helm:</span></span><br><span class="line">      <span class="attr">values:</span> <span class="string">|</span></span><br><span class="line"><span class="string">        defaultSettings:</span></span><br><span class="line"><span class="string">          defaultDataPath: /data/longhorn</span></span><br><span class="line"><span class="string">          # 可选：配置备份存储位置</span></span><br><span class="line"><span class="string">          backupTarget: s3://backups@us-east-1/</span></span><br><span class="line"><span class="string">          backupTargetCredentialSecret: longhorn-backup-secret</span></span><br><span class="line"><span class="string">        persistence:</span></span><br><span class="line"><span class="string">          defaultClass: true</span></span><br><span class="line"><span class="string">          defaultClassReplicaCount: 3</span></span><br><span class="line"><span class="string"></span>  <span class="attr">destination:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="string">https://kubernetes.default.svc</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">longhorn-system</span></span><br><span class="line">  <span class="attr">syncPolicy:</span></span><br><span class="line">    <span class="attr">automated:</span></span><br><span class="line">      <span class="attr">prune:</span> <span class="literal">true</span></span><br><span class="line">      <span class="attr">selfHeal:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">syncOptions:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">CreateNamespace=true</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>如果需要配置备份到 S3，创建密钥文件 <code>backup-secret.yaml</code>：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">longhorn-backup-secret</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">longhorn-system</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">Opaque</span></span><br><span class="line"><span class="attr">stringData:</span></span><br><span class="line">  <span class="attr">AWS_ACCESS_KEY_ID:</span> <span class="string">your-access-key</span></span><br><span class="line">  <span class="attr">AWS_SECRET_ACCESS_KEY:</span> <span class="string">your-secret-key</span></span><br><span class="line">  <span class="attr">AWS_ENDPOINTS:</span> <span class="string">https://s3.us-east-1.amazonaws.com/</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>应用配置：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建 namespace（如果不存在）</span></span><br><span class="line">kubectl create namespace longhorn-system</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果配置了备份，先创建 secret</span></span><br><span class="line">kubectl apply -f backup-secret.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建 ArgoCD Application</span></span><br><span class="line">kubectl apply -f longhorn-application.yaml</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>验证部署状态：<ul>
+<li>在 ArgoCD UI 中查看应用同步状态</li>
+<li>等待所有资源创建完成</li>
+<li>检查 Pod 状态：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pods -n longhorn-system</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ol>
+<h2 id="验证安装"><a href="#验证安装" class="headerlink" title="验证安装"></a>验证安装</h2><ol>
+<li>检查所有 Pod 是否正常运行：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pods -n longhorn-system</span><br></pre></td></tr></table></figure>
+
+<p>预期输出应该显示所有 Pod 都处于 Running 状态：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">NAME                                        READY   STATUS    RESTARTS   AGE</span><br><span class="line">longhorn-manager-pzqsp                     1/1     Running   0          5m</span><br><span class="line">longhorn-driver-deployer-7fd7f8b5c-shpkj   1/1     Running   0          5m</span><br><span class="line">longhorn-ui-78f64844b9-mb7t2              1/1     Running   0          5m</span><br><span class="line">csi-attacher-7bf4b7f996-df8v6             1/1     Running   0          4m</span><br><span class="line">csi-provisioner-869bdc4b79-mzrwf          1/1     Running   0          4m</span><br><span class="line">csi-resizer-6d8cf5f99f-fd2ck              1/1     Running   0          4m</span><br><span class="line">csi-snapshotter-588457fcdf-22bqp          1/1     Running   0          4m</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>验证 StorageClass 是否创建：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get sc</span><br></pre></td></tr></table></figure>
+
+<p>应该能看到 longhorn StorageClass：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NAME                 PROVISIONER          RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE</span><br><span class="line">longhorn (default)   driver.longhorn.io   Delete          Immediate           true                   5m</span><br></pre></td></tr></table></figure>
+
+<h2 id="访问-Longhorn-UI"><a href="#访问-Longhorn-UI" class="headerlink" title="访问 Longhorn UI"></a>访问 Longhorn UI</h2><ol>
+<li>创建 Ingress（可选）：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">longhorn-ingress</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">longhorn-system</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">host:</span> <span class="string">longhorn.example.com</span>  <span class="comment"># 替换为您的域名</span></span><br><span class="line">    <span class="attr">http:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/</span></span><br><span class="line">        <span class="attr">pathType:</span> <span class="string">Prefix</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">service:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">longhorn-frontend</span></span><br><span class="line">            <span class="attr">port:</span></span><br><span class="line">              <span class="attr">number:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>或者使用端口转发：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl port-forward service/longhorn-frontend 8000:80 -n longhorn-system</span><br></pre></td></tr></table></figure>
+
+<p>然后访问 <code>http://localhost:8000</code></p>
+<h2 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h2><p>创建一个使用 Longhorn 存储的示例 Pod：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">longhorn-test-pvc</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">ReadWriteOnce</span></span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">longhorn</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">2Gi</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">test-pod</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">nginx:stable-alpine</span></span><br><span class="line">    <span class="attr">volumeMounts:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">longhorn-test-volume</span></span><br><span class="line">      <span class="attr">mountPath:</span> <span class="string">/data</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">longhorn-test-volume</span></span><br><span class="line">    <span class="attr">persistentVolumeClaim:</span></span><br><span class="line">      <span class="attr">claimName:</span> <span class="string">longhorn-test-pvc</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="常见问题处理"><a href="#常见问题处理" class="headerlink" title="常见问题处理"></a>常见问题处理</h2><ol>
+<li>Pod 无法调度到节点</li>
+</ol>
+<ul>
+<li>检查节点是否满足 Longhorn 的系统要求</li>
+<li>确认 iscsid 服务是否正常运行</li>
+<li>查看 Longhorn Manager 日志</li>
+</ul>
+<ol start="2">
+<li>存储卷创建失败</li>
+</ol>
+<ul>
+<li>检查存储空间是否充足</li>
+<li>确认网络连接是否正常</li>
+<li>查看 Longhorn UI 中的事件日志</li>
+</ul>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><ol>
+<li>存储配置</li>
+</ol>
+<ul>
+<li>建议使用 SSD 作为存储介质</li>
+<li>为不同类型的工作负载创建不同的 StorageClass</li>
+<li>根据实际需求配置副本数量</li>
+</ul>
+<ol start="2">
+<li>备份策略</li>
+</ol>
+<ul>
+<li>定期创建数据快照</li>
+<li>配置远程备份到对象存储</li>
+<li>制定灾难恢复计划</li>
+</ul>
+<h2 id="存储配置"><a href="#存储配置" class="headerlink" title="存储配置"></a>存储配置</h2><h3 id="指定节点参与-Longhorn-存储"><a href="#指定节点参与-Longhorn-存储" class="headerlink" title="指定节点参与 Longhorn 存储"></a>指定节点参与 Longhorn 存储</h3><ol>
+<li>将需要作为存储的节点添加 label, storage&#x3D;longhorn<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl label node &lt;node-1&gt; storage=longhorn</span><br></pre></td></tr></table></figure></li>
+<li>在1步中的节点对应的位置创建好目录<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p /data/longhorn</span><br></pre></td></tr></table></figure></li>
+<li>通过 Helm 安装时指定node<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">helm install longhorn longhorn/longhorn \</span><br><span class="line">    --namespace longhorn-system \</span><br><span class="line">    --set longhornManager.nodeSelector.storage=longhorn \</span><br><span class="line">    --set longhornDriver.nodeSelector.storage=longhorn \</span><br><span class="line">    --set longhornUI.nodeSelector.storage=longhorn \</span><br><span class="line">    --set defaultSettings.defaultDataPath=&quot;/data/longhorn&quot;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="配置节点默认存储路径"><a href="#配置节点默认存储路径" class="headerlink" title="配置节点默认存储路径"></a>配置节点默认存储路径</h3><p>Longhorn 默认使用 <code>/var/lib/longhorn</code> 作为存储路径。您可以通过以下方式修改默认存储路径：</p>
+<ol>
+<li><p>在 Longhorn UI 中修改：</p>
+<ul>
+<li>访问 Longhorn UI</li>
+<li>点击 “Setting” -&gt; “General” -&gt; “Default Data Path”</li>
+<li>修改为您想要的路径，如 <code>/data/longhorn</code></li>
+</ul>
+</li>
+<li><p>通过 Helm 安装时指定：</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">helm install longhorn longhorn/longhorn \</span><br><span class="line">  --namespace longhorn-system \</span><br><span class="line">  --create-namespace \</span><br><span class="line">  --version 1.8.1 \</span><br><span class="line">  --<span class="built_in">set</span> defaultSettings.defaultDataPath=<span class="string">&quot;/data/longhorn&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="配置额外的存储目录"><a href="#配置额外的存储目录" class="headerlink" title="配置额外的存储目录"></a>配置额外的存储目录</h3><p>您可以为节点添加多个存储目录或磁盘：</p>
+<ol>
+<li><p>准备存储目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在节点上创建目录</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /data/longhorn-1</span><br><span class="line"><span class="built_in">mkdir</span> -p /data/longhorn-2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 确保目录权限正确</span></span><br><span class="line"><span class="built_in">chmod</span> 700 /data/longhorn-*</span><br><span class="line"><span class="built_in">chown</span> root:root /data/longhorn-*</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 Longhorn UI 中添加磁盘：</p>
+<ul>
+<li>进入 “Node” 页面</li>
+<li>选择要配置的节点</li>
+<li>点击 “Edit Node and Disks”</li>
+<li>在 “Add Disk” 部分：<ul>
+<li>输入磁盘路径（如 <code>/data/longhorn-1</code>）</li>
+<li>设置磁盘调度选项</li>
+<li>设置存储预留空间</li>
+<li>点击 “Save” 保存配置</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="使用原始磁盘设备"><a href="#使用原始磁盘设备" class="headerlink" title="使用原始磁盘设备"></a>使用原始磁盘设备</h3><p>如果要使用原始磁盘设备作为存储：</p>
+<ol>
+<li><p>准备磁盘：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看可用磁盘</span></span><br><span class="line">lsblk</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式化磁盘（假设使用 /dev/sdb）</span></span><br><span class="line">mkfs.ext4 /dev/sdb</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建挂载点</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /data/longhorn-disk</span><br><span class="line"></span><br><span class="line"><span class="comment"># 挂载磁盘</span></span><br><span class="line">mount /dev/sdb /data/longhorn-disk</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加到 fstab 以确保重启后自动挂载</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;/dev/sdb /data/longhorn-disk ext4 defaults 0 0&quot;</span> &gt;&gt; /etc/fstab</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 Longhorn UI 中添加磁盘：</p>
+<ul>
+<li>路径填写磁盘的挂载点（如 <code>/data/longhorn-disk</code>）</li>
+<li>其他步骤同上</li>
+</ul>
+</li>
+</ol>
+<h3 id="存储标签（Storage-Tags）"><a href="#存储标签（Storage-Tags）" class="headerlink" title="存储标签（Storage Tags）"></a>存储标签（Storage Tags）</h3><p>您可以使用存储标签来管理不同性能的存储：</p>
+<ol>
+<li><p>添加标签：</p>
+<ul>
+<li>在 Longhorn UI 中选择节点和磁盘</li>
+<li>添加标签，如：<ul>
+<li><code>ssd=true</code> 用于 SSD 存储</li>
+<li><code>hdd=true</code> 用于 HDD 存储</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>在创建卷时使用标签：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">longhorn-ssd</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">driver.longhorn.io</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">numberOfReplicas:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line">  <span class="attr">diskSelector:</span> <span class="string">&quot;ssd&quot;</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">high-perf-pvc</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">ReadWriteOnce</span></span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">longhorn-ssd</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">10Gi</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="存储最佳实践"><a href="#存储最佳实践" class="headerlink" title="存储最佳实践"></a>存储最佳实践</h3><ol>
+<li><p>容量规划</p>
+<ul>
+<li>为系统预留足够空间（建议 30% 以上）</li>
+<li>考虑副本数量对存储空间的影响</li>
+<li>定期监控存储使用情况</li>
+</ul>
+</li>
+<li><p>性能优化</p>
+<ul>
+<li>使用 SSD 作为主存储</li>
+<li>合理设置副本数量（通常为 3）</li>
+<li>避免在系统盘上存储数据</li>
+</ul>
+</li>
+<li><p>可靠性保障</p>
+<ul>
+<li>使用 RAID 配置提高可靠性</li>
+<li>配置定期备份</li>
+<li>启用磁盘健康检查</li>
+</ul>
+</li>
+<li><p>监控告警</p>
+<ul>
+<li>配置存储空间告警阈值</li>
+<li>监控磁盘 I&#x2F;O 性能</li>
+<li>设置节点状态监控</li>
+</ul>
+</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://longhorn.io/docs/">Longhorn 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/longhorn/longhorn">Longhorn GitHub</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/">Kubernetes 存储文档</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。 </p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/DevOps/Kubernetes%E4%BA%91%E5%8E%9F%E7%94%9F%E5%AD%98%E5%82%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%20-%20Longhorn%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97/">https://xhua.eu.org/DevOps/Kubernetes%E4%BA%91%E5%8E%9F%E7%94%9F%E5%AD%98%E5%82%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%20-%20Longhorn%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Kubernetes/">Kubernetes</a><a class="post-meta__tags" href="/tags/%E5%AD%98%E5%82%A8/">存储</a><a class="post-meta__tags" href="/tags/Longhorn/">Longhorn</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/DevOps/rclone%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" title="rclone使用教程"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/332c57aefdbdef51b6cdb74f116e0ed00b3986e4fae5fe4d5ea3f3e1714ee45c.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">rclone使用教程</div></div></a></div><div class="next-post pull-right"><a href="/AI/%E4%BD%BF%E7%94%A8python%E5%BC%80%E5%8F%91%E8%87%AA%E5%B7%B1%E7%9A%84MCP/" title="使用Python开发自己的MCP服务：AI能力扩展入门指南"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">使用Python开发自己的MCP服务：AI能力扩展入门指南</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/openshift/Argo-Rollouts%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9AKubernetes%E9%AB%98%E7%BA%A7%E9%83%A8%E7%BD%B2%E7%AD%96%E7%95%A5%E8%AF%A6%E8%A7%A3/" title="Argo Rollouts使用指南：Kubernetes高级部署策略详解"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/65d68aee408035584ccb994bd2f56a4200fb6ab76c8ac149bc7ebfd1f904a7e6.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-19</div><div class="title">Argo Rollouts使用指南：Kubernetes高级部署策略详解</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E7%89%B9%E6%80%A7"><span class="toc-text">主要特性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E8%A6%81%E6%B1%82"><span class="toc-text">环境要求</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%A3%80%E6%9F%A5"><span class="toc-text">环境检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AC%E4%BB%B6%E8%A6%81%E6%B1%82"><span class="toc-text">硬件要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%AF%E4%BB%B6%E8%A6%81%E6%B1%82"><span class="toc-text">软件要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E8%A6%81%E6%B1%82"><span class="toc-text">节点要求</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95"><span class="toc-text">安装方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E4%BD%BF%E7%94%A8-Helm-%E5%AE%89%E8%A3%85%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">方法一：使用 Helm 安装（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%9A%E4%BD%BF%E7%94%A8-kubectl-%E5%AE%89%E8%A3%85"><span class="toc-text">方法二：使用 kubectl 安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8-ArgoCD-%E5%AE%89%E8%A3%85"><span class="toc-text">方法三：使用 ArgoCD 安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85"><span class="toc-text">验证安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE-Longhorn-UI"><span class="toc-text">访问 Longhorn UI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-text">使用示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%A4%84%E7%90%86"><span class="toc-text">常见问题处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">最佳实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E9%85%8D%E7%BD%AE"><span class="toc-text">存储配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%87%E5%AE%9A%E8%8A%82%E7%82%B9%E5%8F%82%E4%B8%8E-Longhorn-%E5%AD%98%E5%82%A8"><span class="toc-text">指定节点参与 Longhorn 存储</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%8A%82%E7%82%B9%E9%BB%98%E8%AE%A4%E5%AD%98%E5%82%A8%E8%B7%AF%E5%BE%84"><span class="toc-text">配置节点默认存储路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E9%A2%9D%E5%A4%96%E7%9A%84%E5%AD%98%E5%82%A8%E7%9B%AE%E5%BD%95"><span class="toc-text">配置额外的存储目录</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%8E%9F%E5%A7%8B%E7%A3%81%E7%9B%98%E8%AE%BE%E5%A4%87"><span class="toc-text">使用原始磁盘设备</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%A0%87%E7%AD%BE%EF%BC%88Storage-Tags%EF%BC%89"><span class="toc-text">存储标签（Storage Tags）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">存储最佳实践</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.png')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Michael Pan</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk(Object.assign({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      id: 'd30bed62255bdf1c571c1e21ef1f849d',
+      updateCountCallback: commentCount
+    },{"language":"zh-CN"}))
+
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+    getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.textContent= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !false) {
+  if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
