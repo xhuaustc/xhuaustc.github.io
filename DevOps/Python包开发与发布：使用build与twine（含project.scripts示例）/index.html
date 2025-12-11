@@ -1,0 +1,317 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Python包开发与发布：使用 build 与 twine（含 project.scripts 示例） | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：  如何创建标准的 Python 包工程骨架（src 布局） 在 pyproject.toml 中使用 PEP 621 声明元数据与 project.scripts 生成命令行脚本 使用 build 本地构建分发产物（sdist&#x2F;wheel） 使用 twine 校验并上传到 TestPy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）">
+<meta property="og:url" content="https://xhua.eu.org/DevOps/Python%E5%8C%85%E5%BC%80%E5%8F%91%E4%B8%8E%E5%8F%91%E5%B8%83%EF%BC%9A%E4%BD%BF%E7%94%A8build%E4%B8%8Etwine%EF%BC%88%E5%90%ABproject.scripts%E7%A4%BA%E4%BE%8B%EF%BC%89/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：  如何创建标准的 Python 包工程骨架（src 布局） 在 pyproject.toml 中使用 PEP 621 声明元数据与 project.scripts 生成命令行脚本 使用 build 本地构建分发产物（sdist&#x2F;wheel） 使用 twine 校验并上传到 TestPy">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.png">
+<meta property="article:published_time" content="2025-11-13T01:56:56.000Z">
+<meta property="article:modified_time" content="2025-12-11T02:01:36.725Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Packaging">
+<meta property="article:tag" content="PyPI">
+<meta property="article:tag" content="DevOps">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.png"><link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.png"><link rel="canonical" href="https://xhua.eu.org/DevOps/Python%E5%8C%85%E5%BC%80%E5%8F%91%E4%B8%8E%E5%8F%91%E5%B8%83%EF%BC%9A%E4%BD%BF%E7%94%A8build%E4%B8%8Etwine%EF%BC%88%E5%90%ABproject.scripts%E7%A4%BA%E4%BE%8B%EF%BC%89/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-12-11 10:01:36'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">255</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">89</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Michael Blog"><span class="site-name">Michael Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-11-13T01:56:56.000Z" title="发表于 2025-11-13 09:56:56">2025-11-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-11T02:01:36.725Z" title="更新于 2025-12-11 10:01:36">2025-12-11</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/DevOps/">DevOps</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：</p>
+<ul>
+<li>如何创建标准的 Python 包工程骨架（src 布局）</li>
+<li>在 <code>pyproject.toml</code> 中使用 PEP 621 声明元数据与 <code>project.scripts</code> 生成命令行脚本</li>
+<li>使用 <code>build</code> 本地构建分发产物（sdist&#x2F;wheel）</li>
+<li>使用 <code>twine</code> 校验并上传到 TestPyPI 与 PyPI</li>
+<li>常见问题与排错要点</li>
+</ul>
+<p>参考标准：PEP 517&#x2F;518（构建系统），PEP 621（项目元数据）。</p>
+<h3 id="适用环境"><a href="#适用环境" class="headerlink" title="适用环境"></a>适用环境</h3><ul>
+<li>Python ≥ 3.8（推荐 3.10+）</li>
+<li>macOS&#x2F;Linux&#x2F;Windows</li>
+<li>包管理：<code>pip</code> 或 <code>pipx</code></li>
+</ul>
+<hr>
+<h2 id="一、项目骨架（src-布局）"><a href="#一、项目骨架（src-布局）" class="headerlink" title="一、项目骨架（src 布局）"></a>一、项目骨架（src 布局）</h2><p>推荐使用「src 布局」以避免导入歧义，目录结构如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mycli/</span><br><span class="line">├─ pyproject.toml</span><br><span class="line">├─ README.md</span><br><span class="line">├─ LICENSE</span><br><span class="line">├─ src/</span><br><span class="line">│  └─ mycli/</span><br><span class="line">│     ├─ __init__.py</span><br><span class="line">│     ├─ __main__.py</span><br><span class="line">│     └─ cli.py</span><br><span class="line">└─ tests/</span><br><span class="line">   └─ test_basic.py</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>src/mycli</code>：包代码根目录</li>
+<li><code>cli.py</code>：命令行入口逻辑（将通过 <code>project.scripts</code> 暴露为命令）</li>
+<li><code>__main__.py</code>：支持 <code>python -m mycli</code> 直接运行</li>
+<li><code>pyproject.toml</code>：声明构建系统与项目元数据（PEP 621）</li>
+</ul>
+<hr>
+<h2 id="二、编写包代码（示例：命令行工具）"><a href="#二、编写包代码（示例：命令行工具）" class="headerlink" title="二、编写包代码（示例：命令行工具）"></a>二、编写包代码（示例：命令行工具）</h2><p>所有代码与注释统一使用英文（便于社区协作与审核）。</p>
+<p><code>src/mycli/cli.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> argparse</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>() -&gt; <span class="literal">None</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Entry point for the mycli command line tool.&quot;&quot;&quot;</span></span><br><span class="line">    parser = argparse.ArgumentParser(</span><br><span class="line">        prog=<span class="string">&quot;mycli&quot;</span>,</span><br><span class="line">        description=<span class="string">&quot;A tiny example CLI that greets the user.&quot;</span></span><br><span class="line">    )</span><br><span class="line">    parser.add_argument(</span><br><span class="line">        <span class="string">&quot;-n&quot;</span>, <span class="string">&quot;--name&quot;</span>,</span><br><span class="line">        default=<span class="string">&quot;World&quot;</span>,</span><br><span class="line">        <span class="built_in">help</span>=<span class="string">&quot;Name to greet&quot;</span></span><br><span class="line">    )</span><br><span class="line">    args = parser.parse_args()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Hello, <span class="subst">&#123;args.name&#125;</span>!&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><code>src/mycli/__init__.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">__all__ = [<span class="string">&quot;__version__&quot;</span>]</span><br><span class="line">__version__ = <span class="string">&quot;0.1.0&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>src/mycli/__main__.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> .cli <span class="keyword">import</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、pyproject-toml（PEP-621-project-scripts）"><a href="#三、pyproject-toml（PEP-621-project-scripts）" class="headerlink" title="三、pyproject.toml（PEP 621 + project.scripts）"></a>三、pyproject.toml（PEP 621 + project.scripts）</h2><p>示例使用 <code>setuptools</code> 作为构建后端，启用 PEP 621 元数据与 <code>project.scripts</code>：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[build-system]</span></span><br><span class="line"><span class="attr">requires</span> = [<span class="string">&quot;setuptools&gt;=69&quot;</span>, <span class="string">&quot;wheel&quot;</span>]</span><br><span class="line"><span class="attr">build-backend</span> = <span class="string">&quot;setuptools.build_meta&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[project]</span></span><br><span class="line"><span class="attr">name</span> = <span class="string">&quot;mycli-example&quot;</span></span><br><span class="line"><span class="attr">version</span> = <span class="string">&quot;0.1.0&quot;</span></span><br><span class="line"><span class="attr">description</span> = <span class="string">&quot;A tiny example CLI published to PyPI.&quot;</span></span><br><span class="line"><span class="attr">readme</span> = <span class="string">&quot;README.md&quot;</span></span><br><span class="line"><span class="attr">requires-python</span> = <span class="string">&quot;&gt;=3.8&quot;</span></span><br><span class="line"><span class="attr">license</span> = &#123; text = <span class="string">&quot;MIT&quot;</span> &#125;</span><br><span class="line"><span class="attr">authors</span> = [&#123; name = <span class="string">&quot;Your Name&quot;</span>, email = <span class="string">&quot;you@example.com&quot;</span> &#125;]</span><br><span class="line"><span class="attr">keywords</span> = [<span class="string">&quot;cli&quot;</span>, <span class="string">&quot;example&quot;</span>, <span class="string">&quot;greeting&quot;</span>]</span><br><span class="line"><span class="attr">classifiers</span> = [</span><br><span class="line">  <span class="string">&quot;Programming Language :: Python :: 3&quot;</span>,</span><br><span class="line">  <span class="string">&quot;Programming Language :: Python :: 3 :: Only&quot;</span>,</span><br><span class="line">  <span class="string">&quot;License :: OSI Approved :: MIT License&quot;</span>,</span><br><span class="line">  <span class="string">&quot;Operating System :: OS Independent&quot;</span>,</span><br><span class="line">]</span><br><span class="line"><span class="attr">dependencies</span> = []</span><br><span class="line"></span><br><span class="line"><span class="comment"># This creates an executable &#x27;mycli&#x27; in the user&#x27;s PATH after installation.</span></span><br><span class="line"><span class="section">[project.scripts]</span></span><br><span class="line"><span class="attr">mycli</span> = <span class="string">&quot;mycli.cli:main&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[tool.setuptools]</span></span><br><span class="line"><span class="attr">package-dir</span> = &#123;<span class="string">&quot;&quot;</span> = <span class="string">&quot;src&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">[tool.setuptools.packages.find]</span></span><br><span class="line"><span class="attr">where</span> = [<span class="string">&quot;src&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li><code>project.scripts</code> 将 <code>mycli</code> 命令映射到 <code>mycli.cli:main</code></li>
+<li>采用 <code>src</code> 布局需设置 <code>package-dir</code> 与 <code>packages.find.where</code></li>
+<li>设置 <code>requires-python</code> 与 <code>classifiers</code> 便于用户检索与兼容性声明</li>
+</ul>
+<hr>
+<h2 id="四、README-与-LICENSE"><a href="#四、README-与-LICENSE" class="headerlink" title="四、README 与 LICENSE"></a>四、README 与 LICENSE</h2><ul>
+<li><code>README.md</code> 作为包主页与长描述，需简要说明安装与用法</li>
+<li>许可证建议选择常见的开源协议（如 MIT&#x2F;Apache-2.0）</li>
+</ul>
+<p><code>README.md</code> 示例：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># mycli-example</span></span><br><span class="line"></span><br><span class="line">Simple CLI that greets you.</span><br><span class="line"></span><br><span class="line"><span class="section">## Install</span></span><br><span class="line"></span><br><span class="line"><span class="code">```bash</span></span><br><span class="line"><span class="code">pip install mycli-example</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mycli --name Alice</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">## 五、安装工具并本地构建</span><br><span class="line"></span><br><span class="line">推荐使用 `pipx` 安装构建与发布工具，避免污染项目虚拟环境：</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line"># Install tools</span><br><span class="line">pipx install build</span><br><span class="line">pipx install twine</span><br><span class="line"></span><br><span class="line"># Or use pip (in a temporary/clean venv)</span><br><span class="line">python -m pip install --upgrade build twine</span><br></pre></td></tr></table></figure>
+
+<p>执行构建：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python -m build</span><br><span class="line"><span class="comment"># 输出产物位于 dist/ 目录，包含 .whl 与 .tar.gz</span></span><br></pre></td></tr></table></figure>
+
+<p>构建检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">twine check dist/*</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六、发布到-TestPyPI-与-PyPI"><a href="#六、发布到-TestPyPI-与-PyPI" class="headerlink" title="六、发布到 TestPyPI 与 PyPI"></a>六、发布到 TestPyPI 与 PyPI</h2><p>强烈建议先在 TestPyPI 验证再发布至 PyPI。</p>
+<h3 id="方式-A：使用-pypirc-管理凭据（推荐）"><a href="#方式-A：使用-pypirc-管理凭据（推荐）" class="headerlink" title="方式 A：使用 .pypirc 管理凭据（推荐）"></a>方式 A：使用 .pypirc 管理凭据（推荐）</h3><p>创建 <code>~/.pypirc</code>（macOS&#x2F;Linux）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[distutils]</span></span><br><span class="line"><span class="attr">index-servers</span> =</span><br><span class="line">    pypi</span><br><span class="line">    testpypi</span><br><span class="line"></span><br><span class="line"><span class="section">[pypi]</span></span><br><span class="line"><span class="attr">repository</span> = https://upload.pypi.org/legacy/</span><br><span class="line"><span class="attr">username</span> = __token__</span><br><span class="line"><span class="attr">password</span> = pypi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span><br><span class="line"></span><br><span class="line"><span class="section">[testpypi]</span></span><br><span class="line"><span class="attr">repository</span> = https://test.pypi.org/legacy/</span><br><span class="line"><span class="attr">username</span> = __token__</span><br><span class="line"><span class="attr">password</span> = pypi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span><br></pre></td></tr></table></figure>
+
+<p>上传到 TestPyPI：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">twine upload -r testpypi dist/*</span><br></pre></td></tr></table></figure>
+
+<p>验证安装（注意使用 TestPyPI 索引）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">python -m pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple mycli-example</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证命令是否可用</span></span><br><span class="line">mycli --name Bob</span><br></pre></td></tr></table></figure>
+
+<p>确认无误后，上传至 PyPI：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">twine upload -r pypi dist/*</span><br></pre></td></tr></table></figure>
+
+<h3 id="方式-B：直接指定仓库-URL（无需-pypirc）"><a href="#方式-B：直接指定仓库-URL（无需-pypirc）" class="headerlink" title="方式 B：直接指定仓库 URL（无需 .pypirc）"></a>方式 B：直接指定仓库 URL（无需 .pypirc）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">twine upload --repository-url https://test.pypi.org/legacy/ dist/*</span><br><span class="line">twine upload --repository-url https://upload.pypi.org/legacy/ dist/*</span><br></pre></td></tr></table></figure>
+
+<p>凭据将通过交互提示或环境变量读取（CI 中建议使用环境变量&#x2F;密文）。</p>
+<hr>
+<h2 id="七、使用与验证"><a href="#七、使用与验证" class="headerlink" title="七、使用与验证"></a>七、使用与验证</h2><p>安装后应具备两种使用方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1) 通过脚本（来自 project.scripts）</span></span><br><span class="line">mycli --name Carol</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2) 通过模块运行（__main__.py）</span></span><br><span class="line">python -m mycli --name Carol</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="八、常见问题与排错"><a href="#八、常见问题与排错" class="headerlink" title="八、常见问题与排错"></a>八、常见问题与排错</h2><ul>
+<li><strong>File already exists（重复版本）</strong>：PyPI 不允许覆盖同版本；升级 <code>version</code>（如 0.1.1）并重新构建上传</li>
+<li><strong>Invalid long_description</strong>：<code>twine check</code> 失败，多为 README 渲染问题；将 <code>readme = &quot;README.md&quot;</code> 并确保 Markdown 合规</li>
+<li><strong>Script not found</strong>：检查 <code>project.scripts</code> 的目标路径是否正确（<code>mycli.cli:main</code>）且包已包含在构建中（<code>packages.find</code> 设置）</li>
+<li><strong>ImportError after install</strong>：多因未使用 src 布局或测试时在项目根运行导致导入到源码；建议在全新 venv 中验证</li>
+<li><strong>401&#x2F;403 授权失败</strong>：确认使用 <code>__token__</code> 用户名与有效 PyPI Token；避免泄露令牌（使用 CI 密文）</li>
+<li><strong>Wheel 缺少文件</strong>：确认未被 <code>MANIFEST.in</code>&#x2F;忽略规则误排除；或切换到现代 PEP 621 配置并避免遗留 setup.cfg 混用</li>
+</ul>
+<hr>
+<h2 id="九、在-CI-中自动发布（可选思路）"><a href="#九、在-CI-中自动发布（可选思路）" class="headerlink" title="九、在 CI 中自动发布（可选思路）"></a>九、在 CI 中自动发布（可选思路）</h2><ul>
+<li>在 GitHub Actions&#x2F;其他 CI 中使用发布工作流</li>
+<li>构建步骤同本地：<code>python -m build</code> → <code>twine check</code> → <code>twine upload</code></li>
+<li>凭据使用仓库密文（如 <code>PYPI_API_TOKEN</code>），并在 CI 步骤设置为环境变量</li>
+</ul>
+<p>官方参考：</p>
+<ul>
+<li>Packaging User Guide（构建&#x2F;发布）：<a target="_blank" rel="noopener" href="https://packaging.python.org/en/latest/">Packaging Guide</a></li>
+<li>PyPI（上传与凭据）：<a target="_blank" rel="noopener" href="https://packaging.python.org/en/latest/tutorials/packaging-projects/">Publishing packages</a></li>
+</ul>
+<hr>
+<h2 id="十、总结"><a href="#十、总结" class="headerlink" title="十、总结"></a>十、总结</h2><ul>
+<li>使用 PEP 621 在 <code>pyproject.toml</code> 声明元数据，结合 <code>project.scripts</code> 生成命令行</li>
+<li>用 <code>build</code> 统一构建 sdist&#x2F;wheel，<code>twine</code> 校验与上传</li>
+<li>先 TestPyPI 验证，再发布至 PyPI</li>
+<li>采用 src 布局、明确 Python 版本与分类器，提升可维护性与可发现性</li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。 </p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/DevOps/Python%E5%8C%85%E5%BC%80%E5%8F%91%E4%B8%8E%E5%8F%91%E5%B8%83%EF%BC%9A%E4%BD%BF%E7%94%A8build%E4%B8%8Etwine%EF%BC%88%E5%90%ABproject.scripts%E7%A4%BA%E4%BE%8B%EF%BC%89/">https://xhua.eu.org/DevOps/Python%E5%8C%85%E5%BC%80%E5%8F%91%E4%B8%8E%E5%8F%91%E5%B8%83%EF%BC%9A%E4%BD%BF%E7%94%A8build%E4%B8%8Etwine%EF%BC%88%E5%90%ABproject.scripts%E7%A4%BA%E4%BE%8B%EF%BC%89/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Python/">Python</a><a class="post-meta__tags" href="/tags/Packaging/">Packaging</a><a class="post-meta__tags" href="/tags/PyPI/">PyPI</a><a class="post-meta__tags" href="/tags/DevOps/">DevOps</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/AI/%E7%94%9F%E4%BA%A7%E7%BA%A7%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%B9%B3%E5%8F%B0%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/" title="生产级大语言模型平台系统设计：多期落地方案与实践"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/0c48a51774caee38ab8195ab16d9895325b3056f41cb0b06ee3bff5c009bc2d4.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">生产级大语言模型平台系统设计：多期落地方案与实践</div></div></a></div><div class="next-post pull-right"><a href="/AI/LiteLLM-Proxy-%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9ADocker%E9%83%A8%E7%BD%B2%E3%80%81vLLM%E4%BB%A3%E7%90%86/" title="LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/AI/vLLM%E9%AB%98%E6%80%A7%E8%83%BD%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="vLLM高性能大模型推理引擎使用指南"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/daaca0b411fbe28fb31f728aff34d87083919fff6300004fea34ff5fce7ad91b.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-05</div><div class="title">vLLM高性能大模型推理引擎使用指南</div></div></a></div><div><a href="/AI/Cursor%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AApython%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%89%80%E6%9C%89%E4%BA%A4%E4%BA%92/" title="Cursor创建一个python项目的所有交互"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-27</div><div class="title">Cursor创建一个python项目的所有交互</div></div></a></div><div><a href="/AI/%E4%BD%BF%E7%94%A8python%E5%BC%80%E5%8F%91%E8%87%AA%E5%B7%B1%E7%9A%84MCP/" title="使用Python开发自己的MCP服务：AI能力扩展入门指南"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-04-16</div><div class="title">使用Python开发自己的MCP服务：AI能力扩展入门指南</div></div></a></div><div><a href="/openshift/Argo-Rollouts%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9AKubernetes%E9%AB%98%E7%BA%A7%E9%83%A8%E7%BD%B2%E7%AD%96%E7%95%A5%E8%AF%A6%E8%A7%A3/" title="Argo Rollouts使用指南：Kubernetes高级部署策略详解"><img class="cover" src="https://cdn.jsdelivr.net/gh/xhuaustc/images@main/65d68aee408035584ccb994bd2f56a4200fb6ab76c8ac149bc7ebfd1f904a7e6.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-19</div><div class="title">Argo Rollouts使用指南：Kubernetes高级部署策略详解</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E7%8E%AF%E5%A2%83"><span class="toc-text">适用环境</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%A1%B9%E7%9B%AE%E9%AA%A8%E6%9E%B6%EF%BC%88src-%E5%B8%83%E5%B1%80%EF%BC%89"><span class="toc-text">一、项目骨架（src 布局）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%BC%96%E5%86%99%E5%8C%85%E4%BB%A3%E7%A0%81%EF%BC%88%E7%A4%BA%E4%BE%8B%EF%BC%9A%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7%EF%BC%89"><span class="toc-text">二、编写包代码（示例：命令行工具）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81pyproject-toml%EF%BC%88PEP-621-project-scripts%EF%BC%89"><span class="toc-text">三、pyproject.toml（PEP 621 + project.scripts）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81README-%E4%B8%8E-LICENSE"><span class="toc-text">四、README 与 LICENSE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Usage"><span class="toc-text">Usage</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E5%8F%91%E5%B8%83%E5%88%B0-TestPyPI-%E4%B8%8E-PyPI"><span class="toc-text">六、发布到 TestPyPI 与 PyPI</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F-A%EF%BC%9A%E4%BD%BF%E7%94%A8-pypirc-%E7%AE%A1%E7%90%86%E5%87%AD%E6%8D%AE%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">方式 A：使用 .pypirc 管理凭据（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F-B%EF%BC%9A%E7%9B%B4%E6%8E%A5%E6%8C%87%E5%AE%9A%E4%BB%93%E5%BA%93-URL%EF%BC%88%E6%97%A0%E9%9C%80-pypirc%EF%BC%89"><span class="toc-text">方式 B：直接指定仓库 URL（无需 .pypirc）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E4%BD%BF%E7%94%A8%E4%B8%8E%E9%AA%8C%E8%AF%81"><span class="toc-text">七、使用与验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%8E%92%E9%94%99"><span class="toc-text">八、常见问题与排错</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%9C%A8-CI-%E4%B8%AD%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83%EF%BC%88%E5%8F%AF%E9%80%89%E6%80%9D%E8%B7%AF%EF%BC%89"><span class="toc-text">九、在 CI 中自动发布（可选思路）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-text">十、总结</span></a></div></div></div></div></main><footer id="footer" style="background-image: url('https://cdn.jsdelivr.net/gh/xhuaustc/images@main/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.png')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Michael Pan</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk(Object.assign({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      id: 'ac6fc8485942585b2ff66fbfca6ec10c',
+      updateCountCallback: commentCount
+    },{"language":"zh-CN"}))
+
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+    getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.textContent= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !false) {
+  if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
