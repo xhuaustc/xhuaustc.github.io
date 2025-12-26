@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift中的Grafana监控界面无法完成登录 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="问题描述：访问OpenShift默认的grafana无法跳转到OpenShift console界面。报如下错误： 12&#123;&quot;error&quot;:&quot;invalid_request&quot;,&quot;error_description&quot;:&quot;The request is missing a required parameter, includ">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift中的Grafana监控界面无法完成登录">
+<meta property="og:url" content="https://xhua.eu.org/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="问题描述：访问OpenShift默认的grafana无法跳转到OpenShift console界面。报如下错误： 12&#123;&quot;error&quot;:&quot;invalid_request&quot;,&quot;error_description&quot;:&quot;The request is missing a required parameter, includ">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.664Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift中的Grafana监控界面无法完成登录",
+  "url": "https://xhua.eu.org/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.664Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift中的Grafana监控界面无法完成登录',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift中的Grafana监控界面无法完成登录</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift中的Grafana监控界面无法完成登录</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.664Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-08f808d3c6961f56.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Grafana OpenShift"></p>
+<p><strong>问题描述：</strong><br>访问OpenShift默认的grafana无法跳转到OpenShift console界面。报如下错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;error&quot;:&quot;invalid_request&quot;,&quot;error_description&quot;:&quot;The request is missing a required parameter,</span><br><span class="line"> includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.&quot;&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>解决办法：</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc patch sa grafana -p <span class="string">&#x27;&#123;&quot;metadata&quot;:&#123;&quot;annotations&quot;:&#123;&quot;serviceaccounts.openshift.io/oauth-redirecturi.first&quot;:&quot;https://grafana.apps.example.com:450&quot;&#125;&#125;&#125;&#x27;</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>解释说明：</strong><br>因为某些原因，外部负载均衡器并没有使用与Router对应的80&#x2F;443端口，而是使用了83&#x2F;450端口。<br>默认情况下OpenShift oauth-proxy登录验证会传入clientId为应用的serviceaccount，它会将跳转链接与serviceaccount中的redirecturi校验。如果匹配则允许跳转，否则会报参数不合法的错误。</p>
+<p>grafana serviceaccount的默认跳转相关的配置如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get serviceaccount grafana -n openshift-monitoring -o yaml</span></span><br><span class="line">...</span><br><span class="line">  serviceaccounts.openshift.io/oauth-redirectreference.grafana: &#x27;&#123;&quot;kind&quot;:&quot;OAuthRedirectReference&quot;,&quot;apiVersion&quot;:&quot;v1&quot;,&quot;reference&quot;:&#123;&quot;kind&quot;:&quot;Route&quot;,&quot;name&quot;:&quot;grafana&quot;&#125;&#125;&#x27;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>它会从grafana Route中获取跳转链接，它与真实的链接（83&#x2F;450）不匹配，所以会报出不合法的错误。<br>故而需要添加指定的认证链接<code>https://grafana.apps.example.com:450</code>。</p>
+<p>除了grafana外，其它OpenShift默认的服务也会出类似的问题，也可以通过同样的方法解决。<br><strong>参考文档：</strong><br><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/architecture/additional_concepts/authentication.html">https://docs.openshift.com/container-platform/3.11/architecture/additional_concepts/authentication.html</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/">https://xhua.eu.org/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/OpenShift%E4%B8%AD%E8%8A%82%E7%82%B9%E7%9A%84%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E2%80%94%E2%80%94%E5%AE%B9%E5%99%A8%E4%B8%8E%E9%95%9C%E5%83%8F/" title="OpenShift中节点的垃圾收集——容器与镜像"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift中节点的垃圾收集——容器与镜像</div></div><div class="info-2"><div class="info-item-1">参考文档https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;garbage_collection.html </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E4%B8%AD%E5%A6%82%E4%BD%95%E5%B0%86PV%E4%B8%8EPVC%E7%BB%91%E5%AE%9A/" title="OpenShift中如何将PV与PVC绑定"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift中如何将PV与PVC绑定</div></div><div class="info-2"><div class="info-item-1">PV&#x2F;PVC是什么？PV（Persistent Volume）：描述的是持久化的Volume实体概念，生命周期与Pod创建和销毁事件无关。要么运行事先准备好，要么通过动态创建。PVC（PersistentVolumeClaim）：PVC是对PV的请求，申明Pod所希望使用的持久化存储的属性，例如容量，读写权限。 Kubernete Volumes能够帮忙应用持久化数据，PV&#x2F;PVC是Kubernetes Volumes存储类型的一种，其它类型还有：本地存储：emptyDir &#x2F; hostPath网络存储：in-tree: aws ElasticBlockStore &#x2F; gcePersistentDisk &#x2F; nfsout-of-tree：csi等网络存储插件Project Volume：secret &#x2F; configmap &#x2F; downwardAPI &#x2F; serviceAccountToken PV&#x2F;PVC的意义 使用不同的控制器来管理计算与存储资源，解耦POD与Volume的生命周期，实现...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift%E6%A8%A1%E6%9D%BF%E4%B9%8B%E9%A1%B9%E7%9B%AE%E5%88%9B%E5%BB%BA%E6%A8%A1%E6%9D%BF%EF%BC%88%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6%EF%BC%89/" title="Openshift模板之项目创建模板（资源限制）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift模板之项目创建模板（资源限制）</div></div><div class="info-2"><div class="info-item-1">Openshift创建project时，可以按照设定的模板来创建，这就省去了很多初始化的工作。###文件内容(template.yaml) 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112apiVersion: v1kind: Templatemetadata:  creationTimestamp: null  name: project-requestobjects:- apiVersion: v1  kind: Project  metadata:    annotations:      openshift.io/description: $&#123;PROJECT_D...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E4%BD%BF%E7%94%A8OpenLDAP%E4%BD%9C%E4%B8%BA%E7%BB%9F%E4%B8%80%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81/" title="Openshift使用OpenLDAP作为统一用户认证"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift使用OpenLDAP作为统一用户认证</div></div><div class="info-2"><div class="info-item-1"> 背景Openshift默认的用户认证是使用HTPasswd，之前的部署方式也都是使用了HTPasswd的方式。其实Openshift官方默认支持LDAP协议，可以很容易地将OpenLDAP与Openshift进行集成，使用OpenLDAP集中管理用户。 环境 centos 7.4 openshift 3.10 openldap 2.4.44  openldap安装与使用介绍Openshift集群3.9升级到3.10 用户账号配置及验证登录 Openshift中配置验证方式为LDAPPasswordIdentityProvider  LDAP URL说明： 12345678910111213141516ldapurl     = scheme &quot;://&quot; [hostport] [&quot;/&quot;[dn [&quot;?&quot; [attributes] [&quot;?&quot; [scope][&quot;?&quot; [filter] [&quot;?&quot; extensions]]]]]]scheme   = &quot;ldap...</div></div></div></a><a class="pagination-related" href="/openshift/%E7%8E%A9%E8%BD%ACOpenshift%E4%B8%ADPod%E8%B0%83%E5%BA%A6/" title="玩转Openshift中Pod调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">玩转Openshift中Pod调度</div></div><div class="info-2"><div class="info-item-1"> 大部分情况下，Openshift中的Pod只是容器的载体，通过Deployment、DaemonSet、RC、Job、Cronjob等对象来完成一组Pod的调度与自动控制功能。Pod调度也是由Scheduler组件完成的。      Deployment&#x2F;RC：全自动调度  Deployment&#x2F;RC主要是自动部署应用的多个副本，并持续监控，以维持副本的数量。默认是使用系统Master的Scheduler经过一系列算法计算来调度，用户无法干预调度过程与结果。 12345678910111213141516171819202122apiVersion: apps/v1kind: Deploymentmetadata:  name: nginx  labels:    app: nginxspec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      containers:      - name: nginx    ...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E7%81%BE%E5%A4%87%E7%9A%84%E6%96%B9%E6%A1%88%E5%8F%8A%E6%AD%A5%E9%AA%A4/" title="OpenShift灾备的方案及步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift灾备的方案及步骤</div></div><div class="info-2"><div class="info-item-1">https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restoring-cluster.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-master-host.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restore-etcd-quorum.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-etcd-member.html </div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2%E9%85%8D%E7%BD%AE%E4%BA%8B%E9%A1%B9/" title="Openshift生产环境部署配置事项"><img class="cover" src="https://img.xhua.eu.org/7f22b77f268e751b9611748deb43413ac72d9958c04521eaa06eaa2632fac6b3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift生产环境部署配置事项</div></div><div class="info-2"><div class="info-item-1">1. 主机配置推荐 master 16核 32GB 网卡带宽不低于1Gb。CPU x86_64架构，核数和主机数线性递增，每增加一台主机增加0.1核。5台主机4.5核，总的核数为4+0.1 * 主机数内存与主机数线性递增，每增一台主机增加200M内存，5台8G，总的内存数为7+0.2 * 主机数 node 40核 256GB  网卡带宽不低于1Gb根据应用场景估算  2. 磁盘目录挂载 master磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var&#x2F;lib&#x2F;docker：100GB 做raid高可用&#x2F;var&#x2F;lib&#x2F;etcd [ssd]：20GB 做raid高可用&#x2F;var ：50GB 可根据实际进行调整，主要emptyDir的存储在&#x2F;var&#x2F;lib&#x2F;origin目录下 node磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E5%AD%98%E5%82%A8%E7%AE%A1%E7%90%86%E6%96%B9%E6%A1%88%E2%80%94%E2%80%94Rook/" title="OpenShift存储管理方案——Rook"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift存储管理方案——Rook</div></div><div class="info-2"><div class="info-item-1"> 存储的重要意义存储资源是容器云平台中的一个核心基础设施，为不同的应用服务提供可靠的持久化服务。大家都知道，容器运行过程中产生的数据是临时数据，并不可靠，一旦容器挂了，这些数据都会丢失。所以对数据可靠性有要求的应用就必须使用存储资源。存储的方案有很多种，常用的有本地盘存储、NFS、Ceph、Gluster FS等等。其中Ceph是一个开源的分布式文件系统，同时支持对象存储、块存储、文件存储,为云计算平台提供了最全面的存储方案。它以可靠、高性能等特性得到了很多企业的认可，并使用它来作为生产环境的存储。但是运维Ceph存储集群是一件较复杂工作，通过Rook项目，我们可以非常方便简单地实施Ceph存储方案，并且已有企业使用Rook来运维生产级别的存储方案。 Rook：CNCF云原生存储项目Rook于2018年1月加入了CNCF，成为了CNCF第15个项目，同时它也是CNCF首个云原生存储项目。Rook并不是自己开发一套存储方案，而是将现有的分布式存储系统云原生化，让它们能够实现自我管理，自我扩展，自我修复。 它使存储管理员的任务自动化：部署，引导，配置，配置，扩展，升级，迁移，灾难恢复...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'f2dc9224752c55a45909720a992ddd83'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift通过EgressIP为Project设置对外的出口IP | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift通过EgressIP为Project设置对外的出口IP">
+<meta property="og:url" content="https://xhua.eu.org/openshift/OpenShift%E9%80%9A%E8%BF%87EgressIP%E4%B8%BAProject%E8%AE%BE%E7%BD%AE%E5%AF%B9%E5%A4%96%E7%9A%84%E5%87%BA%E5%8F%A3IP/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.667Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift通过EgressIP为Project设置对外的出口IP",
+  "url": "https://xhua.eu.org/openshift/OpenShift%E9%80%9A%E8%BF%87EgressIP%E4%B8%BAProject%E8%AE%BE%E7%BD%AE%E5%AF%B9%E5%A4%96%E7%9A%84%E5%87%BA%E5%8F%A3IP/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.667Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/OpenShift%E9%80%9A%E8%BF%87EgressIP%E4%B8%BAProject%E8%AE%BE%E7%BD%AE%E5%AF%B9%E5%A4%96%E7%9A%84%E5%87%BA%E5%8F%A3IP/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift通过EgressIP为Project设置对外的出口IP',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift通过EgressIP为Project设置对外的出口IP</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift通过EgressIP为Project设置对外的出口IP</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.667Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。</p>
+<ol>
+<li>将出口IP分配到指定的Node</li>
+</ol>
+<p>支持指定特定的IP</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<p>支持指定特定的IP段</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressCIDRs&quot;: [&quot;192.168.1.0/24&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为项目指定静态出口IP</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch netnamespace &lt;project-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.100&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>OpenShift容器平台会自动以平衡的方式将特定的出口IP地址分配给可用节点。 在这种情况下，它将出口IP地址192.168.1.100分配给<node-name>。</li>
+</ol>
+<p>一个Project只能指定一个EgressIP</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/OpenShift%E9%80%9A%E8%BF%87EgressIP%E4%B8%BAProject%E8%AE%BE%E7%BD%AE%E5%AF%B9%E5%A4%96%E7%9A%84%E5%87%BA%E5%8F%A3IP/">https://xhua.eu.org/openshift/OpenShift%E9%80%9A%E8%BF%87EgressIP%E4%B8%BAProject%E8%AE%BE%E7%BD%AE%E5%AF%B9%E5%A4%96%E7%9A%84%E5%87%BA%E5%8F%A3IP/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/OpenShift%E9%83%A8%E7%BD%B2%E6%97%B6%E5%A6%82%E4%BD%95%E5%BB%B6%E9%95%BF%E7%BB%84%E4%BB%B6%E8%AF%81%E4%B9%A6%E7%9A%84%E6%9C%89%E6%95%88%E6%9C%9F/" title="OpenShift部署时如何延长组件证书的有效期"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift部署时如何延长组件证书的有效期</div></div><div class="info-2"><div class="info-item-1"> 延长集群核心证书的有效期OpenShift集群正常运行中涉及到非常多的证书，有各节点通信的证书，有数据库的证书，有私有镜像仓库的证书，还有各种组件的证书（EFK、ClusterMonitor、Metrics等）。对于集群的相关证书可以通过在inventory文件中添加如下配置就可以非常方便地更改相关证书的默认有效期。 1234openshift_hosted_registry_cert_expire_days=3650openshift_ca_cert_expire_days=3650openshift_master_cert_expire_days=3650etcd_ca_default_days=3650 但是以上的几个配置对于一些组件并不起作用，如EFK等。 延长一些特殊组件证书的有效期openshift自签应用证书的有效期为2 or 5年。其中crt证书默认为两年，ca证书为5年。例如es中的证书中，admin-ca有效期为5年，admin-crt有效期为2年。 也就是说按照当前OpenShift安装的默认步骤安装的EFK组件，证书最短有效期为两年，两年后需要执行证书更...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E8%BF%90%E7%BB%B4%E7%82%B9%E6%B1%87%E6%80%BB/" title="OpenShift运维点汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift运维点汇总</div></div><div class="info-2"><div class="info-item-1">应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控    物理层 创建资源  负载均衡器NAS存储应用私有网络   监控  vpc负载均衡器主机状态监控（CPU与内存）    集群层 备份  etcd全量备份应用配置备份(Ark)应用备份（oc export)   集群版本管理  集群升级（每个大版本升级）   日志归档与清理  EFK日志清理hawkular-cassandra日志清理journal日志归档  1journalctl --vacuum-time=3days或者journalctl --vacuum-size=200M或者在/etc/systemd/journald.conf中设置日志大小  message日志归档   ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2%E9%85%8D%E7%BD%AE%E4%BA%8B%E9%A1%B9/" title="Openshift生产环境部署配置事项"><img class="cover" src="https://img.xhua.eu.org/7f22b77f268e751b9611748deb43413ac72d9958c04521eaa06eaa2632fac6b3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift生产环境部署配置事项</div></div><div class="info-2"><div class="info-item-1">1. 主机配置推荐 master 16核 32GB 网卡带宽不低于1Gb。CPU x86_64架构，核数和主机数线性递增，每增加一台主机增加0.1核。5台主机4.5核，总的核数为4+0.1 * 主机数内存与主机数线性递增，每增一台主机增加200M内存，5台8G，总的内存数为7+0.2 * 主机数 node 40核 256GB  网卡带宽不低于1Gb根据应用场景估算  2. 磁盘目录挂载 master磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var&#x2F;lib&#x2F;docker：100GB 做raid高可用&#x2F;var&#x2F;lib&#x2F;etcd [ssd]：20GB 做raid高可用&#x2F;var ：50GB 可根据实际进行调整，主要emptyDir的存储在&#x2F;var&#x2F;lib&#x2F;origin目录下 node磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E9%83%A8%E7%BD%B2zalenium(%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84selenium)%E5%8F%8APython%E8%87%AA%E5%8A%A8%E6%B5%8B%E8%AF%95/" title="Openshift部署zalenium(容器化的selenium)及Python自动测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift部署zalenium(容器化的selenium)及Python自动测试</div></div><div class="info-2"><div class="info-item-1">什么是zaleniumzalenium是一个Selenium Grid扩展，用Docker容器动态扩展你的本地网格。它使用docker-selenium在本地运行Firefox和Chrome中的测试。官网地址 zalenium Openshift上部署zalenium 创建zalenium项目  1oc new-project zalenium --display-name=&quot;自动测试Selenium Grid&quot;  创建Service Account  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455# 创建ClusterRole# oc create -f zalenium-role.json&#123;    &quot;kind&quot;: &quot;ClusterRole&quot;,    &quot;apiVersion&quot;: &quot;v1&quot;,    &quot;meta...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E4%B8%AD%E5%A6%82%E4%BD%95%E9%80%9A%E8%BF%87%E8%84%9A%E6%9C%AC%E8%8E%B7%E5%8F%96Alertmanager%E7%9A%84%E5%91%8A%E8%AD%A6%E6%95%B0%E6%8D%AE/" title="OpenShift中如何通过脚本获取Alertmanager的告警数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中如何通过脚本获取Alertmanager的告警数据</div></div><div class="info-2"><div class="info-item-1">一、为什么需要通过脚本获取告警信息 二、Alertmanager的告警信息 三、amtool工具获取告警信息 12# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093 -o extended -o：默认值为simple，输出格式，还可以是extended，json 四、amtool更多功能 </div></div></div></a><a class="pagination-related" href="/openshift/%E4%B8%8B%E8%BD%BD%E5%9B%BD%E5%A4%96%E8%B5%84%E6%BA%90%E5%8A%A0%E9%80%9F%E5%99%A8/" title="下载国外资源加速器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">下载国外资源加速器</div></div><div class="info-2"><div class="info-item-1">axel https://github.com/axel-download-accelerator/axel </div></div></div></a><a class="pagination-related" href="/openshift/Openshift-F5%E9%9B%86%E6%88%90%EF%BC%88%E6%80%BB%E7%BB%93%EF%BC%89%E2%80%94%E2%80%94%E4%B8%8ERouter%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94/" title="Openshift-F5集成（总结）——与Router方案对比"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（总结）——与Router方案对比</div></div><div class="info-2"><div class="info-item-1">这篇文章来自9月份自己在F5年度会议上分享的PPT，感谢过程中帮忙一起联调的小伙伴。PPT也分享出来，地址如下：openshift与F5的联合解决方案Openshift-F5集成（南北流量走F5）Openshift-F5集成（续）——实现灰度发布 Openshift的基础概念Openshift简介红帽® OpenShift 是一款性能强大的开源企业级PaaS产品。不仅是企业级的Kubernetes，可以构建、部署与管理容器应用，还提供从开发到投入生产的整个应用生命周期内使用的完整解决方案，帮助客户享受快速创新带来的收益，同时保持企业级平台的稳定性、可靠性和安全性。Openshift支持多种环境下部署，无论是在企业内部，公共云，或是托管环境中。 Openshift Pod Pod是Openshift调度的最小单元 一个Pod包含一个或多个容器 Pod内的容器共享网络，IP不固定  实例： 12345678910111213apiVersion: v1kind: Podmetadata:  name: MyApp       labels:    app: MyApp    spec...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-4-3%E9%83%A8%E7%BD%B2%E5%AE%89%E8%A3%85%EF%BC%88%E5%9B%BD%E5%86%85%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91%E6%94%AF%E6%8C%81%EF%BC%89/" title="OpenShift-4-3部署安装（国内需要使用科学上网支持）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-4-3部署安装（国内需要使用科学上网支持）</div></div><div class="info-2"><div class="info-item-1">准备好本机访问科学上网环境 安装pip软件  1$ yum install python2-pip  安装shadowsocks包  1pip install shadowsocks -i https://pypi.douban.com/simple  编辑文件&#x2F;etc&#x2F;shadowsocks.json  123456789101112$ cat &gt; /etc/shadowsocks.json &lt;&lt;EOF&#123;    &quot;server&quot;:&quot;shadowsocks的IP&quot;,    &quot;server_port&quot;:8388,    &quot;local_address&quot;: &quot;0.0.0.0&quot;,    &quot;local_port&quot;:1080,    &quot;password&quot;:&quot;fuuuuuuuuuuuuckgfw&quot;,    &quot;timeout&quot;:300,    &quot;method&q...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '0c1d2f607444feef8f19a0c67a2d40c2'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

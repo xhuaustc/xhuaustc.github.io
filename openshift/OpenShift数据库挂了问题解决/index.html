@@ -1,0 +1,262 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift数据库挂了问题解决 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift数据库挂了问题解决">
+<meta property="og:url" content="https://xhua.eu.org/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCe">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.666Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift数据库挂了问题解决",
+  "url": "https://xhua.eu.org/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.666Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift数据库挂了问题解决',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift数据库挂了问题解决</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift数据库挂了问题解决</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.666Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>每个计算节点都无法启动，报错信息为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCertificate:true RotateKubeletClientCertificate:true]&#125;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.902964    4307 mount_linux.go:211] Detected OS with systemd</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.908967    4307 server.go:383] Version: v1.10.0+b81c8f8</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909036    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletClientCertificate:true RotateKubeletServerCertificate:true]&#125;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909150    4307 plugins.go:89] No cloud provider specified.</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909162    4307 server.go:499] No cloud provider specified: &quot;&quot; from the config file: &quot;&quot;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: E0105 00:05:10.931121    4307 bootstrap.go:198] Part of the existing bootstrap client certificate is expired: 2020-01-04 07:20:00 +0000 UTC</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.931145    4307 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig file</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.932606    4307 certificate_store.go:131] Loading cert/key pair from &quot;/etc/origin/node/certificates/kubelet-client-current.pem&quot;.</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.959131    4307 csr.go:105] csr for this node already exists, reusing</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.967338    4307 csr.go:113] csr for this node is still valid</span><br></pre></td></tr></table></figure>
+<p>一、更新证书后，&#x2F;etc&#x2F;origin&#x2F;node&#x2F;cerxx**&#x2F;client-current.(server).</p>
+<p>如果有csr的话，就需要将csr（CertificateSigningRequest）批准通过</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get csr -o name | xargs oc adm certificate approve</span><br></pre></td></tr></table></figure>
+<p>需要去查的是：</p>
+<ol>
+<li>为什么1月4日会自动去更新kubelet证书<br>因为生产上kubelet证书的默认有效期为1年，到期会自动更新证书。计算节点上相关的配置项为<code>kubeletArguments.rotate-certificates: [&#39;true&#39;]</code></li>
+<li>为什么csr为Pending，而没有被批准<br>这是openshift 3.11的Master节点恰好刚过期，但是此时的bootstrap的token没有过期，Node节点会向Master申请证书csr。而在OpenShift中csr的审批需要手动通过。所以这块需要做好监控与告警，确保生产上的证书不要过期。</li>
+</ol>
+<p>相关文章：<br><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/3716861">https://access.redhat.com/solutions/3716861</a><br><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/4565991">https://access.redhat.com/solutions/4565991</a></p>
+<p>二、数据库问题<br>数据库使用的镜像是：<code>centos/mysql-57-centos7</code><br>由于是操作数据库mysql改变root的密码，而common.sh中会校验数据库的状态，但是该镜像中的common.sh默认root密码是空的，需要更改该脚本的代码，(添加ROOT密码)：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 第54行</span><br><span class="line">mysql_flags=&quot;-u root -p$MYSQL_ROOT_PASSWORD --socket=/tmp/mysql.sock</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/">https://xhua.eu.org/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/OpenShift%E4%BD%BF%E7%94%A8KeepAlived+LVS%E5%AE%9E%E7%8E%B0%E5%A4%96%E9%83%A8%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E5%99%A8/" title="OpenShift使用KeepAlived+LVS实现外部负载均衡器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift使用KeepAlived+LVS实现外部负载均衡器</div></div><div class="info-2"><div class="info-item-1">OpenShift集群资源列表    主机名 类型 IP    相关节点IP     master0 master 192.168.0.2   master1 master 192.168.0.3   master2 master 192.168.0.4   infra0 infra 192.168.0.5   infra1 infra 192.168.0.6   vip地址分配     master-vip vip 192.168.0.250   infra-vip vip 192.168.0.251   部署Master API负载均衡器作为集群内外访问的入口 在三个Master节点安装KeepAlived与LVS  12$ ansible masters -m package -a &#x27;name=keepalived state=present&#x27;$ ansible masters -m package -a &#x27;name=ipvsadm state=present&#x27;  选择master0作为VIP的Master节点  1234567891...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E6%94%AF%E6%8C%81Calico-BGP-%E8%B7%AF%E7%94%B1%E5%8F%8D%E5%B0%84%EF%BC%88RR%EF%BC%89%E6%A8%A1%E5%BC%8F/" title="OpenShift支持Calico-BGP-路由反射（RR）模式"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift支持Calico-BGP-路由反射（RR）模式</div></div><div class="info-2"><div class="info-item-1"> 一、Calico 是什么calico 是容器网络的一种解决方案，也是当前最流行的方案之一。和其他虚拟网络最大的不同是，它没有采用 overlay 网络做报文的转发，提供了纯 3 层的网络模型。三层通信模型表示每个容器都通过 IP 直接通信，中间通过路由转发找到对方。在这个过程中，容器所在的节点类似于传统的路由器，提供了路由查找的功能。 要想路由工作能够正常，每个虚拟路由器（容器所在的主机节点）必须有某种方法知道整个集群的路由信息，calico 采用的是BGP 路由协议，全称是 Border Gateway Protocol。 除了能用于 docker 这样的容器外，它还能集成到容器集群平台 OpenShift&#x2F;kubernetes、公有云平台 AWS、GCE 等， 而且也能很容易地集成到 openstack 等 Iaas 平台。 二、Calico网络方式2.1 IPIP模式从字面来理解，就是把一个IP数据包又套在一个IP包里，即把 IP 层封装到 IP 层的一个 tunnel，看起来似乎是浪费，实则不然。它的作用其实基本上就相当于一个基于IP层的网桥！一般来说，普通的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift%E9%9B%86%E7%BE%A4%E5%8D%87%E7%BA%A73-6%E8%87%B33-7/" title="Openshift集群升级3-6至3-7"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群升级3-6至3-7</div></div><div class="info-2"><div class="info-item-1">更新方法与策略：自动升级方法  更新openshift-ansible的脚本代码   12git pull git checkout -b release-3.7 安装需要的包  1ansible all -m yum -a &#x27;name=pyOpenSSL state=present&#x27;  关闭Service Catalog和Template Service Broker。3.7 以上版本默认会启用 Service Catalog 和 Template Service Broker  123456# /etc/ansible/hosts...openshift_enable_service_catalog=falsetemplate_service_broker_install=falseansible_service_broker_install=false...  关闭etcd目录的selinux检查关闭任务Check selinux label of ‘‘与Make sure the ‘‘ has the proper label  12345678910...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6%E5%8A%A8%E6%80%81%E5%88%87%E6%8D%A2/" title="Openshift网络插件动态切换"><img class="cover" src="https://img.xhua.eu.org/8fa378a33eeba62f347cc799820c761a8ae6a3ecb2ce55c0fcf7d8bc709a09f3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift网络插件动态切换</div></div><div class="info-2"><div class="info-item-1">Openshift 3.11版本Openshift SDN网络插件ovs-subnet 与 ovs-multitenant切换  更改节点上的networkPluginName的配置    master节点：/etc/origin/master/master-config.yaml node节点：/etc/origin/node/node-config.yaml 将networkPluginName中的redhat/openshift-ovs-subnet换成redhat/openshift-ovs-multitenant,或者反过来。  12$ ansible all -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshift-ovs-multitenant/g&quot; /etc/origin/node/node-config.yaml&#x27;$ ansible masters  -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshif...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E4%B8%ADElasticsearch%E7%B4%A2%E5%BC%95%E8%87%AA%E5%8A%A8%E6%B8%85%E7%90%86%E5%B7%A5%E5%85%B7%EF%BC%9ACurator/" title="Openshift中Elasticsearch索引自动清理工具：Curator"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift中Elasticsearch索引自动清理工具：Curator</div></div><div class="info-2"><div class="info-item-1">Openshift 3.11版本Openshift 3.10版本参考文档Openshift官方文档curator配置 </div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E6%8E%92%E9%94%99%E6%8A%80%E5%B7%A7%E2%80%94%E2%80%94From-Redhat%E5%A4%A7%E5%AE%A2%E6%88%B7%E4%BA%A4%E6%B5%81%E4%BC%9A/" title="Openshift排错技巧——From-Redhat大客户交流会"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift排错技巧——From-Redhat大客户交流会</div></div><div class="info-2"><div class="info-item-1"> 今天参加Redhat大客户交流会，有一个主题是Redhat的小伙伴介绍Openshift的排错技巧。这个还是很值得参考的，于是将内容发在了这里，以便更多的小伙伴能够从中受益。当然Redhat小伙伴列出的也只是一部分，同时有些排错细节PPT中也并没有具体写，这篇中我就不扩展了。以下为PPT的内容。 OpenShift排错技巧 环境基本信息收集 日志等级 应用程序 OC客户端排错 镜像仓库 网络 路由 Installer DNS Etcd  日志等级openshift service log:&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master.env #同时作用于API和ControllersDEBUG_LOGLEVEL&#x3D;4 &#x2F;etc&#x2F;sysconfig&#x2F;atomic-openshift-nodeOPTIONS&#x3D;–loglevel&#x3D;4 错误等级  0 - Errors and warning only 2 - Normal information 4 - Debugging-leve...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Kafka-Operator%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/" title="OpenShift-Kafka-Operator测试报告"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Kafka-Operator测试报告</div></div><div class="info-2"><div class="info-item-1">1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本次具体测试的功能点如下：    序号 测试项目 测试项 优先级    1 Kafka Operator部署 Kafka Operator部署 高     Kafka集群创建 高     Kafka监控部署 高   2 Kafka功能测试 Kafka创建Topic 高     Openshift集群内部Kafka producer与consumer测试 高     Openshift集群外部Kafka producer与consumer测试（NodePort方案） 高     Openshift集群外部Kafka producer与consumer测试（Router方案） 高   3 Ka...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/" title="OpenShift节点kubelet证书过期异常的解决步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift节点kubelet证书过期异常的解决步骤</div></div><div class="info-2"><div class="info-item-1"> 环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig fileatomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new oneatomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'ef98289a738ece9da06797b3c1f00eb7'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

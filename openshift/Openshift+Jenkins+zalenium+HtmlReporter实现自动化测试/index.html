@@ -1,0 +1,291 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="上篇介绍了如果在openshift上部署zalenium及python对应用功能进行测试的方法。该篇介绍如何通过Jenkins的Slave容器配合上篇中的zalenium实现自动化功能测试，并生成测试报告。虽然只是一个小例子，但是麻雀虽小，五脏俱全。同时所有的操作及工具都建立在Openshift上。下图为各工具之间的关系：   ###具体操作：   启动Jenkins需要添加环境变量JENKINS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试">
+<meta property="og:url" content="https://xhua.eu.org/openshift/Openshift+Jenkins+zalenium+HtmlReporter%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="上篇介绍了如果在openshift上部署zalenium及python对应用功能进行测试的方法。该篇介绍如何通过Jenkins的Slave容器配合上篇中的zalenium实现自动化功能测试，并生成测试报告。虽然只是一个小例子，但是麻雀虽小，五脏俱全。同时所有的操作及工具都建立在Openshift上。下图为各工具之间的关系：   ###具体操作：   启动Jenkins需要添加环境变量JENKINS">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.667Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试",
+  "url": "https://xhua.eu.org/openshift/Openshift+Jenkins+zalenium+HtmlReporter%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.667Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/Openshift+Jenkins+zalenium+HtmlReporter%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.667Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>上篇介绍了如果<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c38abbcff5cc">在openshift上部署zalenium及python对应用功能进行测试的方法</a>。<br>该篇介绍<strong>如何通过Jenkins的Slave容器配合上篇中的zalenium实现自动化功能测试，并生成测试报告</strong>。虽然只是一个小例子，但是麻雀虽小，五脏俱全。同时所有的操作及工具都建立在Openshift上。<br>下图为各工具之间的关系：<br><img src="https://img.xhua.eu.org/1f0a705ac716e3f8c042d52afd7aed8cf552827d5db096524a2f14d672bed6fd.jpg" alt="jenkins+zalenium+HtmlReporter">  </p>
+<p>###具体操作：</p>
+<ul>
+<li><ol>
+<li>启动Jenkins需要添加环境变量<br><code>JENKINS_JAVA_OVERRIDES</code> &#x3D;&gt; <code>-Dhudson.model.DirectoryBrowserSupport.CSP=</code><br>该环境变量使得HtmlReporter页面展示正常</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>Jenkins系统管理-&gt;系统设置中创建新的Kubernetes Pod Template<br>基础镜像<code>jenkins-slave-python-centos7:3.10</code>，Dockerfile安装需要的python依赖包</li>
+</ol>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Dockerfile</span><br><span class="line">FROM informaticsmatters/jenkins-slave-python-centos7</span><br><span class="line">RUN pip install selenium -i https://pypi.douban.com/simple/</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><img src="https://img.xhua.eu.org/02bb5e58cd845a59a119505e37e8a78b1ca6c17fcc04f8cf991bc6b46f6080b2.jpg" alt="添加Jenkins Slave模板.PNG">  </p>
+<ul>
+<li><ol start="3">
+<li>代码中添加自动化测试脚本</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"># -*- coding: utf-8 -*-</span><br><span class="line">import unittest</span><br><span class="line">from selenium import webdriver</span><br><span class="line">from selenium.webdriver.remote.remote_connection import RemoteConnection</span><br><span class="line">from HTMLTestRunner import HTMLTestRunner</span><br><span class="line"></span><br><span class="line">class SeleniumTestCase(unittest.TestCase):</span><br><span class="line">    def setUp(self):</span><br><span class="line">        remoteconnection = RemoteConnection(&#x27;http://zalenium.example.com/wd/hub&#x27;,</span><br><span class="line">                                            keep_alive=False,</span><br><span class="line">                                            resolve_ip=False)</span><br><span class="line"></span><br><span class="line">        self.driver = webdriver.Remote(command_executor=remoteconnection,</span><br><span class="line">                                       desired_capabilities=&#123;</span><br><span class="line">                                           &#x27;browserName&#x27;: &quot;chrome&quot;,</span><br><span class="line">                                           &#x27;video&#x27;: &#x27;True&#x27;,</span><br><span class="line">                                           &#x27;platform&#x27;: &#x27;LINUX&#x27;,</span><br><span class="line">                                           &#x27;platformName&#x27;: &#x27;LINUX&#x27;</span><br><span class="line">                                       &#125;)</span><br><span class="line">        self.driver.implicitly_wait(30)</span><br><span class="line">        self.driver.maximize_window()</span><br><span class="line"></span><br><span class="line">    def test_login_test_case(self):</span><br><span class="line">        self.driver.get(&quot;https://devpf.example.com&quot;)</span><br><span class="line">        username_input = self.driver.find_element_by_id(&#x27;username&#x27;)</span><br><span class="line">        password_input = self.driver.find_element_by_id(&#x27;password&#x27;)</span><br><span class="line">        login_button = self.driver.find_element_by_id(&#x27;login_btn&#x27;)</span><br><span class="line">        username_input.clear()</span><br><span class="line">        username_input.send_keys(&#x27;panxiaohua&#x27;)</span><br><span class="line">        password_input.clear()</span><br><span class="line">        password_input.send_keys(&#x27;12345678&#x27;)</span><br><span class="line">        login_button.click()</span><br><span class="line"></span><br><span class="line">        assert not None is self.driver.find_element_by_id(&#x27;content&#x27;), &#x27;Error Happends&#x27;</span><br><span class="line"></span><br><span class="line">    def tearDown(self):</span><br><span class="line">        self.driver.quit()</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    suite = unittest.TestSuite()</span><br><span class="line">    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(SeleniumTestCase))</span><br><span class="line">    with open(&#x27;report.html&#x27;, &#x27;w&#x27;) as f:</span><br><span class="line">        runner = HTMLTestRunner(stream=f, title=&#x27;Test Report&#x27;, verbosity=2)</span><br><span class="line">        runner.run(suite)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><ol start="4">
+<li>Jenkins Job中完成部署后，执行测试脚本</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd tests</span><br><span class="line">python test_urls.py</span><br></pre></td></tr></table></figure>
+<p><img src="https://img.xhua.eu.org/a11aca0485914de1ebedac5959779f320c50afafb9377e580e76c7c152536d46.jpg" alt="测试执行操作.PNG">  </p>
+<ul>
+<li><ol start="5">
+<li>导出自动测试报表</li>
+</ol>
+</li>
+</ul>
+<p><img src="https://img.xhua.eu.org/ba8900ff40faed422da37060f650629a9d4e301784151b2da8f3566ba92c5a73.jpg" alt="构建后操作.PNG">  </p>
+<ul>
+<li><ol start="6">
+<li>最后结果展示</li>
+</ol>
+</li>
+</ul>
+<p><img src="https://img.xhua.eu.org/dccf4ae9e0efb1f7ce4baff44b06f90469f2a97c58b7cc1ffe1c3770c4af8bf6.jpg" alt="Reporter报告展示.PNG">  </p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/Openshift+Jenkins+zalenium+HtmlReporter%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/">https://xhua.eu.org/openshift/Openshift+Jenkins+zalenium+HtmlReporter%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/Openshift-All-In-One%E4%B8%80%E9%94%AE%E9%83%A8%E7%BD%B2%E5%B7%A5%E5%85%B7%E4%B8%8A%E7%BA%BF/" title="Openshift-All-In-One一键部署工具上线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-All-In-One一键部署工具上线</div></div><div class="info-2"><div class="info-item-1">Openshift All In One工具制作的初衷： 工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。 Openshift3.9部署手册，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的操作还是会遇到一些问题，毕竟步骤有那么多，差了一步，就很容易就会失败。有了这个脚本工具后，想要部署测试Openshift的朋友就很容易去部署测试了，而不是在部署这一步就放弃了。 有些厂商提供了Openshift的解决方案，但是做支持的厂商朋友并不太熟悉容器平台环境，也想在自己的环境下部署一套Openshift来测试，最后往往困难重重，从展望到放弃。  做个自动化工具，让所有关心Openshift&#x2F;K8s的朋友就可以跳过部署的步骤，快速进入到Paas这个神奇的世界，去了解到自己真正关心的内容。 进入正题 什么是正题？直接上工具git地址OpenshiftOneClick：http...</div></div></div></a><a class="pagination-related" href="/openshift/Openshfit%E4%B8%8A%E7%94%A8ConfigMap%E6%9D%A5%E8%87%AA%E5%AE%9A%E4%B9%89Nginx%E9%85%8D%E7%BD%AE/" title="Openshfit上用ConfigMap来自定义Nginx配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshfit上用ConfigMap来自定义Nginx配置</div></div><div class="info-2"><div class="info-item-1">Nginx是最常用的代理软件，也是最常用的WebServer，怎样很方便地在openshift上部署呢？同时又能很方便地对它自定义进行配置？直接使用docker的nginx会有以下问题：   启动时权限问题。默认openshift的应用会使用类似10000100的user_id启用docker，但是官方nginx镜像会使用root启用；还有nginx默认会启用80端口这个也是需要root权限的。 无法动态更新nginx配置。nginx配置在镜像中设置，如果需要更新配置的话，需要重新编译镜像。 应用代码更新。如果用户的代码，如静态代码，版本更新，是否可以不更新镜像，而完成版本的升级？   在Openshift上部署一个nginx应用如何解决以上3个问题。   权限问题    解决办法: 制作专用nginx镜像，1. 更改特殊文件夹的权限为777；2.将默认端口设置为8080default.conf 123456789101112server&#123;    listen  8080;    server_name _;    location /&#123;      root ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/CentOS%E4%B8%8AOpenLDAP-Server%E4%BD%BF%E7%94%A8cn=config%E6%96%B9%E5%BC%8F%E9%85%8D%E7%BD%AE/" title="CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置"><img class="cover" src="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置</div></div><div class="info-2"><div class="info-item-1">翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装openldap包  1yum install -y openldap openldap-clients openldap-servers LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d 123456789101112[root@rhel7 ~]# cd /etc/openldap/slapd.d/[root@rhel7 slapd.d]# ls -ldrwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=co...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E9%9B%86%E7%BE%A43-9%E5%8D%87%E7%BA%A7%E5%88%B03-10/" title="Openshift集群3-9升级到3-10"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群3-9升级到3-10</div></div><div class="info-2"><div class="info-item-1"> 更新方法与策略：自动升级方法 下载openshift-ansible的脚本代码   12git clone https://github.com/openshift/openshift-ansible.git git checkout  release-3.10 将master上的&#x2F;etc&#x2F;origin&#x2F;master&#x2F;htpasswd备份到&#x2F;root&#x2F;htpasswd  1scp master1:/etc/origin/master/htpasswd /root/htpasswd  openshift_master_identity_providers中的filename去掉  123# /etc/ansible/hostsopenshift_master_identity_providers=[&#123;&#x27;name&#x27;: &#x27;htpasswd_auth&#x27;, &#x27;login&#x27;:&#x27;true&#x27;,&#x27;challenge&#x27;: &#x2...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E5%BC%BA%E5%A4%A7%E7%9A%84oc-set%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3/" title="OpenShift强大的oc-set命令详解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift强大的oc-set命令详解</div></div><div class="info-2"><div class="info-item-1"> OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# oc setConfigure application resourcesUsage:  oc set COMMAND [flags]Replication controllers, deployments, and daemon sets:  env             Update environment variables on a pod template  resources       Update resource requests/limits on objects with pod templates  volumes         Update volumes o...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E6%97%A5%E5%BF%97%E7%BA%A7%E5%88%AB%E7%9B%B8%E5%85%B3/" title="OpenShift日志级别相关"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift日志级别相关</div></div><div class="info-2"><div class="info-item-1">总共需要考虑的服务日志有  OpenShift 服务日志 Docker 守护进程日志 Etcd 日志 命令行日志 Pod&#x2F;容器日志 OpenShift Builder 日志 OpenShift 路由器日志  OpenShift服务日志 docker的日志级别docker日志级别总共有以下：”debug”, “info”, “warn”, “error”, “fatal”五个。docker –log-level默认为info  参考文章https://access.redhat.com/zh_CN&#x2F;solutions&#x2F;3345021 </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E4%B8%AD%E7%9A%84Grafana%E7%9B%91%E6%8E%A7%E7%95%8C%E9%9D%A2%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E7%99%BB%E5%BD%95/" title="OpenShift中的Grafana监控界面无法完成登录"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中的Grafana监控界面无法完成登录</div></div><div class="info-2"><div class="info-item-1"> 问题描述：访问OpenShift默认的grafana无法跳转到OpenShift console界面。报如下错误： 12&#123;&quot;error&quot;:&quot;invalid_request&quot;,&quot;error_description&quot;:&quot;The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.&quot;&#125; 解决办法： 1$ oc patch sa grafana -p &#x27;&#123;&quot;metadata&quot;:&#123;&quot;annotations&quot;:&#123;&quot;serviceaccounts.openshift.io/oauth-redirecturi.first&quot;:&quot;https://grafana.ap...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E5%AE%9E%E7%8E%B0Etcd%E4%B8%80%E9%94%AE%E5%A4%87%E4%BB%BD%E4%B8%8E%E4%B8%80%E9%94%AE%E6%81%A2%E5%A4%8D%E8%84%9A%E6%9C%AC/" title="Openshift实现Etcd一键备份与一键恢复脚本"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift实现Etcd一键备份与一键恢复脚本</div></div><div class="info-2"><div class="info-item-1"> 一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!/bin/bashexport ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)oc login -u system:adminexport ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)oc project kube-systemoc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key -...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '87756d6c2e820da101ebe023a317c3a7'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

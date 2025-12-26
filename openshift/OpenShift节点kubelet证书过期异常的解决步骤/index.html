@@ -1,0 +1,291 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift节点kubelet证书过期异常的解决步骤 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to gener">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift节点kubelet证书过期异常的解决步骤">
+<meta property="og:url" content="https://xhua.eu.org/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to gener">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.667Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift节点kubelet证书过期异常的解决步骤",
+  "url": "https://xhua.eu.org/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.667Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift节点kubelet证书过期异常的解决步骤',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift节点kubelet证书过期异常的解决步骤</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift节点kubelet证书过期异常的解决步骤</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.667Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-dde4d8e7c1980f41.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="证书过期"></p>
+<p>环境：OpenShift 3.10 or 3.11<br>问题:</p>
+<ul>
+<li>重新部署了新的CA，节点不再处于就绪状态。</li>
+<li>如何手动强制创建新证书。</li>
+<li>节点无法更新其证书，并出现以下错误：</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig file</span><br><span class="line">atomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new one</span><br><span class="line">atomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed to run Kubelet: cannot create certificate signing request: Unauthorized</span><br></pre></td></tr></table></figure>
+<p>步骤：</p>
+<ol>
+<li>为节点创建一个新的bootstrap.kubeconfig（主节点仅需要复制admin.kubeconfig）。 从任何Master节点运行：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc serviceaccounts create-kubeconfig node-bootstrapper -n openshift-infra --config /etc/origin/master/admin.kubeconfig &gt; ~/bootstrap.kubeconfig</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在Master节点上将admin.kubeconfig文件复制到&#x2F;etc&#x2F;origin&#x2F;node&#x2F;bootstrap.kubeconfig。 在每个Master上运行：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">cp</span> /etc/origin/master/admin.kubeconfig /etc/origin/node/bootstrap.kubeconfig</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>将第1步中的〜&#x2F; bootstrap.kubeconfig分发给计算节点(worker,infra)，替换计算节点的&#x2F;etc&#x2F;origin&#x2F;node&#x2F;bootstrap.kubeconfig文件。 还要将其分发到所有主节点（master）上的&#x2F;etc&#x2F;origin&#x2F;master&#x2F;bootstrap.kubeconfig中（注意，它是master文件夹，而不是node文件夹）。</li>
+<li>在所有节点上移动node.kubeconfig 和 client-ca.crt文件</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/client-ca.crt&#123;,.old&#125;</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/node.kubeconfig&#123;,.old&#125;</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除每个节点的&#x2F;etc&#x2F;origin&#x2F;node&#x2F;certificates&#x2F;目录（包括master，worker, infra）</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">rm</span> -rf  /etc/origin/node/certificates</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>重启node服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl restart atomic-openshift-node.service</span> </span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>批准CSR，每个节点（master，worker, infra）应批准2个：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc get csr -o name | xargs oc adm certificate approve</span></span><br></pre></td></tr></table></figure>
+<p>或者</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="keyword">for</span> i <span class="keyword">in</span> $(oc get csr | grep -i Pending | awk <span class="string">&#x27;&#123; print $1 &#125;&#x27;</span>); <span class="keyword">do</span> oc adm certificate approve <span class="variable">$i</span> ; <span class="keyword">done</span></span></span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>检查Node状态</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc get node</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="keyword">for</span> i <span class="keyword">in</span> `oc get nodes -o jsonpath=$<span class="string">&#x27;&#123;range .items[*]&#125;&#123;.metadata.name&#125;\n&#123;end&#125;&#x27;</span>`; <span class="keyword">do</span> oc get --raw /api/v1/nodes/<span class="variable">$i</span>/proxy/healthz; <span class="built_in">echo</span> -e <span class="string">&quot;\t<span class="variable">$i</span>&quot;</span>; <span class="keyword">done</span></span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/3782361">Manually recreate OpenShift Node TLS bootstrapped certificates and kubeconfig files.</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/">https://xhua.eu.org/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/OpenShift%E6%97%A5%E5%BF%97%E7%BA%A7%E5%88%AB%E7%9B%B8%E5%85%B3/" title="OpenShift日志级别相关"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift日志级别相关</div></div><div class="info-2"><div class="info-item-1">总共需要考虑的服务日志有  OpenShift 服务日志 Docker 守护进程日志 Etcd 日志 命令行日志 Pod&#x2F;容器日志 OpenShift Builder 日志 OpenShift 路由器日志  OpenShift服务日志 docker的日志级别docker日志级别总共有以下：”debug”, “info”, “warn”, “error”, “fatal”五个。docker –log-level默认为info  参考文章https://access.redhat.com/zh_CN&#x2F;solutions&#x2F;3345021 </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E8%87%AA%E5%B8%A6%E7%9A%84%E6%97%A5%E5%BF%97%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8EES%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%89%A9%E5%AE%B9/" title="OpenShift自带的日志搜索引擎ES服务的扩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift自带的日志搜索引擎ES服务的扩容</div></div><div class="info-2"><div class="info-item-1"> 有以下两种扩容方式：  存储扩容 节点扩容  存储扩容 查看集群的状态  1$ oc exec $es-pod-name -c elasticsearch -- health  停止ES节点分片平衡  1$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;none&quot;&#125;&#125;&#x27;  为每个ES节点的DC执行以下操作3.1 获取需要暂停的ES pod所在的Node节点 ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift%E9%83%A8%E7%BD%B2%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83oc-cluster-up/" title="Openshift部署测试环境oc-cluster-up"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift部署测试环境oc-cluster-up</div></div><div class="info-2"><div class="info-item-1">1oc cluster up --base-dir=/root/openshift --public-hostname=master.douhua.com </div></div></div></a><a class="pagination-related" href="/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/" title="应用日志方案"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">应用日志方案</div></div><div class="info-2"><div class="info-item-1">    原生方式 DaemonSet方式 Sidecar方式    集日志类型 标准输出 标准输出 文件   部署运维 低，原生支持 一般，需维护DaemonSet 较高，需要为每个容器采集日志的   日志分类存储 无法实现 可通过容器、路径映射实现 每个Pod可单独配置，灵活性高   支持集群规模 本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制 取决于配置数 无限制   资源占用 低，docker引擎提供 较低，每个节点运行一个容器 较高，每个Pod运行一个容器   查询便捷性 低，grep原始日志 较高，自定义查询、统计 高，根据业务特点定制   适用场景 测试、POC等非生产环境 日志分类明确的集群 大型、混合型集群   </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Prometheus%E4%BD%BF%E7%94%A8%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8Prometheus%E7%BA%A7%E8%81%94%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0%E5%A4%9A%E9%9B%86%E7%BE%A4%E7%BB%9F%E4%B8%80%E7%9B%91%E6%8E%A7%E5%91%8A%E8%AD%A6/" title="OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警</div></div><div class="info-2"><div class="info-item-1"> 背景大家知道OpenShfit官方通过Prometheus Operator可以快速构建高可用的监控告警平台，它不仅能够收集集群本身的监控指标，还可以通过ServiceMonitor扩展以监控应用自身的指标，实现单集群内部的统一监控。但是生产实践中，我们并不会只采用一个OpenShift部署应用，还会部署非容器应用，在非容器环境下也可能会部署Prometheus来监控相关服务（特别是现在Prometheus已经成为了监控的一个标配），甚至有可能会在不同的网络区部署多个集群，由于不同网络的隔离特性显然一组Prometheus是无法满足所有平台及应用的监控的。这就使得生产中会有很多套Prometheus集群需要管理与维护，查看监控指标也很分散，也就让我们想到必须采用一种办法能够将各处的指标统一收集，实现多集群多Prometheus服务的统一监控。目前实现这种要求的方法主要有两个，一个是通过Prometheus联邦 Federate，另一个是通过Thanos。今天主要介绍集群外部如何使用Prometheus联邦机制收集OpenShift内部Prometheus服务的监控指标。 操作实...</div></div></div></a><a class="pagination-related" href="/openshift/%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93%E7%9A%84%E9%95%9C%E5%83%8F%E6%B8%85%E7%90%86/" title="镜像仓库的镜像清理"><img class="cover" src="https://img.xhua.eu.org/1514aa0f6061bac9f56db85011618fe2d64a6a9613ed033486c46faa921fa512.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">镜像仓库的镜像清理</div></div><div class="info-2"><div class="info-item-1">1. 必备条件镜像仓库打开可删除功能 2. 清理镜像12345# curl -k -I -H &quot;Accept: application/vnd.docker.distribution.manifest.v2+json&quot; -I http://localhost:5000/v2/openshift/ocp-router/manifests/v3.11.129获取镜像层的sha256值# curl -X DELETE http://localhost:5000/v2/openshift/ocp-router/manifests/sha256:39ad17c3e10f902d8b098ee5128a87d4293b6d07cbc2d1e52ed9ddf0076e3cf9# #登录到镜像仓库# registry garbage-collect /etc/docker-distribution/registry/config.yml  3. 参考文档私有docker registry的使用–push,pull,search,delete </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E6%A0%B9%E6%8D%AEetcd%E5%A4%87%E4%BB%BD%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8Detcd%E9%9B%86%E7%BE%A4/" title="OpenShift根据etcd备份数据恢复etcd集群"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift根据etcd备份数据恢复etcd集群</div></div><div class="info-2"><div class="info-item-1">123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121# ssh master1.etcd.com# ETCD_ALL_ENDPOINTS=` etcdctl3 --write-out=fields   member list | awk &#x27;/ClientURL/&#123;printf &quot;%s%s&quot;,sep,$3; sep=&quot;,&quot;&#125;&#x27;`# etcdctl3 --endpoints=$ETCD_ALL_ENDPOINTS  endpoint status  --w...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E4%B8%ADetcd%E9%9B%86%E7%BE%A4%E7%9A%84%E6%9F%90%E4%B8%AAetcd%E6%9C%8D%E5%8A%A1%E6%96%87%E4%BB%B6%E6%8D%9F%E5%9D%8F%EF%BC%8C%E5%AF%BC%E8%87%B4%E8%8A%82%E7%82%B9%E6%95%85%E9%9A%9C%EF%BC%8C%E6%81%A2%E5%A4%8D%E8%BF%87%E7%A8%8B/" title="OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程"><img class="cover" src="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</div></div><div class="info-2"><div class="info-item-1">问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从etcd集群剥离；二、将恢复的新的etcd节点添加到etcd集群。具体步骤如下：  查看etcd状态  1234$ etcdctl2 cluster-health$ ## 获取问题节点的member ID$ etcdctl2 member remove  &lt;member ID&gt;$ ## 将问题etcd服务从etcd集群中删除  停止问题节点上的etcd服务  12$ mkdir -p /etc/origin/node/pods-stopped$ mv /etc/origin/node/pods/* /etc/origin/node/pods-stopped/  删除问题节点上的...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'f8ea7eaec7f90229d2940487c9731c56'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

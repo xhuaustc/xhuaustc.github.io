@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubernetes更新etcd证书 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在三台etcd所在的主机上执行以下操作 123456789$ cd &#x2F;etc&#x2F;kubernetes&#x2F;pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client&#x2F;$ kubeadm alpha phase certs etcd-ca$ kubeadm alph">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes更新etcd证书">
+<meta property="og:url" content="https://xhua.eu.org/openshift/Kubernetes%E6%9B%B4%E6%96%B0etcd%E8%AF%81%E4%B9%A6/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="在三台etcd所在的主机上执行以下操作 123456789$ cd &#x2F;etc&#x2F;kubernetes&#x2F;pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client&#x2F;$ kubeadm alpha phase certs etcd-ca$ kubeadm alph">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.662Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Kubernetes更新etcd证书",
+  "url": "https://xhua.eu.org/openshift/Kubernetes%E6%9B%B4%E6%96%B0etcd%E8%AF%81%E4%B9%A6/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.662Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/Kubernetes%E6%9B%B4%E6%96%B0etcd%E8%AF%81%E4%B9%A6/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubernetes更新etcd证书',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Kubernetes更新etcd证书</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes更新etcd证书</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.662Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在三台etcd所在的主机上执行以下操作</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> /etc/kubernetes/pki</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mv</span> etcd etcd.bak</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> apiserver-etcd-client</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mv</span> apiserver-etcd-client.* apiserver-etcd-client/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubeadm alpha phase certs etcd-ca</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubeadm alpha phase certs apiserver-etcd-client --config=/etc/kubernetes/kubeadmcfg.yaml</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/Kubernetes%E6%9B%B4%E6%96%B0etcd%E8%AF%81%E4%B9%A6/">https://xhua.eu.org/openshift/Kubernetes%E6%9B%B4%E6%96%B0etcd%E8%AF%81%E4%B9%A6/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/Kubespray%E5%AE%89%E8%A3%85Kubernates%E8%BF%87%E7%A8%8B/" title="Kubespray安装Kubernates过程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Kubespray安装Kubernates过程</div></div><div class="info-2"><div class="info-item-1"> 准备机器，绑定好IP（请关闭ipv6功能），关闭防火墙，并配置好hostname  1   在bation机器上设置免密码登录，并下载好kubespray安装脚本  先安装python3与python3-pip，并将pip进行升级   12$ yum install python3 python3-pip -y$ pip3 install --upgrade pip   安装python依赖包  1$ pip install -r requirements.txt  -i https://pypi.douban.com/simple   更改镜像地址，特别是国内网络安装时  12$ vim roles/download/defaults/main.yml </div></div></div></a><a class="pagination-related" href="/openshift/Kubernetes%E5%B7%A5%E5%85%B7%E9%9B%86%EF%BC%88%E6%8C%81%E7%BB%AD%E6%94%B6%E9%9B%86------%EF%BC%89/" title="Kubernetes工具集（持续收集------）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Kubernetes工具集（持续收集------）</div></div><div class="info-2"><div class="info-item-1">Kubescope cliKubescope cli 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 cAdvisor 等其他集群指标收集服务一样， kubescope cli 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvisor 进行测试，每次都要使用新的 Pod 作为测试对象，因为 Kubernetes 在超过资源限制时就会将 Pod 杀死，然后重新启动一个全新的 Pod。而 kubescope cli 就没有这方面的忧虑，它直接从 Docker Daemon 中收集容器指标（你可以自定义收集指标的时间间隔），并使用正则表达式来选择和过滤你想要显示的容器。  KubeMarkKubemark是K8s官方提供的一个对K8s集群进行性能测试的工具。它可以模拟出一个K8s cluster（Kubemark cluster），不受资源限制，从而能够测试的集群规模比真实集群大的多。这个cluster中master...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/OpenShift%E6%A0%B9%E6%8D%AEetcd%E5%A4%87%E4%BB%BD%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8Detcd%E9%9B%86%E7%BE%A4/" title="OpenShift根据etcd备份数据恢复etcd集群"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift根据etcd备份数据恢复etcd集群</div></div><div class="info-2"><div class="info-item-1">123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121# ssh master1.etcd.com# ETCD_ALL_ENDPOINTS=` etcdctl3 --write-out=fields   member list | awk &#x27;/ClientURL/&#123;printf &quot;%s%s&quot;,sep,$3; sep=&quot;,&quot;&#125;&#x27;`# etcdctl3 --endpoints=$ETCD_ALL_ENDPOINTS  endpoint status  --w...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E4%B9%8B%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BCIstio/" title="Openshift之服务网格Istio"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之服务网格Istio</div></div><div class="info-2"><div class="info-item-1"> 什么是服务网格？服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。 Istio是什么？Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部署的服务建立网络，该网络具有负载均衡、服务间认证、监控等功能，而不需要对服务的代码做任何改动。想要让服务支持 Istio，只需要在您的环境中部署一个特殊的 sidecar，使用 Istio 控制平面功能配置和管理代理，拦截微服务之间的所有网络通信。 Istio能做什么？Istio 提供了一个完整的解决方案，通过为整个服务网格提供行为洞察和操作控制来满足微服务应用程序的多样化需求。它在服务网络中统一提供了许多关键功能：  流量管理。控制服务之间的流量和API调用的流向，使得调用更可靠，并使网络在恶劣情况下更加健壮。 服务身份和安全。为网格中的服务提供可验证身份，并提供保护服务流量的能力，使...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E9%9B%86%E7%BE%A4%E5%85%A8%E7%8E%AF%E5%A2%83%E5%A4%87%E4%BB%BD/" title="Openshift集群全环境备份"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境备份</div></div><div class="info-2"><div class="info-item-1"> 创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是万能的，应用自己的数据我们应该保证有单独的备份。 创建Master节点备份在系统基础架构进行更改，都需要对节点做备份。比如说，系统升级，集群升级或者任何重大更新。通过定期备份数据，当集群出现故障时，我们就能使用备份恢复集群。 Master主机上运行着非常重要的服务：API、Controllers。&#x2F;etc&#x2F;origin&#x2F;master目录下存放着许多重要的文件。  API、Controllers服务等的配置文件  安装生成的证书  云提供商提供的配置文件  密钥和其它身份认证文件   另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#...</div></div></div></a><a class="pagination-related" href="/openshift/%E4%B8%80%E6%9D%A1%E5%91%BD%E4%BB%A4%E8%A7%A3%E5%86%B3Kubernetes%E6%9B%B4%E6%94%B9%E9%BB%98%E8%AE%A4%E7%9A%84namespace/" title="一条命令解决Kubernetes更改默认的namespace"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">一条命令解决Kubernetes更改默认的namespace</div></div><div class="info-2"><div class="info-item-1"> K8S默认是在default的namespace下，但是很多时候我们是在一个新的namespace下部署应用，每个操作都需要指定namespace，非常不方便。那么有没有办法切换namespce呢？如果可以切换的话，那有没有更简单的办法。 最简单的方式切换namespace，赠送一个方便的脚本可以将它alias到一个新的命令”kubectl ns” 12$  alias kubectl=&#x27;_kubectl_custom()&#123; if [[ &quot;$1&quot; == &quot;project&quot; &amp;&amp; &quot;$2&quot; != &quot;&quot; ]]; then ccontext=`kubectl config current-context`; kubectl config set-context $ccontext --namespace=$2; elif [[ &quot;$1&quot; == &quot;projects&quot; &amp;&amp; &quot;$2&quot; == &quo...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Prometheus%E6%B7%BB%E5%8A%A0Alert-Rules/" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/openshift/%E5%9F%BA%E4%BA%8E%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF%E6%9E%84%E5%BB%BA%E4%B8%80%E7%AB%99%E5%BC%8F%E4%B8%9A%E5%8A%A1%E6%94%AF%E6%92%91%E5%B9%B3%E5%8F%B0%E2%80%94%E2%80%94%E5%AE%9E%E7%8E%B0%E4%B8%9A%E5%8A%A1%E9%9C%80%E6%B1%82%E5%BF%AB%E9%80%9F%E4%BA%A4%E4%BB%98%EF%BC%8C%E5%BA%94%E7%94%A8%E7%A8%B3%E5%AE%9A%E5%8F%AF%E9%9D%A0%E8%BF%90%E8%A1%8C/" title="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行"><img class="cover" src="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</div></div><div class="info-2"><div class="info-item-1">来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。 基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。 2 需求分析2.1 业务需求2.1.1 应用架构****改造需求某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'c5985ff7d212e19985ad3a1697121c04'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

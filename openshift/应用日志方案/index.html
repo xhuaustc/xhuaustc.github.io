@@ -1,0 +1,301 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>应用日志方案 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="原生方式 DaemonSet方式 Sidecar方式    集日志类型 标准输出 标准输出 文件   部署运维 低，原生支持 一般，需维护DaemonSet 较高，需要为每个容器采集日志的   日志分类存储 无法实现 可通过容器、路径映射实现 每个Pod可单独配置，灵活性高   支持集群规模 本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制 取决于配置数 无限制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="应用日志方案">
+<meta property="og:url" content="https://xhua.eu.org/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="原生方式 DaemonSet方式 Sidecar方式    集日志类型 标准输出 标准输出 文件   部署运维 低，原生支持 一般，需维护DaemonSet 较高，需要为每个容器采集日志的   日志分类存储 无法实现 可通过容器、路径映射实现 每个Pod可单独配置，灵活性高   支持集群规模 本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制 取决于配置数 无限制">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.676Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "应用日志方案",
+  "url": "https://xhua.eu.org/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.676Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '应用日志方案',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">应用日志方案</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">应用日志方案</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.676Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><table>
+<thead>
+<tr>
+<th></th>
+<th>原生方式</th>
+<th>DaemonSet方式</th>
+<th>Sidecar方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>集日志类型</td>
+<td>标准输出</td>
+<td>标准输出</td>
+<td>文件</td>
+</tr>
+<tr>
+<td>部署运维</td>
+<td>低，原生支持</td>
+<td>一般，需维护DaemonSet</td>
+<td>较高，需要为每个容器采集日志的</td>
+</tr>
+<tr>
+<td>日志分类存储</td>
+<td>无法实现</td>
+<td>可通过容器、路径映射实现</td>
+<td>每个Pod可单独配置，灵活性高</td>
+</tr>
+<tr>
+<td>支持集群规模</td>
+<td>本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制</td>
+<td>取决于配置数</td>
+<td>无限制</td>
+</tr>
+<tr>
+<td>资源占用</td>
+<td>低，docker引擎提供</td>
+<td>较低，每个节点运行一个容器</td>
+<td>较高，每个Pod运行一个容器</td>
+</tr>
+<tr>
+<td>查询便捷性</td>
+<td>低，grep原始日志</td>
+<td>较高，自定义查询、统计</td>
+<td>高，根据业务特点定制</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>测试、POC等非生产环境</td>
+<td>日志分类明确的集群</td>
+<td>大型、混合型集群</td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/">https://xhua.eu.org/openshift/%E5%BA%94%E7%94%A8%E6%97%A5%E5%BF%97%E6%96%B9%E6%A1%88/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8SonarQube%E5%AF%B9%E5%BA%94%E7%94%A8%E8%BF%9B%E8%A1%8C%E9%9D%99%E6%80%81%E4%BB%A3%E7%A0%81%E6%89%AB%E6%8F%8F/" title="快速使用SonarQube对应用进行静态代码扫描"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">快速使用SonarQube对应用进行静态代码扫描</div></div><div class="info-2"><div class="info-item-1">1、启动SonarQube服务 12$ mkdir -p /sonar/&#123;conf,data,extensions&#125;$ docker run -v /sonar/conf:/opt/sonarqube/conf -v /sonar/data:/opt/sonarqube/data -v /sonar/extensions:/opt/sonarqube/extensions -p 9000:9000 xhuaustc/sonarqube:7.9.1 本地目录为~/Downloads/sonar/2、登录SonarQube服务端：http://127.0.0.1:9000/projects，登录用户名：admin，密码：admin3、创建新的项目,获得projectKey与token值4、下载对应版本的sonar scanner工具：SonarScanner下载地址5、请在代码目录中执行扫描工具 123456/xx/bin/sonar-scanner \  -Dsonar.projectKey=test \  -Dsonar.sources=. \  -Dsona...</div></div></div></a><a class="pagination-related" href="/openshift/%E5%AF%B9%E6%96%87%E4%BB%B6%E7%9B%AE%E5%BD%95%E8%AE%BE%E7%BD%AEacl%E6%9D%83%E9%99%90/" title="对文件目录设置acl权限"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">对文件目录设置acl权限</div></div><div class="info-2"><div class="info-item-1">尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。 为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。 以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限 setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名 如果想要一次设置可以添加 -R 参数 递归设置整个目录，以及整个目录下的所有文件 setfacl -R -m u:user:r– &#x2F;目录名&#x2F; 这样就可以保证某个特殊普通用户对这个目录有可读权限 如果这个目录需要 user 用户可以 cd 进入的话，设置时可以增加大写 X 参数，设置 acl 的时候，大写 X 表示遇到目录给执行权限，遇到文件对象不给执行权限 setfacl -m u:user:r-X &#x2F;目录名&#x2F;setfacl -m u:user:r-X &#x2F;目录名&#x2F;文件名 这样设置，可以让 user 用户能 cd 进入特殊目录 </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift-HPA%EF%BC%88Horizontal-Pod-Autoscaler%EF%BC%89%E8%87%AA%E5%8A%A8%E4%BC%B8%E7%BC%A9%E8%BF%87%E7%A8%8B%E5%8F%8A%E7%AE%97%E6%B3%95/" title="Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法</div></div><div class="info-2"><div class="info-item-1">1、HPA介绍HPA（Horizontal Pod Autoscaler）是Openshift中的一个非常重要的对象，它定义了系统如何根据收集对应的Pod的状态（CPU&#x2F;Memory）对DeploymentConfig、ReplicationController对象进行扩容与缩容。  HPA依赖于收集到的Pod资源的使用状态，所以要使HPA生效，Openshift必须安装好cluster metrics应用。 被监控的pod必须设置好了spec.containers.resources.requests属性，HPA才能正常工作。 仅支持CPU&#x2F;Memory使用率的判断，如果自定义监控项，只能使用经验值，不能使用使用率。 支持对象：DeploymentConfig、ReplicationController、Deployment、Replica Set。  2. HPA伸缩过程及算法 HPA进行伸缩过程   收集该HPA控制下所有Pod最近的cpu使用情况（CPU utilization） 对比在扩容条件里记录的cpu限额（CPUUtilization） 调整实...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Router%E9%85%8D%E7%BD%AE%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" title="OpenShift-Router配置重新加载机制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router配置重新加载机制</div></div><div class="info-2"><div class="info-item-1"> OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证集群的路由信息是最新的。重载配置是否会对当前在线业务产生影响，这是系统管理员担心的问题。 一、 Haproxy配置重载的过程Haproxy在重新加载配置过程分两步。  生成最新的配置 重启Haproxy进程  Haproxy生成最新的配置OpenShift上以下三种资源的改变会触发Haproxy配置的更新  Routes改变 Pod IP&#x2F;Endpoint 改变 证书改变  OpenShift Route有一个配置模板文件，最终的配置会根据这个模板文件来创建。该模板文件，默认路径为/var/lib/haproxy/conf/haproxy-config.template，也可以...</div></div></div></a><a class="pagination-related" href="/openshift/Jira%E5%AE%B9%E5%99%A8%E5%8C%96-+-Openshift-Jira%E6%A8%A1%E6%9D%BF%E5%88%9B%E5%BB%BA/" title="Jira容器化-+-Openshift-Jira模板创建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jira容器化-+-Openshift-Jira模板创建</div></div><div class="info-2"><div class="info-item-1">因为应用容器化部署已经是标准化的流程，无需再详篇介绍具体的部署流程。所以本文只提供相关的配置文档。如果对部署过程不了解的同学，请先自学容器基础。镜像已经创建好了，如下 12docker.io/xhuaustc/jira-software:7.11.0docker.io/xhuaustc/atlassian-mysql:5.7 镜像构建配置Jira容器构建 1git clone https://github.com/cptactionhank/docker-atlassian-jira-software 将setenv.sh与atlassian-extras-3.2.jar拷贝到docker-atlassian-jira-software 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919...</div></div></div></a><a class="pagination-related" href="/openshift/%E9%95%9C%E5%83%8F%E5%91%BD%E5%90%8D%E8%A7%84%E8%8C%83%E4%B8%8EDockerfile%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83/" title="镜像命名规范与Dockerfile编写规范"><img class="cover" src="https://img.xhua.eu.org/57a8f992b61307a0a6f4c1fd5b4df56f6b28f747304f403453aff19e08d8acee.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">镜像命名规范与Dockerfile编写规范</div></div><div class="info-2"><div class="info-item-1">镜像命名规范镜像地址：镜像仓库&#x2F;项目名&#x2F;镜像名:标签名  项目名，公共项目使用名称：base，并设置为公开；其它项目使用英文小写项目名，设置为私有。 镜像名中应该包含使用的组件名称及版本信息，使用-连接。 基础镜像命名规则基础镜像命名应按照操作系统大版本：版本号-构建版本的格式命名，例如：base/rehl7:7.6-1 公共镜像全名规则公共镜像命名应按照服务名-中间件-上级中间件：服务版本号-中间件版本号-上级中间件版本号-构建版本的格式命名，中间件名称可以包含大版本号，例如：base/tomcat8-openjdk8:8.5.23-jre8u212-1 应用命名规则使用格式：系统-模块:系统版本-模块版本-构建版本，例如：sys/sys-rs:1.1-1.1-1   同一应用镜像在以上标签的规则下，还可以根据发布流程设置多个标签，以满足部署时版本依赖的管理要求。例如sys/sys-rs:v1代表v1.x的最新版本。  镜像制作规范 关键字使用大写 FROM镜像，指定明确的Tag，不要使用latest 发布向后兼容的镜像可以使用同一个Tag号，否则使用新的T...</div></div></div></a><a class="pagination-related" href="/openshift/Docker%E4%B8%AD%E4%BD%BF%E7%94%A8%E5%91%BD%E4%BB%A4COPY-ADD%E5%AF%BC%E5%85%A5%E6%96%87%E4%BB%B6%E5%AF%B9%E6%9D%83%E9%99%90%E7%9A%84%E5%BD%B1%E5%93%8D/" title="Docker中使用命令COPY-ADD导入文件对权限的影响"><img class="cover" src="https://img.xhua.eu.org/dafb05d9920eff85c9bc37cc048b382a74876c704e19731457294aca239cacf1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker中使用命令COPY-ADD导入文件对权限的影响</div></div><div class="info-2"><div class="info-item-1">1、文件保留权限原文件的权限所属用户与组为镜像中的用户可以使用--chown=jenkins:jenkins来指定用户所属 1COPY --chown=1001:1001 sample.txt sample.txt  2、压缩包（ADD）保留权限原文件的权限保留压缩包内文件的用户与组 </div></div></div></a><a class="pagination-related" href="/openshift/Openshift-%E5%B8%B8%E8%A7%81%E8%BF%90%E7%BB%B4%E8%84%9A%E6%9C%AC%E5%8F%8A%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" title="Openshift-常见运维脚本及问题解决"><img class="cover" src="https://img.xhua.eu.org/80ad677abfc8210c0f9eb91a5e2465d9f40dd419ca0f2937a12ed348f15ef874.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-22</div><div class="info-item-2">Openshift-常见运维脚本及问题解决</div></div><div class="info-2"><div class="info-item-1">1.扩容计算结点在执行扩容前需检查扩容节点的以下几点信息：  内核版本 selinux已经开启enforcing docker数据盘已经就绪 &#x2F;etc&#x2F;resolv.conf配置正确 hostname已经设置 时间同步已配置 在每个节点都能解析新增节点的域名，如果是通过&#x2F;etc&#x2F;hosts来配置域名解析，需要在配置后重启所有节点的dnsmasq服务 docker证书的问题需要添加到自动化配置中来，特别是私有镜像仓库的证书。有三个地方： &#x2F;etc&#x2F;sysconfig&#x2F;docker配置， &#x2F;etc&#x2F;pki&#x2F;ca-trust&#x2F;source&#x2F;anchors&#x2F;目录下的证书， &#x2F;etc&#x2F;docker&#x2F;certs.d下docker拉取镜像认证证书    123456789101112131415# /etc/ansible/hosts[OSEv3:children]mastersnodesetcdnew_nodes...[new_nod...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '956d16ccbcdbe768cae6dd1a6eecf4e7'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

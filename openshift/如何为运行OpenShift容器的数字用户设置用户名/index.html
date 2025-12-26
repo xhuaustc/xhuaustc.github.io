@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>如何为运行OpenShift容器的数字用户设置用户名 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。 **解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：:x:::&lt;说明&gt;::&#x2F;sbin&#x2F;nologin。 执行步骤  基础镜像中为&#x2F;etc&amp;#">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何为运行OpenShift容器的数字用户设置用户名">
+<meta property="og:url" content="https://xhua.eu.org/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。 **解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：:x:::&lt;说明&gt;::&#x2F;sbin&#x2F;nologin。 执行步骤  基础镜像中为&#x2F;etc&amp;#">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.675Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "如何为运行OpenShift容器的数字用户设置用户名",
+  "url": "https://xhua.eu.org/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/",
+  "image": "https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.675Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '如何为运行OpenShift容器的数字用户设置用户名',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">如何为运行OpenShift容器的数字用户设置用户名</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">如何为运行OpenShift容器的数字用户设置用户名</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.675Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。</p>
+<p>**解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：<USER NAME>:x:<UID>:<GID>:&lt;说明&gt;:<HOME>:&#x2F;sbin&#x2F;nologin。</p>
+<p><strong>执行步骤</strong></p>
+<ol>
+<li>基础镜像中为&#x2F;etc&#x2F;passwd设置root组用户可写的权限</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN chmod g=u /etc/passwd</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>应用启动时为用户设置用户名，要在ENTRYPOINT&#x2F;CMD的脚本中添加如下代码</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">USER_NAME=$&#123;USER_NAME:-uidname&#125;</span><br><span class="line">USER_ID=$(id -u)</span><br><span class="line">if ! whoami &amp;&gt; /dev/null</span><br><span class="line">then</span><br><span class="line">    if [ -w /etc/passwd ]</span><br><span class="line">    then</span><br><span class="line">      echo &quot;$&#123;USER_NAME&#125;:x:$&#123;USER_ID&#125;:0:$&#123;USER_NAME&#125; user:$&#123;HOME&#125;:/sbin/nologin&quot; &gt;&gt; /etc/passwd</span><br><span class="line">    fi</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/">https://xhua.eu.org/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/%E5%A6%82%E4%BD%95%E5%9C%A8Openshift%E4%B8%AD%E8%AE%A9Router-Pod%E7%8B%AC%E5%8D%A0Router%E8%8A%82%E7%82%B9/" title="如何在Openshift中让Router-Pod独占Router节点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">如何在Openshift中让Router-Pod独占Router节点</div></div><div class="info-2"><div class="info-item-1"> 概念 什么是Router Pod?  Router Pod是Openshift中管理外部流量访问集群服务的重要的入口，它是通过一个haproxy的Pod实现的。由于Router Pod的独特性，几乎所有的流量都过Router中的Pod代理到真正的服务，所以它是一个非常非常重要的服务。  什么是Router节点  因为集群中的Router Pod数量是有限的，外部流量通过负载均衡器到达Router的Pod，所以对于Router Pod必须固定在负载均衡器下的节点上。这些运行Router Pod的节点，我们叫做Router节点。它有两个特点：  运行default&#x2F;router的pod;  被外部负载均衡器监听  为什么需要让Router Pod独占Router节点上几乎所有的外部访问集群服务的流量都通过Router Pod代理，所以它是非常重要。在正式使用时，需要对它进行保护。让它独占节点，防止其它Pod抢占Router Pod的资源，以确保集群下服务的可用性。 具体实施Router Pod独占绑定Router节点 Router节点上添加label  1oc label...</div></div></div></a><a class="pagination-related" href="/openshift/%E5%9F%BA%E4%BA%8E%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF%E6%9E%84%E5%BB%BA%E4%B8%80%E7%AB%99%E5%BC%8F%E4%B8%9A%E5%8A%A1%E6%94%AF%E6%92%91%E5%B9%B3%E5%8F%B0%E2%80%94%E2%80%94%E5%AE%9E%E7%8E%B0%E4%B8%9A%E5%8A%A1%E9%9C%80%E6%B1%82%E5%BF%AB%E9%80%9F%E4%BA%A4%E4%BB%98%EF%BC%8C%E5%BA%94%E7%94%A8%E7%A8%B3%E5%AE%9A%E5%8F%AF%E9%9D%A0%E8%BF%90%E8%A1%8C/" title="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行"><img class="cover" src="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</div></div><div class="info-2"><div class="info-item-1">来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。 基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。 2 需求分析2.1 业务需求2.1.1 应用架构****改造需求某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Jira%E5%AE%B9%E5%99%A8%E5%8C%96-+-Openshift-Jira%E6%A8%A1%E6%9D%BF%E5%88%9B%E5%BB%BA/" title="Jira容器化-+-Openshift-Jira模板创建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jira容器化-+-Openshift-Jira模板创建</div></div><div class="info-2"><div class="info-item-1">因为应用容器化部署已经是标准化的流程，无需再详篇介绍具体的部署流程。所以本文只提供相关的配置文档。如果对部署过程不了解的同学，请先自学容器基础。镜像已经创建好了，如下 12docker.io/xhuaustc/jira-software:7.11.0docker.io/xhuaustc/atlassian-mysql:5.7 镜像构建配置Jira容器构建 1git clone https://github.com/cptactionhank/docker-atlassian-jira-software 将setenv.sh与atlassian-extras-3.2.jar拷贝到docker-atlassian-jira-software 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Prometheus%E6%B7%BB%E5%8A%A0Alert-Rules/" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E5%AE%B9%E5%99%A8%E4%B8%AD%E8%AF%BB%E5%8F%96Project%E4%BF%A1%E6%81%AF/" title="OpenShift容器中读取Project信息"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift容器中读取Project信息</div></div><div class="info-2"><div class="info-item-1"> 背景在日常运维管理中，经常需要获取OpenShift集群资源的信息，甚至创建、编辑或删除资源。我们都很清楚，使用oc命令就能够非常方便地完成这些操作。但是有时，我们希望通过调用接口来实现，以便于与其它组件或者应用进行集成。那么我们该如何做呢？本篇就以读取Project信息为例，展示如何通过HTTP请求操作OpenShift的资源。 操作 首先需要创建具有读取Project信息权限的clusterrole project_view  12345678910111213$ cat &lt;&lt;EOF | oc create -f -apiVersion: authorization.openshift.io/v1kind: ClusterRolemetadata:  name: project_viewrules:- apiGroups:  - project.openshift.io  resources:  - projects  verbs:  - getEOF  为需要调用的应用POD添加获取Project信息的权限  1$ oc adm policy add-clus...</div></div></div></a><a class="pagination-related" href="/openshift/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E8%AF%A6%E7%BB%86%E4%BB%8B%E7%BB%8D%E2%80%94%E2%80%94Netflix%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%AE%9E%E8%B7%B5%E6%8E%A2%E5%AF%BB/" title="混沌工程详细介绍——Netflix持续交付实践探寻"><img class="cover" src="https://img.xhua.eu.org/c87bd7a75f171c9fd0475e71c902ce41e36880b5e5166386bad715cca2f08bfb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">混沌工程详细介绍——Netflix持续交付实践探寻</div></div><div class="info-2"><div class="info-item-1">本篇来自于本人6月-7月参加的“DevOps案例深度研究”活动Netflix案例研究的第五部分，详细介绍了Netflix的混沌工程。经过一个月的战斗，四个版本的迭代，Netflix战队最后交付了让所有人满意的战果，并获得了全场唯一的案例研究最佳小组奖杯。感谢我们的战友，还有指导老师，姚冬老师和徐磊老师。    Netflix实施混沌工程的背景   08年Netflix决定把它的业务迁移到aws上，从自身运维的角度考虑，它有很多担忧的地方。  很长时间内有两套系统在同时运行，运维的复杂度更高了。 NetFlix的用户量已经达到了1亿，对应用稳定性依赖很高，如果出现故障对用户的影响非常大，甚至是致命的。 它的业务不断复杂，引入微服务架构，对应用的高可用性要求越来越高。 生产环境非常复杂，是多样性的，很难在测试环境中完全模拟生产的状态。  因此Netflix决心探索一种在生产环境验证应用高可用性的一种方法，这就是现在大家所熟知的混沌工程。 混乱工程的发展    2010年，捣乱猴子诞生 2011年，猴子军团，有了更多场景下的工具集 2012年，开源了捣乱猴子的代码，建立社区，影响了越来...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E9%83%A8%E7%BD%B2zalenium(%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84selenium)%E5%8F%8APython%E8%87%AA%E5%8A%A8%E6%B5%8B%E8%AF%95/" title="Openshift部署zalenium(容器化的selenium)及Python自动测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift部署zalenium(容器化的selenium)及Python自动测试</div></div><div class="info-2"><div class="info-item-1">什么是zaleniumzalenium是一个Selenium Grid扩展，用Docker容器动态扩展你的本地网格。它使用docker-selenium在本地运行Firefox和Chrome中的测试。官网地址 zalenium Openshift上部署zalenium 创建zalenium项目  1oc new-project zalenium --display-name=&quot;自动测试Selenium Grid&quot;  创建Service Account  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455# 创建ClusterRole# oc create -f zalenium-role.json&#123;    &quot;kind&quot;: &quot;ClusterRole&quot;,    &quot;apiVersion&quot;: &quot;v1&quot;,    &quot;meta...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E6%9C%AC%E5%9C%B0%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93%E6%89%93%E4%B8%8D%E5%BC%80/" title="OpenShift本地镜像仓库打不开"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift本地镜像仓库打不开</div></div><div class="info-2"><div class="info-item-1">访问OpenShift本地镜像仓库https://registry.paas.net，报错 1234&#123;&quot;error&quot;: &quot;invalid_request&quot;,&quot;error_description&quot;: &quot;The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.&quot;&#125; 一般情况下，访问镜像仓库 12345678$ oc get oauthclientNAME                           SECRET                                                                 WWW-CHALLENGE   TOKEN-MAX-AGE   REDIRECT URIScockpit-oau...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '43f0b9a6796a926df15f5e75f5a091d9'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

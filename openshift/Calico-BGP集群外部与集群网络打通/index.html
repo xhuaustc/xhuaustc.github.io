@@ -1,0 +1,253 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Calico-BGP集群外部与集群网络打通 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calico-BGP集群外部与集群网络打通">
+<meta property="og:url" content="https://xhua.eu.org/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.2">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.661Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Calico-BGP集群外部与集群网络打通",
+  "url": "https://xhua.eu.org/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.661Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Calico-BGP集群外部与集群网络打通',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Calico-BGP集群外部与集群网络打通</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Calico-BGP集群外部与集群网络打通</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.661Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>把这几个路由规则加入到路由器或者客户端机器上</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76</span><br><span class="line">route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74</span><br><span class="line">route add -net 10.233.183.64 netmask 255.255.255.192 gw 10.21.21.75</span><br></pre></td></tr></table></figure>
+<p>Win10客户端机器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">route add -p 10.233.97.128 mask  255.255.255.192 192.168.1.225</span><br><span class="line">route add -p 10.233.75.0  mask  255.255.255.192 192.168.1.226</span><br><span class="line">route add -p 10.233.100.128 mask 255.255.255.192 192.168.1.227</span><br><span class="line">route add -p 10.233.90.0 mask 255.255.255.192 192.168.1.228</span><br><span class="line">route add -p 10.233.75.64 mask 255.255.255.192 192.168.1.42</span><br><span class="line">route add -p 10.233.71.0 mask 255.255.255.192 192.168.1.43</span><br><span class="line">route add -p 10.233.74.64 mask 255.255.255.192 192.168.1.44</span><br><span class="line">route add -p 10.233.102.128 mask 255.255.255.192 192.168.1.41</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/">https://xhua.eu.org/openshift/Calico-BGP%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E4%B8%8E%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C%E6%89%93%E9%80%9A/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/CentOS%E4%B8%8AOpenLDAP-Server%E4%BD%BF%E7%94%A8cn=config%E6%96%B9%E5%BC%8F%E9%85%8D%E7%BD%AE/" title="CentOS上OpenLDAP-Server使用cn=config方式配置"><img class="cover" src="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CentOS上OpenLDAP-Server使用cn=config方式配置</div></div><div class="info-2"><div class="info-item-1">翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装openldap包  1yum install -y openldap openldap-clients openldap-servers LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d 123456789101112[root@rhel7 ~]# cd /etc/openldap/slapd.d/[root@rhel7 slapd.d]# ls -ldrwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=co...</div></div></div></a><a class="pagination-related" href="/openshift/Ansible%E7%9A%84k8s%E6%A8%A1%E5%9D%97%E5%AE%8C%E5%85%A8%E5%85%BC%E5%AE%B9OpenShift%E8%B5%84%E6%BA%90/" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/%E5%88%A9%E7%94%A8Openshift%E4%B8%AD%E7%9A%84cronjob-+-zalenium%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%AB%99%E7%9B%91%E6%8E%A7/" title="利用Openshift中的cronjob-+-zalenium实现网站监控"><img class="cover" src="https://img.xhua.eu.org/8c36db257f6f233d289fe7998f46aeeed727740d017cd71b780a2f221a969fc7.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">利用Openshift中的cronjob-+-zalenium实现网站监控</div></div><div class="info-2"><div class="info-item-1">背景介绍有一个网站（pf.apps.example.com)，会获取主机的信息，但是主机信息的格式不统一，而且经常性会添加机器，但是信息又是不确定的，所以有时添加新机器会缺失字段，导致网站异常。 有两种解决方法，   优化代码，提高代码的兼容性，不致于导致页面无法显示。    严格规范字段的输入，必须保证字段的完整性。    不管哪种方法，我们都需要在页面出现故障时第一时间知道。这就要求编写代码自动监测网站相关页面的可用性，一旦出现问题，及时发邮件告知，第一时间恢复。 有使用到上篇介绍的zalenium Openshift部署zalenium(容器化的selenium)及Python自动测试 编写监控脚本监控脚本使用selenium控制浏览器，先模拟登录，再访问需要测试的页面，如果页面正常打开则正常，否则发邮件告警。（由于这个网站的每个页面都有id&#x3D;content的一个div，所以通过检测页面中是否存在id&#x3D;content的div来判断页面是否正常）monitor.py 123456789101112131415161718192021222324252627...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift-3scale%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E8%8A%82%E7%82%B9kubelet%E8%AF%81%E4%B9%A6%E8%BF%87%E6%9C%9F%E5%BC%82%E5%B8%B8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%AD%A5%E9%AA%A4/" title="OpenShift节点kubelet证书过期异常的解决步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift节点kubelet证书过期异常的解决步骤</div></div><div class="info-2"><div class="info-item-1"> 环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig fileatomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new oneatomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E4%BD%BF%E7%94%A8KeepAlived+LVS%E5%AE%9E%E7%8E%B0%E5%A4%96%E9%83%A8%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E5%99%A8/" title="OpenShift使用KeepAlived+LVS实现外部负载均衡器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用KeepAlived+LVS实现外部负载均衡器</div></div><div class="info-2"><div class="info-item-1">OpenShift集群资源列表    主机名 类型 IP    相关节点IP     master0 master 192.168.0.2   master1 master 192.168.0.3   master2 master 192.168.0.4   infra0 infra 192.168.0.5   infra1 infra 192.168.0.6   vip地址分配     master-vip vip 192.168.0.250   infra-vip vip 192.168.0.251   部署Master API负载均衡器作为集群内外访问的入口 在三个Master节点安装KeepAlived与LVS  12$ ansible masters -m package -a &#x27;name=keepalived state=present&#x27;$ ansible masters -m package -a &#x27;name=ipvsadm state=present&#x27;  选择master0作为VIP的Master节点  1234567891...</div></div></div></a><a class="pagination-related" href="/openshift/%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BF%90%E8%A1%8COpenShift%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E5%AD%97%E7%94%A8%E6%88%B7%E8%AE%BE%E7%BD%AE%E7%94%A8%E6%88%B7%E5%90%8D/" title="如何为运行OpenShift容器的数字用户设置用户名"><img class="cover" src="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何为运行OpenShift容器的数字用户设置用户名</div></div><div class="info-2"><div class="info-item-1">OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。 **解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：:x:::&lt;说明&gt;::&#x2F;sbin&#x2F;nologin。 执行步骤  基础镜像中为&#x2F;etc&#x2F;passwd设置root组用户可写的权限  1RUN chmod g=u /etc/passwd  应用启动时为用户设置用户名，要在ENTRYPOINT&#x2F;CMD的脚本中添加如下代码  123456789USER_NAME=$&#123;USER_NAME:-uidname&#125;USER_ID=$(id -u)if ! whoami &amp;&gt; /dev/nullthen    if [ -w /etc/passwd ]    then      echo &quot;$&#123;USER_NAME&#125;:x:$&#123;USER_ID&#125;...</div></div></div></a><a class="pagination-related" href="/openshift/%E8%87%AA%E5%AE%9A%E4%B9%89Service%E6%B7%BB%E5%8A%A0%E5%88%B0Openshift%E4%B8%AD%E7%9A%84Prometheus/" title="自定义Service添加到Openshift中的Prometheus"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">自定义Service添加到Openshift中的Prometheus</div></div><div class="info-2"><div class="info-item-1">prometheus.yml中定义了keep, drop, update等状态1234567891011121314151617181920212223242526272829303132333435363738394041424344- job_name: &#x27;kubernetes-service-endpoints&#x27;  tls_config:    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt    # TODO: this should be per target    insecure_skip_verify: true  kubernetes_sd_configs:  - role: endpoints  relabel_configs:    # only scrape infrastructure components    - source_labels: [__meta_kubernetes_namespace]      action: keep      rege...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'd003ae6550e9bca6850dba1e85b7d3b4'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

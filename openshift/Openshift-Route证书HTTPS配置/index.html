@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-Route证书HTTPS配置 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-Route证书HTTPS配置">
+<meta property="og:url" content="https://xhua.eu.org/openshift/Openshift-Route%E8%AF%81%E4%B9%A6HTTPS%E9%85%8D%E7%BD%AE/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.669Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-Route证书HTTPS配置",
+  "url": "https://xhua.eu.org/openshift/Openshift-Route%E8%AF%81%E4%B9%A6HTTPS%E9%85%8D%E7%BD%AE/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.669Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/Openshift-Route%E8%AF%81%E4%B9%A6HTTPS%E9%85%8D%E7%BD%AE/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-Route证书HTTPS配置',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-Route证书HTTPS配置</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-Route证书HTTPS配置</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.669Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>后台应用为http服务<br>Termination Type:  Edge<br>Insecure Traffic:     Allow</p>
+<p>后台应用为https服务<br>Termination Type:  Passthrough<br>Insecure Traffic:     None</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/Openshift-Route%E8%AF%81%E4%B9%A6HTTPS%E9%85%8D%E7%BD%AE/">https://xhua.eu.org/openshift/Openshift-Route%E8%AF%81%E4%B9%A6HTTPS%E9%85%8D%E7%BD%AE/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/Openshift-3scale%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a><a class="pagination-related" href="/openshift/Openshift-Nginx-Router%E6%9B%BF%E6%8D%A2%E9%BB%98%E8%AE%A4Haproxy-Router/" title="Openshift-Nginx-Router替换默认Haproxy-Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-Nginx-Router替换默认Haproxy-Router</div></div><div class="info-2"><div class="info-item-1"> 什么是Router Router在Openshift集群的一个不可非常重要的组件，它作为外部请求访问集群内部资源的入口，为Openshift上的应用提供边缘负载均衡。 Router可以为应用提供HTTP和websocket流量的负载均衡，同时支持HTTPS连接。Openshift上有一个特殊的资源叫Route，通过它可以方便地配置Router。 Openshift集群默认使用Haproxy应用作为Router的实现，它通过容器的形式运行在相应的Node上，同时Router Pod网络使用的宿主机的网络，即hostNetwork=true。 除了Haproxy,我们还可以使用Nginx来实现Router，这也是本文的重点。 不管是Haproxy还是Nginx方案都是使用了软件负载均衡器，还可以使用F5等硬件负载均衡器来替换Router，达到性能的提升。   Nginx Router与默认Router比较 如何替换Openshift默认Router卸载当前Router 用system:admin登录集群  1$ oc login -u system:admin  选择default...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/OpenShift%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8C%82%E4%BA%86%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/" title="OpenShift数据库挂了问题解决"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift数据库挂了问题解决</div></div><div class="info-2"><div class="info-item-1">每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCertificate:true RotateKubeletClientCertificate:true]&#125;Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.902964    4307 mount_linux.go:211] Detected OS with systemdJan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.908967    4307 server.go:383] Version: v1.10....</div></div></div></a><a class="pagination-related" href="/openshift/%E4%BC%81%E4%B8%9A%E7%BA%A7%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0OpenShift%E4%BB%8B%E7%BB%8D/" title="企业级容器平台OpenShift介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">企业级容器平台OpenShift介绍</div></div><div class="info-2"><div class="info-item-1">随着移动互联网生态的兴起，传统银行面临跨界竞争，在电子商务支付、消费金融、商业融资的新的业务场景下面临严峻的挑战，数字化转型的需求日益迫切。在这场技术转型的浪潮下，各大银行积极推进科技改革，拥抱云计算，以适应市场不断的变化。随着容器技术的成熟，一个以Kubernetes容器编排引擎为核心的生态圈已经形成，互联网、金融、汽车等各企业都积极投入容器技术的应用中。容器云平台的建设已经被认为是云计算落地的一种快捷的方式。说到容器云平台，就不得不提当前容器调度与编排的事实标准——Kubernetes。Kubernetes通过定义基础资源（容器、存储、网络）的协议接口，为底层基础设施提供了统一的管理方式。研发人员通过声明的方式定义资源编排文件，Kubernetes便通过自身组件自动完成资源的申请与分配，快速实现应用的部署。Kubernetes为容器的管理调度，应用的编排提供了便利，它无所不能，但是在建设企业级容器平台时，我们需要在以Kubernetes为核心的前提下，整合其他组件，例如网络插件、应用访问入口、存储实现、监控、日志、镜像仓库等。如图一所示。OpenShift正是基于Kubern...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E5%BC%BA%E5%A4%A7%E7%9A%84oc-set%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3/" title="OpenShift强大的oc-set命令详解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift强大的oc-set命令详解</div></div><div class="info-2"><div class="info-item-1"> OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# oc setConfigure application resourcesUsage:  oc set COMMAND [flags]Replication controllers, deployments, and daemon sets:  env             Update environment variables on a pod template  resources       Update resource requests/limits on objects with pod templates  volumes         Update volumes o...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift%E7%94%9F%E4%BA%A7%E9%9B%86%E7%BE%A4%E7%89%A9%E7%90%86%E6%9C%BA%E9%83%A8%E7%BD%B2%E4%B8%8E%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%83%A8%E7%BD%B2%E5%90%84%E8%87%AA%E4%BC%98%E7%BC%BA%E7%82%B9/" title="OpenShift生产集群物理机部署与虚拟机部署各自优缺点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift生产集群物理机部署与虚拟机部署各自优缺点</div></div><div class="info-2"><div class="info-item-1"> OpenShift是物理机部署，还是虚拟机部署？这是企业在做容器平台架构选型时必须考虑的问题。尤其是大企业，有机器，有业务。今天我们就来列一列物理机与虚拟机部署各自的优缺点。 物理机部署 优点   性能好，无虚拟化层性能开销 小业务集群，节点少 配置高能够支持更大规模的容器数量 License成本更低 架构复杂度低（PaaS） 需要额外准备LB与存储 缺点   运维复杂度高 集群扩容周期长 如果出现故障，恢复周期长，需要及时去机房诊断修复 一台主机出现故障，影响业务范围更广 合规限制，需要更高要求的安全与隐私控制  虚拟机部署 优点   灵活部署、配置、维护简单 快速扩容 能与IaaS资源混合使用（LB、存储等） 一台虚拟机出现故障，影响业务范围小 虚拟机技术成熟，有热迁移技术，恢复快 IaaS高可用+PaaS高可用，两层保障 虚拟机支持虚拟快照，方便做主机回滚，集群可靠怀提升 IaaS目前已经有成熟的合规方案，在其上构建PaaS可以更方便地满足合规要求 缺点   性能较差（网络、计算等） 架构复杂度提升（IaaS + Paas） 配置较低，承载的容器容量更小（节点更多） 需要...</div></div></div></a><a class="pagination-related" href="/openshift/%E7%8E%A9%E8%BD%ACOpenshift%E4%B8%ADPod%E8%B0%83%E5%BA%A6/" title="玩转Openshift中Pod调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">玩转Openshift中Pod调度</div></div><div class="info-2"><div class="info-item-1"> 大部分情况下，Openshift中的Pod只是容器的载体，通过Deployment、DaemonSet、RC、Job、Cronjob等对象来完成一组Pod的调度与自动控制功能。Pod调度也是由Scheduler组件完成的。      Deployment&#x2F;RC：全自动调度  Deployment&#x2F;RC主要是自动部署应用的多个副本，并持续监控，以维持副本的数量。默认是使用系统Master的Scheduler经过一系列算法计算来调度，用户无法干预调度过程与结果。 12345678910111213141516171819202122apiVersion: apps/v1kind: Deploymentmetadata:  name: nginx  labels:    app: nginxspec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      containers:      - name: nginx    ...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AE%E4%BD%BF%E7%94%A8Prometheus%E6%9D%A5%E7%9B%91%E6%8E%A7Router/" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '484cea9eb17aec0ee1e08cecba47e2f9'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

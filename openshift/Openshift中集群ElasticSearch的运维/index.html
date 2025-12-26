@@ -1,0 +1,297 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift中集群ElasticSearch的运维 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="大家都知道，Openshift集成了EFK(Elasticsearch + Fluentd + Kibana)作为集群的日志管理平台。我们该怎样去维护ElasticSearch.   找到ES所在的pod   1oc get pod -l component&#x3D;es -o name -n logging | cut -d&#x2F; -f2   查看所有ES索引   1oc exec $es-pod-name">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift中集群ElasticSearch的运维">
+<meta property="og:url" content="https://xhua.eu.org/openshift/Openshift%E4%B8%AD%E9%9B%86%E7%BE%A4ElasticSearch%E7%9A%84%E8%BF%90%E7%BB%B4/index.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="大家都知道，Openshift集成了EFK(Elasticsearch + Fluentd + Kibana)作为集群的日志管理平台。我们该怎样去维护ElasticSearch.   找到ES所在的pod   1oc get pod -l component&#x3D;es -o name -n logging | cut -d&#x2F; -f2   查看所有ES索引   1oc exec $es-pod-name">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-26T05:37:50.670Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift中集群ElasticSearch的运维",
+  "url": "https://xhua.eu.org/openshift/Openshift%E4%B8%AD%E9%9B%86%E7%BE%A4ElasticSearch%E7%9A%84%E8%BF%90%E7%BB%B4/",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-26T05:37:50.670Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/openshift/Openshift%E4%B8%AD%E9%9B%86%E7%BE%A4ElasticSearch%E7%9A%84%E8%BF%90%E7%BB%B4/index.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift中集群ElasticSearch的运维',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift中集群ElasticSearch的运维</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/prompts/"><i class="fa-fw fas fa-lightbulb"></i><span> 提示词优化</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift中集群ElasticSearch的运维</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-26T05:37:50.670Z" title="更新于 2025-12-26 13:37:50">2025-12-26</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>大家都知道，Openshift集成了EFK(Elasticsearch + Fluentd + Kibana)作为集群的日志管理平台。我们该怎样去维护ElasticSearch.</p>
+<blockquote>
+<ol>
+<li>找到ES所在的pod</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get pod -l component=es -o name -n logging | cut -d/ -f2</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="2">
+<li>查看所有ES索引</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca https://localhost:9200/_cat/indices?v</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="3">
+<li>清理所有3月份的ES索引</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XDELETE https://localhost:9200/*.2018.03.*</span><br></pre></td></tr></table></figure>
+<p><em><code>curl可以加-k这样就不需要--cacert参数</code></em></p>
+<blockquote>
+<ol start="4">
+<li>打开Kibana，显示错误<code>Elasticsearch is still initializing the kibana index</code><br>解决办法：删除kibana的索引，重新进入kibana</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XDELETE https://localhost:9200/.kibana</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="5">
+<li>确认ES集群的工作状态</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc exec $es-pod-name -c elasticsearch -- health</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="6">
+<li>停止ES节点分片平衡</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;none&quot;&#125;&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>6.开启ES节点分片平衡</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;all&quot;&#125;&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="7">
+<li>ES扩容</li>
+</ol>
+</blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/1c74e560303b">OpenShift自带的日志搜索引擎ES服务的扩容</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/openshift/Openshift%E4%B8%AD%E9%9B%86%E7%BE%A4ElasticSearch%E7%9A%84%E8%BF%90%E7%BB%B4/">https://xhua.eu.org/openshift/Openshift%E4%B8%AD%E9%9B%86%E7%BE%A4ElasticSearch%E7%9A%84%E8%BF%90%E7%BB%B4/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/openshift/Openshift%E4%B9%8BNetApp-SolidFire%E9%9B%86%E6%88%90%E5%8F%8A%E6%B5%8B%E8%AF%95/" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift%E4%B8%AD%E7%9A%84Prometheus-Operator%E5%A6%82%E4%BD%95%E6%B7%BB%E5%8A%A0%E6%96%B0%E7%9A%84%E5%BA%94%E7%94%A8%E7%9B%91%E6%8E%A7/" title="Openshift中的Prometheus-Operator如何添加新的应用监控"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift中的Prometheus-Operator如何添加新的应用监控</div></div><div class="info-2"><div class="info-item-1">  prometheus使用的配置文件在openshift-monitoring/secret/prometheus-k8s中。有添加ServiceMonitor时会动态更新该文件 为system:serviceaccount:openshift-monitoring:prometheus-k8s添加应用所在project的view权限  1$ oc policy add-role-to-user view system:serviceaccount:openshift-monitoring:prometheus-k8s -n myproject  查看prometheus的配置，查看对于servicemonitor的过滤器  123456$ oc get prometheus k8s -o yaml...  serviceMonitorSelector:    matchExpressions:    - key: k8s-app      operator: Exists  serviceMonitorSelector表示，只有设置了k8s-app的Label的service...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/openshift/Openshift-gitlab-redmine-testlink%E9%9B%86%E6%88%90/" title="Openshift-gitlab-redmine-testlink集成"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-gitlab-redmine-testlink集成</div></div><div class="info-2"><div class="info-item-1"> Gitlab:使用Git作为代码管理工具，并在此基础上搭建起来的web服务。Redmine:项目管理和bug跟踪工具。TestLink:基于web的测试用例管理系统，主要功能是测试用例的创建、管理和执行，并且还提供了一些简单的统计功能。Redmine作为项目问题及bug收集汇总的地方，gitlab及testlink通过调用redmine的api进行对问题进行更新。那第它们之间是怎么配置的呢？下面就一起来配置下。  Redmine部署与插件安装相关配置在github项目：https://github.com/xhuaustc/redmine-openshift  Dockerfile中更新了docker-entrypoint.sh文件，更新了数据库的编码（mysql: utf8mb4 ) 创建镜像   12$ docker build -t harbor.local.com/public/redmine .$ docker push harbor.local.com/public/redmine  在openshift上创建新的项目  创建工程 1$ oc new-project...</div></div></div></a><a class="pagination-related" href="/openshift/Openshift-All-In-One%E4%B8%80%E9%94%AE%E9%83%A8%E7%BD%B2%E5%B7%A5%E5%85%B7%E4%B8%8A%E7%BA%BF/" title="Openshift-All-In-One一键部署工具上线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-All-In-One一键部署工具上线</div></div><div class="info-2"><div class="info-item-1">Openshift All In One工具制作的初衷： 工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。 Openshift3.9部署手册，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的操作还是会遇到一些问题，毕竟步骤有那么多，差了一步，就很容易就会失败。有了这个脚本工具后，想要部署测试Openshift的朋友就很容易去部署测试了，而不是在部署这一步就放弃了。 有些厂商提供了Openshift的解决方案，但是做支持的厂商朋友并不太熟悉容器平台环境，也想在自己的环境下部署一套Openshift来测试，最后往往困难重重，从展望到放弃。  做个自动化工具，让所有关心Openshift&#x2F;K8s的朋友就可以跳过部署的步骤，快速进入到Paas这个神奇的世界，去了解到自己真正关心的内容。 进入正题 什么是正题？直接上工具git地址OpenshiftOneClick：http...</div></div></div></a><a class="pagination-related" href="/openshift/%E7%99%BD%E5%8C%96Kubernetes%E7%BD%91%E7%BB%9C/" title="白化Kubernetes网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">白化Kubernetes网络</div></div><div class="info-2"><div class="info-item-1">引自：http://www.10tiao.com/html/217/201708/2649694873/1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清本质，用形象的例子展示Weave、Flannel、Calico和Romana等网络解决方案背后的原理。  这次讲一讲容器集群中的网络。其实不同的容器集群解决方案，在网络方面的核心原理都是相似的，只不过这次我们将以Kubernetes为线索，来窥斑见豹的一睹容器网络的发展过程。  我是来自ThoughtWorks的林帆，我们从Docker的0.x版本开始就在对容器的应用场景进行探索，积累了一线的容器运用经验。这次分享会用简洁易懂的方式告诉大家我们对容器网络方面的一些知识归纳。  初入容器集群的人往往会发现，和单节点的容器运用相比，容器的网络和存储是两个让人望而却步的领域。在这些领域里，存在...</div></div></div></a><a class="pagination-related" href="/openshift/OpenShift-Prometheus%E6%B7%BB%E5%8A%A0Alert-Rules/" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/openshift/%E5%A6%82%E4%BD%95%E5%9C%A8Openshift%E4%B8%AD%E8%AE%A9Router-Pod%E7%8B%AC%E5%8D%A0Router%E8%8A%82%E7%82%B9/" title="如何在Openshift中让Router-Pod独占Router节点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何在Openshift中让Router-Pod独占Router节点</div></div><div class="info-2"><div class="info-item-1"> 概念 什么是Router Pod?  Router Pod是Openshift中管理外部流量访问集群服务的重要的入口，它是通过一个haproxy的Pod实现的。由于Router Pod的独特性，几乎所有的流量都过Router中的Pod代理到真正的服务，所以它是一个非常非常重要的服务。  什么是Router节点  因为集群中的Router Pod数量是有限的，外部流量通过负载均衡器到达Router的Pod，所以对于Router Pod必须固定在负载均衡器下的节点上。这些运行Router Pod的节点，我们叫做Router节点。它有两个特点：  运行default&#x2F;router的pod;  被外部负载均衡器监听  为什么需要让Router Pod独占Router节点上几乎所有的外部访问集群服务的流量都通过Router Pod代理，所以它是非常重要。在正式使用时，需要对它进行保护。让它独占节点，防止其它Pod抢占Router Pod的资源，以确保集群下服务的可用性。 具体实施Router Pod独占绑定Router节点 Router节点上添加label  1oc label...</div></div></div></a><a class="pagination-related" href="/openshift/%E4%BD%BF%E7%94%A8Vagrant+Ansible%E4%B8%80%E9%94%AE%E9%83%A8%E7%BD%B2Rancher2-0/" title="使用Vagrant+Ansible一键部署Rancher2-0"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用Vagrant+Ansible一键部署Rancher2-0</div></div><div class="info-2"><div class="info-item-1"> Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。 既然这么简单，那我们就使用Vagrant与Ansible让它更简单。 安装Vagrant + VirtualBox    具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。  导入Vagrant Box。这里使用的是Centos 7.5  centos75-with-boxadditions.box下载链接: https://pan.baidu.com/s/1U-kJhbY2JirHgw0eP9TBXw 密码: 1a6b 1vagrant box add centos/75 centos75-with-boxadditions.box 或者安装vagrant插件 1$ vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest  定义Vagrantfile，设置好虚拟机的配置，具...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">93</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/openshift/%E6%8E%92%E9%9A%9C%E8%AE%B0%E5%BD%95%EF%BC%9A%E5%88%A0%E9%99%A4Namespace-olm%E4%B8%80%E7%9B%B4Terminating%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B/" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/Fabric-%E5%BC%80%E6%BA%90AI%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%A1%86%E6%9E%B6%E8%AF%A6%E8%A7%A3/" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%AE%9E%E7%94%A8%E5%BC%80%E6%BA%90AI%E9%A1%B9%E7%9B%AE%E6%B1%87%E6%80%BB/" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%90%84%E7%B1%BB%E7%89%88%E6%9C%AC%E8%AF%A6%E8%A7%A3/" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/AI/%E4%BD%BF%E7%94%A8vLLM%E9%83%A8%E7%BD%B2Qwen3-Next-80B-A3B-Instruct%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%8C%E6%95%B4%E6%8C%87%E5%8D%97/" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</a><time datetime="2025-11-24T13:52:00.000Z" title="发表于 2025-11-24 21:52:00">2025-11-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = {"language":"zh-CN"}
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: 'bd411f7fab0148676434',
+      clientSecret: 'c428724cacf9b34ab17326dec6d6e8a2e23b6c15',
+      repo: 'xhuaustc.github.io',
+      owner: 'xhuaustc',
+      admin: ['xhuaustc'],
+      updateCountCallback: commentCount,
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'b1250386951dfebe8981b3657cf465a0'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('/pluginsSrc/gitalk/dist/gitalk.css')
+      await btf.getScript('/pluginsSrc/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
