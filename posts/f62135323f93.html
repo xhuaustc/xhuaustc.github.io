@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>通过跳板机代理将本地文件传输到远端服务器 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="通过-J参数指定跳板机  123$ ssh -J user@&lt;bastion:port&gt; &lt;user@remote:port&gt;&#x2F;&#x2F; scp$ scp -J user@&lt;bastion:port&gt; sourcefile &lt;user@remote:port&gt;:  在.ssh&#x2F;config中配置  123456789101112### The">
+<meta property="og:type" content="article">
+<meta property="og:title" content="通过跳板机代理将本地文件传输到远端服务器">
+<meta property="og:url" content="https://xhua.eu.org/posts/f62135323f93.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="通过-J参数指定跳板机  123$ ssh -J user@&lt;bastion:port&gt; &lt;user@remote:port&gt;&#x2F;&#x2F; scp$ scp -J user@&lt;bastion:port&gt; sourcefile &lt;user@remote:port&gt;:  在.ssh&#x2F;config中配置  123456789101112### The">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-30T09:55:49.009Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "通过跳板机代理将本地文件传输到远端服务器",
+  "url": "https://xhua.eu.org/posts/f62135323f93.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-30T09:55:49.009Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/f62135323f93.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '通过跳板机代理将本地文件传输到远端服务器',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">通过跳板机代理将本地文件传输到远端服务器</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">通过跳板机代理将本地文件传输到远端服务器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-30T09:55:49.009Z" title="更新于 2025-12-30 17:55:49">2025-12-30</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ol>
+<li>通过-J参数指定跳板机</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ssh -J user@&lt;bastion:port&gt; &lt;user@remote:port&gt;</span><br><span class="line">// scp</span><br><span class="line">$ scp -J user@&lt;bastion:port&gt; sourcefile &lt;user@remote:port&gt;:</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在.ssh&#x2F;config中配置</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">## The Bastion Host</span></span></span><br><span class="line">Host jump</span><br><span class="line">  HostName 10.2.3.2</span><br><span class="line">  Port 3022</span><br><span class="line">  User jump</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">## The Remote Host</span></span></span><br><span class="line">Host remote</span><br><span class="line">  HostName 172.32.2.7</span><br><span class="line">  Port 22</span><br><span class="line">  User root</span><br><span class="line">  ProxyJump jump</span><br></pre></td></tr></table></figure>
+<p>使用普通参数就可以实现跳转</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ssh remote</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">scp &lt;sourcefile&gt; remote:/data/</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/f62135323f93.html">https://xhua.eu.org/posts/f62135323f93.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/70668969ef36.html" title="项目的通用结构"><img class="cover" src="https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">项目的通用结构</div></div><div class="info-2"><div class="info-item-1">项目的通用结构，可根据真实情况进行删减 12345678910111213141516171819202122232425- src #代码- data #需要保存的文件，如安装包、镜像等- docs # 说明文档- scripts #相关的脚本文件- hack  - build    - Dockerfile  # 构建镜像  - Vagrantfile #Vagrant配置  - ansible/    # ansible构建部署脚本    - site.yml    - hosts    - roles/    - group_vars/    - host_vars/    - library/  - kubernetes/  # Openshift平台构建部署脚本  - docker-compose # Docker compose部署    - conf    - docker-compose.yaml- Makefile # 不同环境构统一构建入口- Jenkinsfile # Jenkins构建流水线，可调用ansible脚本或Dockerfile脚本- REA...</div></div></div></a><a class="pagination-related" href="/posts/f94f9d30a93e.html" title="系统性能测试与监测工具汇总"><img class="cover" src="https://img.xhua.eu.org/efa140bf87df6771b7597bdf3f240840ddcbeb5bca6247c373c1b63d8846cb61.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">系统性能测试与监测工具汇总</div></div><div class="info-2"><div class="info-item-1">综合能力性能测试（Unixbench）1[root@localhost] $ ./Run 计算查看当前CPU负载（uptime）1[root@localhost] $ uptime 测试单cpu计算能力（bc）1[root@localhost] $ time echo &quot;scale=5000;4*a(1)&quot; | bc -l -q 内存查看当前内存使用的情况的状态（free）1[root@localhost] $ free -m 进程对内存的占用情况（pmap） 1[root@localhost] $ pmap -d 35713 # 查看进程35713占用内存的情况 磁盘磁盘IO测试（dd）测试磁盘的IO写速度 1# time dd if=/dev/zero of=test.dbf bs=8k count=300000 oflag=direct 测试磁盘的IO读速度 1# dd if=test.dbf bs=8k count=300000 of=/dev/null  表示每次写入&#x2F;读取8k的数据，执行300000次 实时查看各磁盘的io（iostat）...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/416068ee4e18.html" title="持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 什么是部署流水线部署流水线是指软件从版本控制到用户手中这一过程的自动化表现形式。价值流图    产品可行性评估  产品探索  产品计划与评估  开发  最后测试与审核  发布    3天 1周 7天 10天 10天 10天 3天 7周 1周 2天 2小时    开发到发布的流水线：会有很多次构建通过这一流程走向最后的发布 流水线各个阶段：交付团队-&gt;版本控制库-&gt;构建和单元测试-&gt;自动化验收测试-&gt;用户验收测试-&gt;发布 一般而言，只要某个构建使这个流程任一阶段失败，都会停止，不会进入下一个阶段。 提交阶段【自动化测试（主要是单元测试），代码分析】   自动化验收测试阶段【功能与非功能测试】 手工测试阶段【对自动化测试的补充，探索性测试，集成测试等】 发布阶段【部署到生产环境或试运行环境】  最基本的部署流水线   部署流水线的相关实践 只生成一次二进制包。对于不需要编译的语言，二制包指的是所有源文件的集合。这些二进制包应保存在文件系统的某个位置，让流水线后续阶段能够轻松访问到，但不要放在版本控制库中。二进制...</div></div></div></a><a class="pagination-related" href="/posts/d5b91b0cd4d2.html" title="创建自签证书步骤"><img class="cover" src="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">创建自签证书步骤</div></div><div class="info-2"><div class="info-item-1"> 根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;/C=CN/ST=shanxi/L=taiyuan/O=cn/OU=test/CN=example.com&quot;$ #或者 openssl req -new -x509 -days 36500 -key ca.key -out ca.crt 手动输入配置  创建证书并使用根证书签发  123$ openssl genrsa -out app.key 2048$ openssl req -new -key app.key -out app.csr$ openssl x509 -req -in app.csr -CA ca.crt -CAkey ca.key -out app.crt -days 3650  -CAcreateserial  使用 Openssl 工具查看证书信息  123$ openssl x509 -in app.crt -no...</div></div></div></a><a class="pagination-related" href="/posts/8619a1b54338.html" title="持续交付发布可靠软件的系统方法（_交付生态圈）第十五章：持续交付管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（_交付生态圈）第十五章：持续交付管理</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 实现持续交付不仅仅是搭建一些工具，做一些自动化的工作，它依赖于交付过程中的每个人的协作。通过持续交付实践，可以快速且可靠地交付新版本。 配置与发布管理成熟模型 这个模型的最终目标：  缩短生产周期 减少缺陷 提高软件交付生命周期的可预测性 规范合规 有效发现和管理软件交付相关风险 交付更少缺陷的软件，降低成本  模型指导组织推进持续交付变革，使用戴明环，即计划——执行——检查——处理。  使用模型来分析所在部门的配置与发布管理模式 选择一个领域集中发力，该领域是你的薄弱环节，痛点所在 实施变革。先创建一个实施计划，选择真正感到痛苦的那部分人 一旦发生了变化，使用之前创建的验收条件来衡量这些变化是否达到了预期效果。组织所有相关人员召开回顾会议，找出改进点及潜在改进领域 重复上述步骤，积累知识，增量改进，推广到整个部门  项目生命周期团队的组建与磨合常常有以下五个阶段：创建期、风暴期、规范期、运转期、调整重组期。软件也有五个阶段：立项阶段、启动阶段、初始阶段、开发部署阶段、运维阶段。  立项阶段：业务分析、业务负责人及涉及部门有关人确立 启...</div></div></div></a><a class="pagination-related" href="/posts/cf903a398614.html" title="SOPS对配置文件数据进行加密"><img class="cover" src="https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">SOPS对配置文件数据进行加密</div></div><div class="info-2"><div class="info-item-1">SOPS 是由Mozilla 开发的一款开源的文本编辑工具，它支持对YAML, JSON, ENV, INI 和BINARY 文本格式的文件进行编辑，并利用AWS KMS, GCP KMS, Azure Key Vault 或PGP 等加密方式对编辑的文件进行加密和解密。在当前它还可以与heml secret作用，为Kubernetes的secret资源数据进行加密。本篇主要介绍sops的基本用法，而helm secret的使用不做介绍。 ##GPG进行加密  生成GPG文件  1$ gpg --generate-key # 根据引导生成gpg加密文件 或者自动生成 123456789101112131415gpg --batch --generate-key &lt;&lt;EOF%echo Generating a basic OpenPGP key for HELM SecretKey-Type: RSAKey-Length: 4096Subkey-Type: RSASubkey-Length: 4096Name-Real: MichaelName-Comment: Per...</div></div></div></a><a class="pagination-related" href="/posts/29c771c693e3.html" title="使用Ansible-Tower与Jenkins集成实现CI-CD"><img class="cover" src="https://img.xhua.eu.org/417cb66870058dd036ecb4dd3a5f72dc88b36b52abfdda5217a1e56abbc6d983.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="info-item-2">使用Ansible-Tower与Jenkins集成实现CI-CD</div></div><div class="info-2"><div class="info-item-1">Ansible Tower是什么？Ansible Tower是一个基于Web的用户界面，提供了IT自动化的企业解决方案。它有一个友好用户的仪表板来管理部署和监控资源。Ansible Tower为Ansible增加自动化，可视化管理和监控能力。 为什么要使用Ansible Tower替换Ansible与Jenkins集成？使用Ansible Tower与Jenkins集成，打开了一个充满可能性的世界。与一篇中介绍的《Ansible与Jenkins集成实现CI&#x2F;CD》进行比较，它可以从Jenkins中删除很多配置，比如部署应用的服务器的访问配置，管理playbook执行，最重要的是，避免在Jenkins端配置SSH密钥，同时Jenkins不需要知道应用程序的部署服务器地址：它可能位于公有云中，物理机中，甚至是笔记本电脑上的虚拟客户端。 把这些配置与过程都放到Ansible Tower中进行集中管理。 Ansible Tower的组件    Credentials: Ansible Tower在运行作业时，访问Tower外部服务或者连接主机时需要进行身份验证。Credenti...</div></div></div></a><a class="pagination-related" href="/posts/8f583cb100a6.html" title="持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这会促进他们之间的良好合作 有助于让每个人更关注业务的价值   验收测试与单元测试的区别：验收测试是针对业务的，单元测试是面向开发的。  创建验收测试  分析人员与测试人员和客户紧密合作，定义验收条件    分析人员向开发人员讲解需求，以及它的业务上下文，并检查一遍验收条件    测试人员与开发人员讨论，并就“哪些自动化验收测试来证明验收条件被满足”达成一致    开发人员认为工作完成是指所有单元测试和组件测试通过，验收测试全部实现，并证明系统满足需求。此时可以向分析人员、测试人员和客户进行演示    应用程序驱动层应用程序驱动层是一个知道如何与应用程序打交道的层次。它所用的API是以某种...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

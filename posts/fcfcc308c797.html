@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>使用Vagrant+Ansible一键部署Rancher2-0 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。 既然这么简单，那我们就使用Vagrant与Ansible让它更简单。 安装Vagrant + VirtualBox    具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。  导入">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Vagrant+Ansible一键部署Rancher2-0">
+<meta property="og:url" content="https://xhua.eu.org/posts/fcfcc308c797.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。 既然这么简单，那我们就使用Vagrant与Ansible让它更简单。 安装Vagrant + VirtualBox    具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。  导入">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-30T09:55:49.018Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "使用Vagrant+Ansible一键部署Rancher2-0",
+  "url": "https://xhua.eu.org/posts/fcfcc308c797.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-30T09:55:49.018Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/fcfcc308c797.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '使用Vagrant+Ansible一键部署Rancher2-0',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">使用Vagrant+Ansible一键部署Rancher2-0</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">使用Vagrant+Ansible一键部署Rancher2-0</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-30T09:55:49.018Z" title="更新于 2025-12-30 17:55:49">2025-12-30</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ul>
+<li>Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。</li>
+<li>既然这么简单，那我们就使用Vagrant与Ansible让它更简单。<blockquote>
+<p>安装Vagrant + VirtualBox</p>
+</blockquote>
+</li>
+</ul>
+<p>具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。</p>
+<blockquote>
+<p>导入Vagrant Box。这里使用的是Centos 7.5</p>
+</blockquote>
+<p>centos75-with-boxadditions.box下载链接: <a target="_blank" rel="noopener" href="https://pan.baidu.com/s/1U-kJhbY2JirHgw0eP9TBXw">https://pan.baidu.com/s/1U-kJhbY2JirHgw0eP9TBXw</a> 密码: 1a6b</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vagrant box add centos/75 centos75-with-boxadditions.box</span><br></pre></td></tr></table></figure>
+<p>或者安装vagrant插件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>定义Vagrantfile，设置好虚拟机的配置，具体的配置可根据情况调整。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"># Vagrantfile</span><br><span class="line"># -*- mode: ruby -*-</span><br><span class="line"># vi: set ft=ruby :</span><br><span class="line"></span><br><span class="line">RANCHER_SERVER_IP = &quot;192.168.50.100&quot;</span><br><span class="line">RANCHER_AGENT_IP_1 = &quot;192.168.50.101&quot;</span><br><span class="line"></span><br><span class="line">Vagrant.configure(&quot;2&quot;) do |config|</span><br><span class="line"> </span><br><span class="line">  config.vm.box = &quot;centos/75&quot;</span><br><span class="line"></span><br><span class="line">  config.vm.define &quot;server&quot; do |server|</span><br><span class="line">    server.vm.hostname = &quot;server.rancher.local.com&quot;</span><br><span class="line">    server.vm.network &quot;public_network&quot;, ip: RANCHER_SERVER_IP</span><br><span class="line">    server.vm.provider &quot;virtualbox&quot; do |v|</span><br><span class="line">        v.name = &quot;server&quot;</span><br><span class="line">        v.memory = 2048</span><br><span class="line">        v.cpus = 1</span><br><span class="line">      end</span><br><span class="line">  end</span><br><span class="line"></span><br><span class="line">  config.vm.define &quot;agent1&quot; do |agent|</span><br><span class="line">    agent.vm.hostname = &quot;agent1.rancher.local.com&quot;</span><br><span class="line">    agent.vm.network &quot;public_network&quot;, ip: RANCHER_AGENT_IP_1</span><br><span class="line">    agent.vm.provider &quot;virtualbox&quot; do |v|</span><br><span class="line">        v.name = &quot;agent1&quot;</span><br><span class="line">        v.memory = 2048</span><br><span class="line">        v.cpus = 1</span><br><span class="line">      end</span><br><span class="line">  end</span><br><span class="line"></span><br><span class="line">  config.vm.provision &quot;ansible_local&quot; do |ansible|</span><br><span class="line">    ansible.playbook = &quot;ansible/playbook.yml&quot;</span><br><span class="line">    ansible.groups = &#123;</span><br><span class="line">      &quot;servers&quot; =&gt; [&quot;server&quot;],</span><br><span class="line">      &quot;agents&quot; =&gt; [&quot;agent1&quot;]</span><br><span class="line">    &#125;</span><br><span class="line">  end</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>编写ansible&#x2F;playbook.yml</p>
+</blockquote>
+<p>这里的过程很简单：</p>
+<ol>
+<li>安装docker</li>
+<li>设置docker的镜像代理</li>
+<li>关闭selinux  </li>
+<li>启动docker</li>
+<li>部署rancher2.0<blockquote>
+<p>这里将完整的代码分享，供参考</p>
+</blockquote>
+</li>
+</ol>
+<p>Rancher Vagrant：<a target="_blank" rel="noopener" href="https://gitee.com/xhua/rancher-vagrant.git">https://gitee.com/xhua/rancher-vagrant.git</a><br><code>说明：agent虚拟机只是自动安装了docker及设置了docker代理，在上面部署k8s还需要通过rancher生成对应的docker命令后在上面运行。</code><br><img src="https://img.xhua.eu.org/c4cb7a113e32ffaccba3f4586d615506db0d6560e41b40d7a8076b30bea93f98.jpg" alt="Rancher登录界面展示.PNG">  </p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/fcfcc308c797.html">https://xhua.eu.org/posts/fcfcc308c797.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/aaf1d512ebcb.html" title="利用Openshift中的cronjob-+-zalenium实现网站监控"><img class="cover" src="https://img.xhua.eu.org/8c36db257f6f233d289fe7998f46aeeed727740d017cd71b780a2f221a969fc7.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">利用Openshift中的cronjob-+-zalenium实现网站监控</div></div><div class="info-2"><div class="info-item-1">背景介绍有一个网站（pf.apps.example.com)，会获取主机的信息，但是主机信息的格式不统一，而且经常性会添加机器，但是信息又是不确定的，所以有时添加新机器会缺失字段，导致网站异常。 有两种解决方法，   优化代码，提高代码的兼容性，不致于导致页面无法显示。    严格规范字段的输入，必须保证字段的完整性。    不管哪种方法，我们都需要在页面出现故障时第一时间知道。这就要求编写代码自动监测网站相关页面的可用性，一旦出现问题，及时发邮件告知，第一时间恢复。 有使用到上篇介绍的zalenium Openshift部署zalenium(容器化的selenium)及Python自动测试 编写监控脚本监控脚本使用selenium控制浏览器，先模拟登录，再访问需要测试的页面，如果页面正常打开则正常，否则发邮件告警。（由于这个网站的每个页面都有id&#x3D;content的一个div，所以通过检测页面中是否存在id&#x3D;content的div来判断页面是否正常）monitor.py 123456789101112131415161718192021222324252627...</div></div></div></a><a class="pagination-related" href="/posts/5c248e2fc353.html" title="使用ArgoCD实现多集群自动部署"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">使用ArgoCD实现多集群自动部署</div></div><div class="info-2"><div class="info-item-1">什么是Argo CD？Argo CD是用于Kubernetes的声明性GitOps连续交付工具，其优势为：  通过声明式定义应用、配置及环境信息，并且可以通过代码仓库实现版本控制 可通过自动或手动的方式同步应用到配置的期望状态 支持应用在多个环境、多个Kubernetes集群进行统一部署和管理 有UI及CLI多种方式，UI提供应用状态的可观测性，CLI方便与其它持续集成系统对接 支持多种SSO（OIDC，OAuth2，LDAP，SAML 2.0，GitHub，GitLab，Microsoft，LinkedIn） 支持Prometheus监控指标  参考文章https://www.openshift.com/blog/openshift-authentication-integration-with-argocdhttps://www.openshift.com/blog/introduction-to-gitops-with-openshifthttps://argoproj.github.io/argo-cd/ </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/370dfa8a122e.html" title="OpenShift使用MetalLB，打开了Service通向外界的大门"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用MetalLB，打开了Service通向外界的大门</div></div><div class="info-2"><div class="info-item-1"> #背景在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。  Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。 NodePort：在私有集群中也常用来暴露服务，但是它必须使用30000以上的端口，数量有限，不便于管理，而且对于一些特殊的服务，如DNS，必须使用小端口号，那么使用NodePort则无法满足。 HostNetwork：对于集群中的一些特殊服务使用该方式，它将容器与宿主机的网络绑定，如OpenShift中的Router服务就是使用HostNetwork与Router节点绑定。它的缺点是pod必须与主机绑定，同时每个Node上只能运行一个Pod实例，因为端口无法被复用。 HostPort：与HostNetwork类似，将Pod指定的端口与Node对应的端口绑定。 LoadBalancer：一般只在公有云平台使用，可以使Service获得与主机同一平面...</div></div></div></a><a class="pagination-related" href="/posts/8b9a311fc207.html" title="OpenShift自带的日志搜索引擎ES服务的扩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift自带的日志搜索引擎ES服务的扩容</div></div><div class="info-2"><div class="info-item-1"> 有以下两种扩容方式：  存储扩容 节点扩容  存储扩容 查看集群的状态  1$ oc exec $es-pod-name -c elasticsearch -- health  停止ES节点分片平衡  1$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;none&quot;&#125;&#125;&#x27;  为每个ES节点的DC执行以下操作3.1 获取需要暂停的ES pod所在的Node节点 ...</div></div></div></a><a class="pagination-related" href="/posts/2dea11d3dfea.html" title="Openshift上搭建NFS-StorageClass，别再说存储使用不方便"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上搭建NFS-StorageClass，别再说存储使用不方便</div></div><div class="info-2"><div class="info-item-1">动态存储是什么Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。  静态存储：需要管理员手动创建PV，供PVC挂载调用 动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。  StorageClass是什么 StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。  StorageClass对象还可以用作控制不同级别的存储和对存储的访问的管理机制。 有了StorageClass后，管理员无需手动创建PV。Openshift的使用者在创建PVC时只需要指定StorageClass,会自动按照对应的StorageClass配置，调用对应的Dynamic provisioning来创建需要的存储  没有StorageClass时代，如何使用NFS每次需要手动创建PV，一句话：麻烦。 StorageClass时代来了一次配置，永久自动，无需手动创建PV，一句话：方便。 NFS Provisioner原理    新建PVC时，指定为默认驱动，或者指定sto...</div></div></div></a><a class="pagination-related" href="/posts/3fb7f39636aa.html" title="Openshift-F5集成（续）——实现灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（续）——实现灰度发布</div></div><div class="info-2"><div class="info-item-1">上篇：Openshift-F5集成（南北流量走F5）中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。 为什么要使用灰度发布 什么是灰度发布灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  灰度发布的价值使用灰度发布可以在产品正式上线前针对特定一些目标用户进行开放，获得这些目标用户的反馈，及早发现问题，修复问题，完善产品的不足。如果发现新的版本价值不大，能够及早更换思路，避免产品直接上线后产生不好的影响。  Openshift Route自带的灰度发布功能 Openshift Route自带的灰度发布，是通过Route下“挂载”两个或两个以上Service，并调整各个Service的权值进行控制流量的分布。 例如...</div></div></div></a><a class="pagination-related" href="/posts/dae9f91bc2e9.html" title="Openshift集群升级3-6至3-7"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群升级3-6至3-7</div></div><div class="info-2"><div class="info-item-1">更新方法与策略：自动升级方法  更新openshift-ansible的脚本代码   12git pull git checkout -b release-3.7 安装需要的包  1ansible all -m yum -a &#x27;name=pyOpenSSL state=present&#x27;  关闭Service Catalog和Template Service Broker。3.7 以上版本默认会启用 Service Catalog 和 Template Service Broker  123456# /etc/ansible/hosts...openshift_enable_service_catalog=falsetemplate_service_broker_install=falseansible_service_broker_install=false...  关闭etcd目录的selinux检查关闭任务Check selinux label of ‘‘与Make sure the ‘‘ has the proper label  12345678910...</div></div></div></a><a class="pagination-related" href="/posts/2192f822e66c.html" title="技术中台"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">技术中台</div></div><div class="info-2"><div class="info-item-1">金融机构中台战略之路 在传统金融机构体系中，系统往往由各个项目组独立建设，每个机构中有成百上千套复杂的系统，它们相互调用，形成复杂的网状结构，很难进行管理。随着银行数字化转型的深入，大量业务以互联网的形式向用户开放，对系统高并发、大数据量、强一致性等需求越来越高。与此同时，为了满足用户多样化的需求，银行必须从以业务为中心向以人为中心转变，并做出快速响应。中台建设正是目前解决这些问题的新兴平台型企业架构。 企业中台为业务而生，快速敏捷地响应业务变化，以服务的形式为业务提供支撑，服务接入层以统一的路由适配转发。在整个技术构架上需要考虑可拓展性、敏捷性、轻量化，并注重与前台的交互，灵活地通过服务编排实现应用功能，满足前台需求。因此中台融合分布式、微服务、容器云、DevOps、大数据处理及高可用高性能高并发架构，遵循“高内聚、松耦合”设计原则。业务中台需要微服务、云原生、分布式事务体系支撑，并设计业务模型和微服务边界，最终形成业务单元；数据中台汇聚企业内外割裂的数据，并通过统一治理、建模加工，消除数据孤岛，实现数据资产化，为企业提供客户画像、商品智能推荐、业务实时监控，达到数据驱动业务能...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

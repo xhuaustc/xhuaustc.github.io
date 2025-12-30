@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>系统僵尸进程管理 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="查看系统僵尸进程数top    查看僵尸进程详情ps -ef|grep defunct    停止僵尸进程kill -9 $Parent PID">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统僵尸进程管理">
+<meta property="og:url" content="https://xhua.eu.org/posts/1554de812850.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="查看系统僵尸进程数top    查看僵尸进程详情ps -ef|grep defunct    停止僵尸进程kill -9 $Parent PID">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-30T09:55:49.009Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "系统僵尸进程管理",
+  "url": "https://xhua.eu.org/posts/1554de812850.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-30T09:55:49.009Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/1554de812850.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '系统僵尸进程管理',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">系统僵尸进程管理</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">系统僵尸进程管理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-30T09:55:49.009Z" title="更新于 2025-12-30 17:55:49">2025-12-30</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ol>
+<li><p>查看系统僵尸进程数<br>top<br><img src="https://img.xhua.eu.org/c4d6b38a2b3d2493a87000deedba11ca1b63bb19538577adfe94e4108a6292ae.jpg" alt="image.png">  </p>
+</li>
+<li><p>查看僵尸进程详情<br>ps -ef|grep defunct<br><img src="https://img.xhua.eu.org/fa1df78a5c205ca2fb28c01021fdc16164b7c514c81ef9b43e88bbfd880b3c15.jpg" alt="image.png">  </p>
+</li>
+<li><p>停止僵尸进程<br>kill -9 $Parent PID</p>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/1554de812850.html">https://xhua.eu.org/posts/1554de812850.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/f94f9d30a93e.html" title="系统性能测试与监测工具汇总"><img class="cover" src="https://img.xhua.eu.org/efa140bf87df6771b7597bdf3f240840ddcbeb5bca6247c373c1b63d8846cb61.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">系统性能测试与监测工具汇总</div></div><div class="info-2"><div class="info-item-1">综合能力性能测试（Unixbench）1[root@localhost] $ ./Run 计算查看当前CPU负载（uptime）1[root@localhost] $ uptime 测试单cpu计算能力（bc）1[root@localhost] $ time echo &quot;scale=5000;4*a(1)&quot; | bc -l -q 内存查看当前内存使用的情况的状态（free）1[root@localhost] $ free -m 进程对内存的占用情况（pmap） 1[root@localhost] $ pmap -d 35713 # 查看进程35713占用内存的情况 磁盘磁盘IO测试（dd）测试磁盘的IO写速度 1# time dd if=/dev/zero of=test.dbf bs=8k count=300000 oflag=direct 测试磁盘的IO读速度 1# dd if=test.dbf bs=8k count=300000 of=/dev/null  表示每次写入&#x2F;读取8k的数据，执行300000次 实时查看各磁盘的io（iostat）...</div></div></div></a><a class="pagination-related" href="/posts/8d5496ec675f.html" title="测试工具汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">测试工具汇总</div></div><div class="info-2"><div class="info-item-1">压力测试JmeterJmeter简单介绍与搭配Jenkins实现自动化测试实践使用JMeter进行负载测试——终极指南 LocustLocust学习总结分享性能测试工具LocustLocust 系列教程 LoadRunnerUsing LoadRunner with Jenkins 接口测试Robot FrameworkRobot Framework 在 Jenkins 上的自动化测试 </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/9bf126597211.html" title="Jmeter简单配置使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jmeter简单配置使用</div></div><div class="info-2"><div class="info-item-1"> 创建Test Plan 测试计划File-&gt;New或者直接点击New图标 添加Thread Group 测试任务右击测试计划，Add-&gt;Threads(Users)-&gt;Thread Group 添加HTTP Cookie 请求Cookie管理右击Thread Group，Add-&gt;Config Element-&gt;HTTP Cookie Manager 添加HTTP Header  请求头管理右击Thread Group，Add-&gt;Config Element-&gt;HTTP Header Manager 添加HTTP Request 请求右击Thread Group，Add-&gt;Sampler-&gt;HTTP Request 添加User Defined Variables 用户定义变量右击Thread Group，Add-&gt;Config Element-&gt;User Defined Variable 添加报告Result Tree 结果树右击Thread Group，Add-&gt;Listener-&gt;View R...</div></div></div></a><a class="pagination-related" href="/posts/0021c1b20a24.html" title="自动化工具集(持续更新------)"><img class="cover" src="https://img.xhua.eu.org/ec260d1e0542ad57622ab0ff9243cd11b1f1b47767bf86bba22b1cde361d0578.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="info-item-2">自动化工具集(持续更新------)</div></div><div class="info-2"><div class="info-item-1">1. 部署集群kopskubespraykubeoperatork(8s) in d(ocker) 2. 部署应用kustomize  路径名中有/时，使用~1替换  123456789101112131415161718kustomization.yaml---apiVersion: kustomize.config.k8s.io/v1beta1kind: Kustomization...patchesJson6902:- target:    version: v1    kind: Namespace    name: argocd  path: patch-namespace.yamlpatch-namespace.yaml---- op: replace  path: &quot;/metadata/annotations/iam.amazonaws.com~1allowed-roles&quot;  value: &gt;    [&quot;arn:aws:iam::12313112:role/argocd&quot;]  kapphelmhelmfileargoc...</div></div></div></a><a class="pagination-related" href="/posts/d5b91b0cd4d2.html" title="创建自签证书步骤"><img class="cover" src="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">创建自签证书步骤</div></div><div class="info-2"><div class="info-item-1"> 根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;/C=CN/ST=shanxi/L=taiyuan/O=cn/OU=test/CN=example.com&quot;$ #或者 openssl req -new -x509 -days 36500 -key ca.key -out ca.crt 手动输入配置  创建证书并使用根证书签发  123$ openssl genrsa -out app.key 2048$ openssl req -new -key app.key -out app.csr$ openssl x509 -req -in app.csr -CA ca.crt -CAkey ca.key -out app.crt -days 3650  -CAcreateserial  使用 Openssl 工具查看证书信息  123$ openssl x509 -in app.crt -no...</div></div></div></a><a class="pagination-related" href="/posts/8619a1b54338.html" title="持续交付发布可靠软件的系统方法（_交付生态圈）第十五章：持续交付管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（_交付生态圈）第十五章：持续交付管理</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 实现持续交付不仅仅是搭建一些工具，做一些自动化的工作，它依赖于交付过程中的每个人的协作。通过持续交付实践，可以快速且可靠地交付新版本。 配置与发布管理成熟模型 这个模型的最终目标：  缩短生产周期 减少缺陷 提高软件交付生命周期的可预测性 规范合规 有效发现和管理软件交付相关风险 交付更少缺陷的软件，降低成本  模型指导组织推进持续交付变革，使用戴明环，即计划——执行——检查——处理。  使用模型来分析所在部门的配置与发布管理模式 选择一个领域集中发力，该领域是你的薄弱环节，痛点所在 实施变革。先创建一个实施计划，选择真正感到痛苦的那部分人 一旦发生了变化，使用之前创建的验收条件来衡量这些变化是否达到了预期效果。组织所有相关人员召开回顾会议，找出改进点及潜在改进领域 重复上述步骤，积累知识，增量改进，推广到整个部门  项目生命周期团队的组建与磨合常常有以下五个阶段：创建期、风暴期、规范期、运转期、调整重组期。软件也有五个阶段：立项阶段、启动阶段、初始阶段、开发部署阶段、运维阶段。  立项阶段：业务分析、业务负责人及涉及部门有关人确立 启...</div></div></div></a><a class="pagination-related" href="/posts/b4bb0e80ace4.html" title="Jenkins-Pipeline语法实例"><img class="cover" src="https://img.xhua.eu.org/65a7b96870c08bac993faf2fae2f8975faf58a4260edd90c0817d6d0f8398fa5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jenkins-Pipeline语法实例</div></div><div class="info-2"><div class="info-item-1">Jenkins Pipeline支持的指令   指令名 说明 作用域    agent 定义执行任务的代理 stage 或pipeline   environment 设置环境变量 stage或pipeline   tools 自动下载并安装指定的工具，并将其加入到PATH变量中 stage或pipeline   input 暂停pipeline,提示输入内容 stage   options 配置Jenkins pipeline本身，如options{retry(3}},指pipeline失败时再重试2次 stage 或 pipeline   parallel 并行执行多个step stage   parameters 执行pipeline前传入一些参数 pipeline   triggers 定义执行pipeline的触发器 pipeline   when 定义阶段执行的条件 stage   build 触发其他的job steps   options Jenkins Pipeline配置参数   参数名 说明 例子    buildDiscarder 保留最近历史构建记录的数...</div></div></div></a><a class="pagination-related" href="/posts/fda9ff2fc746.html" title="《凤凰项目—一个IT运维的传奇故事》整理"><img class="cover" src="https://img.xhua.eu.org/ea5127a287e83fb46b6f0871ee16a757e542427d7e505652f78cfdc24e8b1a55.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《凤凰项目—一个IT运维的传奇故事》整理</div></div><div class="info-2"><div class="info-item-1">###《凤凰项目》三位作者  Gene Kim: Tripwire有限公司创始人，一直热衷于研究如何提高IT组织的效率 Kevin Behr：创建了信息技术流程研究院 George Spafford：行业分析师  向他们致敬。 故事内容雨前龙井整理的非常详细，可阅读它写的博客 凤凰项目 http://ijyun.github.io/2016/04/23/phoenix-project.html 书中的核心概念 三步工作法  本书中阐述了一个原理：所有开发运维模式都来自“三步工作法”，可以说它是我们平台开发运维的指导思想。  第一工作法是关于从开发到技术运营，再到客户的整个自左向右的工作流。为了使流量最大化，我们需要小的批量规模和工作间隔，绝不让缺陷流向下游工作中心，并且不断为了整体目标（相对于开发功能完成率、测试发现&#x2F;修复比例或运维有效性等局部目标）进行优化。流程自动化  实践：持续构建、持续集成、持续部署，按需创建环境、限制半成品，构建起能够顺利变更的安全系统和组织。  第二工作法是关于价值流各阶段自右向左的快速持续反馈流，放大其效益以确保防止问题再次发生，或者更快地...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>将字符串进行压缩后保存该如何做？ | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="如何将zip文件挂载到容器Pod中呢？Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。具体的操作如下： 12$ echo &quot;abc&quot; | gzip | base64H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA 解密操作： 1$ echo &amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="将字符串进行压缩后保存该如何做？">
+<meta property="og:url" content="https://xhua.eu.org/posts/0a0be0426bc4.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="如何将zip文件挂载到容器Pod中呢？Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。具体的操作如下： 12$ echo &quot;abc&quot; | gzip | base64H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA 解密操作： 1$ echo &amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-12-30T09:55:49.007Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "将字符串进行压缩后保存该如何做？",
+  "url": "https://xhua.eu.org/posts/0a0be0426bc4.html",
+  "image": "https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2025-12-30T09:55:49.007Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/0a0be0426bc4.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '将字符串进行压缩后保存该如何做？',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">将字符串进行压缩后保存该如何做？</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">将字符串进行压缩后保存该如何做？</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-12-30T09:55:49.007Z" title="更新于 2025-12-30 17:55:49">2025-12-30</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>如何将zip文件挂载到容器Pod中呢？<br>Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。<br>具体的操作如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> <span class="string">&quot;abc&quot;</span> | gzip | <span class="built_in">base64</span></span></span><br><span class="line">H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA</span><br></pre></td></tr></table></figure>
+<p>解密操作：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> <span class="string">&quot;H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA&quot;</span> | <span class="built_in">base64</span> -d | gunzip</span></span><br></pre></td></tr></table></figure>
+<p>大家可以尝试下。另外需要注意的是，将该数据挂载到POD的文件中，文件是压缩后的gz文件。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/0a0be0426bc4.html">https://xhua.eu.org/posts/0a0be0426bc4.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/d5b91b0cd4d2.html" title="创建自签证书步骤"><img class="cover" src="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">创建自签证书步骤</div></div><div class="info-2"><div class="info-item-1"> 根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;/C=CN/ST=shanxi/L=taiyuan/O=cn/OU=test/CN=example.com&quot;$ #或者 openssl req -new -x509 -days 36500 -key ca.key -out ca.crt 手动输入配置  创建证书并使用根证书签发  123$ openssl genrsa -out app.key 2048$ openssl req -new -key app.key -out app.csr$ openssl x509 -req -in app.csr -CA ca.crt -CAkey ca.key -out app.crt -days 3650  -CAcreateserial  使用 Openssl 工具查看证书信息  123$ openssl x509 -in app.crt -no...</div></div></div></a><a class="pagination-related" href="/posts/39ef65c75107.html" title="为啥新环境的Kafka性能这么差？"><img class="cover" src="https://img.xhua.eu.org/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">为啥新环境的Kafka性能这么差？</div></div><div class="info-2"><div class="info-item-1">本故事纯属虚构，如有雷同，纯属巧合，一笑了之。公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。A信心满满，认认真真地按照之前B写的文档操作。可测试结果让他大吃一惊，新机器的性能竟然不到老机器的一半。  网络问题？  A：这个Kafka集群压测数据怎么这么差？会不会是网络问题呢？B：之前我们用的是万M网卡，你这个是多少？A：网卡速度怎么看？B：用ethtool命令，后面加对应的网络接口名，看Speed值，就能知道是万M还是千M网卡了。 123456$ ethtool eth0Settings for em0:Supported ports: [ TP ]...Speed: 1000Mb/s... A：这是千M网卡，怪不得性能会这么差呢。B：你确定是网卡的问题吗？你压测的时候用nload命令查看一下网络的带宽有...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/81fb69c8f46f.html" title="《启示录：打造用户喜爱的产品》读书笔记"><img class="cover" src="https://img.xhua.eu.org/7ea9c30d42e84bf4558827e28233a82fd1452743487bb525dbe6d5e64fe259a4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《启示录：打造用户喜爱的产品》读书笔记</div></div><div class="info-2"><div class="info-item-1">   好产品具备三个基本条件：价值、可用性、可行性，三者缺一不可。产品没有价值，开发团队再优秀也无济于事。 第一篇：人员现代软件产品团队成员  产品经理职责：评估产品机会；定义要开发的产品。 用户体验设计师交互设计师：负责深入理解目标用户，设计有价值的，可用的功能，以及用户导航和产品使用流程。视觉设计师：根据交互设计原型，制作美观的产品界面 项目管理人员产品经理完成产品定义后，开发团队开始开发产品。项目经理核心任务：制订计划和跟踪进度。 开发团队职责：负责产品的技术开发。 运维团队职责：互联网服务产品通常运行在服务器上，保证服务正常运行。 产品营销人员职责：负责对外发布信息、宣传产品，为扩展市场销售渠道、组织重点营销活动、促进产品销售提供支持  第二篇：流程11. 评估产品机会——确定待解决的问题只讨论待解决的问题，不应涉及具体解决方案。产品经理需要回答如下十个问题：  产品要解决什么问题？（产品价值） 为谁解决这个问题？（目标市场） 成功的机会有多大？（市场规模） 怎样判断产品成功与否？（度量指标或收益指标） 有哪些同类产品？（竞争格局） 为什么我们最适合做这个产品？（竞争优...</div></div></div></a><a class="pagination-related" href="/posts/884e03ef9a57.html" title="Bash中的换行"><img class="cover" src="https://img.xhua.eu.org/0d4ec5bcd584cd7e23a2cad78e2fed7e0f521a55cb76db042b4b4c230cddc588.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-07</div><div class="info-item-2">Bash中的换行</div></div><div class="info-2"><div class="info-item-1">换行在平常的shell编程中是经常遇到的，但是有时也会忽略掉一些问题。本篇中将会介绍多种方式实现输出换行的方法。 使用 echoecho 自带换行echo 命令输出字符串，在最后后会添加一个换行 123root@Michael:~# echo hello worldhello worldroot@Michael:~# 添加 -n 可以禁用echo最后的换行 12root@Michael:~# echo -n hello worldhello worldroot@Michael:~# 换行符”\n”但是当我们使用bash执行以下命令时，发现它并没有换行 123root@Michael:~#  bash -c &quot;echo \&quot;\n\&quot;&quot;\nroot@Michael:~# 而是需要加一个 -e 1234root@Michael:~# bash -c &quot;echo -e \&quot;\n\&quot;&quot;root@Michael:~# 从echo的说明中可以看到 -e 指的是让转义符生效，其中有： 1234567891011121...</div></div></div></a><a class="pagination-related" href="/posts/f510512cbabb.html" title="持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 性能、吞吐量、容量概念性能：对处理单一事务所花时间的一种度量，既可以单独衡量，也可以在一定的负载下衡量。吞吐量：系统在一定时间内处理事务的数量，通常它受限于系统中的某个瓶颈容量：一定的负载下，当每个单独请求的响应时间维持在可接受范围内时，系统所能承担的最大吞吐量。非功能性：有效性、容量、安全性、可维护性等。 非功能需求管理将非功能需求与功能需求一样对待。  创建一些具体任务来管理非功能需求 有必要的话，向功能需求中加入非功能需求的验收条件  如何为容量编程 为何要做容量测试高德纳著名格言：在97%的时间里，我们都应该忘记那种小的效率提升：过早优化是所有罪恶之根。然而，我们也不能让另外非常关键的3%的机会与我们擦肩而过。一个优秀程序员不会因为这个原则而对其置之不理，他们非常聪明，只会在识别出那段关键代码后，才会非常细心地去查看。在找到解决方案之前，必须先找出问题的根源。容量测试会告诉我们是否存在问题，以便我们可以修复它。不要枉自猜测，而要先进行度量。 解决容量问题现代软件系统中，最昂贵的是网络通信或磁盘存储，在性能和应用程序的稳定性方面，...</div></div></div></a><a class="pagination-related" href="/posts/85b6f42d9df2.html" title="Jenkins Pipeline局部变量"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-13</div><div class="info-item-2">Jenkins Pipeline局部变量</div></div><div class="info-2"><div class="info-item-1">变量未定义在编写Jenkinsfile时，经常会遇到变量问题，明明已经定义过了，但是函数是就是无法读取。例如： 123456789101112131415161718def some_var = &quot;some value&quot;def pr() &#123;    def another_var = &quot;another &quot; + some_var    echo &quot;$&#123;another_var&#125;&quot;&#125;pipeline &#123;    agent any    stages &#123;        stage (&quot;Run&quot;) &#123;            steps &#123;                pr()            &#125;        &#125;    &#125;&#125; 将获得如下错误： 1groovy.lang.MissingPropertyException: No such property: some_var for cla...</div></div></div></a><a class="pagination-related" href="/posts/f94f9d30a93e.html" title="系统性能测试与监测工具汇总"><img class="cover" src="https://img.xhua.eu.org/efa140bf87df6771b7597bdf3f240840ddcbeb5bca6247c373c1b63d8846cb61.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">系统性能测试与监测工具汇总</div></div><div class="info-2"><div class="info-item-1">综合能力性能测试（Unixbench）1[root@localhost] $ ./Run 计算查看当前CPU负载（uptime）1[root@localhost] $ uptime 测试单cpu计算能力（bc）1[root@localhost] $ time echo &quot;scale=5000;4*a(1)&quot; | bc -l -q 内存查看当前内存使用的情况的状态（free）1[root@localhost] $ free -m 进程对内存的占用情况（pmap） 1[root@localhost] $ pmap -d 35713 # 查看进程35713占用内存的情况 磁盘磁盘IO测试（dd）测试磁盘的IO写速度 1# time dd if=/dev/zero of=test.dbf bs=8k count=300000 oflag=direct 测试磁盘的IO读速度 1# dd if=test.dbf bs=8k count=300000 of=/dev/null  表示每次写入&#x2F;读取8k的数据，执行300000次 实时查看各磁盘的io（iostat）...</div></div></div></a><a class="pagination-related" href="/posts/1e1968ef6b3f.html" title="持续交付发布可靠软件的系统方法（基础篇）第四章：测试策略的实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（基础篇）第四章：测试策略的实现</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 项目在一开始阶段，测试人员就会与开发人员及客户一起写自动化测试。这些测试应该在开发前就写好。以上这些测试仅仅是系统进行功能测试，容量、安全性及其非功能性试也应尽早建立，为它们写自动化测试套件。确保不符合需求的问题尽早暴露。  业务导向且支持开发过程的测试在开发一个用户故事之前，应写好验收测试，采取完美的自动化形式。系统的验收测试应运行在类生产环境（UAT)验收测试有价值的特性：  它加快了反馈速度  减少了测试人员的工作负荷 让测试人员集中精力做探索性测试和高价值的活动 这些验收测试也是一组回归测试套件 行为驱动开发，可以以这些测试中自动生成需求说明文档  并不是所有的东西都需要自动化。我们倾向于将自动化验收测试限于完全覆盖Happy Path的行为，并仅覆盖其它一些极其重要的部分。每一种测试都应该覆盖应用程序的80%验收测试一般都是端对端测试，但是这样很多时候验收测试的失败并不是因为真正的缺陷，而是因为界面的变更，这将导致增大了验收测试脚本的维护。有两种方法解决这个问题：  在测试与用户界面之间增加一个抽象层，以便减少因用户界面变更而...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">257</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">95</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</a><time datetime="2025-11-26T10:00:00.000Z" title="发表于 2025-11-26 18:00:00">2025-11-26</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2025 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
