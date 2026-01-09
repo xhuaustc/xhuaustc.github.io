@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubernetes安装手册 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Kubernetes在2014年开源后，很快便占据了容器编排的主导地位，成为容器编排的事实标准。那么Kubernetes的安装是了解它的第一步。目前有非常多的工具方法来实现Kubernetes的安装，收集了一些如下。  kubeadm：https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;kubeadmkubeadm是官方提供的最为通用的一种部署方案。 kops：https:&#x2F;&#x2F;github">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes安装手册">
+<meta property="og:url" content="https://xhua.eu.org/posts/d7d0952ffadb.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Kubernetes在2014年开源后，很快便占据了容器编排的主导地位，成为容器编排的事实标准。那么Kubernetes的安装是了解它的第一步。目前有非常多的工具方法来实现Kubernetes的安装，收集了一些如下。  kubeadm：https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;kubeadmkubeadm是官方提供的最为通用的一种部署方案。 kops：https:&#x2F;&#x2F;github">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.069Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Kubernetes安装手册",
+  "url": "https://xhua.eu.org/posts/d7d0952ffadb.html",
+  "image": "https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.069Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/d7d0952ffadb.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubernetes安装手册',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Kubernetes安装手册</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes安装手册</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.069Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Kubernetes在2014年开源后，很快便占据了容器编排的主导地位，成为容器编排的事实标准。那么Kubernetes的安装是了解它的第一步。目前有非常多的工具方法来实现Kubernetes的安装，收集了一些如下。</p>
+<ul>
+<li>kubeadm：<a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubeadm">https://github.com/kubernetes/kubeadm</a><br>kubeadm是官方提供的最为通用的一种部署方案。</li>
+<li>kops：<a target="_blank" rel="noopener" href="https://github.com/kubernetes/kops">https://github.com/kubernetes/kops</a><br>kops通过命令行创建，销毁，升级和维护生产级，高可用性的Kubernetes集群。目前正式支持AWS（Amazon Web Services），其中GCE和OpenStack处于beta测试阶段，而VMware vSphere处于alpha阶段。</li>
+<li>kubespray：<a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kubespray">https://github.com/kubernetes-sigs/kubespray</a><br>kubespray通过 Ansible Playbook 来定义系统与 Kubernetes 集群部署的任务。</li>
+<li>KubeOperator: <a target="_blank" rel="noopener" href="https://github.com/KubeOperator/KubeOperator">https://github.com/KubeOperator/KubeOperator</a><br>KubeOperator 是一个Fit2Cloud开源项目，在离线网络环境下，通过可视化 Web UI 在 VMware、Openstack 或者物理机上规划、部署和运营生产级别的 Kubernetes 集群。</li>
+<li>ansible-install-k8s：<a target="_blank" rel="noopener" href="https://github.com/lizhenliang/ansible-install-k8s">https://github.com/lizhenliang/ansible-install-k8s</a><br>ansible-install-k8s支持离线安装，是属于个人开发的ansible部署脚本</li>
+<li>kind：<a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kind">https://github.com/kubernetes-sigs/kind</a><br>Kind（Kubernetes in Docker） 是一个 Kubernetes 孵化项目，Kind 是一套开箱即用的 Kubernetes 环境搭建方案。顾名思义，就是将 Kubernetes 所需要的所有组件，全部部署在一个 Docker 容器中，可以很方便的搭建 Kubernetes 集群。</li>
+<li>sealos：<a target="_blank" rel="noopener" href="https://github.com/fanux/sealos">https://github.com/fanux/sealos</a><br>Sealos 是一个 Go 语言开发的简单干净且轻量的 Kubernetes 集群部署工具，Sealos 能很好的支持在生产环境中部署高可用的 Kubernetes 集群。</li>
+</ul>
+<h2 id="使用kubeadm部署单机版k8s"><a href="#使用kubeadm部署单机版k8s" class="headerlink" title="使用kubeadm部署单机版k8s"></a>使用kubeadm部署单机版k8s</h2><h3 id="Master节点安装"><a href="#Master节点安装" class="headerlink" title="Master节点安装"></a>Master节点安装</h3><ol>
+<li>机器准备</li>
+</ol>
+<ul>
+<li>虚机配置2核4G以上</li>
+<li>可访问外网</li>
+<li>操作系统CentOS 7.6</li>
+</ul>
+<ol start="2">
+<li>准备工作</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl stop firewalld</span><br><span class="line">$ systemctl disable firewalld</span><br><span class="line">$ setenforce 0</span><br><span class="line">$cat /etc/selinux/config</span><br><span class="line">...</span><br><span class="line">SELINUX=disabled</span><br><span class="line">...</span><br><span class="line">$ hostnamectl set-hostname master1</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>添加k8s yum源</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[k8s]</span><br><span class="line">name=k8s</span><br><span class="line">baseurl=https://mirrors.tuna.tsinghua.edu.cn/kubernetes/yum/repos/kubernetes-el7-x86_64/</span><br><span class="line">gpgcheck=0</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>确保 iptables 工具不使用 nftables 后端</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ update-alternatives --set iptables /usr/sbin/iptables-legacy</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>安装软件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ yum install -y docker kubelet kubeadm kubectl kubernetes-cni</span><br><span class="line">$ echo &quot;KUBELET_EXTRA_ARGS=--cgroup-driver=systemd&quot; &gt; /etc/sysconfig/kubelet</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>关闭系统的Swap</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ swapoff -a</span><br><span class="line">$ # 将/etc/fstab文件中的Swap注释掉</span><br><span class="line">$ cat /etc/fstab</span><br><span class="line">/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0</span><br><span class="line">UUID=1539acb0-0589-4eae-a0a4-24566186e425 /boot                   xfs     defaults        0 0</span><br><span class="line">#/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>创建&#x2F;etc&#x2F;sysctl.d&#x2F;k8s.conf文件，添加如下内容</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">net.bridge.bridge-nf-call-ip6tables = 1</span><br><span class="line">net.bridge.bridge-nf-call-iptables = 1</span><br><span class="line">net.ipv4.ip_forward = 1</span><br><span class="line">vm.swappiness=0</span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>启动docker与配置kubelet服务</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">systemctl start docker</span><br><span class="line">systemctl enable docker</span><br><span class="line">systemctl enable kubelet</span><br></pre></td></tr></table></figure>
+<ol start="9">
+<li>对docker进行加速，在&#x2F;etc&#x2F;sysconfig&#x2F;docker配置项中添加如下内容</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--registry-mirror=https://r03u9tep.mirror.aliyuncs.com</span><br></pre></td></tr></table></figure>
+<ol start="10">
+<li>使用hub.docker.com中的镜像，例如：<code>docker.io/aiotceo/kube-apiserver</code></li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ # 下载aiotceo镜像</span><br><span class="line">$ kubeadm config images list | sed -e &#x27;s/^/docker pull /g&#x27; -e &#x27;s/k8s.gcr.io/docker.io\/aiotceo/g&#x27; -e &#x27;s/-0//g&#x27; | sh -x</span><br><span class="line">$ #将aiotceo重新tag到k8s.gcr.io</span><br><span class="line">$ docker images | grep aiotceo | awk &#x27;&#123;print &quot;docker tag &quot; $1&quot;:&quot;$2,$1&quot;:&quot;$2&#125;&#x27; | sed -e &quot;s#docker.io/aiotceo#k8s.gcr.io#2&quot; -e &quot;s#3.4.3#3.4.3-0#2&quot; | sh -x</span><br><span class="line">$ #删除aiotceo镜像</span><br><span class="line">$ docker images |grep aiotceo |awk &#x27;&#123;print &quot;docker rmi &quot;, $1&quot;:&quot;$2&#125;&#x27; |sh -x </span><br></pre></td></tr></table></figure>
+<ol start="11">
+<li>初始化kube集群</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ kubeadm init</span><br><span class="line">...</span><br><span class="line">kubeadm join 10.0.2.15:6443 --token 8o8yv2.tv836s1jncmrwgsp \</span><br><span class="line">    --discovery-token-ca-cert-hash sha256:d9d15b5905e8defc0ef6de294be5eff08d720ed9d98b8d6cb99d153bc7332e8e</span><br></pre></td></tr></table></figure>
+<ol start="12">
+<li>创建管理员访问文件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir -p $HOME/.kube</span><br><span class="line">$ cp -i /etc/kubernetes/admin.conf $HOME/.kube/config</span><br></pre></td></tr></table></figure>
+<ol start="13">
+<li>安装网络插件，例如calico</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f https://kuboard.cn/install-script/calico/calico-3.13.1.yaml</span><br></pre></td></tr></table></figure>
+<ol start="14">
+<li>查看k8s状态</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get node</span><br><span class="line">NAME    STATUS   ROLES    AGE   VERSION</span><br><span class="line">node1   Ready    master   14m   v1.18.2</span><br></pre></td></tr></table></figure>
+<h3 id="添加计算节点"><a href="#添加计算节点" class="headerlink" title="添加计算节点"></a>添加计算节点</h3><p>重复 0-9 步，完成环境准备，安装软件及下载镜像。<br>10. kubeadm将计算节点加入集群</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubeadm join 10.0.2.15:6443 --token 8o8yv2.tv836s1jncmrwgsp \</span><br><span class="line">    --discovery-token-ca-cert-hash sha256:d9d15b5905e8defc0ef6de294be5eff08d720ed9d98b8d6cb99d153bc7332e8e</span><br></pre></td></tr></table></figure>
+<ol start="11">
+<li>查看k8s状态</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get node</span><br><span class="line">NAME    STATUS   ROLES    AGE   VERSION</span><br><span class="line">node1   Ready    master   14m   v1.18.2</span><br><span class="line">node2   Ready    &lt;none&gt;   30m   v1.18.2</span><br></pre></td></tr></table></figure>
+<h3 id="补充说明："><a href="#补充说明：" class="headerlink" title="补充说明："></a>补充说明：</h3><ol>
+<li>安装时可以通过<code>kubeadm config print init-defaults</code>查看默认配置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">$ kubeadm config print init-defaults</span><br><span class="line">apiVersion: kubeadm.k8s.io/v1beta2</span><br><span class="line">bootstrapTokens:</span><br><span class="line">- groups:</span><br><span class="line">  - system:bootstrappers:kubeadm:default-node-token</span><br><span class="line">  token: abcdef.0123456789abcdef</span><br><span class="line">  ttl: 24h0m0s</span><br><span class="line">  usages:</span><br><span class="line">  - signing</span><br><span class="line">  - authentication</span><br><span class="line">kind: InitConfiguration</span><br><span class="line">localAPIEndpoint:</span><br><span class="line">  advertiseAddress: 1.2.3.4</span><br><span class="line">  bindPort: 6443</span><br><span class="line">nodeRegistration:</span><br><span class="line">  criSocket: /var/run/dockershim.sock</span><br><span class="line">  name: master1</span><br><span class="line">  taints:</span><br><span class="line">  - effect: NoSchedule</span><br><span class="line">    key: node-role.kubernetes.io/master</span><br><span class="line">---</span><br><span class="line">apiServer:</span><br><span class="line">  timeoutForControlPlane: 4m0s</span><br><span class="line">apiVersion: kubeadm.k8s.io/v1beta2</span><br><span class="line">certificatesDir: /etc/kubernetes/pki</span><br><span class="line">clusterName: kubernetes</span><br><span class="line">controllerManager: &#123;&#125;</span><br><span class="line">dns:</span><br><span class="line">  type: CoreDNS</span><br><span class="line">etcd:</span><br><span class="line">  local:</span><br><span class="line">    dataDir: /var/lib/etcd</span><br><span class="line">imageRepository: k8s.gcr.io</span><br><span class="line">kind: ClusterConfiguration</span><br><span class="line">kubernetesVersion: v1.18.0</span><br><span class="line">networking:</span><br><span class="line">  dnsDomain: cluster.local</span><br><span class="line">  serviceSubnet: 10.96.0.0/12</span><br><span class="line">scheduler: &#123;&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>使用<code>kubeadm init --config</code>可以指定kubeadm配置文件</li>
+</ol>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://kuboard.cn/install/install-k8s.html#%E6%96%87%E6%A1%A3%E7%89%B9%E7%82%B9">使用kubeadm安装kubernetes_v1.18.x</a><br><a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/setup/production-environment/tools/kubeadm/high-availability/">利用 kubeadm 创建高可用集群</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/d7d0952ffadb.html">https://xhua.eu.org/posts/d7d0952ffadb.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/863aac1da72a.html" title="OpenShift-Route会话保持与负载均衡策略"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-Route会话保持与负载均衡策略</div></div><div class="info-2"><div class="info-item-1">Route会话保持OpenShift Router是基于Haproxy反向代理实现的，客户端请求与后端应用POD通过cookie来实现会话保持。  默认是开启会话保持的，基于cookie的会话保持。 如果设置haproxy.router.openshift.io/disable_cookies为True，将会禁用基于cookie的会话保持，而使用balance的负载策略。  此过程分为两个阶段：第一次请求阶段、再次发起请求阶段 第一次请求阶段客户端发起第一次请求时，Router会给返回的数据中添加一条指定的cookie。  客户端请求到达Router节点。 Router节点通过默认的负载均衡策略选择后端应用POD。 后端应用POD返回数据到Router节点。 Router根据后端应用POD,给返回的数据包set-cookie: cookiename[HASH值]&#x3D;cookievalue(HASH值），有效期为SESSION(浏览器客户端关闭前有效)。  再次发起请求阶段客户端再次发起请求时，会带上第一次Router设置的cookie,Router根据该cookie值选择...</div></div></div></a><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/4f92c76453ff.html" title="通过curl访问OpenShift上部署的Prometheus获取监控数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">通过curl访问OpenShift上部署的Prometheus获取监控数据</div></div><div class="info-2"><div class="info-item-1"> Prometheus作为最常用的集群的监控组件，它收集了集群最全的状态信息。那么当我们需要将它与现有的监控告警平台打通，或者根据它开发一个自己的监控展示平台时，就不得不需要获得Prometheus的监控数据了。这时就不得不访问Prometheus的API接口。根据场景的不同有两种方式能够获取到Prometheus的数据  集群外部，通过访问Prometheus UI的链接来获取指标数据 集群内部，进入Prometheus容器中，获取指标数据  1. 集群外部，curl访问Prometheus UI地址由于OpenShift上部署的Prometheus应用对接了OpenShift的用户认证oauth-proxy，所以必须先获取用户的Token后再通过curl访问prometheus服务获取数据，具体操作如下。 123456789101112# #登录[root@master ~]# oc login -u adminAuthentication required for https://master.example.com:8443 (openshift)Username: ad...</div></div></div></a><a class="pagination-related" href="/posts/3e4333ef6f0f.html" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a><a class="pagination-related" href="/posts/84360199a57a.html" title="Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建</div></div><div class="info-2"><div class="info-item-1">#Jenkins系统配置详情 安装插件列表：Git Parameter Plug-In Gitlab Hook Plugin SonarQube Scanner for Jenkins JaCoCo plugin Maven Integration plugin Jenkins配置详情：Jenkins-&gt;系统管理-&gt;系统配置 SonarQube servers配置  Name:  SonarqubeServer Server URL: http://sonarqube-sonarqube.apps.test.openshift.com Server version: 5.3 or higher Server authentication token: $TOKEN(从SonarQube Server上创建） Jenkins-&gt;系统管理-&gt;Global Tool Configuration Maven Configuration  Default settings provider: Use default maven settings Default gl...</div></div></div></a><a class="pagination-related" href="/posts/ab2bfd6bf012.html" title="OpenShift中节点的垃圾收集——容器与镜像"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中节点的垃圾收集——容器与镜像</div></div><div class="info-2"><div class="info-item-1">参考文档https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;garbage_collection.html </div></div></div></a><a class="pagination-related" href="/posts/ed13f1158553.html" title="Openshift-F5集成（总结）——与Router方案对比"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（总结）——与Router方案对比</div></div><div class="info-2"><div class="info-item-1">这篇文章来自9月份自己在F5年度会议上分享的PPT，感谢过程中帮忙一起联调的小伙伴。PPT也分享出来，地址如下：openshift与F5的联合解决方案Openshift-F5集成（南北流量走F5）Openshift-F5集成（续）——实现灰度发布 Openshift的基础概念Openshift简介红帽® OpenShift 是一款性能强大的开源企业级PaaS产品。不仅是企业级的Kubernetes，可以构建、部署与管理容器应用，还提供从开发到投入生产的整个应用生命周期内使用的完整解决方案，帮助客户享受快速创新带来的收益，同时保持企业级平台的稳定性、可靠性和安全性。Openshift支持多种环境下部署，无论是在企业内部，公共云，或是托管环境中。 Openshift Pod Pod是Openshift调度的最小单元 一个Pod包含一个或多个容器 Pod内的容器共享网络，IP不固定  实例： 12345678910111213apiVersion: v1kind: Podmetadata:  name: MyApp       labels:    app: MyApp    spec...</div></div></div></a><a class="pagination-related" href="/posts/688ce06e973e.html" title="镜像命名规范与Dockerfile编写规范"><img class="cover" src="https://img.xhua.eu.org/57a8f992b61307a0a6f4c1fd5b4df56f6b28f747304f403453aff19e08d8acee.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">镜像命名规范与Dockerfile编写规范</div></div><div class="info-2"><div class="info-item-1">镜像命名规范镜像地址：镜像仓库&#x2F;项目名&#x2F;镜像名:标签名  项目名，公共项目使用名称：base，并设置为公开；其它项目使用英文小写项目名，设置为私有。 镜像名中应该包含使用的组件名称及版本信息，使用-连接。 基础镜像命名规则基础镜像命名应按照操作系统大版本：版本号-构建版本的格式命名，例如：base/rehl7:7.6-1 公共镜像全名规则公共镜像命名应按照服务名-中间件-上级中间件：服务版本号-中间件版本号-上级中间件版本号-构建版本的格式命名，中间件名称可以包含大版本号，例如：base/tomcat8-openjdk8:8.5.23-jre8u212-1 应用命名规则使用格式：系统-模块:系统版本-模块版本-构建版本，例如：sys/sys-rs:1.1-1.1-1   同一应用镜像在以上标签的规则下，还可以根据发布流程设置多个标签，以满足部署时版本依赖的管理要求。例如sys/sys-rs:v1代表v1.x的最新版本。  镜像制作规范 关键字使用大写 FROM镜像，指定明确的Tag，不要使用latest 发布向后兼容的镜像可以使用同一个Tag号，否则使用新的T...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8kubeadm%E9%83%A8%E7%BD%B2%E5%8D%95%E6%9C%BA%E7%89%88k8s"><span class="toc-text">使用kubeadm部署单机版k8s</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Master%E8%8A%82%E7%82%B9%E5%AE%89%E8%A3%85"><span class="toc-text">Master节点安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E8%AE%A1%E7%AE%97%E8%8A%82%E7%82%B9"><span class="toc-text">添加计算节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%E8%AF%B4%E6%98%8E%EF%BC%9A"><span class="toc-text">补充说明：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

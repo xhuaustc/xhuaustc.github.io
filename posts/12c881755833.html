@@ -1,0 +1,219 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>常用的Tcpdump命令 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="监控某一网络接口的数据包  1tcpdump -i eth0   查看dns解析的包 port domain  1tcpdump -i eth0 -nt  -s 500 port domain -t 不显示时间-n 不会将ip显示为hostname  过滤IP  12345tcpdump -i eth0 host 202.22.22.22tcpdump -i eth0 src host 202.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="常用的Tcpdump命令">
+<meta property="og:url" content="https://xhua.eu.org/posts/12c881755833.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="监控某一网络接口的数据包  1tcpdump -i eth0   查看dns解析的包 port domain  1tcpdump -i eth0 -nt  -s 500 port domain -t 不显示时间-n 不会将ip显示为hostname  过滤IP  12345tcpdump -i eth0 host 202.22.22.22tcpdump -i eth0 src host 202.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg">
+<meta property="article:published_time" content="2023-12-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.066Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta property="article:tag" content="infra tools">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "常用的Tcpdump命令",
+  "url": "https://xhua.eu.org/posts/12c881755833.html",
+  "image": "https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg",
+  "datePublished": "2023-12-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.066Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/12c881755833.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '常用的Tcpdump命令',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">常用的Tcpdump命令</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">常用的Tcpdump命令</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-12-20T12:30:00.000Z" title="发表于 2023-12-20 20:30:00">2023-12-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.066Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ol>
+<li>监控某一网络接口的数据包</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -i eth0</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>查看dns解析的包 port domain</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -i eth0 -nt  -s 500 port domain</span><br></pre></td></tr></table></figure>
+<p>-t 不显示时间<br>-n 不会将ip显示为hostname</p>
+<ol start="3">
+<li>过滤IP</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -i eth0 host 202.22.22.22</span><br><span class="line">tcpdump -i eth0 src host 202.22.22.22  ## 指定源地址</span><br><span class="line">tcpdump -i eth0 dst host 202.22.22.22  ## 指定目的地址</span><br><span class="line">tcpdump -i eth0 host 202.22.22.22 and \(202.22.22.21 or 202.22.22.20 \)  ## 获取202.22.22.22 与 202.22.22.21或202.22.22.20之间的包</span><br><span class="line">tcpdump -i eth0 host 202.22.22.22 and !202.22.22.21  ## 获取202.22.22.22 与 除了202.22.22.21 之外的ip之间的包</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>过滤端口 port</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -i eth0 port 22</span><br><span class="line">tcpdump -i eth0 src port 22  ## 指定源端口</span><br><span class="line">tcpdump -i eth0 dst port 22  ## 指定目的端口</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>过滤协议</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -i eth0 arp</span><br><span class="line">tcpdump -i eth0 ip</span><br><span class="line">tcpdump -i eth0 tcp</span><br><span class="line">tcpdump -i eth0 udp</span><br><span class="line">tcpdump -i eth0 icmp</span><br></pre></td></tr></table></figure>
+
+<p>参考文章：</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/jiujuan/p/9017495.html">tcpdump高级过滤</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/12c881755833.html">https://xhua.eu.org/posts/12c881755833.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a><a class="post-meta__tags" href="/tags/infra-tools/">infra tools</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/0b2e9fb9bf3f.html" title="selenium+Xvfb+ffmpeg实现服务器录屏"><img class="cover" src="https://img.xhua.eu.org/3699f0dc0039aa39a20cdf12a48352920020a72ece5829eadc646dc32f50f9e2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">selenium+Xvfb+ffmpeg实现服务器录屏</div></div><div class="info-2"><div class="info-item-1">在现代软件开发中，自动化测试变得越来越重要，而录屏功能则为测试结果的验证提供了直观的方式。通过结合Selenium、Xvfb和FFmpeg这三个强大的工具，我们可以在服务器上实现无头(headless)的录屏环境，这对于没有图形界面的服务器尤其有用。 Selenium是一个自动化测试工具，它可以模拟用户对网页的操作，如点击、输入文本等。Xvfb（X虚拟帧缓冲）提供了一个虚拟的显示环境，使得我们可以在不需要实际显示器的情况下运行图形应用程序。FFmpeg是一个强大的多媒体框架，能够处理视频和音频的录制、转换和流式传输。 将这三个工具结合起来，我们可以创建一个自动化的录屏流程，这个流程可以在后台运行，录制Selenium驱动的浏览器会话。这样，无论是进行自动化测试验证，还是生成用户操作教程，都可以通过这种方式来实现。 例如，我们可以使用Selenium启动一个浏览器会话，然后用Xvfb创建一个虚拟的显示环境来捕获这个会话的屏幕。接着，使用FFmpeg开始录制屏幕内容，直到测试完成。这个过程完全自动化，可以集成到持续集成&#x2F;持续部署（CI&#x2F;CD）的流程中，提高开发效率...</div></div></div></a><a class="pagination-related" href="/posts/85b6f42d9df2.html" title="Jenkins Pipeline局部变量"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Jenkins Pipeline局部变量</div></div><div class="info-2"><div class="info-item-1">变量未定义在编写Jenkinsfile时，经常会遇到变量问题，明明已经定义过了，但是函数是就是无法读取。例如： 123456789101112131415161718def some_var = &quot;some value&quot;def pr() &#123;    def another_var = &quot;another &quot; + some_var    echo &quot;$&#123;another_var&#125;&quot;&#125;pipeline &#123;    agent any    stages &#123;        stage (&quot;Run&quot;) &#123;            steps &#123;                pr()            &#125;        &#125;    &#125;&#125; 将获得如下错误： 1groovy.lang.MissingPropertyException: No such property: some_var for cla...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/7a9b103dcaf6.html" title="OpenResty"><img class="cover" src="https://img.xhua.eu.org/75c4e1975b9ede9ade5076198580ec44860aff0d1d1ee51109ecd3f5c34cea38.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-05-26</div><div class="info-item-2">OpenResty</div></div><div class="info-2"><div class="info-item-1">什么是OpenRestyOpenResty是一个基于 Nginx 与 Lua 的高性能 Web 平台，其内部集成了大量精良的 Lua 库、第三方模块以及大多数的依赖项。用于方便地搭建能够处理超高并发、扩展性极高的动态 Web 应用、Web 服务和动态网关。可用于实现：  路由控制 高并发入口 动态服务降级 动态负载均衡 WAF应用防火墙  安装OpenResty 二进制安装  123[root@localhost ~]# yum-config-manager --add-repo https://openresty.org/yum/cn/centos/OpenResty.repo[root@localhost ~]# yum install openresty -y[root@localhost ~]# systemctl start openresty   Docker 安装  1docker run -e KEY_ENV --name proxy --rm -p 443:443 -p 80:80 -v ~/openresty/:/etc/nginx/ docker.io/op...</div></div></div></a><a class="pagination-related" href="/posts/efe927f19448.html" title="ansible通过跳板机管理另一个网络下的主机集群"><img class="cover" src="https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">ansible通过跳板机管理另一个网络下的主机集群</div></div><div class="info-2"><div class="info-item-1">原文地址：http://wooooe.com/2018/07/31/remote_forwarding&#x2F; ssh端口映射例子 因为公司的网络比较深所以经常需要跳转多次。所以这次做个记录    需求: 需要从your host跳到client中间隔了两层跳板机。 如果单纯用代理方法只能跳一层 所以如果用端口映射+代理方式就可以跳两层了 映射命令 1ssh -g -f -NL 127.0.0.1:44010:172.16.3.14:22 -p 3391 jump_host1_username@222.222.222.222  意思就是将172.16.3.14的22端口映射到127.0.0.1的44010端口,222.222.222.222是中间的代理机，3391是222.222.222.222的ssh端口。 映射完成之后。执行 1ssh -p 44010 jump_host2_username@127.0.0.1  就可以直接跳转到jump_host2上 ssh走代理方法 第一种: 1ssh -o ProxyCommand=&quot;ssh -W %h:%p -p 339...</div></div></div></a><a class="pagination-related" href="/posts/85b6f42d9df2.html" title="Jenkins Pipeline局部变量"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-13</div><div class="info-item-2">Jenkins Pipeline局部变量</div></div><div class="info-2"><div class="info-item-1">变量未定义在编写Jenkinsfile时，经常会遇到变量问题，明明已经定义过了，但是函数是就是无法读取。例如： 123456789101112131415161718def some_var = &quot;some value&quot;def pr() &#123;    def another_var = &quot;another &quot; + some_var    echo &quot;$&#123;another_var&#125;&quot;&#125;pipeline &#123;    agent any    stages &#123;        stage (&quot;Run&quot;) &#123;            steps &#123;                pr()            &#125;        &#125;    &#125;&#125; 将获得如下错误： 1groovy.lang.MissingPropertyException: No such property: some_var for cla...</div></div></div></a><a class="pagination-related" href="/posts/470494acb742.html" title="Elasticsearch-+-Kibana添加到Systemctl"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Elasticsearch-+-Kibana添加到Systemctl</div></div><div class="info-2"><div class="info-item-1">&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/kibana-5.1.1-linux-x86_64/kibana.pidExecStart=/home/vagrant/kibana-5.1.1-linux-x86_64/bin/kibanaUser=vagrantRestart=alwaysLimitMEMLOCK=infinityLimitNOFILE=1048576LimitNPROC=1048576  &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;elasticsearch.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/elasticsearch-rtf/elasticsearc...</div></div></div></a><a class="pagination-related" href="/posts/f510512cbabb.html" title="持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 性能、吞吐量、容量概念性能：对处理单一事务所花时间的一种度量，既可以单独衡量，也可以在一定的负载下衡量。吞吐量：系统在一定时间内处理事务的数量，通常它受限于系统中的某个瓶颈容量：一定的负载下，当每个单独请求的响应时间维持在可接受范围内时，系统所能承担的最大吞吐量。非功能性：有效性、容量、安全性、可维护性等。 非功能需求管理将非功能需求与功能需求一样对待。  创建一些具体任务来管理非功能需求 有必要的话，向功能需求中加入非功能需求的验收条件  如何为容量编程 为何要做容量测试高德纳著名格言：在97%的时间里，我们都应该忘记那种小的效率提升：过早优化是所有罪恶之根。然而，我们也不能让另外非常关键的3%的机会与我们擦肩而过。一个优秀程序员不会因为这个原则而对其置之不理，他们非常聪明，只会在识别出那段关键代码后，才会非常细心地去查看。在找到解决方案之前，必须先找出问题的根源。容量测试会告诉我们是否存在问题，以便我们可以修复它。不要枉自猜测，而要先进行度量。 解决容量问题现代软件系统中，最昂贵的是网络通信或磁盘存储，在性能和应用程序的稳定性方面，...</div></div></div></a><a class="pagination-related" href="/posts/bc3bb21f4547.html" title="Nginx性能优化配置参考"><img class="cover" src="https://img.xhua.eu.org/4c48d3fee79573989e60813093038ca9d495356ae92e592eea40a13e07c0b777.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Nginx性能优化配置参考</div></div><div class="info-2"><div class="info-item-1">系统优化 系统内核优化参考  123456789101112131415161718192021222324$ cat /etc/sysctl.confnet.ipv4.tcp_max_syn_backlog = 65536net.core.netdev_max_backlog =  36768net.core.somaxconn = 36768 net.core.wmem_default = 8588608net.core.rmem_default = 8588608net.core.rmem_max = 16877216net.core.wmem_max = 16877216 net.ipv4.tcp_synack_retries = 2net.ipv4.tcp_syn_retries = 2 net.ipv4.tcp_tw_recycle = 1net.ipv4.tcp_tw_reuse = 1 net.ipv4.tcp_mem = 94500000 915000000 927000000net.ipv4.tcp_max_orphans = 3376800net.ipv4....</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</a><time datetime="2026-01-09T03:15:00.000Z" title="发表于 2026-01-09 11:15:00">2026-01-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>创建自签证书步骤 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;&#x2F;C&#x3D;CN&#x2F;ST&#x3D;shanxi&#x2F;L&#x3D;taiyuan&#x2F;O&#x3D;cn&#x2F;OU&#x3D;test&#x2F;CN&#x3D;example.com&quot;$ #或者 openssl req -new -">
+<meta property="og:type" content="article">
+<meta property="og:title" content="创建自签证书步骤">
+<meta property="og:url" content="https://xhua.eu.org/posts/d5b91b0cd4d2.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;&#x2F;C&#x3D;CN&#x2F;ST&#x3D;shanxi&#x2F;L&#x3D;taiyuan&#x2F;O&#x3D;cn&#x2F;OU&#x3D;test&#x2F;CN&#x3D;example.com&quot;$ #或者 openssl req -new -">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.066Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "创建自签证书步骤",
+  "url": "https://xhua.eu.org/posts/d5b91b0cd4d2.html",
+  "image": "https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.066Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/d5b91b0cd4d2.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '创建自签证书步骤',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">创建自签证书步骤</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">创建自签证书步骤</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.066Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ol>
+<li>根证书创建</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl genrsa -out ca.key 2048</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj <span class="string">&quot;/C=CN/ST=shanxi/L=taiyuan/O=cn/OU=test/CN=example.com&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#或者 openssl req -new -x509 -days 36500 -key ca.key -out ca.crt 手动输入配置</span></span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>创建证书并使用根证书签发</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl genrsa -out app.key 2048</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl req -new -key app.key -out app.csr</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl x509 -req -<span class="keyword">in</span> app.csr -CA ca.crt -CAkey ca.key -out app.crt -days 3650  -CAcreateserial</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>使用 Openssl 工具查看证书信息</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl x509 -<span class="keyword">in</span> app.crt -noout -dates</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl x509 -<span class="keyword">in</span> app.crt -noout -subject</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">openssl x509 -<span class="keyword">in</span> app.crt -noout -text</span></span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>nginx的配置中的证书使用中，ca与crt证书的保存顺序如下：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">CRT</span><br><span class="line">-----END CERTIFICATE-----</span><br><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">CA</span><br><span class="line">-----END CERTIFICATE-----</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/d5b91b0cd4d2.html">https://xhua.eu.org/posts/d5b91b0cd4d2.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/0a0be0426bc4.html" title="将字符串进行压缩后保存该如何做？"><img class="cover" src="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">将字符串进行压缩后保存该如何做？</div></div><div class="info-2"><div class="info-item-1">如何将zip文件挂载到容器Pod中呢？Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。具体的操作如下： 12$ echo &quot;abc&quot; | gzip | base64H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA 解密操作： 1$ echo &quot;H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA&quot; | base64 -d | gunzip 大家可以尝试下。另外需要注意的是，将该数据挂载到POD的文件中，文件是压缩后的gz文件。 </div></div></div></a><a class="pagination-related" href="/posts/39ef65c75107.html" title="为啥新环境的Kafka性能这么差？"><img class="cover" src="https://img.xhua.eu.org/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">为啥新环境的Kafka性能这么差？</div></div><div class="info-2"><div class="info-item-1">本故事纯属虚构，如有雷同，纯属巧合，一笑了之。公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。A信心满满，认认真真地按照之前B写的文档操作。可测试结果让他大吃一惊，新机器的性能竟然不到老机器的一半。  网络问题？  A：这个Kafka集群压测数据怎么这么差？会不会是网络问题呢？B：之前我们用的是万M网卡，你这个是多少？A：网卡速度怎么看？B：用ethtool命令，后面加对应的网络接口名，看Speed值，就能知道是万M还是千M网卡了。 123456$ ethtool eth0Settings for em0:Supported ports: [ TP ]...Speed: 1000Mb/s... A：这是千M网卡，怪不得性能会这么差呢。B：你确定是网卡的问题吗？你压测的时候用nload命令查看一下网络的带宽有...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/f8f8c2afa37e.html" title="Lego签SSL证书"><img class="cover" src="https://img.xhua.eu.org/eba62c951952f299eeedb3f6702830b357fc69cd5bdc99b18c79decb952f06e7.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-16</div><div class="info-item-2">Lego签SSL证书</div></div><div class="info-2"><div class="info-item-1">HTTPS已经成为当今网站的标准配置,为网站提供加密和身份验证功能。但是申请和维护SSL证书一直是一个繁琐的过程。幸运的是,Lego这个强大的工具可以帮助我们轻松地自动化获取和更新Let’s Encrypt免费SSL证书。 Lego 简介Lego是一个用Go语言编写的Let’s Encrypt客户端,它可以帮助我们自动化完成SSL证书的申请、验证和更新过程。相比于其他工具,Lego的优势在于:  支持多种验证方式,包括HTTP和DNS验证 集成了众多DNS服务商的API,可以自动完成DNS验证 使用简单,只需几个命令即可完成证书申请 支持通配符证书  安装 Lego mac  1brew install lego  docker  1docker run goacme/lego -h  签发rout53证书 配置AWS密钥  123export AWS_ACCESS_KEY_ID=xxxexport AWS_SECRET_ACCESS_KEY=xxxexport AWS_REGION=us-east-1  生成ssl证书  1lego --email xhuaustc@gmail...</div></div></div></a><a class="pagination-related" href="/posts/6a949e5f3291.html" title="持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 提交阶段的运行应该少于5分钟，一定不要超过10分钏提交阶段的首要目标是创建可部署的产物 提交阶段的原则与实践 提供快速有用的反馈 何时令提交阶段失败 编译错误 测试失败（包括单元覆盖率低于60%）   精心对待提交阶段 提交阶段中有构建用的脚本和运行单元测试、静态分析等脚本。 随着项目的进行，不断改进提交阶段的脚本的质量、设计和性能 确保将脚本做成模块化，将那些经常使用且很少变化的常见任务与需要修改的任务分开 将部署流水线中不同阶段所用的代码分别写在不同脚本中 不要写出与具体环境相关的脚本，即要把具体环境配置与构建脚本分离   让开发人员也拥有所有权如果必要的话，即使是很普通的变更也都应该由开发人员和运维人员来执行 在超大项目团队中指定一个构建负责人 监督和指导对构建的维护 鼓励和加强构建纪律 在团队开始接触持续集成时，构建纪律还没建立起来时，提醒作用   团队成员轮流当，比如每星期轮换一次    提交阶段结果提交阶段的输入是源代码，输出是二进制包和报告（测试结果和代码分析报告） 制品库 制品库仅保存某些版本，而不是全部。如果在部署流水...</div></div></div></a><a class="pagination-related" href="/posts/27114569557b.html" title="WSL2-+-microK8s-+-K8s"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">WSL2-+-microK8s-+-K8s</div></div><div class="info-2"><div class="info-item-1"> Windowns 10 (WSL2) + Ubuntu 20.04   enable systemd snapd microk8s  启动systemd，并使用snap安装   123$  sudo apt install daemonize$ sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target$ sudo nsenter -t $(pidof systemd) -a su - $LOGNAME  安装microk8s  12$ snap info microk8s$ sudo snap install microk8s --classic   使用microk8s  123$ microk8s status$ sudo usermod -a -G microk8s mpan$ sudo chown -f -R mpan ~/.kube   添加节点  1$ microk8s add-node   注意 每次使用micr...</div></div></div></a><a class="pagination-related" href="/posts/70668969ef36.html" title="项目的通用结构"><img class="cover" src="https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">项目的通用结构</div></div><div class="info-2"><div class="info-item-1">项目的通用结构，可根据真实情况进行删减 12345678910111213141516171819202122232425- src #代码- data #需要保存的文件，如安装包、镜像等- docs # 说明文档- scripts #相关的脚本文件- hack  - build    - Dockerfile  # 构建镜像  - Vagrantfile #Vagrant配置  - ansible/    # ansible构建部署脚本    - site.yml    - hosts    - roles/    - group_vars/    - host_vars/    - library/  - kubernetes/  # Openshift平台构建部署脚本  - docker-compose # Docker compose部署    - conf    - docker-compose.yaml- Makefile # 不同环境构统一构建入口- Jenkinsfile # Jenkins构建流水线，可调用ansible脚本或Dockerfile脚本- REA...</div></div></div></a><a class="pagination-related" href="/posts/0021c1b20a24.html" title="自动化工具集(持续更新------)"><img class="cover" src="https://img.xhua.eu.org/ec260d1e0542ad57622ab0ff9243cd11b1f1b47767bf86bba22b1cde361d0578.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="info-item-2">自动化工具集(持续更新------)</div></div><div class="info-2"><div class="info-item-1">1. 部署集群kopskubespraykubeoperatork(8s) in d(ocker) 2. 部署应用kustomize  路径名中有/时，使用~1替换  123456789101112131415161718kustomization.yaml---apiVersion: kustomize.config.k8s.io/v1beta1kind: Kustomization...patchesJson6902:- target:    version: v1    kind: Namespace    name: argocd  path: patch-namespace.yamlpatch-namespace.yaml---- op: replace  path: &quot;/metadata/annotations/iam.amazonaws.com~1allowed-roles&quot;  value: &gt;    [&quot;arn:aws:iam::12313112:role/argocd&quot;]  kapphelmhelmfileargoc...</div></div></div></a><a class="pagination-related" href="/posts/ef3675d1c305.html" title="Git-+-Jenkins-提交Git-触发Jenkins-Job"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Git-+-Jenkins-提交Git-触发Jenkins-Job</div></div><div class="info-2"><div class="info-item-1">利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!/bin/bashecho ====== trigger jenkins job: maglev-verify in 10s  =======(sleep 10 &amp;&amp; .git/hooks/post-push) &amp;  .git&#x2F;hooks&#x2F;post-push  123#!/bin/bashbranch=$(git rev-parse --abbrev-ref @&#123;upstream&#125;)curl -k --user $&#123;USER&#125;=$&#123;TOKEN&#125; http://$&#123;JENKINS_URL&#125;/job/$&#123;JOB_NAME&#125;/buildWithParameters --data-urlencode TAG=$branch</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</a><time datetime="2026-01-09T03:15:00.000Z" title="发表于 2026-01-09 11:15:00">2026-01-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

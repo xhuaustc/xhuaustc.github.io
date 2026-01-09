@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift实现Etcd一键备份与一键恢复脚本 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!&#x2F;bin&#x2F;bashexport ETCD_POD_MANIFEST&#x3D;&quot;&#x2F;etc&#x2F;origin&#x2F;node&#x2F;pods&#x2F;etcd.yaml&quot;export ETCD_EP&#x3D;$(grep https $&#123;ETCD_POD_MANIFE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift实现Etcd一键备份与一键恢复脚本">
+<meta property="og:url" content="https://xhua.eu.org/posts/eb02cfa8b57d.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!&#x2F;bin&#x2F;bashexport ETCD_POD_MANIFEST&#x3D;&quot;&#x2F;etc&#x2F;origin&#x2F;node&#x2F;pods&#x2F;etcd.yaml&quot;export ETCD_EP&#x3D;$(grep https $&#123;ETCD_POD_MANIFE">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.075Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift实现Etcd一键备份与一键恢复脚本",
+  "url": "https://xhua.eu.org/posts/eb02cfa8b57d.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.075Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/eb02cfa8b57d.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift实现Etcd一键备份与一键恢复脚本',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift实现Etcd一键备份与一键恢复脚本</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift实现Etcd一键备份与一键恢复脚本</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.075Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-a8804e63f4e97efd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Openshift etcd"></p>
+<p>一键备份etcd脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@master01 ~]# cat backup_etcd.sh</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">export ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;</span><br><span class="line">export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)</span><br><span class="line">oc login -u system:admin</span><br><span class="line">export ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)</span><br><span class="line">oc project kube-system</span><br><span class="line">oc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key --cacert /etc/etcd/ca.crt --endpoints $ETCD_EP snapshot save /var/lib/etcd/snapshot.db&quot;</span><br><span class="line"></span><br><span class="line">today_date=$(date +%Y%m%d)</span><br><span class="line">mkdir -p /backup/$&#123;today_date&#125;/etcd</span><br><span class="line">mv /var/lib/etcd/snapshot.db /backup/$&#123;today_date&#125;/etcd/snapshot.db</span><br><span class="line"></span><br><span class="line">ls /backup/$&#123;today_date&#125;/etcd/</span><br><span class="line">echo &quot;success backup etcd&quot;</span><br></pre></td></tr></table></figure>
+<p>一键恢复etcd脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">[root@master01 ~]# cat restore_etcd.sh </span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">snapshot_file_dir=$1</span><br><span class="line">if [ $# -lt 1 ]</span><br><span class="line">then</span><br><span class="line">	echo &quot;Please input snapshot file path&quot;</span><br><span class="line">	exit 2</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">export ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;</span><br><span class="line">mv $&#123;ETCD_POD_MANIFEST&#125; .</span><br><span class="line">rm -rf /var/lib/etcd</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 获取etcd相关初始化配置项</span></span></span><br><span class="line">ETCD_CONFIG_FILE=&quot;/etc/etcd/etcd.conf&quot;</span><br><span class="line">etcd_data_dir=$(grep ^ETCD_DATA_DIR= $ETCD_CONFIG_FILE|cut -d= -f2)</span><br><span class="line">etcd_name=$(grep ^ETCD_NAME= $ETCD_CONFIG_FILE|cut -d= -f2)</span><br><span class="line">etcd_initial_cluster=$(grep ^ETCD_INITIAL_CLUSTER= $ETCD_CONFIG_FILE|awk -F&#x27;ETCD_INITIAL_CLUSTER=&#x27; &#x27;&#123;print $2&#125;&#x27;)</span><br><span class="line">etcd_initial_cluster_token=$(grep ^ETCD_INITIAL_CLUSTER_TOKEN= $ETCD_CONFIG_FILE|cut -d= -f2)</span><br><span class="line">etcd_initial_advertise_peer_urls=$(grep ^ETCD_INITIAL_ADVERTISE_PEER_URLS= $ETCD_CONFIG_FILE|cut -d= -f2)</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 恢复etcd数据</span></span></span><br><span class="line">export ETCDCTL_API=3</span><br><span class="line">etcdctl snapshot restore $snapshot_file_dir --data-dir $etcd_data_dir --name $etcd_name --initial-cluster &quot;$etcd_initial_cluster&quot; --initial-cluster-token &quot;$etcd_initial_cluster_token&quot; --initial-advertise-peer-urls $etcd_initial_advertise_peer_urls --skip-hash-check=true</span><br><span class="line"></span><br><span class="line">chown -R etcd.etcd /var/lib/etcd/</span><br><span class="line">restorecon -Rv /var/lib/etcd</span><br><span class="line"></span><br><span class="line">mv etcd.yaml $ETCD_POD_MANIFEST</span><br></pre></td></tr></table></figure>
+
+<p>一键整理etcd数据，解决证书问题</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[root@master01 ~]# cat reset.sh </span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">oc login -u system:admin</span><br><span class="line"></span><br><span class="line">projects=$(oc get projects | awk &#x27;&#123;print $1&#125;&#x27; | grep -v kube-system|grep -v NAME)</span><br><span class="line"></span><br><span class="line">for project in $(echo $projects)</span><br><span class="line">do</span><br><span class="line">  oc delete secret $(oc get secret -n $project | grep token | awk &#x27;&#123;print $1&#125;&#x27;) -n $project</span><br><span class="line">  oc delete pod $(oc get pod -n $project | grep -v NAME | awk &#x27;&#123;print $1&#125;&#x27;) -n $project --force --grace-period=0</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/eb02cfa8b57d.html">https://xhua.eu.org/posts/eb02cfa8b57d.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/169c43378e6a.html" title="Openshift开启Calico-BGP-与-OVS性能PK"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift开启Calico-BGP-与-OVS性能PK</div></div><div class="info-2"><div class="info-item-1"> Openshift网络方案选择 大家都知道K8S在网络插件选择上有很多种，默认的是Flannel，但是它的性能一般，互联网中使用最多的是Calico BGP，因为它的性能非常好。 而对于Openshift，官方只支持ovs一种网络方案，同时RedHat也表示ovs在Openshift平台上运行是最合适的。但是ovs的网络性能怎样呢？因为ovs方案对数据需要进行加包，解包的过程，性能肯定是会受影响的。同时经过实测，在万兆网络中的损耗近50%，虽然在绝大部分场景下ovs已经够用了，但是但是跟几乎无损耗的Calico BGP比起来还是逊色不少。 很庆幸，Openshift虽然官方不作Calico网络方案的支持，但还是很体贴地把它加入到了Openshift的安装脚本中，从而让大家都能方便地使用Calico网络方案，包括IPIP及BGP方案。  安装步骤 在ansible hosts中设置关闭openshift默认的sdn方案，开启calico方案&#x2F;etc&#x2F;ansible&#x2F;hosts  1234[OSEv3:vars]os_sdn_network_plugi...</div></div></div></a><a class="pagination-related" href="/posts/d190629849e1.html" title="Openshift各组件Master-Node-Etcd-Router-Registry证书维护"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift各组件Master-Node-Etcd-Router-Registry证书维护</div></div><div class="info-2"><div class="info-item-1">Openshift集群正常运行过程中，各个组件:Master、Node、Etcd、Router、Registry之前相互通信交互，它们之间都是通过加密协议通信。那么问题来了，对于tls证书是有有效期的，突然有一天，证书过期了怎么办？集群是不是就无法正常运行了呢？现在我们就来看下，怎么能够让加密证书持续有效。  安装时，将证书有效期设置为很长，100年够不够 快速查看当前集群所有证书的有效期 证书过期了，我们该如何进行更新证书  安装时指定证书的有效期默认情况下，etcd证书、openshift证书的有效期为5年，kubelet证书、私有镜像仓库registry证书、Route证书的有效期为2年。在集群安装时可以通过设置ansible&#x2F;hosts中的参数来指定证书的有效期 123456[OSEv3:vars]openshift_hosted_registry_cert_expire_days=730openshift_ca_cert_expire_days=1825openshift_node_cert_expire_days=730openshift_master_c...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/2dea11d3dfea.html" title="Openshift上搭建NFS-StorageClass，别再说存储使用不方便"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上搭建NFS-StorageClass，别再说存储使用不方便</div></div><div class="info-2"><div class="info-item-1">动态存储是什么Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。  静态存储：需要管理员手动创建PV，供PVC挂载调用 动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。  StorageClass是什么 StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。  StorageClass对象还可以用作控制不同级别的存储和对存储的访问的管理机制。 有了StorageClass后，管理员无需手动创建PV。Openshift的使用者在创建PVC时只需要指定StorageClass,会自动按照对应的StorageClass配置，调用对应的Dynamic provisioning来创建需要的存储  没有StorageClass时代，如何使用NFS每次需要手动创建PV，一句话：麻烦。 StorageClass时代来了一次配置，永久自动，无需手动创建PV，一句话：方便。 NFS Provisioner原理    新建PVC时，指定为默认驱动，或者指定sto...</div></div></div></a><a class="pagination-related" href="/posts/d190629849e1.html" title="Openshift各组件Master-Node-Etcd-Router-Registry证书维护"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift各组件Master-Node-Etcd-Router-Registry证书维护</div></div><div class="info-2"><div class="info-item-1">Openshift集群正常运行过程中，各个组件:Master、Node、Etcd、Router、Registry之前相互通信交互，它们之间都是通过加密协议通信。那么问题来了，对于tls证书是有有效期的，突然有一天，证书过期了怎么办？集群是不是就无法正常运行了呢？现在我们就来看下，怎么能够让加密证书持续有效。  安装时，将证书有效期设置为很长，100年够不够 快速查看当前集群所有证书的有效期 证书过期了，我们该如何进行更新证书  安装时指定证书的有效期默认情况下，etcd证书、openshift证书的有效期为5年，kubelet证书、私有镜像仓库registry证书、Route证书的有效期为2年。在集群安装时可以通过设置ansible&#x2F;hosts中的参数来指定证书的有效期 123456[OSEv3:vars]openshift_hosted_registry_cert_expire_days=730openshift_ca_cert_expire_days=1825openshift_node_cert_expire_days=730openshift_master_c...</div></div></div></a><a class="pagination-related" href="/posts/e710e9d4a5d7.html" title="K8S-JFrog-DevOps实战训练营"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">K8S-JFrog-DevOps实战训练营</div></div><div class="info-2"><div class="info-item-1">DevOps CAMS模型C 文化 CultureA 自动化 AutomationM 指标维度 MeasurementS 分享 Sharing DevOps Five Stages 规范化技术栈 推进标准化 &amp; 降低不一致性因素 扩展DevOps实践，开始从一个团队，再到第二个第三个，最后到整个公司 自动化基础框架交付（PaaS平台） 提供自服务能力（自定义编排）  DevOps三步落地法  基于价值流的自动化持续交付，有六个实践，分别是：可视化、限制在制品、减少规模、减少交接数量、持续识别和拓展约束，以及在价值流中消除浪费。 每种架构一套标准化流水线   gitlab &#x2F; jenkins &#x2F; nexus &#x2F; ansible Kanban 或 Sprint计划板实现可视化工作，价值流交付可视化   快速反馈，PaaS监控、应用监控prometheus &#x2F; grafana持续反馈，交付之前快速反馈jmeter &#x2F; redmood &#x2F; senium DevOps度量Hygieia  Docker跨主机网络  大二层网...</div></div></div></a><a class="pagination-related" href="/posts/02c4b11486c5.html" title="Openshift自定义Router成倍提升集群性能"><img class="cover" src="https://img.xhua.eu.org/487deabc05ec1621abaed75ed3be4a1b652a7b478638ae7cb46e8bcd672063e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift自定义Router成倍提升集群性能</div></div><div class="info-2"><div class="info-item-1">为什么要自定义Router Openshift的Router节点其实就是一个Haproxy容器应用，这个已经不是什么秘密了。我们平常使用时，不需要关心Haproxy的配置，因为它的默认配置完全满足绝大多数情况的需求。 但是它的默认配置并没有把最大的性能发挥出来，这时就需要我们对Haproxy的配置进行自定义了。 如果你需要实现一些新的功能，比如说将Mysql通过Router对外提供服务等  怎样自定义Router Router Pod根据haproxy-config模板创建haproxy.conf配置文件，默认文件为/var/lib/haproxy/conf/haproxy-config.template Router Haproxy镜像启动时会根据环境变量TEMPLATE_FILE来选择最终使用的模板文件 向Router Pod中放入自定义的模板文件，并将它的路径传给环境变量TEMPLATE_FILE 模板文件中的相关函数     函数 说明    processEndpointsForAlias(alias ServiceAliasConfig, svc ServiceUni...</div></div></div></a><a class="pagination-related" href="/posts/471d3cbe64a8.html" title="OpenShift管理节点Master与计算节点Node的配置说明"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift管理节点Master与计算节点Node的配置说明</div></div><div class="info-2"><div class="info-item-1">配置文件Master节点的配置文件地址：&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yamlNode节点的配置文件在：openshift-node项目下的configmap中。OpenShift集群的配置信息都在这两个文件中，包括有覆盖默认插件，连接到etcd，自动创建服务帐户，构建映像名称，自定义项目请求，配置卷插件等等。 参考文章Master and Node Configuration </div></div></div></a><a class="pagination-related" href="/posts/e9021798429a.html" title="OpenShift上使用NFS作为共享存储的线上问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift上使用NFS作为共享存储的线上问题</div></div><div class="info-2"><div class="info-item-1"> NFS exports文件配置格式&lt;输出目录&gt; [客户端1 选项（访问权限,用户映射,其他）] [客户端2 选项（访问权限,用户映射,其他）] a. 输出目录：输出目录是指NFS系统中需要共享给客户机使用的目录； b. 客户端：客户端是指网络中可以访问这个NFS输出目录的计算机客户端常用的指定方式 指定ip地址的主机：192.168.0.200指定子网中的所有主机：192.168.0.0&#x2F;24 192.168.0.0&#x2F;255.255.255.0指定域名的主机：david.bsmart.cn指定域中的所有主机：.bsmart.cn所有主机： c. 选项：选项用来设置输出目录的访问权限、用户映射等。 NFS主要有3类选项：  访问权限选项  设置输出目录只读：ro设置输出目录读写：rw  用户映射选项all_squash：将远程访问的所有普通用户及所属组都映射为匿名用户或用户组（nfsnobody）；no_all_squash：与all_squash取反（默认设置）；root_squash：将root用户及所属组都映射为匿名用户或用户组（默认设置）；...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</a><time datetime="2026-01-09T03:15:00.000Z" title="发表于 2026-01-09 11:15:00">2026-01-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

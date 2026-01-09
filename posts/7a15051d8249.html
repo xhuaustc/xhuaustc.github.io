@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift节点kubelet证书过期异常的解决步骤 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to gener">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift节点kubelet证书过期异常的解决步骤">
+<meta property="og:url" content="https://xhua.eu.org/posts/7a15051d8249.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to gener">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.072Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift节点kubelet证书过期异常的解决步骤",
+  "url": "https://xhua.eu.org/posts/7a15051d8249.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.072Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/7a15051d8249.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift节点kubelet证书过期异常的解决步骤',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift节点kubelet证书过期异常的解决步骤</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift节点kubelet证书过期异常的解决步骤</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.072Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-dde4d8e7c1980f41.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="证书过期"></p>
+<p>环境：OpenShift 3.10 or 3.11<br>问题:</p>
+<ul>
+<li>重新部署了新的CA，节点不再处于就绪状态。</li>
+<li>如何手动强制创建新证书。</li>
+<li>节点无法更新其证书，并出现以下错误：</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig file</span><br><span class="line">atomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new one</span><br><span class="line">atomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed to run Kubelet: cannot create certificate signing request: Unauthorized</span><br></pre></td></tr></table></figure>
+<p>步骤：</p>
+<ol>
+<li>为节点创建一个新的bootstrap.kubeconfig（主节点仅需要复制admin.kubeconfig）。 从任何Master节点运行：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc serviceaccounts create-kubeconfig node-bootstrapper -n openshift-infra --config /etc/origin/master/admin.kubeconfig &gt; ~/bootstrap.kubeconfig</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在Master节点上将admin.kubeconfig文件复制到&#x2F;etc&#x2F;origin&#x2F;node&#x2F;bootstrap.kubeconfig。 在每个Master上运行：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">cp</span> /etc/origin/master/admin.kubeconfig /etc/origin/node/bootstrap.kubeconfig</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>将第1步中的〜&#x2F; bootstrap.kubeconfig分发给计算节点(worker,infra)，替换计算节点的&#x2F;etc&#x2F;origin&#x2F;node&#x2F;bootstrap.kubeconfig文件。 还要将其分发到所有主节点（master）上的&#x2F;etc&#x2F;origin&#x2F;master&#x2F;bootstrap.kubeconfig中（注意，它是master文件夹，而不是node文件夹）。</li>
+<li>在所有节点上移动node.kubeconfig 和 client-ca.crt文件</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/client-ca.crt&#123;,.old&#125;</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/node.kubeconfig&#123;,.old&#125;</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除每个节点的&#x2F;etc&#x2F;origin&#x2F;node&#x2F;certificates&#x2F;目录（包括master，worker, infra）</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">rm</span> -rf  /etc/origin/node/certificates</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>重启node服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl restart atomic-openshift-node.service</span> </span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>批准CSR，每个节点（master，worker, infra）应批准2个：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc get csr -o name | xargs oc adm certificate approve</span></span><br></pre></td></tr></table></figure>
+<p>或者</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="keyword">for</span> i <span class="keyword">in</span> $(oc get csr | grep -i Pending | awk <span class="string">&#x27;&#123; print $1 &#125;&#x27;</span>); <span class="keyword">do</span> oc adm certificate approve <span class="variable">$i</span> ; <span class="keyword">done</span></span></span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>检查Node状态</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc get node</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="keyword">for</span> i <span class="keyword">in</span> `oc get nodes -o jsonpath=$<span class="string">&#x27;&#123;range .items[*]&#125;&#123;.metadata.name&#125;\n&#123;end&#125;&#x27;</span>`; <span class="keyword">do</span> oc get --raw /api/v1/nodes/<span class="variable">$i</span>/proxy/healthz; <span class="built_in">echo</span> -e <span class="string">&quot;\t<span class="variable">$i</span>&quot;</span>; <span class="keyword">done</span></span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/3782361">Manually recreate OpenShift Node TLS bootstrapped certificates and kubeconfig files.</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/7a15051d8249.html">https://xhua.eu.org/posts/7a15051d8249.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/8cbac354b58c.html" title="OpenShift解决Route-Https--Http无法跳转的问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift解决Route-Https--Http无法跳转的问题</div></div><div class="info-2"><div class="info-item-1"> 问题现象通过Route创建的edge类型的HTTPS，后端应用使用的是HTTP服务。但在某些情况下，后端应用使用Location时，Location地址为HTTP地址。这时浏览器将因为无法访问HTTP服务而无法实现跳转。 原理Haproxy在返回客户端时，检查返回Head，将Location地址中的HTTP替换为HTTPS，从而让浏览器获取正确的跳转链接。 解决办法更新haproxy-config.template，为edge请求的应用添加标注判断haproxy.router.openshift.io/location-scheme，如果它为https，则将Location请求中的http替换为https。具体配置如下：搜索 ssl_fc_alpn -i h2在其后添加如下配置 1234&#123;&#123;- if eq &quot;https&quot; (index $cfg.Annotaions &quot;haproxy.router.openshift.io/location-scheme&quot;)&#125;&#125;  acl check_locatio...</div></div></div></a><a class="pagination-related" href="/posts/471d3cbe64a8.html" title="OpenShift管理节点Master与计算节点Node的配置说明"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift管理节点Master与计算节点Node的配置说明</div></div><div class="info-2"><div class="info-item-1">配置文件Master节点的配置文件地址：&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yamlNode节点的配置文件在：openshift-node项目下的configmap中。OpenShift集群的配置信息都在这两个文件中，包括有覆盖默认插件，连接到etcd，自动创建服务帐户，构建映像名称，自定义项目请求，配置卷插件等等。 参考文章Master and Node Configuration </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/f7e207fa4001.html" title="OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程"><img class="cover" src="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</div></div><div class="info-2"><div class="info-item-1">问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从etcd集群剥离；二、将恢复的新的etcd节点添加到etcd集群。具体步骤如下：  查看etcd状态  1234$ etcdctl2 cluster-health$ ## 获取问题节点的member ID$ etcdctl2 member remove  &lt;member ID&gt;$ ## 将问题etcd服务从etcd集群中删除  停止问题节点上的etcd服务  12$ mkdir -p /etc/origin/node/pods-stopped$ mv /etc/origin/node/pods/* /etc/origin/node/pods-stopped/  删除问题节点上的...</div></div></div></a><a class="pagination-related" href="/posts/98e57b44aefa.html" title="混沌工程详细介绍——Netflix持续交付实践探寻"><img class="cover" src="https://img.xhua.eu.org/c87bd7a75f171c9fd0475e71c902ce41e36880b5e5166386bad715cca2f08bfb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">混沌工程详细介绍——Netflix持续交付实践探寻</div></div><div class="info-2"><div class="info-item-1">本篇来自于本人6月-7月参加的“DevOps案例深度研究”活动Netflix案例研究的第五部分，详细介绍了Netflix的混沌工程。经过一个月的战斗，四个版本的迭代，Netflix战队最后交付了让所有人满意的战果，并获得了全场唯一的案例研究最佳小组奖杯。感谢我们的战友，还有指导老师，姚冬老师和徐磊老师。    Netflix实施混沌工程的背景   08年Netflix决定把它的业务迁移到aws上，从自身运维的角度考虑，它有很多担忧的地方。  很长时间内有两套系统在同时运行，运维的复杂度更高了。 NetFlix的用户量已经达到了1亿，对应用稳定性依赖很高，如果出现故障对用户的影响非常大，甚至是致命的。 它的业务不断复杂，引入微服务架构，对应用的高可用性要求越来越高。 生产环境非常复杂，是多样性的，很难在测试环境中完全模拟生产的状态。  因此Netflix决心探索一种在生产环境验证应用高可用性的一种方法，这就是现在大家所熟知的混沌工程。 混乱工程的发展    2010年，捣乱猴子诞生 2011年，猴子军团，有了更多场景下的工具集 2012年，开源了捣乱猴子的代码，建立社区，影响了越来...</div></div></div></a><a class="pagination-related" href="/posts/ca6a355f0867.html" title="OpenShift-Kafka-Operator测试报告"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Kafka-Operator测试报告</div></div><div class="info-2"><div class="info-item-1">1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本次具体测试的功能点如下：    序号 测试项目 测试项 优先级    1 Kafka Operator部署 Kafka Operator部署 高     Kafka集群创建 高     Kafka监控部署 高   2 Kafka功能测试 Kafka创建Topic 高     Openshift集群内部Kafka producer与consumer测试 高     Openshift集群外部Kafka producer与consumer测试（NodePort方案） 高     Openshift集群外部Kafka producer与consumer测试（Router方案） 高   3 Ka...</div></div></div></a><a class="pagination-related" href="/posts/01fb942a14a1.html" title="企业级容器云平台建设之资源管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">企业级容器云平台建设之资源管理</div></div><div class="info-2"><div class="info-item-1"> 计算资源管理 多租户权限管理 多集群管理，及集群大小 资源配额与资源限制管理 NodePort端口号管理  网络资源管理 网络业务网、管理网、存储网分离 网卡做bond，提高网络可靠性 网络方案选型 网络策略NetworkPolicy机制 集群边界路由器管理（Ingress&#x2F;Route) 集群DNS域名服务管理  存储资源管理 存储PV选型，动态&#x2F;静态 存储类型，hostpath&#x2F;local&#x2F;NFS&#x2F;Ceph&#x2F;Solidfile等  镜像资源管理 镜像生命周期管理 ，创建&#x2F;查询&#x2F;更新&#x2F;删除 镜像库多租户权限管理 远程复制管理，至少两级镜像库设置，总镜像库&#x2F;子镜像库 镜像库操作审计管理 镜像漏洞安全扫描 镜像签名  补充说明在企业级容器平台建设中，资源管理只是其中的基础部分，另外还需要考虑：监控、告警、日志管理以及运维、安全、审计等方面。 来自：《Kubernetes权威指南：企业级容器云实战》 </div></div></div></a><a class="pagination-related" href="/posts/3fb7f39636aa.html" title="Openshift-F5集成（续）——实现灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（续）——实现灰度发布</div></div><div class="info-2"><div class="info-item-1">上篇：Openshift-F5集成（南北流量走F5）中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。 为什么要使用灰度发布 什么是灰度发布灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  灰度发布的价值使用灰度发布可以在产品正式上线前针对特定一些目标用户进行开放，获得这些目标用户的反馈，及早发现问题，修复问题，完善产品的不足。如果发现新的版本价值不大，能够及早更换思路，避免产品直接上线后产生不好的影响。  Openshift Route自带的灰度发布功能 Openshift Route自带的灰度发布，是通过Route下“挂载”两个或两个以上Service，并调整各个Service的权值进行控制流量的分布。 例如...</div></div></div></a><a class="pagination-related" href="/posts/4362c292014b.html" title="Openshift上部署OpenLDAP实战：为账号一统"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上部署OpenLDAP实战：为账号一统</div></div><div class="info-2"><div class="info-item-1">   Openshift上部署OpenLDAP也并不仅仅只是为了部署，更重要的是要用它来为各种应用统一账号管理。比如GitLab，Gogs, Nexus, Sonarqube等等，同时结合之前的Openshift使用OpenLDAP做账号管理。理想的世界是，一套Openshift，各种应用，它们的用户认证都在一套OpenLDAP上，同时这套OpenLDAP也是非常方便地部署在Openshift上。 为账号一统的第一步，就是我们需要部署OpenLDAP，这也是该篇主题。以下是之前分享的几篇与OpenLDAP有关的文章。 CentOS上搭建双主高可用OpenLDAP ServerOpenshift使用OpenLDAP作为统一用户认证CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 之前分享的与Openldap相关的几篇文章中，它的部署都是在虚拟机中进行的。那么在Openshift上能否完成部署呢，如果可以的话，那么那些复杂的部署我们都可以将它封装到镜像中去，岂不是更方便？那就一起来操作吧。 应用要求点 方便自定义域及管理员用户名与密码 通过环境变量...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</a><time datetime="2026-01-09T03:15:00.000Z" title="发表于 2026-01-09 11:15:00">2026-01-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Service是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。 Service仅仅只能负载一组Pod吗？No。它还可以对接VM的服务，甚至是物理机的服务。 Service负载Pod    1234567891011121314apiVersion:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务">
+<meta property="og:url" content="https://xhua.eu.org/posts/7fa076a49782.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Service是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。 Service仅仅只能负载一组Pod吗？No。它还可以对接VM的服务，甚至是物理机的服务。 Service负载Pod    1234567891011121314apiVersion:">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-09T09:47:08.073Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务",
+  "url": "https://xhua.eu.org/posts/7fa076a49782.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-09T09:47:08.073Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/7fa076a49782.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-09T09:47:08.073Z" title="更新于 2026-01-09 17:47:08">2026-01-09</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ul>
+<li><strong>Service</strong>是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。</li>
+<li>Service仅仅只能负载一组Pod吗？<strong>No。它还可以对接VM的服务，甚至是物理机的服务。</strong><blockquote>
+<p>Service负载Pod</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx</span><br><span class="line">  type: NodePort</span><br><span class="line">  ports:</span><br><span class="line">    - port: 8080</span><br><span class="line">      name: nginx</span><br><span class="line">      protocol: TCP</span><br><span class="line">      targetPort: 8080</span><br><span class="line">      nodePort: 38080</span><br></pre></td></tr></table></figure>
+<ul>
+<li>selector：Label选择器，将选择指定Label的Pod作为被负载Pod</li>
+<li>type：Service的类型，指定Service的访问方式，默认为ClusterIP。<ul>
+<li>ClusterIP：虚拟的服务IP地址，该IP可以被集群下的Pod访问</li>
+<li>NodePort：使用宿主机的端口，通过访问任意Node的对应端口，就能访问Service的端口</li>
+<li>LoadBalancer：使用外部负载均衡器完成到服务的负载分发，需要在.spec.status.loadBalancer指定外部负载均衡器的IP地址，同时定义nodePort和clusterIP。</li>
+</ul>
+</li>
+<li>port：Service监听的端口号</li>
+<li>targetPort：需要转发到后端Pod的端口号</li>
+<li>nodePort：当type&#x3D;NodePort时，指定映射到物理机的端口（范围30000-32767）<blockquote>
+<p>Service负载集群外部Service（可以是VM，物理机等）</p>
+</blockquote>
+</li>
+</ul>
+<ol>
+<li>创建一个无Label Selector的Service（即无法选择后端的Pod，系统不会自动创建Endpoint，需要手动创建Endpoint）</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-out</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - port: 80</span><br><span class="line">      name: nginx-out</span><br><span class="line">      protocol: TCP</span><br><span class="line">      targetPort: 8080</span><br><span class="line">  type: ClusterIP</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>创建Endpoint指向后端服务（该Endpoint的name必须与Service的name相同）</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">kind: Endpoints</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-out</span><br><span class="line">subsets:</span><br><span class="line">  - addresses:</span><br><span class="line">      - ip: 192.168.0.6</span><br><span class="line">    ports:</span><br><span class="line">      - port: 8080</span><br></pre></td></tr></table></figure>
+<p>集群中的pod访问Service nginx-out:80，请求最终会被指向192.168.0.6:8080。<br><img src="https://upload-images.jianshu.io/upload_images/5793257-6f08bffa97a7276e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Service指向外部服务"></p>
+<blockquote>
+<p>实战：将外部的Jenkins用Openshift的Service接管，并创建Route来访问Jenkins服务</p>
+</blockquote>
+<ul>
+<li>Jenkins服务： <code>192.168.0.6:8080</code></li>
+<li>route的Hostname：<code>jenkins.apps.openshift.com</code></li>
+</ul>
+<ol>
+<li>创建project jenkins</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc new-project jenkins</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>创建jenkinsvm Service</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: jenkinsvm</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - port: 8080</span><br><span class="line">      name: jenkinsvm</span><br><span class="line">      protocol: TCP</span><br><span class="line">      targetPort: 8080</span><br><span class="line">  type: ClusterIP</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>创建Endpoints</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">kind: Endpoints</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-out</span><br><span class="line">subsets:</span><br><span class="line">  - addresses:</span><br><span class="line">      - ip: 192.168.0.6</span><br><span class="line">    ports:</span><br><span class="line">      - port: 8080</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>创建Route</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Route</span><br><span class="line">metadata:</span><br><span class="line">  name: jenkins</span><br><span class="line">spec:</span><br><span class="line">  host: jenkins.apps.openshift.com</span><br><span class="line">  port: </span><br><span class="line">    targetPort: jenkinsvm</span><br><span class="line">  to:</span><br><span class="line">    kind: Service</span><br><span class="line">    name: jenkinsvm</span><br><span class="line">    weight: 100</span><br></pre></td></tr></table></figure>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-7bb03f148429a6ab.JPG?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="使用Openshift的Service访问的集群外部的Jenkins服务"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/7fa076a49782.html">https://xhua.eu.org/posts/7fa076a49782.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/2dea11d3dfea.html" title="Openshift上搭建NFS-StorageClass，别再说存储使用不方便"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift上搭建NFS-StorageClass，别再说存储使用不方便</div></div><div class="info-2"><div class="info-item-1">动态存储是什么Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。  静态存储：需要管理员手动创建PV，供PVC挂载调用 动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。  StorageClass是什么 StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。  StorageClass对象还可以用作控制不同级别的存储和对存储的访问的管理机制。 有了StorageClass后，管理员无需手动创建PV。Openshift的使用者在创建PVC时只需要指定StorageClass,会自动按照对应的StorageClass配置，调用对应的Dynamic provisioning来创建需要的存储  没有StorageClass时代，如何使用NFS每次需要手动创建PV，一句话：麻烦。 StorageClass时代来了一次配置，永久自动，无需手动创建PV，一句话：方便。 NFS Provisioner原理    新建PVC时，指定为默认驱动，或者指定sto...</div></div></div></a><a class="pagination-related" href="/posts/84360199a57a.html" title="Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建</div></div><div class="info-2"><div class="info-item-1">#Jenkins系统配置详情 安装插件列表：Git Parameter Plug-In Gitlab Hook Plugin SonarQube Scanner for Jenkins JaCoCo plugin Maven Integration plugin Jenkins配置详情：Jenkins-&gt;系统管理-&gt;系统配置 SonarQube servers配置  Name:  SonarqubeServer Server URL: http://sonarqube-sonarqube.apps.test.openshift.com Server version: 5.3 or higher Server authentication token: $TOKEN(从SonarQube Server上创建） Jenkins-&gt;系统管理-&gt;Global Tool Configuration Maven Configuration  Default settings provider: Use default maven settings Default gl...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b7b877349e97.html" title="Openshift排错技巧——From-Redhat大客户交流会"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift排错技巧——From-Redhat大客户交流会</div></div><div class="info-2"><div class="info-item-1"> 今天参加Redhat大客户交流会，有一个主题是Redhat的小伙伴介绍Openshift的排错技巧。这个还是很值得参考的，于是将内容发在了这里，以便更多的小伙伴能够从中受益。当然Redhat小伙伴列出的也只是一部分，同时有些排错细节PPT中也并没有具体写，这篇中我就不扩展了。以下为PPT的内容。 OpenShift排错技巧 环境基本信息收集 日志等级 应用程序 OC客户端排错 镜像仓库 网络 路由 Installer DNS Etcd  日志等级openshift service log:&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master.env #同时作用于API和ControllersDEBUG_LOGLEVEL&#x3D;4 &#x2F;etc&#x2F;sysconfig&#x2F;atomic-openshift-nodeOPTIONS&#x3D;–loglevel&#x3D;4 错误等级  0 - Errors and warning only 2 - Normal information 4 - Debugging-leve...</div></div></div></a><a class="pagination-related" href="/posts/98e57b44aefa.html" title="混沌工程详细介绍——Netflix持续交付实践探寻"><img class="cover" src="https://img.xhua.eu.org/c87bd7a75f171c9fd0475e71c902ce41e36880b5e5166386bad715cca2f08bfb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">混沌工程详细介绍——Netflix持续交付实践探寻</div></div><div class="info-2"><div class="info-item-1">本篇来自于本人6月-7月参加的“DevOps案例深度研究”活动Netflix案例研究的第五部分，详细介绍了Netflix的混沌工程。经过一个月的战斗，四个版本的迭代，Netflix战队最后交付了让所有人满意的战果，并获得了全场唯一的案例研究最佳小组奖杯。感谢我们的战友，还有指导老师，姚冬老师和徐磊老师。    Netflix实施混沌工程的背景   08年Netflix决定把它的业务迁移到aws上，从自身运维的角度考虑，它有很多担忧的地方。  很长时间内有两套系统在同时运行，运维的复杂度更高了。 NetFlix的用户量已经达到了1亿，对应用稳定性依赖很高，如果出现故障对用户的影响非常大，甚至是致命的。 它的业务不断复杂，引入微服务架构，对应用的高可用性要求越来越高。 生产环境非常复杂，是多样性的，很难在测试环境中完全模拟生产的状态。  因此Netflix决心探索一种在生产环境验证应用高可用性的一种方法，这就是现在大家所熟知的混沌工程。 混乱工程的发展    2010年，捣乱猴子诞生 2011年，猴子军团，有了更多场景下的工具集 2012年，开源了捣乱猴子的代码，建立社区，影响了越来...</div></div></div></a><a class="pagination-related" href="/posts/b35eec06e235.html" title="Openshift上使用shell-operator创建自己的operator"><img class="cover" src="https://img.xhua.eu.org/a08b9223942a941d4bf8792764e492c3047397faa5d02278a00d96c1abb6dcbb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上使用shell-operator创建自己的operator</div></div><div class="info-2"><div class="info-item-1">shell operator是由Falnt公司开发并开源的。Flant公司是一家致力于提供解决所有基础设施问题的解决方案的公司。他们自称是提供DevOps-as-a-Service的服务。 需求 一个简单的任务：监听项目创建与删除事件，并发出告警。 一种简单的解决方法：定时脚本cron，每隔一段时间（如1min)获取对Openshift集群的所有项目，并将它与上次获取的结果值进行比较，得到新创建的项目及删除的项目该方法的缺点： 不及时 性能差，很多时候并没有操作项目，但仍然需要不断执行脚本 如果1min内即创建了新项目，又把这个项目删除了，则无法监测到   另一种解决方法：事件驱动，即订阅来自Kubernetes对象的事件，如果有对Project操作就触发告警。很明显这种方法解决了定时任务的所有问题。 该很么做呢？会不会非常复杂。不会。使用shell-operator项目就可以非常简单地实现。shell-operator项目地址：https://github.com/flant/shell-operator     实现部骤 创建shell-operator项目  1$ oc n...</div></div></div></a><a class="pagination-related" href="/posts/ddc119be7456.html" title="OpenShift-Master1彻底挂了，如何恢复？"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Master1彻底挂了，如何恢复？</div></div><div class="info-2"><div class="info-item-1"> 小强维护着一套生成的OpenShift集群，突然有一天集群的master1节点出现异常，自动关机了。他尝试了多次，都无法开机，怎么办？他需要赶快恢复master1节点，来满足集群的高可用性。 原来的masters在ansible&#x2F;hosts中的顺序如下 1234567891011121314[masters]master1  ## 重要主节点，安装完后单独保存/etc/etcd/ca中的证书master2master3[etcd]master1master2master3[nodes]master1master2master3  恢复过程如下：  新建一台 master1节点，hostname 与 IP 都和原 master1 节点一致 在master2上恢复master主节点的证书、ca.serial.txt及openshift软件。 通过新增 master 的方式将这个节点重新加回集群 通过新增 etcd 的方法，恢复了这台 master 节点 etcd 的状况  以下是恢复的具体步骤。 一、初始化Master节点 与部署机互信 开启selinux 关闭firew...</div></div></div></a><a class="pagination-related" href="/posts/6103ce3be10c.html" title="OpenShift-3升级Docker服务"><img class="cover" src="https://img.xhua.eu.org/0e8580af838b70b51d9c7518927350d677678b626f85c527f0d12d54838d30b1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-3升级Docker服务</div></div><div class="info-2"><div class="info-item-1">背景介绍OpenShift是一个开源产品，自2015年3.0版本开始，它使用Kubernetes作为底层的编排引擎，已经有将近5年了。同时它也有企业级版本，服务了众多大中小企业。经过这些年生产上的实践，OpenShift 3不断完善，已经非常稳定了，但是它依赖组件多，不断增加新的功能，使用量不断增多，一些漏洞和问题会被发现。在生产环境中，运行着大量的生产级应用，我们该如何升级Docker等组件，把业务影响降到最小，这是每个企业都无法绕过的问题。Docker作为OpenShift 3默认的容器运行，它的可靠性也尤为重要。本篇就以Docker升级为例介绍如何对OpenShift组件进行升级。升级不同OpenShift组件的思路是一样，主要是如下两条。  逐个节点升级 升级前将业务应用迁走  升级Docker实操 更新yum源中的docker包  12$ cp docker-rpm/* ./extras/Packages/d/$ createrepo --update extras  迁移节点上的POD并将它设置为不可调度  1$ oc adm drain &lt;node_name&...</div></div></div></a><a class="pagination-related" href="/posts/8cbac354b58c.html" title="OpenShift解决Route-Https--Http无法跳转的问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift解决Route-Https--Http无法跳转的问题</div></div><div class="info-2"><div class="info-item-1"> 问题现象通过Route创建的edge类型的HTTPS，后端应用使用的是HTTP服务。但在某些情况下，后端应用使用Location时，Location地址为HTTP地址。这时浏览器将因为无法访问HTTP服务而无法实现跳转。 原理Haproxy在返回客户端时，检查返回Head，将Location地址中的HTTP替换为HTTPS，从而让浏览器获取正确的跳转链接。 解决办法更新haproxy-config.template，为edge请求的应用添加标注判断haproxy.router.openshift.io/location-scheme，如果它为https，则将Location请求中的http替换为https。具体配置如下：搜索 ssl_fc_alpn -i h2在其后添加如下配置 1234&#123;&#123;- if eq &quot;https&quot; (index $cfg.Annotaions &quot;haproxy.router.openshift.io/location-scheme&quot;)&#125;&#125;  acl check_locatio...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">258</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">99</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">13</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</a><time datetime="2026-01-09T03:15:00.000Z" title="发表于 2026-01-09 11:15:00">2026-01-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</a><time datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程">排障记录：删除Namespace olm一直Terminating的处理过程</a><time datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解">Fabric：开源AI工作流与Prompt辅助框架详解</a><time datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆">15个实用开源AI项目汇总：从PPT生成到语音克隆</a><time datetime="2025-12-08T03:15:00.000Z" title="发表于 2025-12-08 11:15:00">2025-12-08</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
