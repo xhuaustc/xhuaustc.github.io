@@ -1,0 +1,237 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift应用补丁检查与升级 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="OpenShift版本补丁查看：https:&#x2F;&#x2F;docs.openshift.com&#x2F;container-platform&#x2F;3.11&#x2F;release_notes&#x2F;ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; ----------------------------------">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift应用补丁检查与升级">
+<meta property="og:url" content="https://xhua.eu.org/posts/b9fba3e32e8f.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="OpenShift版本补丁查看：https:&#x2F;&#x2F;docs.openshift.com&#x2F;container-platform&#x2F;3.11&#x2F;release_notes&#x2F;ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; ----------------------------------">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-28T09:49:58.362Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift应用补丁检查与升级",
+  "url": "https://xhua.eu.org/posts/b9fba3e32e8f.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-28T09:49:58.362Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/b9fba3e32e8f.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift应用补丁检查与升级',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift应用补丁检查与升级</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift应用补丁检查与升级</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-28T09:49:58.362Z" title="更新于 2026-01-28 17:49:58">2026-01-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>OpenShift版本补丁查看：<a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html">https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html</a></p>
+<p>自动查看新增的补丁版本脚本</p>
+<pre><code># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+-------------------------------------------------
+   File Name：     get_update_v3.11
+-------------------------------------------------
+&quot;&quot;&quot;
+
+last_index=&quot;RHSA-2020:2992&quot;
+
+last_flag = False
+
+import requests
+from pyquery import PyQuery
+
+url=&quot;https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html&quot;
+
+content=requests.get(url)
+query_doc = PyQuery(content.content)(&quot;.sectlevel2:eq(2) li&quot;).items()
+
+
+for update_item in query_doc:
+    if not last_flag:
+        item_text = update_item.text()
+        if item_text.find(last_index) &gt; -1:
+            last_flag = True
+        continue
+
+    print(update_item.text())
+
+-----------------
+
+RHBA-2020:3245 - OpenShift Container Platform 3.11.272 bug fix update
+RHSA-2020:3541 - Important: OpenShift Container Platform security update
+RHBA-2020:3695 - OpenShift Container Platform 3.11.286 bug fix update
+RHSA-2020:3727 - Moderate: OpenShift Container Platform security update
+RHBA-2020:4170 - OpenShift Container Platform 3.11.306 bug fix update
+RHSA-2020:4223 - Important: OpenShift Container Platform security update
+RHBA-2020:4430 - OpenShift Container Platform 3.11.317 bug fix update
+RHBA-2020:5107 - OpenShift Container Platform 3.11.318 bug fix update
+RHSA-2020:5102 - Moderate: OpenShift Container Platform security update
+RHSA-2020:5363 - OpenShift Container Platform 3.11.346 security and bug fix update
+</code></pre>
+<p>软件包：<a target="_blank" rel="noopener" href="https://access.redhat.com/downloads/content/package-browser">https://access.redhat.com/downloads/content/package-browser</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/b9fba3e32e8f.html">https://xhua.eu.org/posts/b9fba3e32e8f.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/a40d5162aa40.html" title="OpenShift强大的oc-set命令详解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift强大的oc-set命令详解</div></div><div class="info-2"><div class="info-item-1"> OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# oc setConfigure application resourcesUsage:  oc set COMMAND [flags]Replication controllers, deployments, and daemon sets:  env             Update environment variables on a pod template  resources       Update resource requests/limits on objects with pod templates  volumes         Update volumes o...</div></div></div></a><a class="pagination-related" href="/posts/ad266545adf3.html" title="OpenShift存储管理方案——Rook"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift存储管理方案——Rook</div></div><div class="info-2"><div class="info-item-1"> 存储的重要意义存储资源是容器云平台中的一个核心基础设施，为不同的应用服务提供可靠的持久化服务。大家都知道，容器运行过程中产生的数据是临时数据，并不可靠，一旦容器挂了，这些数据都会丢失。所以对数据可靠性有要求的应用就必须使用存储资源。存储的方案有很多种，常用的有本地盘存储、NFS、Ceph、Gluster FS等等。其中Ceph是一个开源的分布式文件系统，同时支持对象存储、块存储、文件存储,为云计算平台提供了最全面的存储方案。它以可靠、高性能等特性得到了很多企业的认可，并使用它来作为生产环境的存储。但是运维Ceph存储集群是一件较复杂工作，通过Rook项目，我们可以非常方便简单地实施Ceph存储方案，并且已有企业使用Rook来运维生产级别的存储方案。 Rook：CNCF云原生存储项目Rook于2018年1月加入了CNCF，成为了CNCF第15个项目，同时它也是CNCF首个云原生存储项目。Rook并不是自己开发一套存储方案，而是将现有的分布式存储系统云原生化，让它们能够实现自我管理，自我扩展，自我修复。 它使存储管理员的任务自动化：部署，引导，配置，配置，扩展，升级，迁移，灾难恢复...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/a45bfc874439.html" title="Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警</div></div><div class="info-2"><div class="info-item-1">Openshift从3.9版本开始官方支持Prometheus和Grafana 从官方部署脚本 openshift-ansible 中的目录playbooks下的列表 中可以看到相关部署脚本openshift-prometheusopenshift-grafana  既然官方支持，部署安装就十分简单了。 部署安装Prometheus &#x2F;etc&#x2F;ansible&#x2F;hosts添加配置  12[OSEv3:vars]openshift_hosted_prometheus_deploy=true  执行安装  1ansible-playbook  playbooks/openshift-prometheus/config.yml  打开宿主机的9100端口（kubernetes-nodes-exporter）  1ansible all -m shell -a &#x27;iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 9100 -j ACCEPT; servic...</div></div></div></a><a class="pagination-related" href="/posts/084518f28a58.html" title="如何在Openshift中让Router-Pod独占Router节点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何在Openshift中让Router-Pod独占Router节点</div></div><div class="info-2"><div class="info-item-1"> 概念 什么是Router Pod?  Router Pod是Openshift中管理外部流量访问集群服务的重要的入口，它是通过一个haproxy的Pod实现的。由于Router Pod的独特性，几乎所有的流量都过Router中的Pod代理到真正的服务，所以它是一个非常非常重要的服务。  什么是Router节点  因为集群中的Router Pod数量是有限的，外部流量通过负载均衡器到达Router的Pod，所以对于Router Pod必须固定在负载均衡器下的节点上。这些运行Router Pod的节点，我们叫做Router节点。它有两个特点：  运行default&#x2F;router的pod;  被外部负载均衡器监听  为什么需要让Router Pod独占Router节点上几乎所有的外部访问集群服务的流量都通过Router Pod代理，所以它是非常重要。在正式使用时，需要对它进行保护。让它独占节点，防止其它Pod抢占Router Pod的资源，以确保集群下服务的可用性。 具体实施Router Pod独占绑定Router节点 Router节点上添加label  1oc label...</div></div></div></a><a class="pagination-related" href="/posts/82cffe541eda.html" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a><a class="pagination-related" href="/posts/a33a393500a3.html" title="OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警</div></div><div class="info-2"><div class="info-item-1"> 背景大家知道OpenShfit官方通过Prometheus Operator可以快速构建高可用的监控告警平台，它不仅能够收集集群本身的监控指标，还可以通过ServiceMonitor扩展以监控应用自身的指标，实现单集群内部的统一监控。但是生产实践中，我们并不会只采用一个OpenShift部署应用，还会部署非容器应用，在非容器环境下也可能会部署Prometheus来监控相关服务（特别是现在Prometheus已经成为了监控的一个标配），甚至有可能会在不同的网络区部署多个集群，由于不同网络的隔离特性显然一组Prometheus是无法满足所有平台及应用的监控的。这就使得生产中会有很多套Prometheus集群需要管理与维护，查看监控指标也很分散，也就让我们想到必须采用一种办法能够将各处的指标统一收集，实现多集群多Prometheus服务的统一监控。目前实现这种要求的方法主要有两个，一个是通过Prometheus联邦 Federate，另一个是通过Thanos。今天主要介绍集群外部如何使用Prometheus联邦机制收集OpenShift内部Prometheus服务的监控指标。 操作实...</div></div></div></a><a class="pagination-related" href="/posts/b7b877349e97.html" title="Openshift排错技巧——From-Redhat大客户交流会"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift排错技巧——From-Redhat大客户交流会</div></div><div class="info-2"><div class="info-item-1"> 今天参加Redhat大客户交流会，有一个主题是Redhat的小伙伴介绍Openshift的排错技巧。这个还是很值得参考的，于是将内容发在了这里，以便更多的小伙伴能够从中受益。当然Redhat小伙伴列出的也只是一部分，同时有些排错细节PPT中也并没有具体写，这篇中我就不扩展了。以下为PPT的内容。 OpenShift排错技巧 环境基本信息收集 日志等级 应用程序 OC客户端排错 镜像仓库 网络 路由 Installer DNS Etcd  日志等级openshift service log:&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master.env #同时作用于API和ControllersDEBUG_LOGLEVEL&#x3D;4 &#x2F;etc&#x2F;sysconfig&#x2F;atomic-openshift-nodeOPTIONS&#x3D;–loglevel&#x3D;4 错误等级  0 - Errors and warning only 2 - Normal information 4 - Debugging-leve...</div></div></div></a><a class="pagination-related" href="/posts/6b1fc471637d.html" title="研发项目管理实践"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">研发项目管理实践</div></div><div class="info-2"><div class="info-item-1">项目的特征 唯一性、2. 存在风险、3. 临时的、4. 跨部门的团队、5. 渐渐明晰  项目的三约束（QBT）Q：质量、B：资金、T：时间     按时、在预算之内、满足性能指标、满足或超出客户的预期完成就是一个成功的项目。 优秀的项目经理在完成一个项目的过程中，让Boss、客户、团队成员都满足。 做项目时要时刻考虑到项目的目的。  项目的来源 合同驱动、2. 市场驱动、3. 变更Change  项目周期   与不同干系人的沟通干系人指的是对项目成败有利益，对项目有影响的人。  识别干系人。核心团队成员一起来识别。 分析干系人。 对不同的干系人采取不同的策略。     影响力来源  信誉、2. 互惠、3. 说服  项目进展 核心团队成员融入到项目里面，能够将项目说清楚 做计划。计划的过程很重要。做计划的过程是把核心团队消化项目的过程，也是责任转移的过程。项目经理要将项目分成模块，细节让负责部分的核心团队成员来做。  团队建设模型（Tuckman模型） 团队建设分为四个阶段：形成阶段、磨合阶段、规范阶段、贡献阶段 四个阶段中间不能跳过 保证核心成员的完整性  项目经理，二件事：管项...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ba149dc4d1d.html" title="用 vCluster 在 Kubernetes 集群中构建虚拟集群">用 vCluster 在 Kubernetes 集群中构建虚拟集群</a><time datetime="2026-01-19T02:50:49.000Z" title="发表于 2026-01-19 10:50:49">2026-01-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

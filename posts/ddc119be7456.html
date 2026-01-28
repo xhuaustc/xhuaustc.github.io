@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-Master1彻底挂了，如何恢复？ | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="小强维护着一套生成的OpenShift集群，突然有一天集群的master1节点出现异常，自动关机了。他尝试了多次，都无法开机，怎么办？他需要赶快恢复master1节点，来满足集群的高可用性。 原来的masters在ansible&#x2F;hosts中的顺序如下 1234567891011121314[masters]master1  ## 重要主节点，安装完后单独保存&#x2F;etc&#x2F;etcd&#x2F;ca中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-Master1彻底挂了，如何恢复？">
+<meta property="og:url" content="https://xhua.eu.org/posts/ddc119be7456.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="小强维护着一套生成的OpenShift集群，突然有一天集群的master1节点出现异常，自动关机了。他尝试了多次，都无法开机，怎么办？他需要赶快恢复master1节点，来满足集群的高可用性。 原来的masters在ansible&#x2F;hosts中的顺序如下 1234567891011121314[masters]master1  ## 重要主节点，安装完后单独保存&#x2F;etc&#x2F;etcd&#x2F;ca中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-28T09:49:58.360Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-Master1彻底挂了，如何恢复？",
+  "url": "https://xhua.eu.org/posts/ddc119be7456.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-28T09:49:58.360Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/ddc119be7456.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-Master1彻底挂了，如何恢复？',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-Master1彻底挂了，如何恢复？</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-Master1彻底挂了，如何恢复？</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-28T09:49:58.360Z" title="更新于 2026-01-28 17:49:58">2026-01-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-ee817b383313a625.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="集群恢复"></p>
+<p>小强维护着一套生成的OpenShift集群，突然有一天集群的master1节点出现异常，自动关机了。他尝试了多次，都无法开机，怎么办？<br>他需要赶快恢复master1节点，来满足集群的高可用性。</p>
+<p>原来的masters在ansible&#x2F;hosts中的顺序如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[masters]</span><br><span class="line">master1  ## 重要主节点，安装完后单独保存/etc/etcd/ca中的证书</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[etcd]</span><br><span class="line">master1</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line">master1</span><br><span class="line">master2</span><br><span class="line">master3</span><br></pre></td></tr></table></figure>
+
+<p>恢复过程如下：</p>
+<ol>
+<li>新建一台 master1节点，hostname 与 IP 都和原 master1 节点一致</li>
+<li>在master2上恢复master主节点的证书、ca.serial.txt及openshift软件。</li>
+<li>通过新增 master 的方式将这个节点重新加回集群</li>
+<li>通过新增 etcd 的方法，恢复了这台 master 节点 etcd 的状况</li>
+</ol>
+<p>以下是恢复的具体步骤。</p>
+<h2 id="一、初始化Master节点"><a href="#一、初始化Master节点" class="headerlink" title="一、初始化Master节点"></a>一、初始化Master节点</h2><ul>
+<li>与部署机互信</li>
+<li>开启selinux</li>
+<li>关闭firewalld</li>
+<li>DNS配置或者&#x2F;etc&#x2F;hosts</li>
+<li>HostName设置</li>
+<li>NTP</li>
+<li>ETCD盘与docker盘，如果需要提前准备的话</li>
+<li>Yum源设置</li>
+</ul>
+<h2 id="二、删除问题Master节点"><a href="#二、删除问题Master节点" class="headerlink" title="二、删除问题Master节点"></a>二、删除问题Master节点</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc delete node master1</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、在master2节点上准备好相关证书及软件"><a href="#三、在master2节点上准备好相关证书及软件" class="headerlink" title="三、在master2节点上准备好相关证书及软件"></a>三、在master2节点上准备好相关证书及软件</h2><ol>
+<li>恢复master主节点的证书<br>在&#x2F;etc&#x2F;ansible&#x2F;hosts的[masters]&#x2F;[etcd]&#x2F;[nodes]组中注释掉master1节点，后执行</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ansible-playbook playbooks/openshift-etcd/redeploy-ca.yml</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>恢复ca.serial.txt文件<br>在备份的配置中将ca.serial.txt文件拷贝到&#x2F;etc&#x2F;origin&#x2F;master&#x2F;ca.serial.txt</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ scp ca.serial.txt master2:/etc/origin/master/ca.serial.txt</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>安装openshift命令</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ yum install openshift</span><br></pre></td></tr></table></figure>
+<p>如果显示找不到该包，请查看&#x2F;etc&#x2F;yum.conf的配置，将openshift包从exclude中删除</p>
+<h2 id="四、恢复Master节点"><a href="#四、恢复Master节点" class="headerlink" title="四、恢复Master节点"></a>四、恢复Master节点</h2><ol>
+<li>&#x2F;etc&#x2F;ansible&#x2F;hosts中将需要恢复的节点从[masters]&#x2F;[etcd]&#x2F;[nodes]组移到[new_masters]、[new_nodes]组，并将三个组添加到[OSEv3:children]</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">etcd</span><br><span class="line">nodes</span><br><span class="line">new_masters</span><br><span class="line">new_etcd</span><br><span class="line">new_nodes</span><br><span class="line"></span><br><span class="line">[masters]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[etcd]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[new_masters]</span><br><span class="line">master1</span><br><span class="line"></span><br><span class="line">[new_etcd]</span><br><span class="line">master1</span><br><span class="line"></span><br><span class="line">[new_nodes]</span><br><span class="line">master1</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>执行master节点的scale_up.yaml</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook playbooks/openshift-master/scaleup.yaml</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>检查master1的恢复状态</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get node </span><br><span class="line">$ oc get pod -n kube-system</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>将master1节点从[new_masters]&#x2F;[new_nodes]中移到[masters]&#x2F;[nodes]中，并将它放到各个组的最后面。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">etcd</span><br><span class="line">nodes</span><br><span class="line">new_etcd</span><br><span class="line"></span><br><span class="line">[masters]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line">master1</span><br><span class="line"></span><br><span class="line">[etcd]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line">master1</span><br><span class="line"></span><br><span class="line">[new_etcd]</span><br><span class="line">master1</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、恢复ETCD服务"><a href="#五、恢复ETCD服务" class="headerlink" title="五、恢复ETCD服务"></a>五、恢复ETCD服务</h2><ol>
+<li>在正常的master节点，如master2上移除有问题的etcd节点</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ etcdctl2 member list</span><br><span class="line">23868989e8af989: name=master1 isLeader=false</span><br><span class="line">45f23429e8af943: name=master2 isLeader=false</span><br><span class="line">5323823fadaf989: name=master3 isLeader=true</span><br><span class="line">$ etcdctl2 member remove 23868989e8af989</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>执行etcd的扩容操作etcd scaleup.yaml</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook playbooks/openshift-etcd/scaleup.yaml</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>待执行完成后，检查etcd pod状态</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get pod -n kube-system</span><br><span class="line">$ etcdctl2 cluster-health</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>将master1节点从[new_etcd]组移到[etcd]组的最后面。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">etcd</span><br><span class="line">nodes</span><br><span class="line">[masters]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[etcd]</span><br><span class="line">master2</span><br><span class="line">master3</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line">master2</span><br><span class="line">master3</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>恢复master1节点的etcdctl命令<br>将&#x2F;etc&#x2F;profile.d&#x2F;etcdctl.sh文件拷贝到master1节点的&#x2F;etc&#x2F;profile.d&#x2F;etcdctl.sh，并执行source &#x2F;etc&#x2F;profile.d&#x2F;etcdctl.sh</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>多Master节点的集群具有高可用性，任一节点出现问题都不会影响到集群的服务，但是我们必须尽快恢复它，以免再出现一台主节点出现异常，这将会导致集群故障。</li>
+<li>多台Master节点中，第一台Master节点是特殊的节点，有些证书、配置文件只放在这台节点上，但是扩容时会需要用到。（详情可看openshift-ansible中的代码，很多证书都是从openshift_ca_host主机复制，而openshift_ca_host&#x3D;&lt;!–swig￼26–&gt;）。</li>
+<li>在完成恢复后，需要及时恢复ansible&#x2F;hosts中的内容，将恢复的节点加到对应组的后面，方便下次主机的扩容与维护。</li>
+</ul>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/887d480882a7">OpenShift集群故障恢复–只剩一个master节点可用，没有备份</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/ddc119be7456.html">https://xhua.eu.org/posts/ddc119be7456.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/34b58d420e4b.html" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/posts/ca6a355f0867.html" title="OpenShift-Kafka-Operator测试报告"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-Kafka-Operator测试报告</div></div><div class="info-2"><div class="info-item-1">1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本次具体测试的功能点如下：    序号 测试项目 测试项 优先级    1 Kafka Operator部署 Kafka Operator部署 高     Kafka集群创建 高     Kafka监控部署 高   2 Kafka功能测试 Kafka创建Topic 高     Openshift集群内部Kafka producer与consumer测试 高     Openshift集群外部Kafka producer与consumer测试（NodePort方案） 高     Openshift集群外部Kafka producer与consumer测试（Router方案） 高   3 Ka...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a><a class="pagination-related" href="/posts/5a77edf030a8.html" title="Openshift-Route证书HTTPS配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Route证书HTTPS配置</div></div><div class="info-2"><div class="info-item-1">后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None </div></div></div></a><a class="pagination-related" href="/posts/0bd399c36cb8.html" title="OpenShift-Router配置重新加载机制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router配置重新加载机制</div></div><div class="info-2"><div class="info-item-1"> OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证集群的路由信息是最新的。重载配置是否会对当前在线业务产生影响，这是系统管理员担心的问题。 一、 Haproxy配置重载的过程Haproxy在重新加载配置过程分两步。  生成最新的配置 重启Haproxy进程  Haproxy生成最新的配置OpenShift上以下三种资源的改变会触发Haproxy配置的更新  Routes改变 Pod IP&#x2F;Endpoint 改变 证书改变  OpenShift Route有一个配置模板文件，最终的配置会根据这个模板文件来创建。该模板文件，默认路径为/var/lib/haproxy/conf/haproxy-config.template，也可以...</div></div></div></a><a class="pagination-related" href="/posts/406da41e46f6.html" title="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行"><img class="cover" src="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</div></div><div class="info-2"><div class="info-item-1">来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。 基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。 2 需求分析2.1 业务需求2.1.1 应用架构****改造需求某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭...</div></div></div></a><a class="pagination-related" href="/posts/470695cf24c2.html" title="OpenShift日志审计功能与策略配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift日志审计功能与策略配置</div></div><div class="info-2"><div class="info-item-1"> OpenShift支持审计功能，它可以记录下所有API服务的请求。如果将所有请求记录下来，它的量非常庞大，同时也是没有太大意义的。所以OpenShift审计记录当然出会支持请求的过滤，通过方便地策略配置，可以有选择地记录下请求的内容。通常我们会记录对集群资源作更改的请求。 打开审计功能在部署OpenShift时可以打开审计功能 12openshift_master_audit_config=&#123;&quot;enabled&quot;: true, &quot;auditFilePath&quot;: &quot;/var/lib/origin/audit-ocp.log&quot;, &quot;maximumFileRetentionDays&quot;: 14, &quot;maximumFileSizeMegabytes&quot;: 500, &quot;maximumRetainedFiles&quot;: 5, &quot;policyFile&quot;: &quot;/etc/origin/master/adv-audit.yaml&quot;, &qu...</div></div></div></a><a class="pagination-related" href="/posts/7fa076a49782.html" title="Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务</div></div><div class="info-2"><div class="info-item-1"> Service是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。 Service仅仅只能负载一组Pod吗？No。它还可以对接VM的服务，甚至是物理机的服务。 Service负载Pod    1234567891011121314apiVersion: v1kind: Servicemetadata:  name: nginxspec:  selector:    app: nginx  type: NodePort  ports:    - port: 8080      name: nginx      protocol: TCP      targetPort: 8080      nodePort: 38080  selector：Label选择器，将选择指定Label的Pod作为被负载Pod type：Service的类型，指定Service的访问方式，默认为ClusterIP。 ClusterIP：虚拟的服务IP地址，该IP...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%88%9D%E5%A7%8B%E5%8C%96Master%E8%8A%82%E7%82%B9"><span class="toc-text">一、初始化Master节点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%88%A0%E9%99%A4%E9%97%AE%E9%A2%98Master%E8%8A%82%E7%82%B9"><span class="toc-text">二、删除问题Master节点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%9C%A8master2%E8%8A%82%E7%82%B9%E4%B8%8A%E5%87%86%E5%A4%87%E5%A5%BD%E7%9B%B8%E5%85%B3%E8%AF%81%E4%B9%A6%E5%8F%8A%E8%BD%AF%E4%BB%B6"><span class="toc-text">三、在master2节点上准备好相关证书及软件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%81%A2%E5%A4%8DMaster%E8%8A%82%E7%82%B9"><span class="toc-text">四、恢复Master节点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%81%A2%E5%A4%8DETCD%E6%9C%8D%E5%8A%A1"><span class="toc-text">五、恢复ETCD服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
