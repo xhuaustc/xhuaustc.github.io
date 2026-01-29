@@ -1,0 +1,164 @@
+/*
+  Preloader frosted-glass overlay (Hexo Butterfly fullpage-loading)
+  This is a non-invasive CSS override loaded via _config.butterfly.yml inject.head.
+*/
+
+/* Themeable colors (feel free to tweak) */
+:root {
+    /* More transparent glass so the blurred page is clearly visible */
+    --preloader-glass-bg: rgba(255, 255, 255, 0.22);
+    --preloader-glass-core: rgba(255, 255, 255, 0.12);
+    --preloader-text: rgba(0, 0, 0, 0.82);
+    --preloader-text-shadow: rgba(0, 0, 0, 0.18);
+
+    /* Accent colors for the rotating squares + loading bar */
+    /* Use a clearly different palette (purple -> pink) so changes are obvious */
+    --preloader-accent-1: rgba(167, 139, 250, 0.92);
+    /* purple */
+    --preloader-accent-2: rgba(251, 113, 133, 0.92);
+    /* pink */
+
+    /* Indeterminate loading bar */
+    --preloader-bar-height: 6px;
+    --preloader-bar-glow: rgba(79, 172, 254, 0.35);
+    --preloader-bar-bg: rgba(255, 255, 255, 0.14);
+}
+
+html[data-theme="dark"] {
+    --preloader-glass-bg: rgba(0, 0, 0, 0.22);
+    --preloader-glass-core: rgba(0, 0, 0, 0.14);
+    --preloader-text: rgba(255, 255, 255, 0.9);
+    --preloader-text-shadow: rgba(0, 0, 0, 0.35);
+
+    --preloader-accent-1: rgba(196, 181, 253, 0.4);
+    /* softer purple */
+    --preloader-accent-2: rgba(251, 182, 206, 0.4);
+    /* softer pink */
+    --preloader-bar-glow: rgba(196, 181, 253, 0.28);
+    --preloader-bar-bg: rgba(0, 0, 0, 0.18);
+}
+
+/*
+  Butterfly fullpage-loading DOM:
+  #loading-box
+    .loading-left-bg
+    .loading-right-bg
+    .spinner-box
+      .configure-border-1/.configure-border-2
+        .configure-core
+      .loading-word
+*/
+
+/* Light mode */
+#loading-box .loading-left-bg,
+#loading-box .loading-right-bg {
+    background: var(--preloader-glass-bg) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* Keep the spinner readable on glass */
+#loading-box .loading-word {
+    color: var(--preloader-text) !important;
+    text-shadow: 0 2px 10px var(--preloader-text-shadow);
+}
+
+/* Make the inner core translucent so the glass effect remains visible */
+#loading-box .configure-core {
+    background: var(--preloader-glass-core) !important;
+}
+
+/* Adjust the rotating squares colors */
+#loading-box .spinner-box .configure-border-1 {
+    background: var(--preloader-accent-1) !important;
+    box-shadow: 0 10px 30px var(--preloader-bar-glow);
+}
+
+#loading-box .spinner-box .configure-border-2 {
+    background: var(--preloader-accent-2) !important;
+    box-shadow: 0 10px 30px var(--preloader-bar-glow);
+}
+
+/* Remove the two rotating boxes; keep only the frosted overlay + top bar + text */
+#loading-box .spinner-box .configure-border-1,
+#loading-box .spinner-box .configure-border-2 {
+    display: none !important;
+}
+
+/* When boxes are removed, tighten the layout so the text looks intentional */
+#loading-box .spinner-box {
+    flex-direction: column;
+    gap: 10px;
+}
+
+#loading-box .loading-word {
+    position: static !important;
+    transform: none !important;
+    letter-spacing: 0.2px;
+}
+
+/* Frosted indeterminate loading bar (top) while loading */
+#loading-box:not(.loaded) .spinner-box::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--preloader-bar-height);
+    z-index: 1002;
+    background: var(--preloader-bar-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+}
+
+#loading-box:not(.loaded) .spinner-box::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: var(--preloader-bar-height);
+    z-index: 1003;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            var(--preloader-accent-1) 35%,
+            var(--preloader-accent-2) 65%,
+            transparent 100%);
+    filter: blur(0.2px);
+    box-shadow: 0 0 16px var(--preloader-bar-glow);
+    animation: preloader-bar-sweep 1.15s ease-in-out infinite;
+}
+
+@keyframes preloader-bar-sweep {
+    0% {
+        left: -40%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+/* Optional: Pace progress bar (if you switch preloader.source to 2) */
+.pace {
+    pointer-events: none;
+    user-select: none;
+}
+
+.pace .pace-progress {
+    height: var(--preloader-bar-height) !important;
+    background: linear-gradient(90deg, var(--preloader-accent-1), var(--preloader-accent-2)) !important;
+    box-shadow: 0 0 16px var(--preloader-bar-glow);
+}
+
+.pace .pace-activity {
+    opacity: 0.8;
+    border-top-color: var(--preloader-accent-1) !important;
+    border-left-color: var(--preloader-accent-2) !important;
+}
+
+/*
+  Optional: If your loading icon/text becomes too faint on glass, uncomment and tweak:
+  #loading-box, .preloader { color: rgba(0, 0, 0, 0.85) !important; }
+  html[data-theme="dark"] #loading-box, html[data-theme="dark"] .preloader { color: rgba(255, 255, 255, 0.9) !important; }
+*/

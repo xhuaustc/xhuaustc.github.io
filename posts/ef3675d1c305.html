@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Git-+-Jenkins-提交Git-触发Jenkins-Job | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!&#x2F;bin&#x2F;bashecho &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; trigger jenkins job: maglev-verify in 10s  &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;(sleep 10 &amp;&amp; .git&#x2F;hooks&#x2F;post-push) &amp;  .git&#x2F;hooks&#x2F;post-pus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git-+-Jenkins-提交Git-触发Jenkins-Job">
+<meta property="og:url" content="https://xhua.eu.org/posts/ef3675d1c305.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!&#x2F;bin&#x2F;bashecho &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; trigger jenkins job: maglev-verify in 10s  &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;(sleep 10 &amp;&amp; .git&#x2F;hooks&#x2F;post-push) &amp;  .git&#x2F;hooks&#x2F;post-pus">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-29T15:10:28.429Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Git-+-Jenkins-提交Git-触发Jenkins-Job",
+  "url": "https://xhua.eu.org/posts/ef3675d1c305.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-29T15:10:28.429Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/ef3675d1c305.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Git-+-Jenkins-提交Git-触发Jenkins-Job',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Git-+-Jenkins-提交Git-触发Jenkins-Job</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Git-+-Jenkins-提交Git-触发Jenkins-Job</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-29T15:10:28.429Z" title="更新于 2026-01-29 23:10:28">2026-01-29</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>利用git的Hook机制</p>
+<ol>
+<li>.git&#x2F;hooks&#x2F;pre-push</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">echo ====== trigger jenkins job: maglev-verify in 10s  =======</span><br><span class="line">(sleep 10 &amp;&amp; .git/hooks/post-push) &amp;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>.git&#x2F;hooks&#x2F;post-push</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">branch=$(git rev-parse --abbrev-ref @&#123;upstream&#125;)</span><br><span class="line">curl -k --user $&#123;USER&#125;=$&#123;TOKEN&#125; http://$&#123;JENKINS_URL&#125;/job/$&#123;JOB_NAME&#125;/buildWithParameters --data-urlencode TAG=$branch</span><br></pre></td></tr></table></figure></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/ef3675d1c305.html">https://xhua.eu.org/posts/ef3675d1c305.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/75da61c45e57.html" title="Gitea访问使用KeyCloak作为用户管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Gitea访问使用KeyCloak作为用户管理</div></div><div class="info-2"><div class="info-item-1">一、安装keyCloak 二、配置KeyCloak，添加ClientsClients -&gt; createClient ID: devops-oidcEnabled: trueClient Protocol: openid-connectAccess Type: confidentialValid Redirect URIs: &#x2F;* 三、配置Gitea，添加Authentication SourcesSite Administration -&gt; Authentication Sources -&gt; Add Authentication SourceOAuth2 Provider: OpenID ConnectClient ID(key): devops-oidcClient Secret: &lt;keycload 中 devops-oidc Credentials中查询&gt;OpenID Connect Auto Discovery URL: http:&#x2F;&#x2F;&#x2F;auth&#x2F;realms&#x2F;master&#x2...</div></div></div></a><a class="pagination-related" href="/posts/470494acb742.html" title="Elasticsearch-+-Kibana添加到Systemctl"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Elasticsearch-+-Kibana添加到Systemctl</div></div><div class="info-2"><div class="info-item-1">&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/kibana-5.1.1-linux-x86_64/kibana.pidExecStart=/home/vagrant/kibana-5.1.1-linux-x86_64/bin/kibanaUser=vagrantRestart=alwaysLimitMEMLOCK=infinityLimitNOFILE=1048576LimitNPROC=1048576  &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;elasticsearch.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/elasticsearch-rtf/elasticsearc...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/470494acb742.html" title="Elasticsearch-+-Kibana添加到Systemctl"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Elasticsearch-+-Kibana添加到Systemctl</div></div><div class="info-2"><div class="info-item-1">&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/kibana-5.1.1-linux-x86_64/kibana.pidExecStart=/home/vagrant/kibana-5.1.1-linux-x86_64/bin/kibanaUser=vagrantRestart=alwaysLimitMEMLOCK=infinityLimitNOFILE=1048576LimitNPROC=1048576  &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;elasticsearch.service 1234567891011[Unit]Description=Elasticsearch[Service]PIDFile=/home/vagrant/elasticsearch-rtf/elasticsearc...</div></div></div></a><a class="pagination-related" href="/posts/78c6906d0976.html" title="Mysql瓶颈分析方法"><img class="cover" src="https://img.xhua.eu.org/0b352156bc8be83c534d25e7aaffb0ef0a8cb2438c08549e084611b6c59d3928.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Mysql瓶颈分析方法</div></div><div class="info-2"><div class="info-item-1">数据库往往会成为应用的最终瓶颈，而Mysql是被使用得最多的开源关系型数据库。如何分析执行Mysql数据库语句的性能就非常重要。但是很多开发人员并没有相关的意识与能力，但其实掌握了一些简单的常用手段，就可以让我们自己分析出数据库语句的问题。曾经看到过有对数据库查询语句中出现7个Select的语句，当时完全被震惊到了，这根本就是往系统里注入了一个大雷呀，数据量一旦增多，数据库挂，应用挂，服务挂，客户挂，公司挂。。。。还是不做破了一个鸡蛋就想着毁了一个养鸡场的推断了。我们收集下常见的数据库的分析手段。  查看当前数据库执行命令  12mysql&gt; select count(*) from information_schema.processlist where COMMAND != &#x27;Sleep&#x27;;mysql&gt; select * from information_schema.processlist where COMMAND != &#x27;Sleep&#x27; limit 5;  慢查询查看慢查询时间定义  12345678910mysql&g...</div></div></div></a><a class="pagination-related" href="/posts/7647bfc416ef.html" title="SonarQube应用离线安装插件"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">SonarQube应用离线安装插件</div></div><div class="info-2"><div class="info-item-1">SonarQube的插件地址为：https://binaries.sonarsource.com/Distribution/将下载的插件文件存放在SonarQube应用的/opt/sonarqube/extensions/plugins目录下。 参考文章Sonar 离线安装插件 </div></div></div></a><a class="pagination-related" href="/posts/12af42c297f6.html" title="Openshift上使用Nginx-Pod作灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上使用Nginx-Pod作灰度发布</div></div><div class="info-2"><div class="info-item-1">参考文章：使用 Nginx 实现灰度发布 什么是灰度发布 **【百度百科】**灰度发布（又名金丝雀发布）是指在黑与白之间，能够平滑过渡的一种发布方式。 在其上可以进行A&#x2F;B testing，即让一部分用户继续用产品特性A，一部分用户开始用产品特性B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。 除了AB test灰度发布另一种思想是，只发布给一小部分用户，如：App在发布之前，针对性的给一小批用户测试下新版本，用小流量发布的方式来检验新版会不会有问题。 灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  Openshift上实现蓝绿部署   在openshift上的部署两个版本的Service：service01, service02。在创建Route的时候，可以非常简单地指定同一个Route流量访问两个service的百分比service01（25%流量）, service02（75%流量）。所有请求该Route的流量会被按指定的比例访问后service。      对应的Route yaml配置文...</div></div></div></a><a class="pagination-related" href="/posts/8f583cb100a6.html" title="持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这会促进他们之间的良好合作 有助于让每个人更关注业务的价值   验收测试与单元测试的区别：验收测试是针对业务的，单元测试是面向开发的。  创建验收测试  分析人员与测试人员和客户紧密合作，定义验收条件    分析人员向开发人员讲解需求，以及它的业务上下文，并检查一遍验收条件    测试人员与开发人员讨论，并就“哪些自动化验收测试来证明验收条件被满足”达成一致    开发人员认为工作完成是指所有单元测试和组件测试通过，验收测试全部实现，并证明系统满足需求。此时可以向分析人员、测试人员和客户进行演示    应用程序驱动层应用程序驱动层是一个知道如何与应用程序打交道的层次。它所用的API是以某种...</div></div></div></a><a class="pagination-related" href="/posts/63c9fc8a8ef1.html" title="Jenkins-Pipeline触发机制"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jenkins-Pipeline触发机制</div></div><div class="info-2"><div class="info-item-1">设置好了功能强大的流水线后，接下来我们要做的就是去执行流水线，如果都靠手动去触发流水线，显然不符合带着自动化基因新一代工程师的风格，必须自动触发。那么Jenkins的Pipeline支持哪些触发机制呢。一起来看一下。 定时触发：croncron规则与crontab的规则是一样的 12345678910111213pipeline&#123;	agent any	triggers&#123;		cron(&#x27;0 0 * * *&#x27;)	&#125;	stages&#123;		stage(&#x27;半夜触发&#x27;)&#123;			steps&#123;				echo &quot;凌晨执行&quot;			&#125;		&#125;	&#125;&#125;  轮询代码仓库周期性检查代码，看代码是否有更新。这种方式需要使用 12345678910111213pipeline&#123;	agent any	triggers&#123;		pollSCM(&#x27;* * * * *&#x27;)	&#125;	stages&#123;		stage(&#...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0ba149dc4d1d.html" title="用 vCluster 在 Kubernetes 集群中构建虚拟集群">用 vCluster 在 Kubernetes 集群中构建虚拟集群</a><time datetime="2026-01-19T02:50:49.000Z" title="发表于 2026-01-19 10:50:49">2026-01-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

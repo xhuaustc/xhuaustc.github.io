@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-Router配置重新加载机制 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-Router配置重新加载机制">
+<meta property="og:url" content="https://xhua.eu.org/posts/0bd399c36cb8.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-01-29T15:10:28.436Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-Router配置重新加载机制",
+  "url": "https://xhua.eu.org/posts/0bd399c36cb8.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-01-29T15:10:28.436Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/0bd399c36cb8.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-Router配置重新加载机制',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">263</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">118</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-Router配置重新加载机制</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-Router配置重新加载机制</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-01-29T15:10:28.436Z" title="更新于 2026-01-29 23:10:28">2026-01-29</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-e6e9763b993e55f2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Haproxy Router机制"></p>
+<p>OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。</p>
+<p>OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证集群的路由信息是最新的。重载配置是否会对当前在线业务产生影响，这是系统管理员担心的问题。</p>
+<h2 id="一、-Haproxy配置重载的过程"><a href="#一、-Haproxy配置重载的过程" class="headerlink" title="一、 Haproxy配置重载的过程"></a>一、 Haproxy配置重载的过程</h2><p>Haproxy在重新加载配置过程分两步。</p>
+<ol>
+<li>生成最新的配置</li>
+<li>重启Haproxy进程</li>
+</ol>
+<h3 id="Haproxy生成最新的配置"><a href="#Haproxy生成最新的配置" class="headerlink" title="Haproxy生成最新的配置"></a>Haproxy生成最新的配置</h3><p>OpenShift上以下三种资源的改变会触发Haproxy配置的更新</p>
+<ol>
+<li>Routes改变</li>
+<li>Pod IP&#x2F;Endpoint 改变</li>
+<li>证书改变</li>
+</ol>
+<p>OpenShift Route有一个配置模板文件，最终的配置会根据这个模板文件来创建。该模板文件，默认路径为<code>/var/lib/haproxy/conf/haproxy-config.template</code>，也可以通过环境变量TEMPLATE_FILE来指定。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">exec</span> router-3-r2scd <span class="built_in">cat</span> haproxy-config.template | <span class="built_in">head</span> -n5</span></span><br><span class="line">&#123;&#123;/*</span><br><span class="line">    haproxy-config.cfg: contains the main config with helper backends that are used to terminate</span><br><span class="line">                        encryption before finally sending to a host_be which is the backend that is the final</span><br><span class="line">                        backend for a route and contains all the endpoints for the service</span><br><span class="line">*/&#125;&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h3 id="Haproxy配置的加载过程"><a href="#Haproxy配置的加载过程" class="headerlink" title="Haproxy配置的加载过程"></a>Haproxy配置的加载过程</h3><p>OpenShift Router Pod中运行着两个进程</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">exec</span> router-3-r2scd -n default -- ps -ef</span></span><br><span class="line">UID         PID   PPID  C STIME TTY          TIME CMD</span><br><span class="line">1000000+      1      0  0 Nov07 ?        00:00:08 /usr/bin/openshift-router</span><br><span class="line">1000000+     5076      1  0 Nov07 ?        00:00:02 /usr/sbin/haproxy -f /var/lib/haproxy/conf/haproxy.config -p /var/lib/haproxy/run/haproxy.pid -x /var/lib/haproxy/run/haproxy.sock -sf 5061</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>其中Haproxy进程的父进程是openshift-router，它管理着haproxy进程。openshift-router将通过Master API查询Route、EndPoint及证书的状态，生成最新的Haproxy配置，并执行重新加载操作。在每次重新加载后，haproxy 进程将会被终止并重新启动，haproxy的进程ID将会变化。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">exec</span> router-3-r2scd -n default -- ps -ef</span></span><br><span class="line">UID         PID   PPID  C STIME TTY          TIME CMD</span><br><span class="line">1000000+      1      0  0 Nov07 ?        00:00:08 /usr/bin/openshift-router</span><br><span class="line">1000000+     5208      1  0 Nov07 ?        00:00:02 /usr/sbin/haproxy -f /var/lib/haproxy/conf/haproxy.config -p /var/lib/haproxy/run/haproxy.pid -x /var/lib/haproxy/run/haproxy.sock -sf 5148 5193</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="二、-openshift-router环境变量"><a href="#二、-openshift-router环境变量" class="headerlink" title="二、 openshift-router环境变量"></a>二、 openshift-router环境变量</h2><p>openshift-router接受很多环境变量，来控制haproxy的配置，以及haproxy的重载过程。</p>
+<h3 id="RELOAD-SCRIPT"><a href="#RELOAD-SCRIPT" class="headerlink" title="RELOAD_SCRIPT"></a>RELOAD_SCRIPT</h3><p>重载haproxy的脚本，默认地址为<code>/var/lib/haproxy/reload-haproxy</code>。一般不作更改。openshift-router进程将会隔一定的时间周期去运行该脚本，其中时间周期通过环境变量RELOAD_INTERVAL来设置，默认是5s。</p>
+<h3 id="RELOAD-INTERVAL"><a href="#RELOAD-INTERVAL" class="headerlink" title="RELOAD_INTERVAL"></a>RELOAD_INTERVAL</h3><p>设置openshift-router进程执行RELOAD_SCRIPT的时间周期，默认为5s。将它调大可以减少openshift-router重载haproxy的次数。</p>
+<p>##三、 加快Haproxy的重载速度<br>对Haproxy来说，快速完成配置的加载非常重要。这样客户端就不会达到其SYN重试限制，从而导致连接失败。</p>
+<h3 id="OpenShift路由器优化方法"><a href="#OpenShift路由器优化方法" class="headerlink" title="OpenShift路由器优化方法"></a>OpenShift路由器优化方法</h3><ol>
+<li>更新到3.9以上版本，支持无缝重载</li>
+<li>使用<a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/install_config/router/default_haproxy_router.html?extIdCarryOver=true&sc_cid=701f2000001OH7JAAW#using-router-shards">路由分片</a>方式，减少每个路由的策略，从而达到加快加载的目的</li>
+<li>增大环境变量<code>RELOAD_INTERVAL</code>值，减少周期性Reload调用</li>
+</ol>
+<h3 id="检查重载速度"><a href="#检查重载速度" class="headerlink" title="检查重载速度"></a>检查重载速度</h3><p>通过检查HAProxy的重载速度，可以帮助我们确认连接问题是否是由于重新加载引起的。prometheus中会保存haproxy的加载时间信息到监控项<code>template_router_reload_seconds</code>中。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sh-4.2$ curl -s  http://admin:aAIKAyrX1s@localhost:1936/metrics | grep template_router_reload_seconds</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">HELP template_router_reload_seconds Measures the time spent reloading the router <span class="keyword">in</span> seconds.</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">TYPE template_router_reload_seconds summary</span></span><br><span class="line">template_router_reload_seconds&#123;quantile=&quot;0.5&quot;&#125; NaN</span><br><span class="line">template_router_reload_seconds&#123;quantile=&quot;0.9&quot;&#125; NaN</span><br><span class="line">template_router_reload_seconds&#123;quantile=&quot;0.99&quot;&#125; NaN</span><br><span class="line">template_router_reload_seconds_sum 7.299802469000001</span><br><span class="line">template_router_reload_seconds_count 140</span><br></pre></td></tr></table></figure>
+<p>看到重新加载总数为140，重新加载总和约为7.3秒。平均装载时间为7.3 &#x2F; 140 &#x3D; 0.05秒，相当快！</p>
+<h3 id="自动关闭Router重载后保留的旧Haproxy进程"><a href="#自动关闭Router重载后保留的旧Haproxy进程" class="headerlink" title="自动关闭Router重载后保留的旧Haproxy进程"></a>自动关闭Router重载后保留的旧Haproxy进程</h3><p>OpenShift 3.9以上版本的Router在重载Haproxy后，会保留旧的Haproxy进程一段时间。因为它要等待正在连接中的请求关闭，所以旧的进程将会挂起一段时间。这些请求只通过以下两种方式关闭：</p>
+<ol>
+<li>客户端关闭</li>
+<li>连接超时</li>
+</ol>
+<p>OpenShift默认的连接超时时间为1h，可以通过降低环境变量ROUTER_DEFAULT_TUNNEL_TIMEOUT的值来减少Haproxy进程挂起时间，同时通过降低ROUTER_BACKEND_CHECK_INTERVAL环境变量，能够调整后序健康检查的时间。</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://access.redhat.com/articles/3679861">OpenShift Router Reload Technical Overview
+</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/0bd399c36cb8.html">https://xhua.eu.org/posts/0bd399c36cb8.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/ac610158c667.html" title="OpenShift-Route支持TCP负载均衡改造与使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-Route支持TCP负载均衡改造与使用</div></div><div class="info-2"><div class="info-item-1"> Route作为TCP负载均衡器的部署 获取当前Route的haproxy-template配置  12345# oc project default# oc get podNAME              READY     STATUS    RESTARTS   AGErouter-16-5rv4q    2/2         Running   2            18h# oc rsh router-16-5rv4q cat haproxy-config.template &gt; haproxy-config.template  编辑导出的haproxy-config.template文件在内容&#123;&#123;- end &#125;&#125;&#123;&#123;/*end tls==passthrough*/&#125;&#125;下一行，添加以下内容：  1234567891011&#123;&#123;/*TCP support*/&#125;&#125;&#123;&#123;- if eq &quot;tcp&quot; (index...</div></div></div></a><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/1242150b382a.html" title="OpenShift企业版离线安装：下载RedHat-Repo源及镜像文件"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift企业版离线安装：下载RedHat-Repo源及镜像文件</div></div><div class="info-2"><div class="info-item-1"> 为了安全起见，在很多企业，网络环境是不能连接外网的，而需要使用OpenShift的话，就需要离线部署。离线部署与在线部署最大区别，就是我们得自己准备介质源：YUM源与镜像仓库。只要你拥有红帽订阅，下载最新的介质，其实很简单。 一、同步YUM源RHEL主机注册到红帽订阅，并关联到相应的YUM仓库 12345678910$ subscription-manager register$ subscription-manager refresh$ subscription-manager list --available --matches &#x27;*OpenShift*&#x27;$ subscription-manager attach --pool=&lt;pool_id&gt;$ subscription-manager repos --disable=&quot;*&quot;$ subscription-manager repos \    --enable=&quot;rhel-7-server-rpms&quot; \    --enable=&quot;rhel-...</div></div></div></a><a class="pagination-related" href="/posts/fcfcc308c797.html" title="使用Vagrant+Ansible一键部署Rancher2-0"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用Vagrant+Ansible一键部署Rancher2-0</div></div><div class="info-2"><div class="info-item-1"> Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。 既然这么简单，那我们就使用Vagrant与Ansible让它更简单。 安装Vagrant + VirtualBox    具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。  导入Vagrant Box。这里使用的是Centos 7.5  centos75-with-boxadditions.box下载链接: https://pan.baidu.com/s/1U-kJhbY2JirHgw0eP9TBXw 密码: 1a6b 1vagrant box add centos/75 centos75-with-boxadditions.box 或者安装vagrant插件 1$ vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest  定义Vagrantfile，设置好虚拟机的配置，具...</div></div></div></a><a class="pagination-related" href="/posts/82cffe541eda.html" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a><a class="pagination-related" href="/posts/d1705e2516a7.html" title="企业级容器平台OpenShift介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">企业级容器平台OpenShift介绍</div></div><div class="info-2"><div class="info-item-1">随着移动互联网生态的兴起，传统银行面临跨界竞争，在电子商务支付、消费金融、商业融资的新的业务场景下面临严峻的挑战，数字化转型的需求日益迫切。在这场技术转型的浪潮下，各大银行积极推进科技改革，拥抱云计算，以适应市场不断的变化。随着容器技术的成熟，一个以Kubernetes容器编排引擎为核心的生态圈已经形成，互联网、金融、汽车等各企业都积极投入容器技术的应用中。容器云平台的建设已经被认为是云计算落地的一种快捷的方式。说到容器云平台，就不得不提当前容器调度与编排的事实标准——Kubernetes。Kubernetes通过定义基础资源（容器、存储、网络）的协议接口，为底层基础设施提供了统一的管理方式。研发人员通过声明的方式定义资源编排文件，Kubernetes便通过自身组件自动完成资源的申请与分配，快速实现应用的部署。Kubernetes为容器的管理调度，应用的编排提供了便利，它无所不能，但是在建设企业级容器平台时，我们需要在以Kubernetes为核心的前提下，整合其他组件，例如网络插件、应用访问入口、存储实现、监控、日志、镜像仓库等。如图一所示。OpenShift正是基于Kubern...</div></div></div></a><a class="pagination-related" href="/posts/a5dfd7cd034e.html" title="Openshift上部署awx——ansible-tower的社区版"><img class="cover" src="https://img.xhua.eu.org/ab235a5c4f7700b107d0057e4cb01ddbb05dc15bc846c7cce94b5c2a17e4d568.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上部署awx——ansible-tower的社区版</div></div><div class="info-2"><div class="info-item-1">Ansible的大名，对做运维开发的工程师来说没有不知道的，它是开源的配置管理工具，也是最流行的自动化运维工具之一。Ansible tower是Ansible的图形界面化平台，它是RedHat公司的商业应用，也就是说Ansible tower是付费的。既然是RedHat的付费应用，可想而知，它具有很强大、实用的功能，另外它应该会有一个免费的社区版本。对，那就是awx。Ansible Tower的社区版，功能跟Ansible Tower一样强大，开源免费。 部署安装Awx安装文档：https://github.com/ansible/awx/blob/devel/INSTALL.md  clone下awx的代码  1$ git clone https://github.com/ansible/awx.git  Openshift集群中创建部署awx的project  1$ oc new-project awx  awx的project下创建PVC，默认pvc名为postgresql  123456789101112$ cat &lt;&lt; EOF | oc create -f ...</div></div></div></a><a class="pagination-related" href="/posts/fcc1189de870.html" title="OpenShift-ImageStream指向的镜像是否为内部镜像仓库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-ImageStream指向的镜像是否为内部镜像仓库</div></div><div class="info-2"><div class="info-item-1"> ImageStream是OpenShift中的一个特有的资源。在DeploymentConfig&#x2F;BuildConfig中使用ImageStream和ImageStreamTag时经常会有这样的疑惑：究竟它指向的镜像有没有pull到OpenShift内部的镜像仓库呢？我们使用DeploymentConfig发布应用时，集群会从内部镜像仓库中pull镜像，还是从指向的外部镜像仓库中拉取？大家来看一下下面这个例子： 1$ oc import-image openshift/jenkins:v3.10 --from=docker.io/openshift/jenkins-2-centos7:v3.10 --confirm 猜一猜，以上这条命令是否会将镜像拉取到内部镜像仓库？答案是否定的，内部镜像仓库并不会拉取镜像本身，只是获取镜像的元数据，将创建的ImageStreamTag openshift/jenkins:v3.10指向镜像docker.io/openshift/jenkins-2-centos7:v3.10。这里的关键就是ImageStream[Tag]的一个配置项...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81-Haproxy%E9%85%8D%E7%BD%AE%E9%87%8D%E8%BD%BD%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="toc-text">一、 Haproxy配置重载的过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Haproxy%E7%94%9F%E6%88%90%E6%9C%80%E6%96%B0%E7%9A%84%E9%85%8D%E7%BD%AE"><span class="toc-text">Haproxy生成最新的配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Haproxy%E9%85%8D%E7%BD%AE%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="toc-text">Haproxy配置的加载过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81-openshift-router%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="toc-text">二、 openshift-router环境变量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RELOAD-SCRIPT"><span class="toc-text">RELOAD_SCRIPT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RELOAD-INTERVAL"><span class="toc-text">RELOAD_INTERVAL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OpenShift%E8%B7%AF%E7%94%B1%E5%99%A8%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95"><span class="toc-text">OpenShift路由器优化方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A3%80%E6%9F%A5%E9%87%8D%E8%BD%BD%E9%80%9F%E5%BA%A6"><span class="toc-text">检查重载速度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%85%B3%E9%97%ADRouter%E9%87%8D%E8%BD%BD%E5%90%8E%E4%BF%9D%E7%95%99%E7%9A%84%E6%97%A7Haproxy%E8%BF%9B%E7%A8%8B"><span class="toc-text">自动关闭Router重载后保留的旧Haproxy进程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
