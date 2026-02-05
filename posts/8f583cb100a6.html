@@ -1,0 +1,253 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试">
+<meta property="og:url" content="https://xhua.eu.org/posts/8f583cb100a6.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-05T10:24:35.053Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试",
+  "url": "https://xhua.eu.org/posts/8f583cb100a6.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-05T10:24:35.053Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/8f583cb100a6.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-05T10:24:35.053Z" title="更新于 2026-02-05 18:24:35">2026-02-05</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><a href="/DevOps/%E3%80%8A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%8F%91%E5%B8%83%E5%8F%AF%E9%9D%A0%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%96%B9%E6%B3%95%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">《持续交付发布可靠软件的系统方法》读书笔记</a></p>
+<p>验收测试通常是在每一个通过提交测试的软件版本上执行的。<br><img src="https://upload-images.jianshu.io/upload_images/5793257-ffed8499ec5c9f60.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="验收测试阶段"></p>
+<ul>
+<li>验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。</li>
+<li>如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果：<ul>
+<li>反馈环大大缩短，能够更快地定位问题</li>
+<li>测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这会促进他们之间的良好合作</li>
+<li>有助于让每个人更关注业务的价值</li>
+</ul>
+</li>
+<li>验收测试与单元测试的区别：验收测试是针对业务的，单元测试是面向开发的。</li>
+</ul>
+<h2 id="创建验收测试"><a href="#创建验收测试" class="headerlink" title="创建验收测试"></a>创建验收测试</h2><ul>
+<li><ol>
+<li>分析人员与测试人员和客户紧密合作，定义验收条件</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>分析人员向开发人员讲解需求，以及它的业务上下文，并检查一遍验收条件</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>测试人员与开发人员讨论，并就“哪些自动化验收测试来证明验收条件被满足”达成一致</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>开发人员认为工作完成是指所有单元测试和组件测试通过，验收测试全部实现，并证明系统满足需求。此时可以向分析人员、测试人员和客户进行演示</li>
+</ol>
+</li>
+</ul>
+<h2 id="应用程序驱动层"><a href="#应用程序驱动层" class="headerlink" title="应用程序驱动层"></a>应用程序驱动层</h2><p>应用程序驱动层是一个知道如何与应用程序打交道的层次。它所用的API是以某种领域语言表达的，可以认为是一种针对它自己的领域专属语言。</p>
+<h2 id="实现验收测试"><a href="#实现验收测试" class="headerlink" title="实现验收测试"></a>实现验收测试</h2><ul>
+<li><ol>
+<li>让测试对复杂状态的依赖最小</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>不要使用生产数据的备份作为验收测试的测试数据，要维护一个受控的数据最小集</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>满足原子性，测试的执行顺序无关紧要，可以并行执行，他创建它需要的一切，并在运行后清理干净</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>自动化验收测试不应该运行在包含所有外部系统集成点的环境中，应该为自动验收测试提供一个受控环境，并且被测系统应该能在这个环境下运行。使用替身对象取代外部系统，可以使系统与外部系统耦合最小。</li>
+</ol>
+</li>
+</ul>
+<h2 id="验收测试阶段"><a href="#验收测试阶段" class="headerlink" title="验收测试阶段"></a>验收测试阶段</h2><p>把验收测试套件作为部署流水线的一个组成部分来运行。提交测试一旦成功，就应该开始在通过提交测试的版本上运行验收测试套件。</p>
+<ul>
+<li>验收测试失败的版本不能用于部署</li>
+<li>确保验收测试一直处于通过状态</li>
+</ul>
+<h2 id="验收测试的性能"><a href="#验收测试的性能" class="headerlink" title="验收测试的性能"></a>验收测试的性能</h2><p>验收测试没有把它放在提交测试阶段，主要是因为验收测试运行时间太长。但是我们认为自动化验收测试的全面性比测试在10分钟内运行完成更重要。然而一旦开始实现部署流水线，快速失败体系和迅速反馈环将更快地帮助发现问题，一般验收测试花费几个小时完成也是可以接受的。但是仍然有办法来提高验收测试的效率。</p>
+<ul>
+<li>重构通用任务</li>
+<li>共享昂贵资源</li>
+<li>并行测试</li>
+<li>使用计算网格（如：Selenium Grid、 Zalenium）</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/8f583cb100a6.html">https://xhua.eu.org/posts/8f583cb100a6.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/4ddf67db285d.html" title="持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 引言发布到生产环境和部署到测试环境的差异应该被封装在一组配置文件中，遵循一样的部署过程。启动自动部署系统，将要部署的软件版本与环境名称告诉它，点击开始，后缀部署与发布使用相同的流程。我们需要有一个列表，其中包含能够部署到每个环境的所有构建，并且只要通过点击就可以选择一个软件版本向某个环境进行自动部署。同时这种方式是对环境修改的唯一途径（包括对操作系统和第三方软件配置的修改）。 创建发布策略（文档） 每个环境的部署由发布由谁负责 创建一个资产和配置管理策略 部署时所用的技术的描述。运维团队与开发团队应对其达成共识 实现部署流水线的计划 枚举所有的环境，包括用于验收测试、容量测试、集成测试、用户验收测试的环境，以及每个构建在这些环境中的移动过程 描述在测试和生产环境中部署时应该遵循的流程，比如一个变更申请，及申请授权等 对应用程序的监控需求，包括用于通知运维团队关于应用程序相关状态的API和服务 讨论部署时和运行时的配置方法如何管理，以及它们与自动化部署流程是如何关联在一起的 描述应用程序如何与所有外部系统集成 如何记录日志详情，以便运维人...</div></div></div></a><a class="pagination-related" href="/posts/4639aac39f9a.html" title="持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 ##构建工具概览  Make Ant NAnt与MSBuild Maven Rake Buildr Psake  构建部署脚本化的原则与实践 为部署流水线的每个阶段创建脚本 使用恰当的技术部署应用程序 使用同样的脚本向所有环境部署 使用操作系统自带的包管理工具 确保部署流程是幂等的 部署系统的增量式演进  部署脚本化 多层的部署和测试   层 配置    应用／服务／组件 应用配置   中间件 中间件配置   操作系统 操作系统配置   硬件 硬件    测试环境配置 部署前对基础设施做标准冒烟测试，如果发现问题，就让环境配置流程快速失败，并给出测试结果 确认能从数据库中拿到一条记录 确认能连上网站 断言消息代理中的已注册的消息集合是正确的 透过防火墙发送ping，证明线路通畅    推荐策略 总是使用相对路径 消除手工步骤 从二进制包到版本控制库的内建可追溯性二进制包记录版本信息，如Java应用可以在MANIFEST中包含元数据，另外可以将构建流程生成的每个二进制包的MD5值及名字和版本标识符一起放在数据库中 不要把二进制包作为构建的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/9dbd81598681.html" title="Airflow简单介绍及测试安装"><img class="cover" src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Airflow简单介绍及测试安装</div></div><div class="info-2"><div class="info-item-1">Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。 先看下这篇介绍 ：浅谈调度工具——Airflow   为什么使用 Airflow 智能调度 图形化展示任务关系 程序化流水线定义 流水线间数据交互 扩展性强 分布式，可靠性高 执行方式多样化，除了定时执行还可手动触发，api 触发等  Airflow 常用的场景Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。  系统或运用的日常维护任务，批量作业 CD 部署任务，灰度发布，蓝绿部署等 数据分析，数据流管道管理  一句话：任何批量任务或者需要手动去触发执...</div></div></div></a><a class="pagination-related" href="/posts/0021c1b20a24.html" title="自动化工具集(持续更新------)"><img class="cover" src="https://img.xhua.eu.org/ec260d1e0542ad57622ab0ff9243cd11b1f1b47767bf86bba22b1cde361d0578.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="info-item-2">自动化工具集(持续更新------)</div></div><div class="info-2"><div class="info-item-1">1. 部署集群kopskubespraykubeoperatork(8s) in d(ocker) 2. 部署应用kustomize  路径名中有/时，使用~1替换  123456789101112131415161718kustomization.yaml---apiVersion: kustomize.config.k8s.io/v1beta1kind: Kustomization...patchesJson6902:- target:    version: v1    kind: Namespace    name: argocd  path: patch-namespace.yamlpatch-namespace.yaml---- op: replace  path: &quot;/metadata/annotations/iam.amazonaws.com~1allowed-roles&quot;  value: &gt;    [&quot;arn:aws:iam::12313112:role/argocd&quot;]  kapphelmhelmfileargoc...</div></div></div></a><a class="pagination-related" href="/posts/85b6f42d9df2.html" title="Jenkins Pipeline局部变量"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-13</div><div class="info-item-2">Jenkins Pipeline局部变量</div></div><div class="info-2"><div class="info-item-1">变量未定义在编写Jenkinsfile时，经常会遇到变量问题，明明已经定义过了，但是函数是就是无法读取。例如： 123456789101112131415161718def some_var = &quot;some value&quot;def pr() &#123;    def another_var = &quot;another &quot; + some_var    echo &quot;$&#123;another_var&#125;&quot;&#125;pipeline &#123;    agent any    stages &#123;        stage (&quot;Run&quot;) &#123;            steps &#123;                pr()            &#125;        &#125;    &#125;&#125; 将获得如下错误： 1groovy.lang.MissingPropertyException: No such property: some_var for cla...</div></div></div></a><a class="pagination-related" href="/posts/d5b91b0cd4d2.html" title="创建自签证书步骤"><img class="cover" src="https://img.xhua.eu.org/7e88a8dff24c36af71d514c8ea63e611fc9c15f0c4203e7cbe2c844e851e6a69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">创建自签证书步骤</div></div><div class="info-2"><div class="info-item-1"> 根证书创建  123$ openssl genrsa -out ca.key 2048$ openssl req -new -x509 -days 36500 -key ca.key -out ca.crt -subj &quot;/C=CN/ST=shanxi/L=taiyuan/O=cn/OU=test/CN=example.com&quot;$ #或者 openssl req -new -x509 -days 36500 -key ca.key -out ca.crt 手动输入配置  创建证书并使用根证书签发  123$ openssl genrsa -out app.key 2048$ openssl req -new -key app.key -out app.csr$ openssl x509 -req -in app.csr -CA ca.crt -CAkey ca.key -out app.crt -days 3650  -CAcreateserial  使用 Openssl 工具查看证书信息  123$ openssl x509 -in app.crt -no...</div></div></div></a><a class="pagination-related" href="/posts/12af42c297f6.html" title="Openshift上使用Nginx-Pod作灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上使用Nginx-Pod作灰度发布</div></div><div class="info-2"><div class="info-item-1">参考文章：使用 Nginx 实现灰度发布 什么是灰度发布 **【百度百科】**灰度发布（又名金丝雀发布）是指在黑与白之间，能够平滑过渡的一种发布方式。 在其上可以进行A&#x2F;B testing，即让一部分用户继续用产品特性A，一部分用户开始用产品特性B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。 除了AB test灰度发布另一种思想是，只发布给一小部分用户，如：App在发布之前，针对性的给一小批用户测试下新版本，用小流量发布的方式来检验新版会不会有问题。 灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  Openshift上实现蓝绿部署   在openshift上的部署两个版本的Service：service01, service02。在创建Route的时候，可以非常简单地指定同一个Route流量访问两个service的百分比service01（25%流量）, service02（75%流量）。所有请求该Route的流量会被按指定的比例访问后service。      对应的Route yaml配置文...</div></div></div></a><a class="pagination-related" href="/posts/76fde87cf7cd.html" title="《持续交付发布可靠软件的系统方法》读书笔记"><img class="cover" src="https://img.xhua.eu.org/9aceae35b4b34c39894b12d393be17b9ed54961d4bfee66801c81a7302460e69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《持续交付发布可靠软件的系统方法》读书笔记</div></div><div class="info-2"><div class="info-item-1">基础篇第一章：软件交付的问题第二章：配置管理第三章：持续集成第四章：测试策略的实现 部署流水线第五章：部署流水线解析第六章：构建与部署的脚本化第七章：提交阶段第八章：自动化验收测试第九章：非功能需求的测试第十章：应用程序的部署与发布 交付生态圈第十一章：基础设施与环境管理第十二章：数据管理第十三章：组件和依赖管理第十四章：版本控制进阶第十五章：持续交付管理  </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%AA%8C%E6%94%B6%E6%B5%8B%E8%AF%95"><span class="toc-text">创建验收测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%A9%B1%E5%8A%A8%E5%B1%82"><span class="toc-text">应用程序驱动层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E9%AA%8C%E6%94%B6%E6%B5%8B%E8%AF%95"><span class="toc-text">实现验收测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AA%8C%E6%94%B6%E6%B5%8B%E8%AF%95%E9%98%B6%E6%AE%B5"><span class="toc-text">验收测试阶段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AA%8C%E6%94%B6%E6%B5%8B%E8%AF%95%E7%9A%84%E6%80%A7%E8%83%BD"><span class="toc-text">验收测试的性能</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
