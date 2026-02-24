@@ -1,0 +1,605 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Cursor IDE 使用最佳实践与技巧：从入门到精通 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCurso">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cursor IDE 使用最佳实践与技巧：从入门到精通">
+<meta property="og:url" content="https://xhua.eu.org/posts/11eb1b4f9e5f.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCurso">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg">
+<meta property="article:published_time" content="2026-01-28T09:12:17.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.626Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="Skills">
+<meta property="article:tag" content="VSCode">
+<meta property="article:tag" content="开发工具">
+<meta property="article:tag" content="生产力">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cursor IDE 使用最佳实践与技巧：从入门到精通",
+  "url": "https://xhua.eu.org/posts/11eb1b4f9e5f.html",
+  "image": "https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg",
+  "datePublished": "2026-01-28T09:12:17.000Z",
+  "dateModified": "2026-02-24T07:27:54.626Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/11eb1b4f9e5f.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Cursor IDE 使用最佳实践与技巧：从入门到精通',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Cursor IDE 使用最佳实践与技巧：从入门到精通</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Cursor IDE 使用最佳实践与技巧：从入门到精通</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.626Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。</p>
+<h2 id="为什么选择-Cursor"><a href="#为什么选择-Cursor" class="headerlink" title="为什么选择 Cursor"></a>为什么选择 Cursor</h2><h3 id="Cursor-vs-GitHub-Copilot"><a href="#Cursor-vs-GitHub-Copilot" class="headerlink" title="Cursor vs GitHub Copilot"></a>Cursor vs GitHub Copilot</h3><p>在选择 AI 编程助手时，了解不同工具的优势至关重要：</p>
+<p><strong>Cursor 的核心优势：</strong></p>
+<ul>
+<li><strong>全项目代码库理解</strong>：能够理解整个代码库的上下文，而不仅仅是当前文件</li>
+<li><strong>多文件编辑能力</strong>：通过 Composer 功能同时编辑多个文件</li>
+<li><strong>深度 AI 集成</strong>：AI 能力原生内置于 IDE，而非仅作为扩展</li>
+<li><strong>复杂项目优势</strong>：在处理大型、复杂代码库时表现出色，具备完整的架构感知能力</li>
+<li><strong>模型灵活性</strong>：支持切换不同的 AI 模型（Claude 4.5 Opus、Sonnet 等）</li>
+</ul>
+<p><strong>GitHub Copilot 的优势：</strong></p>
+<ul>
+<li><strong>广泛的 IDE 兼容性</strong>：作为插件可在 VS Code、JetBrains、Vim 等多个编辑器中使用</li>
+<li><strong>快速自动补全</strong>：逐行建议速度快，特别适合 TypeScript 和 React 组件</li>
+<li><strong>更低的成本门槛</strong>：提供免费层级（2000 次补全 + 50 次聊天&#x2F;月），Pro 版本 $10&#x2F;月</li>
+<li><strong>成熟的生态系统</strong>：已建立的工具，与现有开发工作流集成良好</li>
+</ul>
+<p><strong>选择建议：</strong></p>
+<ul>
+<li>如果你希望保持当前编辑器设置且偏好低成本，选择 <strong>GitHub Copilot</strong></li>
+<li>如果你愿意切换编辑器并需要处理复杂代码库的强大上下文能力，选择 <strong>Cursor</strong></li>
+</ul>
+<h2 id="Cursor-核心功能详解"><a href="#Cursor-核心功能详解" class="headerlink" title="Cursor 核心功能详解"></a>Cursor 核心功能详解</h2><h3 id="1-Composer：AI-编码助手"><a href="#1-Composer：AI-编码助手" class="headerlink" title="1. Composer：AI 编码助手"></a>1. Composer：AI 编码助手</h3><p>Composer 是 Cursor 的核心 AI 助手，通过 <code>⌘I</code>（Mac）或 <code>Ctrl+I</code>（Windows&#x2F;Linux）调用。</p>
+<p><strong>两种布局模式：</strong></p>
+<ul>
+<li><strong>Pane 模式</strong>：侧边栏聊天 + 代码编辑器并排显示</li>
+<li><strong>Editor 模式</strong>：单窗口视图，最大化代码编辑空间</li>
+</ul>
+<p><strong>Normal Mode（普通模式）：</strong></p>
+<ul>
+<li>代码库和文档搜索</li>
+<li>Web 搜索能力</li>
+<li>文件创建和写入</li>
+<li>扩展的 <code>@</code> 符号命令</li>
+</ul>
+<p><strong>Agent Mode（智能代理模式）：</strong></p>
+<p>通过 <code>⌘.</code>（Mac）或 <code>Ctrl+.</code>（Windows&#x2F;Linux）启用，获得主动式编码伙伴：</p>
+<ul>
+<li>自动拉取相关上下文（使用 <code>@Recommended</code>）</li>
+<li>运行终端命令</li>
+<li>创建和修改文件</li>
+<li>语义化代码搜索</li>
+<li>执行文件操作</li>
+</ul>
+<blockquote>
+<p><strong>重要提示</strong>：Agent 模式支持最多 25 次工具调用后停止，目前仅支持 Claude 模型。</p>
+</blockquote>
+<h3 id="2-Tab-自动补全"><a href="#2-Tab-自动补全" class="headerlink" title="2. Tab 自动补全"></a>2. Tab 自动补全</h3><p>Cursor Tab 是一个定制的自动补全模型，能够预测你的下一步操作：</p>
+<ul>
+<li>利用 AI 预测实现闪电般的编码速度</li>
+<li>完成函数、生成样板代码、创建测试用例</li>
+<li>AI 从打开的文件中理解上下文，提供更好的结果</li>
+</ul>
+<p><strong>启用方式：</strong><br>在设置中启用 Tab 功能及其高级特性。</p>
+<h3 id="3-上下文管理"><a href="#3-上下文管理" class="headerlink" title="3. 上下文管理"></a>3. 上下文管理</h3><p><strong>使用 <code>@</code> 符号访问上下文：</strong></p>
+<ul>
+<li><code>@</code> + 文件名：引用特定文件</li>
+<li><code>@Recommended</code>：自动推荐相关上下文</li>
+<li>聊天顶部的上下文标签显示活动上下文，可以添加或删除</li>
+</ul>
+<p><strong>使用 <code>#</code> 符号：</strong></p>
+<ul>
+<li><code>#</code> + 文件名：聚焦于特定文件</li>
+</ul>
+<h3 id="4-其他关键功能"><a href="#4-其他关键功能" class="headerlink" title="4. 其他关键功能"></a>4. 其他关键功能</h3><p><strong>Checkpoints（检查点）：</strong><br>每次代码生成都会创建检查点，用于版本控制和回滚更改。</p>
+<p><strong>History（历史记录）：</strong><br>通过历史面板访问之前的 Composer 会话。</p>
+<p><strong>Lint Iteration（Beta）：</strong><br>Composer 会自动尝试修复生成代码中的 linting 问题。</p>
+<h2 id="最佳实践：提升生产力的关键"><a href="#最佳实践：提升生产力的关键" class="headerlink" title="最佳实践：提升生产力的关键"></a>最佳实践：提升生产力的关键</h2><h3 id="结构化规划与文档"><a href="#结构化规划与文档" class="headerlink" title="结构化规划与文档"></a>结构化规划与文档</h3><p><strong>1. 维护项目里程碑文档</strong></p>
+<p>在大型项目中，创建 <code>Project_milestones.md</code> 文件并在 <code>.cursorrules</code> 中引用：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Project Milestones</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Phase 1: Authentication System</span></span><br><span class="line"><span class="bullet">-</span> [x] User registration</span><br><span class="line"><span class="bullet">-</span> [x] Login/logout</span><br><span class="line"><span class="bullet">-</span> [ ] Password reset</span><br><span class="line"><span class="bullet">-</span> [ ] OAuth integration</span><br><span class="line"></span><br><span class="line"><span class="section">## Phase 2: Core Features</span></span><br><span class="line"><span class="bullet">-</span> [ ] Dashboard implementation</span><br><span class="line"><span class="bullet">-</span> [ ] Data visualization</span><br><span class="line"><span class="bullet">-</span> [ ] Export functionality</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>.cursorrules</code> 文件中引用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@Project_milestones.md</span><br><span class="line"></span><br><span class="line">Follow the implementation plan defined in the milestones document.</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 请求实现概览</strong></p>
+<p>在让 AI 生成代码之前，先请求实现概览：</p>
+<ul>
+<li>防止浪费时间</li>
+<li>及早发现 AI 幻觉</li>
+<li>确保方案符合预期</li>
+</ul>
+<p><strong>示例提示词：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Before implementing the user authentication system, </span><br><span class="line">please provide an overview of your planned approach, </span><br><span class="line">including architecture decisions, libraries to use, </span><br><span class="line">and potential security considerations.</span><br></pre></td></tr></table></figure>
+
+<h3 id="增量开发策略"><a href="#增量开发策略" class="headerlink" title="增量开发策略"></a>增量开发策略</h3><p><strong>小步快跑，而非大功能投放：</strong></p>
+<p>❌ <strong>错误做法：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Implement the entire e-commerce checkout flow </span><br><span class="line">including cart, payment, shipping, and order confirmation.</span><br></pre></td></tr></table></figure>
+
+<p>✅ <strong>正确做法：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Step 1: Implement shopping cart add/remove functionality</span><br><span class="line">Step 2: Create cart summary view</span><br><span class="line">Step 3: Add shipping address form</span><br><span class="line">Step 4: Integrate payment gateway</span><br><span class="line">Step 5: Implement order confirmation</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试驱动开发（TDD）：</strong></p>
+<p>先实现测试，再编写代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Step 1: Write test first</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">test_user_registration</span>():</span><br><span class="line">    user = register_user(<span class="string">&quot;test@example.com&quot;</span>, <span class="string">&quot;password123&quot;</span>)</span><br><span class="line">    <span class="keyword">assert</span> user.email == <span class="string">&quot;test@example.com&quot;</span></span><br><span class="line">    <span class="keyword">assert</span> user.is_active == <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Step 2: Let AI implement the function to pass the test</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="上下文管理策略"><a href="#上下文管理策略" class="headerlink" title="上下文管理策略"></a>上下文管理策略</h3><p><strong>1. 创建参考文档</strong></p>
+<p>为一致的上下文创建参考文档：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">project/</span><br><span class="line">├── docs/</span><br><span class="line">│   ├── prd.md          # Product Requirements Document</span><br><span class="line">│   ├── specs.md        # Technical Specifications</span><br><span class="line">│   ├── architecture.md # System Architecture</span><br><span class="line">│   └── todo.md         # Current Tasks</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 分层上下文方法</strong></p>
+<p>针对大型代码库（50 万行以上），采用分层上下文策略：</p>
+<ul>
+<li><strong>即时上下文</strong>：当前文件 + 直接依赖</li>
+<li><strong>模块上下文</strong>：相关文件</li>
+<li><strong>子系统上下文</strong>：更广泛的架构视图</li>
+</ul>
+<p><strong>3. 标记所有必要文件</strong></p>
+<p>在提供上下文时，使用 <code>@</code> 标记所有相关文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@src/auth/login.ts @src/auth/types.ts @src/utils/validation.ts</span><br><span class="line"></span><br><span class="line">Refactor the login function to use the new validation utilities.</span><br></pre></td></tr></table></figure>
+
+<h3 id="工作流优化"><a href="#工作流优化" class="headerlink" title="工作流优化"></a>工作流优化</h3><p><strong>1. 任务分离原则</strong></p>
+<p>为每个任务启动新的聊天，避免上下文膨胀：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Chat 1: Implement user authentication ✓</span><br><span class="line">Chat 2: Add email verification ✓  </span><br><span class="line">Chat 3: Create password reset flow ← New chat</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 模式切换策略</strong></p>
+<ul>
+<li><strong>Ask 模式</strong>：用于规划和探索</li>
+<li><strong>Agent 模式</strong>：用于实现和执行</li>
+</ul>
+<p><strong>3. 模型选择策略</strong></p>
+<ul>
+<li><strong>推理模型</strong>（如 Claude 3.7 Max）：用于规划、架构设计</li>
+<li><strong>常规模型</strong>（如 Claude 4.5 Sonnet）：用于代码实现</li>
+</ul>
+<h3 id="性能优化：大型代码库策略"><a href="#性能优化：大型代码库策略" class="headerlink" title="性能优化：大型代码库策略"></a>性能优化：大型代码库策略</h3><p><strong>1. 智能索引配置</strong></p>
+<p>创建 <code>.cursorignore</code> 文件排除不必要的文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"># Build artifacts</span><br><span class="line">dist/</span><br><span class="line">build/</span><br><span class="line">*.min.js</span><br><span class="line">*.map</span><br><span class="line"></span><br><span class="line"># Dependencies</span><br><span class="line">node_modules/</span><br><span class="line">vendor/</span><br><span class="line">.venv/</span><br><span class="line"></span><br><span class="line"># Generated files</span><br><span class="line">*.generated.*</span><br><span class="line">__generated__/</span><br><span class="line"></span><br><span class="line"># Test snapshots</span><br><span class="line">**/__snapshots__/</span><br><span class="line"></span><br><span class="line"># Logs</span><br><span class="line">*.log</span><br><span class="line">logs/</span><br></pre></td></tr></table></figure>
+
+<p><strong>配置增量更新：</strong></p>
+<p>在设置中配置 5 分钟的增量更新间隔。</p>
+<p><strong>2. 多根工作区策略</strong></p>
+<p>对于 monorepo，按优先级组织工作区文件夹：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">workspace/</span><br><span class="line">├── packages/</span><br><span class="line">│   ├── core/          # High priority - keep open</span><br><span class="line">│   ├── ui/            # High priority - keep open</span><br><span class="line">│   ├── utils/         # Medium priority - close when not needed</span><br><span class="line">│   └── legacy/        # Low priority - keep closed</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>提示</strong>：Cursor 仅索引打开的工作区，关闭不活跃的文件夹可减少内存使用。</p>
+</blockquote>
+<p><strong>3. PRD → Plan → Todo 方法论</strong></p>
+<p>采用文档驱动的开发方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1. PRD (Product Requirements Document)</span><br><span class="line">   ↓</span><br><span class="line">2. Implementation Plan</span><br><span class="line">   ↓</span><br><span class="line">3. Todo List with Checkpoints</span><br><span class="line">   ↓</span><br><span class="line">4. Incremental Implementation</span><br></pre></td></tr></table></figure>
+
+<h2 id="高级技巧"><a href="#高级技巧" class="headerlink" title="高级技巧"></a>高级技巧</h2><h3 id="1-Cursor-Rules-配置"><a href="#1-Cursor-Rules-配置" class="headerlink" title="1. Cursor Rules 配置"></a>1. Cursor Rules 配置</h3><p>在 <code>.cursor/rules</code> 目录创建领域特定知识：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.cursor/</span><br><span class="line">└── rules/</span><br><span class="line">    ├── coding-standards.md</span><br><span class="line">    ├── api-conventions.md</span><br><span class="line">    └── security-guidelines.md</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 <code>coding-standards.md</code>：</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Coding Standards</span></span><br><span class="line"></span><br><span class="line"><span class="section">## TypeScript</span></span><br><span class="line"><span class="bullet">-</span> Use strict mode</span><br><span class="line"><span class="bullet">-</span> Prefer interfaces over types for object shapes</span><br><span class="line"><span class="bullet">-</span> Always define return types for functions</span><br><span class="line"><span class="bullet">-</span> Use const assertions for literal types</span><br><span class="line"></span><br><span class="line"><span class="section">## Error Handling</span></span><br><span class="line"><span class="bullet">-</span> Always use try-catch for async operations</span><br><span class="line"><span class="bullet">-</span> Log errors with context information</span><br><span class="line"><span class="bullet">-</span> Return meaningful error messages to users</span><br><span class="line"></span><br><span class="line"><span class="section">## Testing</span></span><br><span class="line"><span class="bullet">-</span> Minimum 80% code coverage</span><br><span class="line"><span class="bullet">-</span> Write unit tests for all business logic</span><br><span class="line"><span class="bullet">-</span> Use integration tests for API endpoints</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-提示词精确化"><a href="#2-提示词精确化" class="headerlink" title="2. 提示词精确化"></a>2. 提示词精确化</h3><p><strong>❌ 模糊提示：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Make the app faster</span><br></pre></td></tr></table></figure>
+
+<p><strong>✅ 精确提示：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Optimize the user list component by:</span><br><span class="line">1. Implementing virtual scrolling for lists &gt; 100 items</span><br><span class="line">2. Memoizing expensive calculations with useMemo</span><br><span class="line">3. Adding React.memo to prevent unnecessary re-renders</span><br><span class="line">4. Lazy loading user avatars</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-MCP（Model-Context-Protocol）集成"><a href="#3-MCP（Model-Context-Protocol）集成" class="headerlink" title="3. MCP（Model Context Protocol）集成"></a>3. MCP（Model Context Protocol）集成</h3><p>设置 MCP 服务器扩展 Cursor 能力：</p>
+<p><strong>GitHub MCP 示例：</strong></p>
+<ul>
+<li>仓库管理</li>
+<li>代码审查</li>
+<li>问题跟踪</li>
+</ul>
+<p><strong>配置方式：</strong><br>在 Cursor 设置中配置 MCP 服务器：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ~/.cursor/mcp.json</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;mcpServers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;github&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-github&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">:</span> <span class="string">&quot;your_token_here&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;filesystem&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-filesystem&quot;</span><span class="punctuation">,</span> <span class="string">&quot;/path/to/allowed/dir&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-Skills：扩展-Cursor-的能力"><a href="#4-Skills：扩展-Cursor-的能力" class="headerlink" title="4. Skills：扩展 Cursor 的能力"></a>4. Skills：扩展 Cursor 的能力</h3><p><strong>Skills 是 Cursor 强大的扩展机制</strong>，允许你创建可重用的指令集，让 AI 自动获得特定领域的知识和能力。</p>
+<h4 id="什么是-Skills"><a href="#什么是-Skills" class="headerlink" title="什么是 Skills"></a>什么是 Skills</h4><p>Skills 遵循 <a target="_blank" rel="noopener" href="https://agentskills.io/">Agent Skills</a> 开放标准，通过创建 <code>SKILL.md</code> 文件来定义。Cursor 会：</p>
+<ul>
+<li><strong>自动发现</strong>：在相关场景下自动加载 Skills</li>
+<li><strong>手动调用</strong>：通过 <code>/skill-name</code> 命令直接调用</li>
+<li><strong>跨工具兼容</strong>：Skills 标准可在 Cursor、Claude Code 等多个 AI 工具中使用</li>
+</ul>
+<h4 id="创建-Skill"><a href="#创建-Skill" class="headerlink" title="创建 Skill"></a>创建 Skill</h4><p>在 <code>.cursor/skills/</code> 目录下创建 Skill：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建 Skill 目录</span></span><br><span class="line"><span class="built_in">mkdir</span> -p .cursor/skills/code-review</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建 SKILL.md</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>示例：代码审查 Skill</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: code-review</span><br><span class="line"><span class="section">description: 系统化审查代码变更，检查质量、安全和最佳实践。用于 PR 审查或代码质量检查。</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 代码审查 Skill</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 审查清单</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 1. 功能正确性</span></span><br><span class="line"><span class="bullet">-</span> [ ] 代码实现符合需求</span><br><span class="line"><span class="bullet">-</span> [ ] 边缘情况处理完善</span><br><span class="line"><span class="bullet">-</span> [ ] 错误处理适当</span><br><span class="line"></span><br><span class="line"><span class="section">### 2. 代码质量</span></span><br><span class="line"><span class="bullet">-</span> [ ] 命名清晰有意义</span><br><span class="line"><span class="bullet">-</span> [ ] 函数职责单一</span><br><span class="line"><span class="bullet">-</span> [ ] 避免重复代码</span><br><span class="line"></span><br><span class="line"><span class="section">### 3. 安全性</span></span><br><span class="line"><span class="bullet">-</span> [ ] 输入验证充分</span><br><span class="line"><span class="bullet">-</span> [ ] 无 SQL 注入风险</span><br><span class="line"><span class="bullet">-</span> [ ] 敏感数据加密</span><br><span class="line"></span><br><span class="line"><span class="section">### 4. 性能</span></span><br><span class="line"><span class="bullet">-</span> [ ] 无明显性能瓶颈</span><br><span class="line"><span class="bullet">-</span> [ ] 数据库查询优化</span><br><span class="line"></span><br><span class="line"><span class="section">## 审查流程</span></span><br><span class="line"><span class="bullet">1.</span> 阅读变更概述和相关 issue</span><br><span class="line"><span class="bullet">2.</span> 逐文件审查代码</span><br><span class="line"><span class="bullet">3.</span> 运行测试套件</span><br><span class="line"><span class="bullet">4.</span> 提供具体、可操作的反馈</span><br></pre></td></tr></table></figure>
+
+<h4 id="Skill-存放位置与优先级"><a href="#Skill-存放位置与优先级" class="headerlink" title="Skill 存放位置与优先级"></a>Skill 存放位置与优先级</h4><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>路径</th>
+<th>适用范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>个人级</strong></td>
+<td><code>~/.cursor/skills/&lt;skill-name&gt;/SKILL.md</code></td>
+<td>你的所有项目</td>
+</tr>
+<tr>
+<td><strong>项目级</strong></td>
+<td><code>.cursor/skills/&lt;skill-name&gt;/SKILL.md</code></td>
+<td>当前项目</td>
+</tr>
+</tbody></table>
+<h4 id="实用-Skill-示例"><a href="#实用-Skill-示例" class="headerlink" title="实用 Skill 示例"></a>实用 Skill 示例</h4><p><strong>Commit 消息生成器：</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: commit-message</span><br><span class="line"><span class="section">description: 分析 git diff 生成规范的 commit 消息</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># Commit 消息生成器</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 格式规范</span></span><br><span class="line">遵循 Conventional Commits 标准：</span><br></pre></td></tr></table></figure>
+<p><type>(<scope>): <subject></p>
+<body>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## Type 类型</span><br><span class="line">- `feat`: 新功能</span><br><span class="line">- `fix`: Bug 修复</span><br><span class="line">- `docs`: 文档更新</span><br><span class="line">- `refactor`: 重构</span><br><span class="line">- `test`: 测试相关</span><br><span class="line"></span><br><span class="line">## 生成步骤</span><br><span class="line">1. 运行 `git diff --staged` 查看变更</span><br><span class="line">2. 分析变更类型和影响范围</span><br><span class="line">3. 生成简洁但完整的消息</span><br></pre></td></tr></table></figure>
+
+<p><strong>代码解释 Skill：</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: explain-code</span><br><span class="line"><span class="section">description: 用可视化图表和类比解释代码逻辑</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 代码解释 Skill</span></span><br><span class="line"></span><br><span class="line">当解释代码时：</span><br><span class="line"></span><br><span class="line"><span class="section">## 1. 从类比开始</span></span><br><span class="line">将代码与日常生活中的事物进行比较。</span><br><span class="line"></span><br><span class="line"><span class="section">## 2. 绘制图表</span></span><br><span class="line">使用 ASCII 艺术展示流程：</span><br></pre></td></tr></table></figure>
+<p>┌─────────┐     ┌─────────┐     ┌─────────┐<br>│ 输入数据 │ ──&gt; │ 处理逻辑 │ ──&gt; │ 输出结果 │<br>└─────────┘     └─────────┘     └─────────┘</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## 3. 逐步讲解</span><br><span class="line">分步骤解释代码执行过程。</span><br></pre></td></tr></table></figure>
+
+<h4 id="Skills-最佳实践"><a href="#Skills-最佳实践" class="headerlink" title="Skills 最佳实践"></a>Skills 最佳实践</h4><ol>
+<li><strong>简洁至上</strong>：只添加 AI 不知道的信息，避免冗余</li>
+<li><strong>渐进式披露</strong>：SKILL.md 作为概览，详细内容放在单独文件中按需加载</li>
+<li><strong>提供验证步骤</strong>：关键操作要有验证方式</li>
+<li><strong>团队共享</strong>：将 <code>.cursor/skills/</code> 提交到版本控制</li>
+</ol>
+<h3 id="5-团队协作"><a href="#5-团队协作" class="headerlink" title="5. 团队协作"></a>5. 团队协作</h3><p><strong>共享配置：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">project/</span><br><span class="line">├── .cursorrules          # Shared AI behavior rules</span><br><span class="line">├── .cursorignore        # Shared ignore patterns</span><br><span class="line">└── .cursor/</span><br><span class="line">    └── rules/           # Team coding standards</span><br></pre></td></tr></table></figure>
+
+<p>将这些文件提交到版本控制，确保团队成员获得一致的 AI 行为。</p>
+<h2 id="Cursor-与-Claude-Code-集成"><a href="#Cursor-与-Claude-Code-集成" class="headerlink" title="Cursor 与 Claude Code 集成"></a>Cursor 与 Claude Code 集成</h2><h3 id="为什么同时使用两个工具"><a href="#为什么同时使用两个工具" class="headerlink" title="为什么同时使用两个工具"></a>为什么同时使用两个工具</h3><p>Cursor 和 Claude Code 是<strong>互补而非竞争</strong>的关系。两者各有所长，结合使用可以覆盖更广泛的开发场景：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐工具</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>快速原型开发</td>
+<td><strong>Cursor</strong></td>
+<td>IDE 集成，实时补全，所见即所得</td>
+</tr>
+<tr>
+<td>复杂重构</td>
+<td><strong>Claude Code</strong></td>
+<td>200k+ token 上下文，自主执行多文件操作</td>
+</tr>
+<tr>
+<td>代码审查</td>
+<td><strong>Cursor</strong></td>
+<td>内联 diff，可视化对比</td>
+</tr>
+<tr>
+<td>架构级决策</td>
+<td><strong>Claude Code</strong></td>
+<td>Extended Thinking，深度分析能力</td>
+</tr>
+<tr>
+<td>调试和修复</td>
+<td><strong>Cursor</strong></td>
+<td>即时反馈，快速迭代</td>
+</tr>
+<tr>
+<td>批量代码生成</td>
+<td><strong>Claude Code</strong></td>
+<td>Subagents 并行处理</td>
+</tr>
+<tr>
+<td>文档编写</td>
+<td><strong>Cursor</strong></td>
+<td>Markdown 预览，实时编辑</td>
+</tr>
+<tr>
+<td>CI&#x2F;CD 集成</td>
+<td><strong>Claude Code</strong></td>
+<td>Headless 模式，脚本化执行</td>
+</tr>
+</tbody></table>
+<h3 id="配置共享"><a href="#配置共享" class="headerlink" title="配置共享"></a>配置共享</h3><h4 id="共享-MCP-服务器"><a href="#共享-MCP-服务器" class="headerlink" title="共享 MCP 服务器"></a>共享 MCP 服务器</h4><p>Cursor 和 Claude Code 都支持 MCP，可以共享相同的 MCP 服务器配置：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 共享的 MCP 配置逻辑</span></span><br><span class="line"><span class="comment">// Cursor: ~/.cursor/mcp.json</span></span><br><span class="line"><span class="comment">// Claude Code: ~/.config/claude/mcp_servers.json</span></span><br><span class="line"></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;github&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-github&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$&#123;GITHUB_TOKEN&#125;&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;postgres&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-postgres&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;DATABASE_URL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$&#123;DATABASE_URL&#125;&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="共享-Skills"><a href="#共享-Skills" class="headerlink" title="共享 Skills"></a>共享 Skills</h4><p>由于 Skills 遵循开放标准，可以在项目中创建统一的 Skills 目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">project/</span><br><span class="line">├── .cursor/</span><br><span class="line">│   └── rules/              # Cursor 专用规则</span><br><span class="line">├── .claude/</span><br><span class="line">│   └── hooks.json          # Claude Code 专用 hooks</span><br><span class="line">├── skills/                 # 共享 Skills（两个工具都可读取）</span><br><span class="line">│   ├── code-review/</span><br><span class="line">│   │   └── SKILL.md</span><br><span class="line">│   └── commit-message/</span><br><span class="line">│       └── SKILL.md</span><br><span class="line">└── CLAUDE.md              # 项目上下文（两个工具都识别）</span><br></pre></td></tr></table></figure>
+
+<h3 id="协同工作流"><a href="#协同工作流" class="headerlink" title="协同工作流"></a>协同工作流</h3><h4 id="工作流-1：规划-实现"><a href="#工作流-1：规划-实现" class="headerlink" title="工作流 1：规划 + 实现"></a>工作流 1：规划 + 实现</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Step 1: 使用 Claude Code 进行深度规划</span></span><br><span class="line">claude plan <span class="string">&quot;设计用户认证系统，考虑安全性、可扩展性和性能&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Step 2: 审查 Claude Code 的规划输出</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Step 3: 在 Cursor 中实现</span></span><br><span class="line"><span class="comment"># 打开 Cursor，使用 Agent 模式按计划逐步实现</span></span><br><span class="line"><span class="comment"># Cursor 提供更好的代码可视化和即时反馈</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="工作流-2：并行开发"><a href="#工作流-2：并行开发" class="headerlink" title="工作流 2：并行开发"></a>工作流 2：并行开发</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Terminal 1: Claude Code 处理后端重构</span></span><br><span class="line">claude <span class="string">&quot;重构 UserService，将认证逻辑迁移到独立模块&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时在 Cursor 中处理前端</span></span><br><span class="line"><span class="comment"># 使用 Cursor 的实时补全和预览功能开发 UI 组件</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="工作流-3：代码审查-修复"><a href="#工作流-3：代码审查-修复" class="headerlink" title="工作流 3：代码审查 + 修复"></a>工作流 3：代码审查 + 修复</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Step 1: 使用 Claude Code 进行全面代码审查</span></span><br><span class="line">claude <span class="string">&quot;审查最近的 PR 变更，检查安全漏洞和性能问题&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Step 2: 在 Cursor 中查看和修复问题</span></span><br><span class="line"><span class="comment"># 利用 Cursor 的 diff 视图和内联编辑能力快速修复</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="在-Cursor-中使用-Claude-Code-扩展"><a href="#在-Cursor-中使用-Claude-Code-扩展" class="headerlink" title="在 Cursor 中使用 Claude Code 扩展"></a>在 Cursor 中使用 Claude Code 扩展</h3><p>Cursor 支持安装 Claude Code VSCode 扩展，实现深度集成：</p>
+<p><strong>安装方式：</strong></p>
+<ol>
+<li>打开 Cursor 的扩展面板</li>
+<li>搜索 “Claude Code”</li>
+<li>安装官方扩展</li>
+</ol>
+<p><strong>集成功能：</strong></p>
+<ul>
+<li>在 Cursor 内直接调用 Claude Code 终端</li>
+<li>共享编辑器上下文</li>
+<li>统一的快捷键绑定</li>
+</ul>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// settings.json - 配置 Claude Code 扩展</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;claudeCode.autoActivate&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;claudeCode.showInlineHints&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;claudeCode.terminalIntegration&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="最佳实践：工具选择决策树"><a href="#最佳实践：工具选择决策树" class="headerlink" title="最佳实践：工具选择决策树"></a>最佳实践：工具选择决策树</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">需要完成什么任务？</span><br><span class="line">│</span><br><span class="line">├── 简单代码修改 / 快速补全</span><br><span class="line">│   └── ✅ 使用 Cursor</span><br><span class="line">│</span><br><span class="line">├── 单文件重构 / UI 开发</span><br><span class="line">│   └── ✅ 使用 Cursor</span><br><span class="line">│</span><br><span class="line">├── 多文件重构 / 架构变更</span><br><span class="line">│   └── ✅ 使用 Claude Code</span><br><span class="line">│</span><br><span class="line">├── 需要深度分析 / 复杂决策</span><br><span class="line">│   └── ✅ 使用 Claude Code (Extended Thinking)</span><br><span class="line">│</span><br><span class="line">├── 需要并行处理多个任务</span><br><span class="line">│   └── ✅ 使用 Claude Code (Subagents)</span><br><span class="line">│</span><br><span class="line">├── CI/CD 集成 / 自动化脚本</span><br><span class="line">│   └── ✅ 使用 Claude Code (Headless)</span><br><span class="line">│</span><br><span class="line">└── 实时协作 / 代码审查</span><br><span class="line">    └── ✅ 使用 Cursor</span><br></pre></td></tr></table></figure>
+
+<h3 id="配置同步脚本"><a href="#配置同步脚本" class="headerlink" title="配置同步脚本"></a>配置同步脚本</h3><p>创建一个脚本来同步两个工具的配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="comment"># sync-ai-tools.sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 同步 MCP 配置</span></span><br><span class="line"><span class="built_in">cp</span> ~/.cursor/mcp.json ~/.config/claude/mcp_servers.json 2&gt;/dev/null || <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 同步 Skills 到两个位置</span></span><br><span class="line"><span class="keyword">if</span> [ -d <span class="string">&quot;skills&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">  <span class="built_in">mkdir</span> -p .cursor/skills .claude/skills</span><br><span class="line">  <span class="built_in">cp</span> -r skills/* .cursor/skills/</span><br><span class="line">  <span class="built_in">cp</span> -r skills/* .claude/skills/</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;AI 工具配置同步完成&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>将此脚本添加到项目的 <code>package.json</code> 或 <code>Makefile</code> 中，确保配置保持同步。</p>
+<h2 id="常见错误与陷阱"><a href="#常见错误与陷阱" class="headerlink" title="常见错误与陷阱"></a>常见错误与陷阱</h2><h3 id="错误-1：忽略控制台错误"><a href="#错误-1：忽略控制台错误" class="headerlink" title="错误 1：忽略控制台错误"></a>错误 1：忽略控制台错误</h3><p><strong>问题：</strong><br>遇到问题时直接重装 Cursor，而不先检查开发者工具。</p>
+<p><strong>解决方案：</strong></p>
+<ol>
+<li>打开开发者工具：<code>Help &gt; Toggle Developer Tools</code></li>
+<li>过滤控制台查看：<ul>
+<li>“WARN” 消息（搜索提供程序问题）</li>
+<li>“ERROR” 日志（原生模块失败）</li>
+<li>扩展激活失败</li>
+</ul>
+</li>
+</ol>
+<h3 id="错误-2：误诊扩展冲突"><a href="#错误-2：误诊扩展冲突" class="headerlink" title="错误 2：误诊扩展冲突"></a>错误 2：误诊扩展冲突</h3><p><strong>问题：</strong><br>认为所有问题都是扩展冲突导致。</p>
+<p><strong>解决方案：</strong></p>
+<ol>
+<li>先在原版 VS Code 中测试，确认问题不是系统级的</li>
+<li>在开发者工具中检查内置扩展状态</li>
+<li>逐个禁用扩展定位问题</li>
+</ol>
+<h3 id="错误-3：忽略架构不匹配"><a href="#错误-3：忽略架构不匹配" class="headerlink" title="错误 3：忽略架构不匹配"></a>错误 3：忽略架构不匹配</h3><p><strong>问题：</strong><br>系统架构不匹配（特别是 ARM64 vs x64）导致功能失效。</p>
+<p><strong>解决方案：</strong></p>
+<ol>
+<li>检查错误消息中的架构线索（如 “win32-arm64”）</li>
+<li>验证 Cursor 版本与操作系统架构匹配</li>
+<li>必要时重新下载正确架构的版本</li>
+</ol>
+<h3 id="错误-4：浪费时间在表面修复上"><a href="#错误-4：浪费时间在表面修复上" class="headerlink" title="错误 4：浪费时间在表面修复上"></a>错误 4：浪费时间在表面修复上</h3><p><strong>问题：</strong><br>删除配置文件夹或切换实验性设置，但问题依旧。</p>
+<p><strong>解决方案：</strong><br>系统性排查：</p>
+<ol>
+<li>验证 Cursor 版本</li>
+<li>检查架构兼容性</li>
+<li>在终端测试 git grep</li>
+<li>创建测试项目确认问题</li>
+</ol>
+<h3 id="错误-5：错过更新"><a href="#错误-5：错过更新" class="headerlink" title="错误 5：错过更新"></a>错误 5：错过更新</h3><p><strong>问题：</strong><br>自动更新可能静默失败，ARM64 构建有时滞后。</p>
+<p><strong>解决方案：</strong></p>
+<ul>
+<li>定期从官网手动重新下载 Cursor</li>
+<li>设置和扩展会自动迁移</li>
+</ul>
+<h2 id="故障排除速查"><a href="#故障排除速查" class="headerlink" title="故障排除速查"></a>故障排除速查</h2><h3 id="GitHub-登录问题"><a href="#GitHub-登录问题" class="headerlink" title="GitHub 登录问题"></a>GitHub 登录问题</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Command Palette &gt; Sign Out of GitHub</span><br><span class="line">然后重新登录</span><br></pre></td></tr></table></figure>
+
+<h3 id="企业代理阻止-Cmd-K-Tab"><a href="#企业代理阻止-Cmd-K-Tab" class="headerlink" title="企业代理阻止 Cmd K&#x2F;Tab"></a>企业代理阻止 Cmd K&#x2F;Tab</h3><p>在设置中添加：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;cursor.general.disableHttp2&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>原因</strong>：HTTP&#x2F;2 可能被 Zscaler 等代理阻止。</p>
+</blockquote>
+<h3 id="订阅未更新"><a href="#订阅未更新" class="headerlink" title="订阅未更新"></a>订阅未更新</h3><p>从设置中退出并重新登录。</p>
+<h3 id="Remote-SSH-问题"><a href="#Remote-SSH-问题" class="headerlink" title="Remote SSH 问题"></a>Remote SSH 问题</h3><blockquote>
+<p><strong>注意</strong>：Mac 和 Windows 的 SSH 连接目前不受支持。</p>
+</blockquote>
+<h3 id="收集故障排除信息"><a href="#收集故障排除信息" class="headerlink" title="收集故障排除信息"></a>收集故障排除信息</h3><p>报告问题时，收集以下信息：</p>
+<ul>
+<li>截图</li>
+<li>复现步骤</li>
+<li>系统信息（<code>Help &gt; About</code>）</li>
+<li>VPN&#x2F;Zscaler 状态</li>
+<li>开发者工具控制台错误</li>
+<li>日志文件：<ul>
+<li><strong>Windows</strong>: <code>C:\Users\&lt;用户名&gt;\AppData\Roaming\Cursor\logs</code></li>
+<li><strong>Mac</strong>: <code>~/Library/Application Support/Cursor/logs</code></li>
+<li><strong>Linux</strong>: <code>~/.config/Cursor/logs</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="实战案例：从零到生产"><a href="#实战案例：从零到生产" class="headerlink" title="实战案例：从零到生产"></a>实战案例：从零到生产</h2><h3 id="场景：构建用户认证系统"><a href="#场景：构建用户认证系统" class="headerlink" title="场景：构建用户认证系统"></a>场景：构建用户认证系统</h3><p><strong>Step 1: 规划阶段（Ask 模式）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@architecture.md @security-guidelines.md</span><br><span class="line"></span><br><span class="line">I need to implement a user authentication system. </span><br><span class="line">Please provide an implementation plan considering:</span><br><span class="line">- Session vs JWT approach</span><br><span class="line">- Password hashing strategy</span><br><span class="line">- Rate limiting for login attempts</span><br><span class="line">- OAuth integration requirements</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2: 创建 Todo</strong></p>
+<p>基于 AI 的规划，创建 <code>todo.md</code>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># User Authentication Implementation</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Phase 1: Core Auth</span></span><br><span class="line"><span class="bullet">-</span> [ ] Set up database schema for users</span><br><span class="line"><span class="bullet">-</span> [ ] Implement password hashing with bcrypt</span><br><span class="line"><span class="bullet">-</span> [ ] Create registration endpoint</span><br><span class="line"><span class="bullet">-</span> [ ] Create login endpoint</span><br><span class="line"><span class="bullet">-</span> [ ] Implement JWT token generation</span><br><span class="line"></span><br><span class="line"><span class="section">## Phase 2: Security</span></span><br><span class="line"><span class="bullet">-</span> [ ] Add rate limiting middleware</span><br><span class="line"><span class="bullet">-</span> [ ] Implement refresh token mechanism</span><br><span class="line"><span class="bullet">-</span> [ ] Add email verification</span><br><span class="line"><span class="bullet">-</span> [ ] Create password reset flow</span><br><span class="line"></span><br><span class="line"><span class="section">## Phase 3: OAuth</span></span><br><span class="line"><span class="bullet">-</span> [ ] Google OAuth integration</span><br><span class="line"><span class="bullet">-</span> [ ] GitHub OAuth integration</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 3: 增量实现（Agent 模式）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@todo.md @src/auth/</span><br><span class="line"></span><br><span class="line">Implement Phase 1, Task 1: Set up database schema for users.</span><br><span class="line">Use Prisma ORM and include fields for email, password hash, </span><br><span class="line">created_at, updated_at, and is_verified.</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 4: 测试驱动</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@src/auth/register.ts</span><br><span class="line"></span><br><span class="line">Write unit tests for the registration function covering:</span><br><span class="line">- Successful registration</span><br><span class="line">- Duplicate email handling</span><br><span class="line">- Password validation</span><br><span class="line">- Email format validation</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 5: 代码审查</strong></p>
+<p>使用 Cursor 的检查点功能回顾更改，确保质量。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Cursor IDE 通过深度 AI 集成和强大的上下文理解能力，正在重新定义开发者的工作方式。掌握以下关键实践，可以最大化你的生产力：</p>
+<ul>
+<li><strong>结构化规划</strong>：使用 PRD、规范文档和 todo 列表保持组织性</li>
+<li><strong>增量开发</strong>：小步快跑，采用测试驱动开发</li>
+<li><strong>上下文管理</strong>：创建参考文档，使用分层上下文方法</li>
+<li><strong>工作流优化</strong>：任务分离，合理选择模式和模型</li>
+<li><strong>性能优化</strong>：配置 <code>.cursorignore</code>，使用多根工作区</li>
+<li><strong>Skills 扩展</strong>：创建可重用的 Skills，标准化 AI 行为</li>
+<li><strong>工具协同</strong>：结合 Claude Code 使用，覆盖更广泛的开发场景</li>
+<li><strong>团队协作</strong>：共享 Cursor 规则、Skills 和配置</li>
+</ul>
+<p>记住，AI 是你的编码伙伴，而非替代品。通过精确的提示词、良好的上下文管理、Skills 扩展和与 Claude Code 的协同使用，你可以将 AI 辅助编程的潜力发挥到极致。</p>
+<h2 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h2><h3 id="Cursor-相关"><a href="#Cursor-相关" class="headerlink" title="Cursor 相关"></a>Cursor 相关</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.cursor.com/">Cursor 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://cursorintro.com/best-practices">Cursor Best Practices</a></li>
+<li><a target="_blank" rel="noopener" href="https://cursorideguide.com/guides">Cursor IDE Guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://developertoolkit.ai/en/cursor-ide/tips-tricks/">Developer Toolkit - Cursor Tips</a></li>
+<li><a target="_blank" rel="noopener" href="https://forum.cursor.com/">Cursor Community Forum</a></li>
+</ul>
+<h3 id="Claude-Code-与集成"><a href="#Claude-Code-与集成" class="headerlink" title="Claude Code 与集成"></a>Claude Code 与集成</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs">Claude Code 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://agentskills.io/">Agent Skills 开放标准</a></li>
+<li><a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/">Model Context Protocol</a></li>
+<li><a target="_blank" rel="noopener" href="https://northflank.com/blog/claude-code-vs-cursor-comparison">Claude Code vs Cursor 深度对比</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/11eb1b4f9e5f.html">https://xhua.eu.org/posts/11eb1b4f9e5f.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/claude-code/">Claude Code</a><a class="post-meta__tags" href="/tags/cursor/">Cursor</a><a class="post-meta__tags" href="/tags/ai%E7%BC%96%E7%A8%8B/">AI编程</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a><a class="post-meta__tags" href="/tags/%E7%94%9F%E4%BA%A7%E5%8A%9B/">生产力</a><a class="post-meta__tags" href="/tags/vscode/">VSCode</a><a class="post-meta__tags" href="/tags/skills/">Skills</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧"><img class="cover" src="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Claude Code 使用最佳实践与技巧</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从基础使用提升到专家级别，真正释放 AI 辅助编程的生产力。 Claude Code 核心理解什么是 Claude CodeClaude Code 是 Anthropic 开发的自主编程代理（Agentic Coding Tool），而非传统的代码补全工具。它的核心特点包括：  终端优先：通过 claude 命令在终端中交互，也支持 Web、桌面应用、IDE 插件等多种形式 自主执行：能够独立规划任务、执行多文件操作、运行命令、验证结果 大上下文：支持 200k+ token 的上下文窗口，适合处理大型代码库 多模态能力：不仅限于编程，还能处理文档编写、构建运行、文件搜索、主题研究等任何可...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b9e5a0c5a4ad.html" title="Cursor创建一个python项目的所有交互"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-27</div><div class="info-item-2">Cursor创建一个python项目的所有交互</div></div><div class="info-2"><div class="info-item-1">本文内容主要参考自《用cursor玩转AI辅助编程》，将详细记录如何借助 Cursor AI 高效开发一个基于 FastAPI 和 Vue.js 的销售数据分析系统。适合希望了解 AI 辅助编程实践的 Python 全栈开发者。文章涵盖了从项目初始化、依赖配置、数据库设计、后端与前端开发、数据处理、API 实现、测试到前后端联调的完整流程。通过真实的对话与操作示例，帮助读者掌握在实际开发场景下如何高效利用 Cursor 进行协作，显著提升开发效率与代码质量。 后端开发需求分析 chat  1234我需要开发一个销售数据分析系统，主要功能包括数据处理、统计分析和API。 请推荐合适的Python框架和技术栈，并帮助我搭建基础项目结构。 系统需要处理CSV格式的销售数据，进行数据清洗和分析，最后通过Web API框架提供查询API。 请帮我细化开发步骤，以便后续和你沟通时，能够一步一步实现。  chat  12345感谢你的建议！不过我想做一些调整： 1. 我希望使用MySQL而不是PostgreSQL，因为我在本地电脑已经安装了MySQL 2. 暂时不需要Docker，我们先在本地...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-Cursor"><span class="toc-text">为什么选择 Cursor</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Cursor-vs-GitHub-Copilot"><span class="toc-text">Cursor vs GitHub Copilot</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cursor-%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD%E8%AF%A6%E8%A7%A3"><span class="toc-text">Cursor 核心功能详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Composer%EF%BC%9AAI-%E7%BC%96%E7%A0%81%E5%8A%A9%E6%89%8B"><span class="toc-text">1. Composer：AI 编码助手</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Tab-%E8%87%AA%E5%8A%A8%E8%A1%A5%E5%85%A8"><span class="toc-text">2. Tab 自动补全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86"><span class="toc-text">3. 上下文管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%85%B6%E4%BB%96%E5%85%B3%E9%94%AE%E5%8A%9F%E8%83%BD"><span class="toc-text">4. 其他关键功能</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%EF%BC%9A%E6%8F%90%E5%8D%87%E7%94%9F%E4%BA%A7%E5%8A%9B%E7%9A%84%E5%85%B3%E9%94%AE"><span class="toc-text">最佳实践：提升生产力的关键</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E8%A7%84%E5%88%92%E4%B8%8E%E6%96%87%E6%A1%A3"><span class="toc-text">结构化规划与文档</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A2%9E%E9%87%8F%E5%BC%80%E5%8F%91%E7%AD%96%E7%95%A5"><span class="toc-text">增量开发策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E7%AD%96%E7%95%A5"><span class="toc-text">上下文管理策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%BC%98%E5%8C%96"><span class="toc-text">工作流优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%A4%A7%E5%9E%8B%E4%BB%A3%E7%A0%81%E5%BA%93%E7%AD%96%E7%95%A5"><span class="toc-text">性能优化：大型代码库策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7"><span class="toc-text">高级技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Cursor-Rules-%E9%85%8D%E7%BD%AE"><span class="toc-text">1. Cursor Rules 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%B2%BE%E7%A1%AE%E5%8C%96"><span class="toc-text">2. 提示词精确化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-MCP%EF%BC%88Model-Context-Protocol%EF%BC%89%E9%9B%86%E6%88%90"><span class="toc-text">3. MCP（Model Context Protocol）集成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Skills%EF%BC%9A%E6%89%A9%E5%B1%95-Cursor-%E7%9A%84%E8%83%BD%E5%8A%9B"><span class="toc-text">4. Skills：扩展 Cursor 的能力</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Skills"><span class="toc-text">什么是 Skills</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-Skill"><span class="toc-text">创建 Skill</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Skill-%E5%AD%98%E6%94%BE%E4%BD%8D%E7%BD%AE%E4%B8%8E%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">Skill 存放位置与优先级</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8-Skill-%E7%A4%BA%E4%BE%8B"><span class="toc-text">实用 Skill 示例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Skills-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">Skills 最佳实践</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C"><span class="toc-text">5. 团队协作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cursor-%E4%B8%8E-Claude-Code-%E9%9B%86%E6%88%90"><span class="toc-text">Cursor 与 Claude Code 集成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8%E4%B8%A4%E4%B8%AA%E5%B7%A5%E5%85%B7"><span class="toc-text">为什么同时使用两个工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%85%B1%E4%BA%AB"><span class="toc-text">配置共享</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB-MCP-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">共享 MCP 服务器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB-Skills"><span class="toc-text">共享 Skills</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E5%90%8C%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text">协同工作流</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81-1%EF%BC%9A%E8%A7%84%E5%88%92-%E5%AE%9E%E7%8E%B0"><span class="toc-text">工作流 1：规划 + 实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81-2%EF%BC%9A%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91"><span class="toc-text">工作流 2：并行开发</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81-3%EF%BC%9A%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5-%E4%BF%AE%E5%A4%8D"><span class="toc-text">工作流 3：代码审查 + 修复</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8-Cursor-%E4%B8%AD%E4%BD%BF%E7%94%A8-Claude-Code-%E6%89%A9%E5%B1%95"><span class="toc-text">在 Cursor 中使用 Claude Code 扩展</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%EF%BC%9A%E5%B7%A5%E5%85%B7%E9%80%89%E6%8B%A9%E5%86%B3%E7%AD%96%E6%A0%91"><span class="toc-text">最佳实践：工具选择决策树</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%90%8C%E6%AD%A5%E8%84%9A%E6%9C%AC"><span class="toc-text">配置同步脚本</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%94%99%E8%AF%AF%E4%B8%8E%E9%99%B7%E9%98%B1"><span class="toc-text">常见错误与陷阱</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF-1%EF%BC%9A%E5%BF%BD%E7%95%A5%E6%8E%A7%E5%88%B6%E5%8F%B0%E9%94%99%E8%AF%AF"><span class="toc-text">错误 1：忽略控制台错误</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF-2%EF%BC%9A%E8%AF%AF%E8%AF%8A%E6%89%A9%E5%B1%95%E5%86%B2%E7%AA%81"><span class="toc-text">错误 2：误诊扩展冲突</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF-3%EF%BC%9A%E5%BF%BD%E7%95%A5%E6%9E%B6%E6%9E%84%E4%B8%8D%E5%8C%B9%E9%85%8D"><span class="toc-text">错误 3：忽略架构不匹配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF-4%EF%BC%9A%E6%B5%AA%E8%B4%B9%E6%97%B6%E9%97%B4%E5%9C%A8%E8%A1%A8%E9%9D%A2%E4%BF%AE%E5%A4%8D%E4%B8%8A"><span class="toc-text">错误 4：浪费时间在表面修复上</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF-5%EF%BC%9A%E9%94%99%E8%BF%87%E6%9B%B4%E6%96%B0"><span class="toc-text">错误 5：错过更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4%E9%80%9F%E6%9F%A5"><span class="toc-text">故障排除速查</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GitHub-%E7%99%BB%E5%BD%95%E9%97%AE%E9%A2%98"><span class="toc-text">GitHub 登录问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E4%BB%A3%E7%90%86%E9%98%BB%E6%AD%A2-Cmd-K-Tab"><span class="toc-text">企业代理阻止 Cmd K&#x2F;Tab</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A2%E9%98%85%E6%9C%AA%E6%9B%B4%E6%96%B0"><span class="toc-text">订阅未更新</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Remote-SSH-%E9%97%AE%E9%A2%98"><span class="toc-text">Remote SSH 问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B6%E9%9B%86%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4%E4%BF%A1%E6%81%AF"><span class="toc-text">收集故障排除信息</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%A1%88%E4%BE%8B%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%88%B0%E7%94%9F%E4%BA%A7"><span class="toc-text">实战案例：从零到生产</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%EF%BC%9A%E6%9E%84%E5%BB%BA%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81%E7%B3%BB%E7%BB%9F"><span class="toc-text">场景：构建用户认证系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toc-text">参考资源</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Cursor-%E7%9B%B8%E5%85%B3"><span class="toc-text">Cursor 相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Claude-Code-%E4%B8%8E%E9%9B%86%E6%88%90"><span class="toc-text">Claude Code 与集成</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

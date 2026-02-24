@@ -1,0 +1,246 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ansible通过跳板机管理另一个网络下的主机集群 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="原文地址：http:&#x2F;&#x2F;wooooe.com&#x2F;2018&#x2F;07&#x2F;31&#x2F;remote_forwarding&#x2F; ssh端口映射例子 因为公司的网络比较深所以经常需要跳转多次。所以这次做个记录    需求: 需要从your host跳到client中间隔了两层跳板机。 如果单纯用代理方法只能跳一层 所以如果用端口映射+代理方式就可以跳两层了 映射命令 1ssh -g -f -NL 127.0.0">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ansible通过跳板机管理另一个网络下的主机集群">
+<meta property="og:url" content="https://xhua.eu.org/posts/efe927f19448.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="原文地址：http:&#x2F;&#x2F;wooooe.com&#x2F;2018&#x2F;07&#x2F;31&#x2F;remote_forwarding&#x2F; ssh端口映射例子 因为公司的网络比较深所以经常需要跳转多次。所以这次做个记录    需求: 需要从your host跳到client中间隔了两层跳板机。 如果单纯用代理方法只能跳一层 所以如果用端口映射+代理方式就可以跳两层了 映射命令 1ssh -g -f -NL 127.0.0">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.631Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ansible通过跳板机管理另一个网络下的主机集群",
+  "url": "https://xhua.eu.org/posts/efe927f19448.html",
+  "image": "https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.631Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/efe927f19448.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ansible通过跳板机管理另一个网络下的主机集群',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">ansible通过跳板机管理另一个网络下的主机集群</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ansible通过跳板机管理另一个网络下的主机集群</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.631Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>原文地址：<a target="_blank" rel="noopener" href="http://wooooe.com/2018/07/31/remote_forwarding/">http://wooooe.com/2018/07/31/remote_forwarding&#x2F;</a></p>
+<p>ssh端口映射例子</p>
+<p>因为公司的网络比较深所以经常需要跳转多次。所以这次做个记录</p>
+<p><img src="https://img.xhua.eu.org/1eef3a75dc2f4c45fd229c3f112b58432a51d2383683e9f674d83b62cd8e3b04.jpg" alt="服务器结构">  </p>
+<p>需求: 需要从your host跳到client中间隔了两层跳板机。</p>
+<p>如果单纯用代理方法只能跳一层</p>
+<p>所以如果用端口映射+代理方式就可以跳两层了</p>
+<p>映射命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -g -f -NL 127.0.0.1:44010:172.16.3.14:22 -p 3391 jump_host1_username@222.222.222.222</span><br></pre></td></tr></table></figure>
+
+<p>意思就是将172.16.3.14的22端口映射到127.0.0.1的44010端口,222.222.222.222是中间的代理机，3391是222.222.222.222的ssh端口。</p>
+<p>映射完成之后。执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -p 44010 jump_host2_username@127.0.0.1</span><br></pre></td></tr></table></figure>
+
+<p>就可以直接跳转到jump_host2上</p>
+<p><strong>ssh走代理方法</strong></p>
+<p>第一种:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -o ProxyCommand=&quot;ssh -W %h:%p -p 3391 -q jump_host1_username@222.222.222.222&quot; jump_host2_username@172.16.3.14</span><br></pre></td></tr></table></figure>
+
+<p>第二种:</p>
+<p>需要在你当前用户目录下的.ssh目录下建一个config文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Host 192.122.150.*</span><br><span class="line">    Port 22</span><br><span class="line">    User anyone</span><br><span class="line">    ProxyCommand ssh -p 3391 jump_host1_username@222.222.222.222 -W %h:%p</span><br></pre></td></tr></table></figure>
+
+<p>意思就是当你在当前这个用户进行ssh连接时凡是匹配到192.122.150的ip都会使用222.222.222.222的3391端口作代理.</p>
+<p><strong>ansible使用代理的方法</strong></p>
+<p>当你用playbook时可以直接写在hosts文件做全局变量</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[web]</span><br><span class="line">172.16.3.14 ansible_ssh_user=aaaa</span><br><span class="line">[web:vars]</span><br><span class="line">ansible_ssh_common_args=&#x27;-o ProxyCommand=&quot;ssh -W %h:%p -p 3391 -q jump_host1_username@222.222.222.222&quot;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>如果你想直接附加在命令行中，那么可以这么写</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--ssh-common-args=&#x27;-o ProxyCommand=&quot;ssh -W %h:%p -p 3391 -q jump_host2_username@222.222.222.222&quot;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>如果你想调用ansible api走代理，那么可以这么写</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">Options = namedtuple(&#x27;Options&#x27;,</span><br><span class="line">                 [&#x27;connection&#x27;,</span><br><span class="line">                  &#x27;remote_user&#x27;,</span><br><span class="line">                  &#x27;ask_sudo_pass&#x27;,</span><br><span class="line">                  &#x27;verbosity&#x27;,</span><br><span class="line">                  &#x27;ack_pass&#x27;,</span><br><span class="line">                  &#x27;module_path&#x27;,</span><br><span class="line">                  &#x27;forks&#x27;,</span><br><span class="line">                  &#x27;become&#x27;,</span><br><span class="line">                  &#x27;become_method&#x27;,</span><br><span class="line">                  &#x27;become_user&#x27;,</span><br><span class="line">                  &#x27;ssh_common_args&#x27;,</span><br><span class="line">                  &#x27;check&#x27;,</span><br><span class="line">                  &#x27;listhosts&#x27;,</span><br><span class="line">                  &#x27;listtasks&#x27;,</span><br><span class="line">                  &#x27;listtags&#x27;,</span><br><span class="line">                  &#x27;syntax&#x27;,</span><br><span class="line">                  &#x27;sudo_user&#x27;,</span><br><span class="line">                  &#x27;sudo&#x27;,</span><br><span class="line">                  &#x27;diff&#x27;])</span><br><span class="line">options = Options(connection=&#x27;smart&#x27;,</span><br><span class="line">                   remote_user=None,</span><br><span class="line">                   ack_pass=None,</span><br><span class="line">                   sudo_user=None,</span><br><span class="line">                   forks=5,</span><br><span class="line">                   sudo=None,</span><br><span class="line">                   ask_sudo_pass=False,</span><br><span class="line">                   verbosity=5,</span><br><span class="line">                   module_path=None,</span><br><span class="line">                   become=None,</span><br><span class="line">                   become_method=None,</span><br><span class="line">                   become_user=None,</span><br><span class="line">                   ssh_common_args=sshCommonArgs,</span><br><span class="line">                   check=False,</span><br><span class="line">                   diff=False,</span><br><span class="line">                   listhosts=None,</span><br><span class="line">                   listtasks=None,</span><br><span class="line">                   listtags=None,</span><br><span class="line">                   syntax=None)</span><br></pre></td></tr></table></figure>
+
+<p>你需要把参数传给sshCommonArgs,例如</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh_common_args=&#x27;-o ProxyCommand=&quot;ssh -W %h:%p -p 3391 jump_host1_username@222.222.222.222&#x27;</span><br></pre></td></tr></table></figure>
+<h2 id="ansible-tower设置"><a href="#ansible-tower设置" class="headerlink" title="ansible tower设置"></a>ansible tower设置</h2><ol>
+<li>使用这种跳转方式，必须将<code>settings</code>-&gt;<code>JOBS</code>-&gt;<code>ENABLE JOB ISOLATION</code>设置为<code>OFF</code>状态</li>
+<li>在Credentials中添加访问的私钥</li>
+<li>Inventories中添加Jumper server Host</li>
+<li>Inventories中添加要访问的Host，并添加ssh访问参数</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible_ssh_common_args: &#x27;-o ProxyCommand=&quot;ssh -W %h:%p -p 22 -q 100.129.71.4&#x27;</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>通过这些设置后，ansible就可以像访问普通主机一样访问目的Host了。</li>
+</ol>
+<p>说明：</p>
+<ul>
+<li>如果私钥各不一样，可以通过HOST的参数设置，其中key放在ansible tower部署机器的某个目录下。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ansible_ssh_private_key_file: key</span><br><span class="line">ansible_ssh_common_args: &#x27;-o ProxyCommand=&quot;ssh -W %h:%p -p 22 -q 100.129.71.4&#x27;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>ansible tower还有一种方式：Isolated Nodes<br>它的方式与zabbix proxy的方式有点像，可参考如下资料<br><a target="_blank" rel="noopener" href="https://www.ansible.com/blog/ansible-tower-feature-spotlight-instance-groups-and-isolated-nodes">https://www.ansible.com/blog/ansible-tower-feature-spotlight-instance-groups-and-isolated-nodes</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/efe927f19448.html">https://xhua.eu.org/posts/efe927f19448.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/1554de812850.html" title="系统僵尸进程管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">系统僵尸进程管理</div></div><div class="info-2"><div class="info-item-1"> 查看系统僵尸进程数top    查看僵尸进程详情ps -ef|grep defunct    停止僵尸进程kill -9 $Parent PID   </div></div></div></a><a class="pagination-related" href="/posts/4639aac39f9a.html" title="持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 ##构建工具概览  Make Ant NAnt与MSBuild Maven Rake Buildr Psake  构建部署脚本化的原则与实践 为部署流水线的每个阶段创建脚本 使用恰当的技术部署应用程序 使用同样的脚本向所有环境部署 使用操作系统自带的包管理工具 确保部署流程是幂等的 部署系统的增量式演进  部署脚本化 多层的部署和测试   层 配置    应用／服务／组件 应用配置   中间件 中间件配置   操作系统 操作系统配置   硬件 硬件    测试环境配置 部署前对基础设施做标准冒烟测试，如果发现问题，就让环境配置流程快速失败，并给出测试结果 确认能从数据库中拿到一条记录 确认能连上网站 断言消息代理中的已注册的消息集合是正确的 透过防火墙发送ping，证明线路通畅    推荐策略 总是使用相对路径 消除手工步骤 从二进制包到版本控制库的内建可追溯性二进制包记录版本信息，如Java应用可以在MANIFEST中包含元数据，另外可以将构建流程生成的每个二进制包的MD5值及名字和版本标识符一起放在数据库中 不要把二进制包作为构建的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/fda9ff2fc746.html" title="《凤凰项目—一个IT运维的传奇故事》整理"><img class="cover" src="https://img.xhua.eu.org/ea5127a287e83fb46b6f0871ee16a757e542427d7e505652f78cfdc24e8b1a55.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《凤凰项目—一个IT运维的传奇故事》整理</div></div><div class="info-2"><div class="info-item-1">###《凤凰项目》三位作者  Gene Kim: Tripwire有限公司创始人，一直热衷于研究如何提高IT组织的效率 Kevin Behr：创建了信息技术流程研究院 George Spafford：行业分析师  向他们致敬。 故事内容雨前龙井整理的非常详细，可阅读它写的博客 凤凰项目 http://ijyun.github.io/2016/04/23/phoenix-project.html 书中的核心概念 三步工作法  本书中阐述了一个原理：所有开发运维模式都来自“三步工作法”，可以说它是我们平台开发运维的指导思想。  第一工作法是关于从开发到技术运营，再到客户的整个自左向右的工作流。为了使流量最大化，我们需要小的批量规模和工作间隔，绝不让缺陷流向下游工作中心，并且不断为了整体目标（相对于开发功能完成率、测试发现&#x2F;修复比例或运维有效性等局部目标）进行优化。流程自动化  实践：持续构建、持续集成、持续部署，按需创建环境、限制半成品，构建起能够顺利变更的安全系统和组织。  第二工作法是关于价值流各阶段自右向左的快速持续反馈流，放大其效益以确保防止问题再次发生，或者更快地...</div></div></div></a><a class="pagination-related" href="/posts/f94f9d30a93e.html" title="系统性能测试与监测工具汇总"><img class="cover" src="https://img.xhua.eu.org/efa140bf87df6771b7597bdf3f240840ddcbeb5bca6247c373c1b63d8846cb61.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">系统性能测试与监测工具汇总</div></div><div class="info-2"><div class="info-item-1">综合能力性能测试（Unixbench）1[root@localhost] $ ./Run 计算查看当前CPU负载（uptime）1[root@localhost] $ uptime 测试单cpu计算能力（bc）1[root@localhost] $ time echo &quot;scale=5000;4*a(1)&quot; | bc -l -q 内存查看当前内存使用的情况的状态（free）1[root@localhost] $ free -m 进程对内存的占用情况（pmap） 1[root@localhost] $ pmap -d 35713 # 查看进程35713占用内存的情况 磁盘磁盘IO测试（dd）测试磁盘的IO写速度 1# time dd if=/dev/zero of=test.dbf bs=8k count=300000 oflag=direct 测试磁盘的IO读速度 1# dd if=test.dbf bs=8k count=300000 of=/dev/null  表示每次写入&#x2F;读取8k的数据，执行300000次 实时查看各磁盘的io（iostat）...</div></div></div></a><a class="pagination-related" href="/posts/8f583cb100a6.html" title="持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这会促进他们之间的良好合作 有助于让每个人更关注业务的价值   验收测试与单元测试的区别：验收测试是针对业务的，单元测试是面向开发的。  创建验收测试  分析人员与测试人员和客户紧密合作，定义验收条件    分析人员向开发人员讲解需求，以及它的业务上下文，并检查一遍验收条件    测试人员与开发人员讨论，并就“哪些自动化验收测试来证明验收条件被满足”达成一致    开发人员认为工作完成是指所有单元测试和组件测试通过，验收测试全部实现，并证明系统满足需求。此时可以向分析人员、测试人员和客户进行演示    应用程序驱动层应用程序驱动层是一个知道如何与应用程序打交道的层次。它所用的API是以某种...</div></div></div></a><a class="pagination-related" href="/posts/6a949e5f3291.html" title="持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 提交阶段的运行应该少于5分钟，一定不要超过10分钏提交阶段的首要目标是创建可部署的产物 提交阶段的原则与实践 提供快速有用的反馈 何时令提交阶段失败 编译错误 测试失败（包括单元覆盖率低于60%）   精心对待提交阶段 提交阶段中有构建用的脚本和运行单元测试、静态分析等脚本。 随着项目的进行，不断改进提交阶段的脚本的质量、设计和性能 确保将脚本做成模块化，将那些经常使用且很少变化的常见任务与需要修改的任务分开 将部署流水线中不同阶段所用的代码分别写在不同脚本中 不要写出与具体环境相关的脚本，即要把具体环境配置与构建脚本分离   让开发人员也拥有所有权如果必要的话，即使是很普通的变更也都应该由开发人员和运维人员来执行 在超大项目团队中指定一个构建负责人 监督和指导对构建的维护 鼓励和加强构建纪律 在团队开始接触持续集成时，构建纪律还没建立起来时，提醒作用   团队成员轮流当，比如每星期轮换一次    提交阶段结果提交阶段的输入是源代码，输出是二进制包和报告（测试结果和代码分析报告） 制品库 制品库仅保存某些版本，而不是全部。如果在部署流水...</div></div></div></a><a class="pagination-related" href="/posts/10b4145e2f83.html" title="rclone使用教程"><img class="cover" src="https://img.xhua.eu.org/332c57aefdbdef51b6cdb74f116e0ed00b3986e4fae5fe4d5ea3f3e1714ee45c.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-14</div><div class="info-item-2">rclone使用教程</div></div><div class="info-2"><div class="info-item-1">rclone 是一款强大的命令行工具，支持在本地与多种云存储之间进行高效的数据同步和迁移。本文将介绍 rclone 的安装、配置及常用操作方法，帮助你快速上手。 一、安装 rclone1. 公网环境安装（以 Ubuntu 为例）12curl https://downloads.rclone.org/v1.67.0/rclone-v1.67.0-linux-amd64.deb -o rclone-v1.67.0-linux-amd64.debsudo dpkg -i rclone-v1.67.0-linux-amd64.deb  2. Mac 安装1brew install rclone  更多平台和安装方式可参考 rclone 官方下载页面。 二、配置 rclonerclone 的配置文件默认位于 ~/.config/rclone/rclone.conf。你可以手动创建和编辑该文件，或通过 rclone config 命令进行交互式配置。 1. 创建配置目录1mkdir -p ~/.config/rclone  2. 编辑配置文件以下是一个典型的配置示例，支持 swift 和 s...</div></div></div></a><a class="pagination-related" href="/posts/81fb69c8f46f.html" title="《启示录：打造用户喜爱的产品》读书笔记"><img class="cover" src="https://img.xhua.eu.org/7ea9c30d42e84bf4558827e28233a82fd1452743487bb525dbe6d5e64fe259a4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《启示录：打造用户喜爱的产品》读书笔记</div></div><div class="info-2"><div class="info-item-1">   好产品具备三个基本条件：价值、可用性、可行性，三者缺一不可。产品没有价值，开发团队再优秀也无济于事。 第一篇：人员现代软件产品团队成员  产品经理职责：评估产品机会；定义要开发的产品。 用户体验设计师交互设计师：负责深入理解目标用户，设计有价值的，可用的功能，以及用户导航和产品使用流程。视觉设计师：根据交互设计原型，制作美观的产品界面 项目管理人员产品经理完成产品定义后，开发团队开始开发产品。项目经理核心任务：制订计划和跟踪进度。 开发团队职责：负责产品的技术开发。 运维团队职责：互联网服务产品通常运行在服务器上，保证服务正常运行。 产品营销人员职责：负责对外发布信息、宣传产品，为扩展市场销售渠道、组织重点营销活动、促进产品销售提供支持  第二篇：流程11. 评估产品机会——确定待解决的问题只讨论待解决的问题，不应涉及具体解决方案。产品经理需要回答如下十个问题：  产品要解决什么问题？（产品价值） 为谁解决这个问题？（目标市场） 成功的机会有多大？（市场规模） 怎样判断产品成功与否？（度量指标或收益指标） 有哪些同类产品？（竞争格局） 为什么我们最适合做这个产品？（竞争优...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ansible-tower%E8%AE%BE%E7%BD%AE"><span class="toc-text">ansible tower设置</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

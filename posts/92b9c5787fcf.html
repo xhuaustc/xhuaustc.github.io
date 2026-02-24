@@ -1,0 +1,351 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="写在前面：BuildKit&#x2F;Buildx 到底是什么关系？很多人日常只用 docker build，但真正让构建“又快又稳又可审计”的关键在 BuildKit。  BuildKit：Docker 的下一代构建引擎，提供并行构建、增量缓存、RUN --mount、远程缓存导入导出、供应链元数据（SBOM&#x2F;Provenance）等能力。 Buildx：Docker 的构建前端（CL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">
+<meta property="og:url" content="https://xhua.eu.org/posts/92b9c5787fcf.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="写在前面：BuildKit&#x2F;Buildx 到底是什么关系？很多人日常只用 docker build，但真正让构建“又快又稳又可审计”的关键在 BuildKit。  BuildKit：Docker 的下一代构建引擎，提供并行构建、增量缓存、RUN --mount、远程缓存导入导出、供应链元数据（SBOM&#x2F;Provenance）等能力。 Buildx：Docker 的构建前端（CL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg">
+<meta property="article:published_time" content="2026-01-22T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.633Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="buildkit">
+<meta property="article:tag" content="buildx">
+<meta property="article:tag" content="cicd">
+<meta property="article:tag" content="container">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据",
+  "url": "https://xhua.eu.org/posts/92b9c5787fcf.html",
+  "image": "https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg",
+  "datePublished": "2026-01-22T02:00:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.633Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/92b9c5787fcf.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.633Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/container/">container</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="写在前面：BuildKit-Buildx-到底是什么关系？"><a href="#写在前面：BuildKit-Buildx-到底是什么关系？" class="headerlink" title="写在前面：BuildKit&#x2F;Buildx 到底是什么关系？"></a>写在前面：BuildKit&#x2F;Buildx 到底是什么关系？</h2><p>很多人日常只用 <code>docker build</code>，但真正让构建“又快又稳又可审计”的关键在 <strong>BuildKit</strong>。</p>
+<ul>
+<li><strong>BuildKit</strong>：Docker 的下一代构建引擎，提供并行构建、增量缓存、<code>RUN --mount</code>、远程缓存导入导出、供应链元数据（SBOM&#x2F;Provenance）等能力。</li>
+<li><strong>Buildx</strong>：Docker 的构建前端（CLI 插件&#x2F;子命令），用来驱动 BuildKit，并提供多平台、远程 builder、Bake 编排、导出&#x2F;推送、attestation 等高级功能。</li>
+</ul>
+<p>截至 2026-01（以官方发布为准），Buildx 最新稳定版本仍在 <code>0.30.x</code>（2025-11 发布 <code>0.30.0/0.30.1</code>），其中包含了对 <code>imagetools</code> 与 attestation 持久化等能力的增强，以及对部分旧命令的弃用提示。</p>
+<h2 id="适用读者与版本建议"><a href="#适用读者与版本建议" class="headerlink" title="适用读者与版本建议"></a>适用读者与版本建议</h2><p>本文面向：</p>
+<ul>
+<li>需要在本地&#x2F;CI 中加速镜像构建的人</li>
+<li>需要多架构镜像（<code>amd64/arm64</code>）的人</li>
+<li>需要把缓存、SBOM、Provenance 一并纳入发布流程的人</li>
+</ul>
+<p>版本建议（越新越好）：</p>
+<ul>
+<li>Docker Engine &#x2F; Docker Desktop：建议使用近两年的版本</li>
+<li><code>docker buildx</code>：建议 <code>0.29+</code>，最好接近 <code>0.30.x</code></li>
+<li>Dockerfile frontend：建议显式声明 <code>#syntax=docker/dockerfile:1.8</code>（或更高）</li>
+</ul>
+<h2 id="一张图理解-BuildKit-的“新能力地图”"><a href="#一张图理解-BuildKit-的“新能力地图”" class="headerlink" title="一张图理解 BuildKit 的“新能力地图”"></a>一张图理解 BuildKit 的“新能力地图”</h2><p>BuildKit 的“新特性”可以按场景分成四类：</p>
+<ul>
+<li><strong>性能</strong>：并行、细粒度缓存、cache mount、减少上下文传输</li>
+<li><strong>可复现</strong>：更严格的 Dockerfile 解析&#x2F;校验、平台一致性检查</li>
+<li><strong>多平台</strong>：一次构建产出 <code>linux/amd64</code> + <code>linux/arm64</code> 并推送 manifest list</li>
+<li><strong>供应链</strong>：Provenance（SLSA 语义）与 SBOM attestation，提升可审计性</li>
+</ul>
+<p>下面按“你能立刻用起来”的角度展开。</p>
+<h2 id="新特性-1：RUN-mount-让构建更快（缓存-Secret-SSH）"><a href="#新特性-1：RUN-mount-让构建更快（缓存-Secret-SSH）" class="headerlink" title="新特性 1：RUN --mount 让构建更快（缓存&#x2F;Secret&#x2F;SSH）"></a>新特性 1：<code>RUN --mount</code> 让构建更快（缓存&#x2F;Secret&#x2F;SSH）</h2><h3 id="1-1-缓存挂载：把“下载依赖”从每次构建中剥离出来"><a href="#1-1-缓存挂载：把“下载依赖”从每次构建中剥离出来" class="headerlink" title="1.1 缓存挂载：把“下载依赖”从每次构建中剥离出来"></a>1.1 缓存挂载：把“下载依赖”从每次构建中剥离出来</h3><p>以 Node.js 为例，传统 <code>RUN npm ci</code> 每次都会重新下载依赖（或者依赖层缓存命中不稳定）。BuildKit 的 cache mount 可以把下载缓存放到一个专用缓存里，让构建在本地和 CI 都更稳。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># syntax=docker/dockerfile:1.8</span></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">20</span>-bookworm-slim AS build</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package.json package-lock.json ./</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Cache npm download directory to speed up builds.</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> --mount=<span class="built_in">type</span>=cache,target=/root/.npm \</span></span><br><span class="line"><span class="language-bash">    npm ci</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm run build</span></span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li>cache mount <strong>不会进入最终镜像层</strong>，仅用于加速构建步骤</li>
+<li>对 Go &#x2F; Maven &#x2F; pip 等生态同样有效（目标目录不同）</li>
+</ul>
+<h3 id="1-2-Secret-挂载：把-Token-从镜像层里彻底移除"><a href="#1-2-Secret-挂载：把-Token-从镜像层里彻底移除" class="headerlink" title="1.2 Secret 挂载：把 Token 从镜像层里彻底移除"></a>1.2 Secret 挂载：把 Token 从镜像层里彻底移除</h3><p>很多团队会在构建时拉私有依赖（NPM token、pip index token、GitHub token）。正确做法是用 <code>--secret</code> 在构建阶段临时注入，不落盘进镜像层。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># syntax=docker/dockerfile:1.8</span></span><br><span class="line"><span class="keyword">FROM</span> alpine:<span class="number">3.20</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> --mount=<span class="built_in">type</span>=secret,<span class="built_in">id</span>=my_token,target=/run/secrets/my_token \</span></span><br><span class="line"><span class="language-bash">    sh -c <span class="string">&#x27;test -s /run/secrets/my_token &amp;&amp; echo &quot;Secret is present&quot;&#x27;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>构建时传入 secret：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Pass secret from local file.</span></span><br><span class="line">docker buildx build \</span><br><span class="line">  --secret <span class="built_in">id</span>=my_token,src=./my_token.txt \</span><br><span class="line">  -t demo:secret .</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>secret 只在该条 <code>RUN</code> 指令可见</li>
+<li>不要用 <code>ARG</code>&#x2F;<code>ENV</code> 传敏感信息（容易进入层或被构建日志泄露）</li>
+</ul>
+<h3 id="1-3-SSH-挂载：安全拉取私有-Git-仓库"><a href="#1-3-SSH-挂载：安全拉取私有-Git-仓库" class="headerlink" title="1.3 SSH 挂载：安全拉取私有 Git 仓库"></a>1.3 SSH 挂载：安全拉取私有 Git 仓库</h3><p>当你需要 <code>git clone</code> 私有仓库时，可以用 SSH agent 转发，而不是把私钥复制进镜像。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># syntax=docker/dockerfile:1.8</span></span><br><span class="line"><span class="keyword">FROM</span> alpine:<span class="number">3.20</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apk add --no-cache git openssh-client</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> --mount=<span class="built_in">type</span>=ssh \</span></span><br><span class="line"><span class="language-bash">    git <span class="built_in">clone</span> git@github.com:YOUR_ORG/YOUR_PRIVATE_REPO.git /src</span></span><br></pre></td></tr></table></figure>
+
+<p>构建时启用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Forward default SSH agent socket.</span></span><br><span class="line">docker buildx build --ssh default -t demo:ssh .</span><br></pre></td></tr></table></figure>
+
+<h4 id="多个-SSH-Key-的常见做法"><a href="#多个-SSH-Key-的常见做法" class="headerlink" title="多个 SSH Key 的常见做法"></a>多个 SSH Key 的常见做法</h4><h5 id="做法-A：在同一个-ssh-agent-里加载多把-key（推荐）"><a href="#做法-A：在同一个-ssh-agent-里加载多把-key（推荐）" class="headerlink" title="做法 A：在同一个 ssh-agent 里加载多把 key（推荐）"></a>做法 A：在同一个 <code>ssh-agent</code> 里加载多把 key（推荐）</h5><p>BuildKit 转发的是 <strong>SSH agent</strong>，因此多 key 场景最稳的方式是：在宿主机把多把 key 都 <code>ssh-add</code> 进同一个 agent，然后构建时仍然只需要 <code>--ssh default</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Start ssh-agent in current shell.</span></span><br><span class="line"><span class="built_in">eval</span> <span class="string">&quot;<span class="subst">$(ssh-agent -s)</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Add multiple keys into the same agent.</span></span><br><span class="line">ssh-add ~/.ssh/id_ed25519_github</span><br><span class="line">ssh-add ~/.ssh/id_ed25519_gitlab</span><br><span class="line"></span><br><span class="line"><span class="comment"># Build with forwarded agent.</span></span><br><span class="line">docker buildx build --ssh default -t demo:ssh .</span><br></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<ul>
+<li>agent 会根据目标主机与可用 key 自动尝试匹配；如果你有 GitHub&#x2F;GitLab&#x2F;自建 Git 多个来源，这是最省心的方式。</li>
+<li>如果 key 带 passphrase，使用 agent 方式也更友好（避免在构建里交互输入）。</li>
+</ul>
+<h5 id="做法-B：用多个-ssh-id-分别转发不同-key（便于精确控制）"><a href="#做法-B：用多个-ssh-id-分别转发不同-key（便于精确控制）" class="headerlink" title="做法 B：用多个 --ssh id=... 分别转发不同 key（便于精确控制）"></a>做法 B：用多个 <code>--ssh id=...</code> 分别转发不同 key（便于精确控制）</h5><p>如果你想在 Dockerfile 的不同步骤里明确使用不同的 SSH 凭据，可以为 <code>--mount=type=ssh</code> 指定 <code>id</code>，并在构建时传入多个 <code>--ssh</code>。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># syntax=docker/dockerfile:1.8</span></span><br><span class="line"><span class="keyword">FROM</span> alpine:<span class="number">3.20</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apk add --no-cache git openssh-client</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> --mount=<span class="built_in">type</span>=ssh,<span class="built_in">id</span>=github \</span></span><br><span class="line"><span class="language-bash">    git <span class="built_in">clone</span> git@github.com:YOUR_ORG/YOUR_PRIVATE_REPO.git /src/github</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> --mount=<span class="built_in">type</span>=ssh,<span class="built_in">id</span>=gitlab \</span></span><br><span class="line"><span class="language-bash">    git <span class="built_in">clone</span> git@gitlab.com:YOUR_ORG/YOUR_PRIVATE_REPO.git /src/gitlab</span></span><br></pre></td></tr></table></figure>
+
+<p>构建时分别指定不同 <code>id</code> 的来源：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Forward different keys (or sockets) with different ids.</span></span><br><span class="line">docker buildx build \</span><br><span class="line">  --ssh github=<span class="variable">$HOME</span>/.ssh/id_ed25519_github \</span><br><span class="line">  --ssh gitlab=<span class="variable">$HOME</span>/.ssh/id_ed25519_gitlab \</span><br><span class="line">  -t demo:ssh-multi .</span><br></pre></td></tr></table></figure>
+
+<p>提示：</p>
+<ul>
+<li>如果你使用的是 passphrase key，更推荐做法 A（agent），然后把 <code>--ssh github=$SSH_AUTH_SOCK</code> &#x2F; <code>--ssh gitlab=$SSH_AUTH_SOCK</code> 都指向同一个 agent socket（本质上仍由 agent 管理解密与选择）。</li>
+</ul>
+<h2 id="新特性-2：远程缓存（-cache-to-cache-from）让-CI-构建“越跑越快”"><a href="#新特性-2：远程缓存（-cache-to-cache-from）让-CI-构建“越跑越快”" class="headerlink" title="新特性 2：远程缓存（--cache-to/--cache-from）让 CI 构建“越跑越快”"></a>新特性 2：远程缓存（<code>--cache-to/--cache-from</code>）让 CI 构建“越跑越快”</h2><p>仅靠本地层缓存，CI 往往命中率很差。BuildKit 支持把缓存导出到 registry（或其他后端），再在后续构建导入。</p>
+<p>下面是一个常见的 registry 缓存模式（适合 GitHub Actions&#x2F;Jenkins&#x2F;GitLab CI 等）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Export cache to registry and reuse in next builds.</span></span><br><span class="line">docker buildx build \</span><br><span class="line">  --platform linux/amd64,linux/arm64 \</span><br><span class="line">  --cache-from <span class="built_in">type</span>=registry,ref=registry.example.com/myapp:buildcache \</span><br><span class="line">  --cache-to <span class="built_in">type</span>=registry,ref=registry.example.com/myapp:buildcache,mode=max \</span><br><span class="line">  -t registry.example.com/myapp:$(git rev-parse --short HEAD) \</span><br><span class="line">  --push .</span><br></pre></td></tr></table></figure>
+
+<p>建议：</p>
+<ul>
+<li><strong>只在推送镜像时写入远程缓存</strong>，否则会产生无效写入</li>
+<li><code>mode=max</code> 缓存更完整但占用更大；可按项目权衡</li>
+</ul>
+<h2 id="新特性-3：多平台镜像从“麻烦事”变成“默认能力”"><a href="#新特性-3：多平台镜像从“麻烦事”变成“默认能力”" class="headerlink" title="新特性 3：多平台镜像从“麻烦事”变成“默认能力”"></a>新特性 3：多平台镜像从“麻烦事”变成“默认能力”</h2><p>Buildx 的典型价值之一就是多平台构建。你可以用一条命令构建并推送多架构镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker buildx build \</span><br><span class="line">  --platform linux/amd64,linux/arm64 \</span><br><span class="line">  -t registry.example.com/myapp:latest \</span><br><span class="line">  --push .</span><br></pre></td></tr></table></figure>
+
+<p>常见坑：</p>
+<ul>
+<li><code>--load</code> 只能加载<strong>单平台</strong>镜像到本地 Docker 镜像仓库（并且可能丢失部分元数据），多平台通常要用 <code>--push</code>。</li>
+<li>某些依赖（如下载的二进制）需要按 <code>TARGETARCH</code> 分支处理，否则会构建出“能推送但不能运行”的镜像。</li>
+</ul>
+<h2 id="新特性-4：Dockerfile-frontend（-syntax）持续进化：更强表达力-更严格校验"><a href="#新特性-4：Dockerfile-frontend（-syntax）持续进化：更强表达力-更严格校验" class="headerlink" title="新特性 4：Dockerfile frontend（#syntax）持续进化：更强表达力 + 更严格校验"></a>新特性 4：Dockerfile frontend（<code>#syntax</code>）持续进化：更强表达力 + 更严格校验</h2><p>Dockerfile 顶部的 <code>#syntax=...</code> 让你选择 Dockerfile frontend 版本，从而获得新语义和新能力。</p>
+<p>截至近年的更新中，值得关注的方向包括：</p>
+<ul>
+<li><strong>变量展开能力增强</strong>：更接近 shell parameter expansion 的用法，写复杂镜像逻辑更可控（frontend 1.7+）。</li>
+<li><strong>更严格的校验与检查</strong>：新增&#x2F;增强检查规则，帮助在构建前发现平台不一致、ARG 扩展错误等问题（frontend 1.8+）。</li>
+</ul>
+<p>实践建议：</p>
+<ul>
+<li>业务镜像建议显式写 <code># syntax=docker/dockerfile:1.8</code>（或你团队验证过的更高版本）</li>
+<li>如果团队想把 Dockerfile 质量门禁做起来，可以研究 <code>#check</code> &#x2F; <code>BUILDKIT_DOCKERFILE_CHECK</code> 相关能力，在 CI 中先做校验再做构建</li>
+</ul>
+<h2 id="新特性-5：供应链元数据（SBOM-Provenance）让镜像“可审计”"><a href="#新特性-5：供应链元数据（SBOM-Provenance）让镜像“可审计”" class="headerlink" title="新特性 5：供应链元数据（SBOM &#x2F; Provenance）让镜像“可审计”"></a>新特性 5：供应链元数据（SBOM &#x2F; Provenance）让镜像“可审计”</h2><h3 id="5-1-为什么需要-SBOM-与-Provenance？"><a href="#5-1-为什么需要-SBOM-与-Provenance？" class="headerlink" title="5.1 为什么需要 SBOM 与 Provenance？"></a>5.1 为什么需要 SBOM 与 Provenance？</h3><p>当你需要回答这些问题时，SBOM&#x2F;Provenance 就很关键：</p>
+<ul>
+<li>这个镜像里到底包含哪些依赖与组件？（SBOM）</li>
+<li>这个镜像是用什么源码、什么构建参数、什么环境构建出来的？（Provenance）</li>
+</ul>
+<p>BuildKit 已经支持为镜像生成并附加这些 attestation（in-toto 语义），并且与 Docker 的构建体系集成。</p>
+<h3 id="5-2-开启方式（示例）"><a href="#5-2-开启方式（示例）" class="headerlink" title="5.2 开启方式（示例）"></a>5.2 开启方式（示例）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker buildx build \</span><br><span class="line">  --platform linux/amd64,linux/arm64 \</span><br><span class="line">  --provenance=<span class="literal">true</span> \</span><br><span class="line">  --sbom=<span class="literal">true</span> \</span><br><span class="line">  -t registry.example.com/myapp:latest \</span><br><span class="line">  --push .</span><br></pre></td></tr></table></figure>
+
+<p>更精细的控制（示例，强调可读性）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Generate more detailed provenance (may expose more build details).</span></span><br><span class="line">docker buildx build \</span><br><span class="line">  --attest <span class="built_in">type</span>=provenance,mode=max \</span><br><span class="line">  --attest <span class="built_in">type</span>=sbom \</span><br><span class="line">  -t registry.example.com/myapp:latest \</span><br><span class="line">  --push .</span><br></pre></td></tr></table></figure>
+
+<p>重要提示：</p>
+<blockquote>
+<p><strong>注意</strong>：在某些导出方式下（例如 <code>--load</code> 或使用默认本地镜像存储），attestation 可能无法完整保留。生产发布链路建议以 <code>--push</code> 为主，并在你的镜像仓库侧验证元数据是否可见。</p>
+</blockquote>
+<h2 id="新特性-6：Buildx-的一些近期变化（截至-2025-11）"><a href="#新特性-6：Buildx-的一些近期变化（截至-2025-11）" class="headerlink" title="新特性 6：Buildx 的一些近期变化（截至 2025-11）"></a>新特性 6：Buildx 的一些近期变化（截至 2025-11）</h2><p>从近一年的发布说明看，Buildx 的演进重点之一是“把构建产物的元数据保留下来，并让多工具链更好协作”。</p>
+<p>你可能会关心的点：</p>
+<ul>
+<li><code>imagetools create</code> 对 attestation manifest 与 cosign 相关签名的保留增强（适合做镜像重组&#x2F;迁移时不丢元数据）。</li>
+<li>一些旧命令（如 <code>docker buildx install/uninstall</code>）出现弃用提示，更倾向于直接使用 <code>docker buildx</code> 的默认行为（以官方 release note 为准）。</li>
+</ul>
+<h2 id="一个可直接复用的-CI-模板（多平台-远程缓存-SBOM-Provenance）"><a href="#一个可直接复用的-CI-模板（多平台-远程缓存-SBOM-Provenance）" class="headerlink" title="一个可直接复用的 CI 模板（多平台 + 远程缓存 + SBOM&#x2F;Provenance）"></a>一个可直接复用的 CI 模板（多平台 + 远程缓存 + SBOM&#x2F;Provenance）</h2><p>把下面这段“按需替换 registry&#x2F;name&#x2F;tag”就能跑：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">REGISTRY=registry.example.com</span><br><span class="line">IMAGE=<span class="variable">$REGISTRY</span>/myteam/myapp</span><br><span class="line">TAG=$(git rev-parse --short HEAD)</span><br><span class="line">CACHE_REF=<span class="variable">$IMAGE</span>:buildcache</span><br><span class="line"></span><br><span class="line">docker buildx build \</span><br><span class="line">  --platform linux/amd64,linux/arm64 \</span><br><span class="line">  --cache-from <span class="built_in">type</span>=registry,ref=<span class="variable">$CACHE_REF</span> \</span><br><span class="line">  --cache-to <span class="built_in">type</span>=registry,ref=<span class="variable">$CACHE_REF</span>,mode=max \</span><br><span class="line">  --provenance=<span class="literal">true</span> \</span><br><span class="line">  --sbom=<span class="literal">true</span> \</span><br><span class="line">  -t <span class="variable">$IMAGE</span>:<span class="variable">$TAG</span> \</span><br><span class="line">  -t <span class="variable">$IMAGE</span>:latest \</span><br><span class="line">  --push .</span><br></pre></td></tr></table></figure>
+
+<h2 id="常见问题与排查思路"><a href="#常见问题与排查思路" class="headerlink" title="常见问题与排查思路"></a>常见问题与排查思路</h2><h3 id="1）为什么我开了-sbom-provenance，但仓库里看不到？"><a href="#1）为什么我开了-sbom-provenance，但仓库里看不到？" class="headerlink" title="1）为什么我开了 --sbom/--provenance，但仓库里看不到？"></a>1）为什么我开了 <code>--sbom/--provenance</code>，但仓库里看不到？</h3><p>优先排查：</p>
+<ul>
+<li>你是否用了 <code>--push</code>（建议）而不是 <code>--load</code></li>
+<li>你的镜像仓库&#x2F;代理是否会剥离 OCI artifact&#x2F;attestation（某些老旧组件会）</li>
+<li>是否用 <code>docker buildx imagetools inspect</code> 检查远端镜像清单与元数据</li>
+</ul>
+<h3 id="2）为什么多平台镜像构建很慢？"><a href="#2）为什么多平台镜像构建很慢？" class="headerlink" title="2）为什么多平台镜像构建很慢？"></a>2）为什么多平台镜像构建很慢？</h3><p>通常原因是：</p>
+<ul>
+<li>缓存没有跨 CI 复用（建议启用 registry cache）</li>
+<li>Dockerfile 没有拆分依赖层，导致无效重建</li>
+<li>某些步骤无法并行（例如单个 <code>RUN</code> 做了过多工作）</li>
+</ul>
+<h3 id="3）cache-mount-会不会把敏感文件缓存出去？"><a href="#3）cache-mount-会不会把敏感文件缓存出去？" class="headerlink" title="3）cache mount 会不会把敏感文件缓存出去？"></a>3）cache mount 会不会把敏感文件缓存出去？</h3><p>cache mount 的内容确实会进入缓存存储（本地或远程缓存后端），因此：</p>
+<ul>
+<li><strong>不要把 secret 写进 cache 目录</strong></li>
+<li>secret 用 <code>--secret</code>，并确保只在单条 <code>RUN</code> 内使用</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>BuildKit&#x2F;Buildx 在近几年的核心价值可以概括为三句话：</p>
+<ul>
+<li><strong>更快</strong>：<code>RUN --mount=type=cache</code> + 远程缓存让构建从“分钟级”变成“秒级可预期”</li>
+<li><strong>更强</strong>：多平台构建与更严格的 Dockerfile 语义&#x2F;校验，让交付更稳定</li>
+<li><strong>更可信</strong>：SBOM&#x2F;Provenance 让镜像可审计，能对接更完整的软件供应链治理</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/build/release-notes/">Docker Build - Release notes</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/build/buildkit/dockerfile-release-notes/">Dockerfile frontend (BuildKit) release notes</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/build/metadata/attestations/">Build attestations: overview</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/build/metadata/attestations/sbom/">Generate SBOM attestations</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/build/metadata/attestations/slsa-provenance/">SLSA provenance attestations</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/docker/buildx/releases">Buildx releases (GitHub)</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/92b9c5787fcf.html">https://xhua.eu.org/posts/92b9c5787fcf.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/docker/">docker</a><a class="post-meta__tags" href="/tags/buildkit/">buildkit</a><a class="post-meta__tags" href="/tags/buildx/">buildx</a><a class="post-meta__tags" href="/tags/container/">container</a><a class="post-meta__tags" href="/tags/cicd/">cicd</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a><a class="pagination-related" href="/posts/0ba149dc4d1d.html" title="用 vCluster 在 Kubernetes 集群中构建虚拟集群"><img class="cover" src="https://img.xhua.eu.org/83c30a6a5652c0ff015eb25de8be05cb6e3d92b95d64dac6bf9a4a3bc0f9f431.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">用 vCluster 在 Kubernetes 集群中构建虚拟集群</div></div><div class="info-2"><div class="info-item-1">引言在企业集群规模增长后，平台团队常常需要同时满足多团队隔离、快速环境交付和成本控制。vCluster 提供了一种折中方案：在同一个宿主 Kubernetes 集群中创建多个虚拟集群，每个虚拟集群有独立的 API Server 和控制平面，但共享底层节点资源。这样比“每个团队一个完整集群”更省成本，也比“只用 Namespace”更强隔离。GitHub 仓库 与 官网 给出了完整定位和文档入口。 本文以通用 Kubernetes 集群为背景，介绍 vCluster 的核心概念、部署要点与实际使用场景。 vCluster 是什么vCluster 是运行在宿主集群命名空间内的虚拟 Kubernetes 集群。核心特征如下：  控制平面独立：每个 vCluster 有自己的 API Server 与控制组件，更接近“真实集群”的使用体验。GitHub 仓库 共享底层资源：节点与资源来自宿主集群，成本更低，创建更快。GitHub 仓库 适合多租户：相比单纯 Namespace，隔离性更好，适合平台工程和团队自治场景。官网  Kubernetes 环境的部署要点在通用 Kubernetes...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/0ceba1378452.html" title="docker in docker测试docker的proxy功能"><img class="cover" src="https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-05-20</div><div class="info-item-2">docker in docker测试docker的proxy功能</div></div><div class="info-2"><div class="info-item-1">docker in docker是什么？顾名思义，docker in docker就是在docker容器中运行docker服务端。这种技术通常用于CI&#x2F;CD流水线中，因为它可以提供一个干净的环境来运行构建和测试。例如，如果您正在使用Jenkins作为CI&#x2F;CD工具，您可以使用DinD来运行构建和测试，而无需在Jenkins服务器上安装Docker。这样可以避免与Jenkins服务器上的其他应用程序发生冲突。使用DinD时，需要注意的是，它会增加容器的复杂性，并且可能会导致性能下降。此外，由于容器内部运行的是另一个容器，因此可能会出现一些安全问题。本篇中用DinD来完成对docker proxy功能的验证。 为什么docker要使用代理？Docker使用代理的原因有很多，其中一些原因包括：  访问公司私有化部署的镜像仓库，对网络环境有限制。 对于一些公共仓库，下载速度很慢，通过代理实现加速上传与下载。  在本测试环境中，docker容器所在环境与目标docker 镜像仓库是网络隔离的，同时两个网络之间可以通过一个http proxy来进行通信。 如何配置prox...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2%EF%BC%9ABuildKit-Buildx-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB%EF%BC%9F"><span class="toc-text">写在前面：BuildKit&#x2F;Buildx 到底是什么关系？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E8%AF%BB%E8%80%85%E4%B8%8E%E7%89%88%E6%9C%AC%E5%BB%BA%E8%AE%AE"><span class="toc-text">适用读者与版本建议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%BC%A0%E5%9B%BE%E7%90%86%E8%A7%A3-BuildKit-%E7%9A%84%E2%80%9C%E6%96%B0%E8%83%BD%E5%8A%9B%E5%9C%B0%E5%9B%BE%E2%80%9D"><span class="toc-text">一张图理解 BuildKit 的“新能力地图”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-1%EF%BC%9ARUN-mount-%E8%AE%A9%E6%9E%84%E5%BB%BA%E6%9B%B4%E5%BF%AB%EF%BC%88%E7%BC%93%E5%AD%98-Secret-SSH%EF%BC%89"><span class="toc-text">新特性 1：RUN --mount 让构建更快（缓存&#x2F;Secret&#x2F;SSH）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%BC%93%E5%AD%98%E6%8C%82%E8%BD%BD%EF%BC%9A%E6%8A%8A%E2%80%9C%E4%B8%8B%E8%BD%BD%E4%BE%9D%E8%B5%96%E2%80%9D%E4%BB%8E%E6%AF%8F%E6%AC%A1%E6%9E%84%E5%BB%BA%E4%B8%AD%E5%89%A5%E7%A6%BB%E5%87%BA%E6%9D%A5"><span class="toc-text">1.1 缓存挂载：把“下载依赖”从每次构建中剥离出来</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-Secret-%E6%8C%82%E8%BD%BD%EF%BC%9A%E6%8A%8A-Token-%E4%BB%8E%E9%95%9C%E5%83%8F%E5%B1%82%E9%87%8C%E5%BD%BB%E5%BA%95%E7%A7%BB%E9%99%A4"><span class="toc-text">1.2 Secret 挂载：把 Token 从镜像层里彻底移除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-SSH-%E6%8C%82%E8%BD%BD%EF%BC%9A%E5%AE%89%E5%85%A8%E6%8B%89%E5%8F%96%E7%A7%81%E6%9C%89-Git-%E4%BB%93%E5%BA%93"><span class="toc-text">1.3 SSH 挂载：安全拉取私有 Git 仓库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A%E4%B8%AA-SSH-Key-%E7%9A%84%E5%B8%B8%E8%A7%81%E5%81%9A%E6%B3%95"><span class="toc-text">多个 SSH Key 的常见做法</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%9A%E6%B3%95-A%EF%BC%9A%E5%9C%A8%E5%90%8C%E4%B8%80%E4%B8%AA-ssh-agent-%E9%87%8C%E5%8A%A0%E8%BD%BD%E5%A4%9A%E6%8A%8A-key%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">做法 A：在同一个 ssh-agent 里加载多把 key（推荐）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%9A%E6%B3%95-B%EF%BC%9A%E7%94%A8%E5%A4%9A%E4%B8%AA-ssh-id-%E5%88%86%E5%88%AB%E8%BD%AC%E5%8F%91%E4%B8%8D%E5%90%8C-key%EF%BC%88%E4%BE%BF%E4%BA%8E%E7%B2%BE%E7%A1%AE%E6%8E%A7%E5%88%B6%EF%BC%89"><span class="toc-text">做法 B：用多个 --ssh id&#x3D;... 分别转发不同 key（便于精确控制）</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-2%EF%BC%9A%E8%BF%9C%E7%A8%8B%E7%BC%93%E5%AD%98%EF%BC%88-cache-to-cache-from%EF%BC%89%E8%AE%A9-CI-%E6%9E%84%E5%BB%BA%E2%80%9C%E8%B6%8A%E8%B7%91%E8%B6%8A%E5%BF%AB%E2%80%9D"><span class="toc-text">新特性 2：远程缓存（--cache-to&#x2F;--cache-from）让 CI 构建“越跑越快”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-3%EF%BC%9A%E5%A4%9A%E5%B9%B3%E5%8F%B0%E9%95%9C%E5%83%8F%E4%BB%8E%E2%80%9C%E9%BA%BB%E7%83%A6%E4%BA%8B%E2%80%9D%E5%8F%98%E6%88%90%E2%80%9C%E9%BB%98%E8%AE%A4%E8%83%BD%E5%8A%9B%E2%80%9D"><span class="toc-text">新特性 3：多平台镜像从“麻烦事”变成“默认能力”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-4%EF%BC%9ADockerfile-frontend%EF%BC%88-syntax%EF%BC%89%E6%8C%81%E7%BB%AD%E8%BF%9B%E5%8C%96%EF%BC%9A%E6%9B%B4%E5%BC%BA%E8%A1%A8%E8%BE%BE%E5%8A%9B-%E6%9B%B4%E4%B8%A5%E6%A0%BC%E6%A0%A1%E9%AA%8C"><span class="toc-text">新特性 4：Dockerfile frontend（#syntax）持续进化：更强表达力 + 更严格校验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-5%EF%BC%9A%E4%BE%9B%E5%BA%94%E9%93%BE%E5%85%83%E6%95%B0%E6%8D%AE%EF%BC%88SBOM-Provenance%EF%BC%89%E8%AE%A9%E9%95%9C%E5%83%8F%E2%80%9C%E5%8F%AF%E5%AE%A1%E8%AE%A1%E2%80%9D"><span class="toc-text">新特性 5：供应链元数据（SBOM &#x2F; Provenance）让镜像“可审计”</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-SBOM-%E4%B8%8E-Provenance%EF%BC%9F"><span class="toc-text">5.1 为什么需要 SBOM 与 Provenance？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E5%BC%80%E5%90%AF%E6%96%B9%E5%BC%8F%EF%BC%88%E7%A4%BA%E4%BE%8B%EF%BC%89"><span class="toc-text">5.2 开启方式（示例）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%89%B9%E6%80%A7-6%EF%BC%9ABuildx-%E7%9A%84%E4%B8%80%E4%BA%9B%E8%BF%91%E6%9C%9F%E5%8F%98%E5%8C%96%EF%BC%88%E6%88%AA%E8%87%B3-2025-11%EF%BC%89"><span class="toc-text">新特性 6：Buildx 的一些近期变化（截至 2025-11）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E7%94%A8%E7%9A%84-CI-%E6%A8%A1%E6%9D%BF%EF%BC%88%E5%A4%9A%E5%B9%B3%E5%8F%B0-%E8%BF%9C%E7%A8%8B%E7%BC%93%E5%AD%98-SBOM-Provenance%EF%BC%89"><span class="toc-text">一个可直接复用的 CI 模板（多平台 + 远程缓存 + SBOM&#x2F;Provenance）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%8E%92%E6%9F%A5%E6%80%9D%E8%B7%AF"><span class="toc-text">常见问题与排查思路</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%EF%BC%89%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E5%BC%80%E4%BA%86-sbom-provenance%EF%BC%8C%E4%BD%86%E4%BB%93%E5%BA%93%E9%87%8C%E7%9C%8B%E4%B8%8D%E5%88%B0%EF%BC%9F"><span class="toc-text">1）为什么我开了 --sbom&#x2F;--provenance，但仓库里看不到？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%EF%BC%89%E4%B8%BA%E4%BB%80%E4%B9%88%E5%A4%9A%E5%B9%B3%E5%8F%B0%E9%95%9C%E5%83%8F%E6%9E%84%E5%BB%BA%E5%BE%88%E6%85%A2%EF%BC%9F"><span class="toc-text">2）为什么多平台镜像构建很慢？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%EF%BC%89cache-mount-%E4%BC%9A%E4%B8%8D%E4%BC%9A%E6%8A%8A%E6%95%8F%E6%84%9F%E6%96%87%E4%BB%B6%E7%BC%93%E5%AD%98%E5%87%BA%E5%8E%BB%EF%BC%9F"><span class="toc-text">3）cache mount 会不会把敏感文件缓存出去？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

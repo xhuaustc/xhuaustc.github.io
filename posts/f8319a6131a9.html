@@ -1,0 +1,223 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubefwd——Openshift-K8S-本地开发的福音 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubefwd——Openshift-K8S-本地开发的福音">
+<meta property="og:url" content="https://xhua.eu.org/posts/f8319a6131a9.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg">
+<meta property="article:published_time" content="2020-05-20T08:26:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.635Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Kubefwd——Openshift-K8S-本地开发的福音",
+  "url": "https://xhua.eu.org/posts/f8319a6131a9.html",
+  "image": "https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg",
+  "datePublished": "2020-05-20T08:26:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.635Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/f8319a6131a9.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubefwd——Openshift-K8S-本地开发的福音',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Kubefwd——Openshift-K8S-本地开发的福音</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Kubefwd——Openshift-K8S-本地开发的福音</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T08:26:00.000Z" title="发表于 2020-05-20 16:26:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.635Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”<br>当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。<br>kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不起的吧。<br>我回复道：“openshift 的 port-forward，再加个自动更新本地 hosts 文件”。<br>小志发来了 kubefwd 请求流向图。</p>
+<p><img src="https://img.xhua.eu.org/131045874b5f63548f32c7206962fc25048b4931bf29c615c539e2fa5904f3bd.jpg" alt="kubefwd"></p>
+<p>服务 api 与服务 auth 提供的都是 80 端口，但是它们能够同时被本地访问，这是 port-forward 无法做到的！我意识到这个工具很不简单，刚才的想法太草率了。<br>我马上回复：“我刚才理解得不对，它可以做到一个 port 对应多个 service！”<br>此刻的心情其实已经非常激动了，因为意识到 kubefwd 这个工具也许解决了困扰我多天的问题。</p>
+<blockquote>
+<p>近一周一直在脑中徘徊的是徐磊老师介绍微软的 TFS 时的演示：开发人员本地修改代码，可以在开发环境独立的 namespace 下实时查看代码生效的结果，当时我为之震惊。因为之前想的各种流程，终究是需要开发者提交代码才能进行下一步测试的。<br>“创建一个环境，让开发者能够以最方便的形式进行开发，这是最直接地提高效率的方式。”<br>于是我开始寻找一种在 openshift&#x2F;k8s 环境下的开源解决方案，测试了 openshift-connector，虽然它跟 TFS 中的代码同步功能有些类似，但是一直没有测试成功，这个插件的关注者很少。后来找了 redhat 的朋友确认，他告诉我这个项目也许已经停止了。我继续寻找，但终究没有新的收获。</p>
+</blockquote>
+<p>我跟一起参会的小伙伴说：“对我而言，也许这次大会的内容，都不及知道了这个工具。”</p>
+<p>晚上回到家，我赶紧做测试。</p>
+<ul>
+<li>第一个要验证的就是 kubefwd 对 Openshift 是否支持，毕竟我们开发测试环境，甚至有些项目的生产环境是在 Openshift 上。</li>
+<li>第二个要验证的就是 kubefwd 是否支持在 windows 系统上运行，毕竟研发几乎都在 windows 上做开发。</li>
+</ul>
+<p>测试结论</p>
+<ul>
+<li>kubefwd 对 Openshift 完全支持</li>
+<li>kubefwd 在 windows 系统上运行正常</li>
+</ul>
+<p>我为什么会如此激动？或者说使用 kubefwd 带来什么样的改变？</p>
+<ul>
+<li>开发人员无需在本地模拟一套完整的线上应用环境就能够测试与其他应用的集成效果</li>
+<li>本地开发应用也能使用远端集群下的中间件，同时使用的配置与集群中的应用完成一样，无需专门做本地访问的配置管理</li>
+<li>开发人员无需提交代码就能与其他应用集成，查看代码生效后的效果</li>
+<li>开发环境变成了相对稳定的集成环境，每个开发者本地版本不会互相影响，降低多个应用同时开发的相互干扰</li>
+</ul>
+<p>对于 kubefwd 如何使用，看它的帮助说明就够了，非常简单。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Usage:</span><br><span class="line">  kubefwd services [flags]</span><br><span class="line"></span><br><span class="line">Aliases:</span><br><span class="line">  services, svcs, svc</span><br><span class="line"></span><br><span class="line">Examples:</span><br><span class="line">  kubefwd svc -n the-project</span><br><span class="line">  kubefwd svc -n the-project -l env=dev,component=api</span><br><span class="line">  kubefwd svc -n default -l &quot;app in (ws, api)&quot;</span><br><span class="line">  kubefwd svc -n default -n the-project</span><br><span class="line">  kubefwd svc -n default -d internal.example.com</span><br><span class="line">  kubefwd svc -n the-project -x prod-cluster</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Flags:</span><br><span class="line">  -x, --context strings     specify a context to override the current context</span><br><span class="line">  -d, --domain string       Append a pseudo domain name to generated host names.</span><br><span class="line">      --exitonfailure       Exit(1) on failure. Useful for forcing a container restart.</span><br><span class="line">  -h, --help                help for services</span><br><span class="line">  -c, --kubeconfig string   absolute path to a kubectl config fil (default &quot;/Users/cjimti/.kube/config&quot;)</span><br><span class="line">  -n, --namespace strings   Specify a namespace. Specify multiple namespaces by duplicating this argument.</span><br><span class="line">  -l, --selector string     Selector (label query) to filter on; supports &#x27;=&#x27;, &#x27;==&#x27;, and &#x27;!=&#x27; (e.g. -l key1=value1,key2=value2).</span><br><span class="line">  -v, --verbose             Verbose output.</span><br></pre></td></tr></table></figure>
+
+<h2 id="项目地址"><a href="#项目地址" class="headerlink" title="项目地址"></a>项目地址</h2><p>kubefwd <a target="_blank" rel="noopener" href="https://github.com/txn2/kubefwd">https://github.com/txn2/kubefwd</a></p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>小志还分享了个方便端口转发的应用，“oc port-forward 的图形化应用”。地址：<a target="_blank" rel="noopener" href="https://kube-forwarder.pixelpoint.io/">https://kube-forwarder.pixelpoint.io/</a></p>
+<p>进一步发现了一个新的工具<a target="_blank" rel="noopener" href="https://alibaba.github.io/kt-connect/#/zh-cn/">kt-connect</a> ，一个可以让开发环境访问 K8S 集群下应用的工具，可以直接访问容器。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 检查依赖环境</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ktctl check</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 1. 安装sshuttle</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo pip install sshuttle -i https://pypi.douban.com/simple</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># openshift中，先创建一个project</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-project ktconnect</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc adm policy add-scc-to-user anyuid -z default <span class="comment">#因为默认kt-connect-daemon需要root用户启动</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo ktctl -n ktconnect connect</span></span><br><span class="line"></span><br><span class="line">11:15AM INF Connect Start At 67595</span><br><span class="line">11:15AM INF Client address 192.168.0.138</span><br><span class="line">11:15AM INF deploy shadow deployment kt-connect-daemon-yuiaq in namespace ktconnect</span><br><span class="line"></span><br><span class="line">11:15AM INF pod label: kt=kt-connect-daemon-yuiaq</span><br><span class="line">11:15AM INF pod: kt-connect-daemon-yuiaq-665dd6bc55-tzb74 is running,but not ready</span><br><span class="line">11:15AM INF pod: kt-connect-daemon-yuiaq-665dd6bc55-tzb74 is running,but not ready</span><br><span class="line">11:15AM INF pod: kt-connect-daemon-yuiaq-665dd6bc55-tzb74 is running,but not ready</span><br><span class="line">11:15AM INF pod: kt-connect-daemon-yuiaq-665dd6bc55-tzb74 is running,but not ready</span><br><span class="line">11:15AM INF Shadow pod: kt-connect-daemon-yuiaq-665dd6bc55-tzb74 is ready.</span><br><span class="line">11:15AM INF Fail to get pod cidr from node.Spec.PODCIDR, try to get with pod sample</span><br><span class="line">Forwarding from 127.0.0.1:2222 -&gt; 22</span><br><span class="line">Forwarding from [::1]:2222 -&gt; 22</span><br><span class="line">11:16AM INF port-forward start at pid: 67596</span><br><span class="line">Handling connection for 2222</span><br><span class="line">Warning: Permanently added &#x27;[127.0.0.1]:2222&#x27; (ECDSA) to the list of known hosts.</span><br><span class="line">client: Connected.</span><br><span class="line">11:16AM INF vpn(sshuttle) start at pid: 67597</span><br><span class="line">11:16AM INF KT proxy start successful</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/f8319a6131a9.html">https://xhua.eu.org/posts/f8319a6131a9.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/posts/9dbd81598681.html" title="Airflow简单介绍及测试安装"><img class="cover" src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Airflow简单介绍及测试安装</div></div><div class="info-2"><div class="info-item-1">Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。 先看下这篇介绍 ：浅谈调度工具——Airflow   为什么使用 Airflow 智能调度 图形化展示任务关系 程序化流水线定义 流水线间数据交互 扩展性强 分布式，可靠性高 执行方式多样化，除了定时执行还可手动触发，api 触发等  Airflow 常用的场景Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。  系统或运用的日常维护任务，批量作业 CD 部署任务，灰度发布，蓝绿部署等 数据分析，数据流管道管理  一句话：任何批量任务或者需要手动去触发执...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/fcc1189de870.html" title="OpenShift-ImageStream指向的镜像是否为内部镜像仓库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-ImageStream指向的镜像是否为内部镜像仓库</div></div><div class="info-2"><div class="info-item-1"> ImageStream是OpenShift中的一个特有的资源。在DeploymentConfig&#x2F;BuildConfig中使用ImageStream和ImageStreamTag时经常会有这样的疑惑：究竟它指向的镜像有没有pull到OpenShift内部的镜像仓库呢？我们使用DeploymentConfig发布应用时，集群会从内部镜像仓库中pull镜像，还是从指向的外部镜像仓库中拉取？大家来看一下下面这个例子： 1$ oc import-image openshift/jenkins:v3.10 --from=docker.io/openshift/jenkins-2-centos7:v3.10 --confirm 猜一猜，以上这条命令是否会将镜像拉取到内部镜像仓库？答案是否定的，内部镜像仓库并不会拉取镜像本身，只是获取镜像的元数据，将创建的ImageStreamTag openshift/jenkins:v3.10指向镜像docker.io/openshift/jenkins-2-centos7:v3.10。这里的关键就是ImageStream[Tag]的一个配置项...</div></div></div></a><a class="pagination-related" href="/posts/6103ce3be10c.html" title="OpenShift-3升级Docker服务"><img class="cover" src="https://img.xhua.eu.org/0e8580af838b70b51d9c7518927350d677678b626f85c527f0d12d54838d30b1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-3升级Docker服务</div></div><div class="info-2"><div class="info-item-1">背景介绍OpenShift是一个开源产品，自2015年3.0版本开始，它使用Kubernetes作为底层的编排引擎，已经有将近5年了。同时它也有企业级版本，服务了众多大中小企业。经过这些年生产上的实践，OpenShift 3不断完善，已经非常稳定了，但是它依赖组件多，不断增加新的功能，使用量不断增多，一些漏洞和问题会被发现。在生产环境中，运行着大量的生产级应用，我们该如何升级Docker等组件，把业务影响降到最小，这是每个企业都无法绕过的问题。Docker作为OpenShift 3默认的容器运行，它的可靠性也尤为重要。本篇就以Docker升级为例介绍如何对OpenShift组件进行升级。升级不同OpenShift组件的思路是一样，主要是如下两条。  逐个节点升级 升级前将业务应用迁走  升级Docker实操 更新yum源中的docker包  12$ cp docker-rpm/* ./extras/Packages/d/$ createrepo --update extras  迁移节点上的POD并将它设置为不可调度  1$ oc adm drain &lt;node_name&...</div></div></div></a><a class="pagination-related" href="/posts/ca88845f35ee.html" title="OpenShift本地镜像仓库打不开"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift本地镜像仓库打不开</div></div><div class="info-2"><div class="info-item-1">访问OpenShift本地镜像仓库https://registry.paas.net，报错 1234&#123;&quot;error&quot;: &quot;invalid_request&quot;,&quot;error_description&quot;: &quot;The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.&quot;&#125; 一般情况下，访问镜像仓库 12345678$ oc get oauthclientNAME                           SECRET                                                                 WWW-CHALLENGE   TOKEN-MAX-AGE   REDIRECT URIScockpit-oau...</div></div></div></a><a class="pagination-related" href="/posts/558c69203e45.html" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a><a class="pagination-related" href="/posts/37f8f369f5b6.html" title="白化Kubernetes网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">白化Kubernetes网络</div></div><div class="info-2"><div class="info-item-1">引自：http://www.10tiao.com/html/217/201708/2649694873/1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清本质，用形象的例子展示Weave、Flannel、Calico和Romana等网络解决方案背后的原理。  这次讲一讲容器集群中的网络。其实不同的容器集群解决方案，在网络方面的核心原理都是相似的，只不过这次我们将以Kubernetes为线索，来窥斑见豹的一睹容器网络的发展过程。  我是来自ThoughtWorks的林帆，我们从Docker的0.x版本开始就在对容器的应用场景进行探索，积累了一线的容器运用经验。这次分享会用简洁易懂的方式告诉大家我们对容器网络方面的一些知识归纳。  初入容器集群的人往往会发现，和单节点的容器运用相比，容器的网络和存储是两个让人望而却步的领域。在这些领域里，存在...</div></div></div></a><a class="pagination-related" href="/posts/2970a12120e5.html" title="企业生产系统迁移至容器云平台的众多难题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">企业生产系统迁移至容器云平台的众多难题</div></div><div class="info-2"><div class="info-item-1"> 该篇是twt论坛交流活动《企业生产系统迁移至容器云平台的网络及安全方案探讨—暨红帽容器化混合云解决方案在线发布活动》的总结。原文：http://www.talkwithtrend.com/Article/245665活动地址：http://www.talkwithtrend.com/activity/?id=1459 自从2013年Docker应用开源以来，容器技术飞速发展，它彻底改变了PaaS原先的发展轨迹。2014年Google发布的容器编排应用Kubernetes，经过5年的发展，更是已经成为了现代容器平台的事实标准，容器平台应用于生产环境也已经现实可落地。 与之前的虚拟技术相比，容器技术具有更快、更轻、更强的优势。 更快，体现在容器可以实现秒级启动。 更轻，体现在容器更加轻量，往往一个容器镜像只有几十兆，可以快速在主机之间迁移，而虚拟机镜像往往是几个G。 更强，体现在容器的性能更好。容器是直接调用硬件资源，不存在虚拟化层，所以它的性能接近于原生应用。 容器以应用为中心，能够快速地在各个平台下部署运行，可以很好地满足应用的快速部署。 但是容器运行时使用的是宿主机的内核，在...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E5%9C%B0%E5%9D%80"><span class="toc-text">项目地址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85"><span class="toc-text">补充</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

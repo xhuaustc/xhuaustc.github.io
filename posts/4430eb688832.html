@@ -1,0 +1,230 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="《持续交付发布可靠软件的系统方法》读书笔记 持续交付让应用程序处于随时可发布的状态。在大型重构或添加复杂功能时，要继续保持应用的可发布状态，需要对大型应用组件化。组件是指应用程序中的一个规模相当大的代码结构，它具有一套定义良好的API，而且可以被另一种实现方式代替。一个基于组件的软件系统，通常其代码库被分成多个相互分离的部分，每个部分通过有限的定义良好的接口提供一些服务与其他组件进行有限的交互。有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理">
+<meta property="og:url" content="https://xhua.eu.org/posts/4430eb688832.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="《持续交付发布可靠软件的系统方法》读书笔记 持续交付让应用程序处于随时可发布的状态。在大型重构或添加复杂功能时，要继续保持应用的可发布状态，需要对大型应用组件化。组件是指应用程序中的一个规模相当大的代码结构，它具有一套定义良好的API，而且可以被另一种实现方式代替。一个基于组件的软件系统，通常其代码库被分成多个相互分离的部分，每个部分通过有限的定义良好的接口提供一些服务与其他组件进行有限的交互。有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.632Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理",
+  "url": "https://xhua.eu.org/posts/4430eb688832.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.632Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/4430eb688832.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">持续交付发布可靠软件的系统方法（交付生态圈）第十三章：组件和依赖管理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.632Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><a href="/DevOps/%E3%80%8A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%8F%91%E5%B8%83%E5%8F%AF%E9%9D%A0%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%96%B9%E6%B3%95%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">《持续交付发布可靠软件的系统方法》读书笔记</a></p>
+<p>持续交付让应用程序处于随时可发布的状态。在大型重构或添加复杂功能时，要继续保持应用的可发布状态，需要对大型应用组件化。<br>组件是指应用程序中的一个规模相当大的代码结构，它具有一套定义良好的API，而且可以被另一种实现方式代替。一个基于组件的软件系统，通常其代码库被分成多个相互分离的部分，每个部分通过有限的定义良好的接口提供一些服务与其他组件进行有限的交互。有人把组件称为模块。<br>基于组件的设计是一种良好的架构，具有松耦合性。</p>
+<h2 id="保持应用程序可发布"><a href="#保持应用程序可发布" class="headerlink" title="保持应用程序可发布"></a>保持应用程序可发布</h2><p>团队不断地增加新特性，可以给每次新特性创建新的分支，当新特性完成后，再将它合并到主分支。这将会导致合并周期变长，无法做到持续集成，这种方法不是最好的。<strong>提倡每个人都应该提交到主干</strong>。可是这样又该如何保证主干一直保持可发布状态呢？有如下四种策略：</p>
+<ul>
+<li>将新功能隐藏起来，直到它完成为止。一种方法是把新功能直接放进主干，但对用户不可见，比如通过单独的URL来访问，通过Web服务器配置不允许访问其入口；另一种方法是通过配置项开关来管理。把功能半成品与系统其他部分一同发布是一个好实践。</li>
+<li>将所有的变更都变成一系列的增量小修改，而每次小修改都是可发布的。首先需要用各种方式将一个需求分解成较小的任务，然后将这些任务再划分成更小的增量修改。</li>
+<li>使用通过抽象来模拟分支的方式对代码库进行大范围的变更。在要修改的那部分代码上创建一个抽象层，然后在当前实现方法存在的同时，开发一种新的实现方式，当完成时再把原始的实现和抽象层删除。</li>
+<li>使用组件，根据不同部分修改的频率对应用程序解耦。</li>
+</ul>
+<h2 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h2><p>库是团队除了选择权以外，没有控制权的软件包，它们很少更新。组件是应用程序所依赖的代码块，它一般由团队自己开发的，更新频繁。<br>构建时的依赖会与运行时依赖不同，管理依赖遇到问题。</p>
+<ul>
+<li>依赖地狱。应用程序的依赖版本与实际部署的版本不一致。</li>
+<li>库管理。一种方法是将库文件提交到代码版本控制库中，但时间久了后会导致版本库变大且乱，同时库文件的状态难以管理。另一种方法是使用显示声明的库管理工具，如Maven。</li>
+</ul>
+<h2 id="组件"><a href="#组件" class="headerlink" title="组件"></a>组件</h2><p>只有一个系统达到一定的复杂度时，才会考虑将它分成多个组件。组件的目的是为了提交团队的效率。</p>
+<ul>
+<li>它将问题分成更小更达意的代码块</li>
+<li>组件常常表示出系统不同部分代码的变化率不同，且有不同的生命周期</li>
+<li>将代码划分，也便于分析系统的职责描述和维护，并且提交了对代码的理解</li>
+<li>提供了额外的自由度来优化构建和部署过程</li>
+</ul>
+<p>当我们遇到以下情况时，可以考虑将组件代码从代码库中独立出来</p>
+<ul>
+<li>代码库的一部分需要独立部署</li>
+<li>打算将系统分成一个内核和一系列组件，以便用另一种实现代替当前系统的某部分或者支持用户自扩展</li>
+<li>组件为其他系统提供了一个接口（如API接口）</li>
+<li>代码的编译和链接时间太长</li>
+<li>在开发环境中打开项目时间太长</li>
+<li>对一个团队来说，代码库太大</li>
+</ul>
+<p>大多数情况下，我们建议整个应用程序使用一个构建流水线，每次提交修改时，就应该构建并测试整个应用。只有当效率太低而无法忍受时，才使用并行流水线方式。</p>
+<h2 id="二进制包管理"><a href="#二进制包管理" class="headerlink" title="二进制包管理"></a>二进制包管理</h2><p>使用制品库来管理二进制包，如Artifactory，Nexus。制品库不应该包含那些无法重现的产物，即便删除整个制品库，也可以方便地将二进制包恢复出来，一般通过重新构建对应的代码。<br>最简单的制品库是磁盘上的一个目录，最重要的是它应该将一个二进制文件关联到版本控制库中生成该文件的某个源码版本对应上。<br>流水线与制品库相结合</p>
+<ul>
+<li>编译阶段会创建需要放到制品库的二进制文件</li>
+<li>单元测试和验收测试阶段会从制品库中取出这些二进制文件，将生成的测试报告放在制品库中</li>
+<li>用户验收测试阶段将二进制文件部署到UAT环境，用于手工测试</li>
+<li>发布阶段从制品库中取出二进制文件，将它部署到生产环境</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/4430eb688832.html">https://xhua.eu.org/posts/4430eb688832.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/a930425c97d6.html" title="持续交付发布可靠软件的系统方法（交付生态圈）第十二章：数据管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（交付生态圈）第十二章：数据管理</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 应用程序可以通过删除前一个版本，使用新版本替换旧版本的方式部署，但是大多数系统，数据无法使用这种方式进行变更，一旦某个系统发布到了生产环境中，关联的数据将不断增加。数据往往是系统中最有价值的部分。当我们需要对数据系统进行结构修改或者内容修改时，就需要相关的策略。对数据的修改是不可避免的，关键在于将数据迁移过程自动化。目前有一些工具对数据迁移提供了较多支持，它们还允许对数据库进行版本化管理。另一个重要部分是测试数据的管理。 数据库脚本化任何数据库的修改都应该通过自动化过程来管理。包括数据库的初始化，数据库所有的迁移都需要脚本化，并将脚本提交到版本控制库中。几乎所有的数据管理系统都支持通过自动化脚本进行数据存储的初始化工作。  清除原有的数据库 创建数据库结构、数据弯路实例以及模式等 向数据库加载数据  在大多数据项目中，数据库的使用要复杂得多。 增量式修改绝大多数据系统，对数据库更新时，要保留它们的数据。由于在部署时需要保留数据库中的已有数据，所以需要有回滚策略，以便部署失败时使用。这就需要对数据库进行版本控制。  在数据库中创建一个数据...</div></div></div></a><a class="pagination-related" href="/posts/d1ede288040e.html" title="持续交付发布可靠软件的系统方法（交付生态圈）第十一章：基础设施和环境管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（交付生态圈）第十一章：基础设施和环境管理</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 基础设施与环境管理的目标是让所有测试环境（包括持续集成环境）都要与生产环境相似，特别是它们的管理方式。环境是指应用程序运行所需的所有资源和它们的配置信息。有如下这些属性：组成运行环境的服务器的硬件配置信息：如CPU类型和数量、内存大小、硬盘和网卡等；应用程序运行所需要的操作系统和中间件：如消息队列、应用服务器、web服务器及数据库服务器等的配置信息。基础设施代表了所在组织中的所有环境以及支持运行的所有服务，如DNS服务器、防火墙、路由器、版本控制库、存储、监控、邮件服务、日志服务等。准备部署环境及管理它，要基于以下原理，用一个整体方法来管理所有基础设施：  使用保存于版本控制库中的配置信息来指定基础设施所处的状态 基础设施应该具有自治特性，即它应该自动地将自己设定为所需状态 通过测试设备和监控手段，应该时时都能掌握基础设施的实时状况 基础设施还应该具有非常容易重新搭建的特性  为了减少在类生产环境中的部署风险，需要精心管理以下内容:  操作系统及其配置信息，包括各个环境 中间件软件栈及其配置信息，包括应用服务器、消息系统和数据库 基础设...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/12c881755833.html" title="常用的Tcpdump命令"><img class="cover" src="https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-20</div><div class="info-item-2">常用的Tcpdump命令</div></div><div class="info-2"><div class="info-item-1"> 监控某一网络接口的数据包  1tcpdump -i eth0   查看dns解析的包 port domain  1tcpdump -i eth0 -nt  -s 500 port domain -t 不显示时间-n 不会将ip显示为hostname  过滤IP  12345tcpdump -i eth0 host 202.22.22.22tcpdump -i eth0 src host 202.22.22.22  ## 指定源地址tcpdump -i eth0 dst host 202.22.22.22  ## 指定目的地址tcpdump -i eth0 host 202.22.22.22 and \(202.22.22.21 or 202.22.22.20 \)  ## 获取202.22.22.22 与 202.22.22.21或202.22.22.20之间的包tcpdump -i eth0 host 202.22.22.22 and !202.22.22.21  ## 获取202.22.22.22 与 除了202.22.22.21 之外的ip之间的包   过滤端口 port...</div></div></div></a><a class="pagination-related" href="/posts/9dbd81598681.html" title="Airflow简单介绍及测试安装"><img class="cover" src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Airflow简单介绍及测试安装</div></div><div class="info-2"><div class="info-item-1">Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。 先看下这篇介绍 ：浅谈调度工具——Airflow   为什么使用 Airflow 智能调度 图形化展示任务关系 程序化流水线定义 流水线间数据交互 扩展性强 分布式，可靠性高 执行方式多样化，除了定时执行还可手动触发，api 触发等  Airflow 常用的场景Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。  系统或运用的日常维护任务，批量作业 CD 部署任务，灰度发布，蓝绿部署等 数据分析，数据流管道管理  一句话：任何批量任务或者需要手动去触发执...</div></div></div></a><a class="pagination-related" href="/posts/78c6906d0976.html" title="Mysql瓶颈分析方法"><img class="cover" src="https://img.xhua.eu.org/0b352156bc8be83c534d25e7aaffb0ef0a8cb2438c08549e084611b6c59d3928.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Mysql瓶颈分析方法</div></div><div class="info-2"><div class="info-item-1">数据库往往会成为应用的最终瓶颈，而Mysql是被使用得最多的开源关系型数据库。如何分析执行Mysql数据库语句的性能就非常重要。但是很多开发人员并没有相关的意识与能力，但其实掌握了一些简单的常用手段，就可以让我们自己分析出数据库语句的问题。曾经看到过有对数据库查询语句中出现7个Select的语句，当时完全被震惊到了，这根本就是往系统里注入了一个大雷呀，数据量一旦增多，数据库挂，应用挂，服务挂，客户挂，公司挂。。。。还是不做破了一个鸡蛋就想着毁了一个养鸡场的推断了。我们收集下常见的数据库的分析手段。  查看当前数据库执行命令  12mysql&gt; select count(*) from information_schema.processlist where COMMAND != &#x27;Sleep&#x27;;mysql&gt; select * from information_schema.processlist where COMMAND != &#x27;Sleep&#x27; limit 5;  慢查询查看慢查询时间定义  12345678910mysql&g...</div></div></div></a><a class="pagination-related" href="/posts/24bf32e1f396.html" title="Ansible常用模块"><img class="cover" src="https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ansible常用模块</div></div><div class="info-2"><div class="info-item-1">lookup 函数在 playbooks 中可以使用一个名为 lookup()的函数，该函数用于 ansible 从外部资源访问数据，根据第一个参数的不同，该函数具有不同的功能，典型的就是读取外部文件内容。lookup()只在本地执行，而不是在远程主机上执行。例子： 123456debug: msg=&quot;&#123;&#123; lookup(&#x27;file&#x27;, &#x27;/etc/foo.txt&#x27;) &#125;&#125;&quot;debug: msg=&quot;password - &#123;&#123; lookup(&#x27;password&#x27;, &#x27;/tmp/random_pass.txt length=10&#x27;) &#125;&#125;&quot;debug: msg=&quot;&#123;&#123; lookup(&#x27;env&#x27;,&#x27;HOME&#x27;) &#125;&#125; is an environment variable&quot;debug: msg...</div></div></div></a><a class="pagination-related" href="/posts/8742f1edd9f5.html" title="Ansible kubernetes.core 模块的使用"><img class="cover" src="https://img.xhua.eu.org/a64533df142446719f509b1ea28c121502a495a39a7954099c994ed8e550f0a3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-08</div><div class="info-item-2">Ansible kubernetes.core 模块的使用</div></div><div class="info-2"><div class="info-item-1">介绍Ansible Guide: https://docs.ansible.com/ansible/latest/collections/kubernetes/core/index.html#description code: https://github.com/ansible-collections/kubernetes.core 模块列表：https://github.com/ansible-collections/kubernetes.core#modules kubernetes.core可以自动化管理kubernetes或openshift集群的应用与资源对象，以及集群的运维管理。 该collection环境要求：kubernetes &gt;&#x3D; 1.19python &gt;&#x3D; 3.6ansible &gt;&#x3D; 2.9.17 Moduleskubernetes.core collection包含有多个模块插件：inventory plugin, lookup plugin, connection plugin, K8s filter p...</div></div></div></a><a class="pagination-related" href="/posts/522406dc14b5.html" title="Scrum敏捷开发"><img class="cover" src="https://img.xhua.eu.org/08610d5404f631e65e15a4035506b037ef8df6428b0dd1dd53d8a400c00525a6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Scrum敏捷开发</div></div><div class="info-2"><div class="info-item-1">团队成员 一般情况人数在5~9个左右 团队要跨职能(包含开发人员、测试人员、用户介面设计师等) 团队成员构成在Sprint内不允许变化。  用户故事建模为开发任务需求编写用户故事    重要性 用户故事 测试方法 预估时间    30 做为一个会员，可以查看自己的购物清单，以便一起购买 登录，点击购买清单Tab 16h   Sprint计划会议（两周一次，4个小时） 设定本Sprint目标及优先级 挑选本Sprint所要开发的需求（Story) 逐一将Story细分成Task 确定每日站会时间和地点 确定演示会议和回顾会议日期计划会议输出：     Story Task Hour    A 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   B 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   第日立会为早上9：00至9：15     Demo演示时间为：2018-07-1...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E6%8C%81%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%8F%AF%E5%8F%91%E5%B8%83"><span class="toc-text">保持应用程序可发布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96"><span class="toc-text">依赖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%84%E4%BB%B6"><span class="toc-text">组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%8C%85%E7%AE%A1%E7%90%86"><span class="toc-text">二进制包管理</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

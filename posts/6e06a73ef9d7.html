@@ -1,0 +1,204 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>SciKit-Learn机器学习入门（二）——Pipeline | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在我们平常的机器学习得到的数据并不能直接使用，必须先对它进行预处理后才能正常使用。以股票数据为例，当前的股价并不是独立的，它与之前的股价是有关系的，一个可用的方法是对对股价处理转为增长幅度。 12time1, price1time2, price2 转为 12time1, Nantime2, (price2-price1)&#x2F;price1 SKLear提供了Pipeline工具方便数据处理。 123">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SciKit-Learn机器学习入门（二）——Pipeline">
+<meta property="og:url" content="https://xhua.eu.org/posts/6e06a73ef9d7.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="在我们平常的机器学习得到的数据并不能直接使用，必须先对它进行预处理后才能正常使用。以股票数据为例，当前的股价并不是独立的，它与之前的股价是有关系的，一个可用的方法是对对股价处理转为增长幅度。 12time1, price1time2, price2 转为 12time1, Nantime2, (price2-price1)&#x2F;price1 SKLear提供了Pipeline工具方便数据处理。 123">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg">
+<meta property="article:published_time" content="2022-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.634Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="机器学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "SciKit-Learn机器学习入门（二）——Pipeline",
+  "url": "https://xhua.eu.org/posts/6e06a73ef9d7.html",
+  "image": "https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg",
+  "datePublished": "2022-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.634Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/6e06a73ef9d7.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'SciKit-Learn机器学习入门（二）——Pipeline',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">SciKit-Learn机器学习入门（二）——Pipeline</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">SciKit-Learn机器学习入门（二）——Pipeline</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-05-20T12:30:00.000Z" title="发表于 2022-05-20 20:30:00">2022-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.634Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在我们平常的机器学习得到的数据并不能直接使用，必须先对它进行预处理后才能正常使用。以股票数据为例，当前的股价并不是独立的，它与之前的股价是有关系的，一个可用的方法是对对股价处理转为增长幅度。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">time1, price1</span><br><span class="line">time2, price2</span><br></pre></td></tr></table></figure>
+<p>转为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">time1, Nan</span><br><span class="line">time2, (price2-price1)/price1</span><br></pre></td></tr></table></figure>
+<p>SKLear提供了Pipeline工具方便数据处理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">## 定义数据处理类ColumnExtractor，获取指定列的数据</span><br><span class="line">class ColumnExtractor(BaseEstimator, TransformerMixin):</span><br><span class="line">    def __init__(self, column_name):</span><br><span class="line">        self.column_name = column_name</span><br><span class="line">    def fit(self, X, y=None):</span><br><span class="line">        return self</span><br><span class="line">    def transform(self, X, y=None):</span><br><span class="line">        return X[self.column_name]</span><br><span class="line"></span><br><span class="line">## 定义数据处理类TimeSeriesDiff， 对数据作data.diff()/data.shift(1)处理</span><br><span class="line">class TimeSeriesDiff(BaseEstimator, TransformerMixin):</span><br><span class="line">    def __init__(self, k=1):</span><br><span class="line">        self.k = k </span><br><span class="line">    def fit(self, X, y=None):</span><br><span class="line">        return self</span><br><span class="line">    def transform(self, X, y=None):</span><br><span class="line">        if type(X) is pd.core.frame.DataFrame or type(X) is pd.core.series.Series:</span><br><span class="line">            return X.diff(self.k) / X.shift(self.k)</span><br><span class="line">        else:</span><br><span class="line">            raise Exception(&quot;Have to be a pandas data frame or Series object!&quot;)</span><br><span class="line"></span><br><span class="line">## 定义数据处理类TimeSeriesEmbedder，每k个数据组成新的数据，共有N-k组数据</span><br><span class="line">class TimeSeriesEmbedder(BaseEstimator, TransformerMixin):</span><br><span class="line">    def __init__(self, k):</span><br><span class="line">        self.k = k </span><br><span class="line">    def fit(self, X, y= None):</span><br><span class="line">        return self</span><br><span class="line">    def transform(self, X, y = None):</span><br><span class="line">        return embed_time_series(X, self.k)</span><br><span class="line"></span><br><span class="line">def embed_time_series(x, k):</span><br><span class="line">    n = len(x)</span><br><span class="line">    if k &gt;= n: </span><br><span class="line">        raise Exception(&quot;Can not deal with k greater than the length of x&quot;)</span><br><span class="line">    output_x = list(map(lambda i: list(x[i:(i+k)]), </span><br><span class="line">                        range(0, n-k)))</span><br><span class="line">    return np.array(output_x)</span><br></pre></td></tr></table></figure>
+<p>使用PipeLine对数据进行预处理组成新的模型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">## 对&quot;Close&quot;列数据进行处理</span><br><span class="line">pipeline_closing_price = Pipeline([(&quot;ColumnEx&quot;, ColumnExtractor(&quot;Close&quot;)),</span><br><span class="line">                                   (&quot;Diff&quot;, TimeSeriesDiff()),</span><br><span class="line">                                   (&quot;Embed&quot;, TimeSeriesEmbedder(10)),</span><br><span class="line">                                   (&quot;ImputerNA&quot;, Imputer())])</span><br><span class="line"></span><br><span class="line">## 对&quot;Volume&quot;列数据进行处理</span><br><span class="line">pipeline_volume = Pipeline([(&quot;ColumnEx&quot;, ColumnExtractor(&quot;Volume&quot;)),</span><br><span class="line">                            (&quot;Diff&quot;, TimeSeriesDiff()),</span><br><span class="line">                            (&quot;Embed&quot;, TimeSeriesEmbedder(10)),</span><br><span class="line">                            (&quot;ImputerNA&quot;, Imputer())])</span><br><span class="line"></span><br><span class="line">## 联合将”Close&quot;与&quot;Volume&quot;处理后的数据</span><br><span class="line">merged_features = FeatureUnion([(&quot;ClosingPriceFeature&quot;, pipeline_closing_price),</span><br><span class="line">                                (&quot;VolumeFeature&quot;, pipeline_volume)])</span><br><span class="line"></span><br><span class="line">## 将数据中添加多项式特征</span><br><span class="line">pipeline_2 = Pipeline([(&quot;MergedFeatures&quot;, merged_features),</span><br><span class="line">                       (&quot;PolyFeature&quot;,PolynomialFeatures()),</span><br><span class="line">                       (&quot;LinReg&quot;, LinearRegression())])</span><br></pre></td></tr></table></figure>
+<p>使用新模型进行数据训练与预测</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pipeline_2.fit(data_train, y_train)</span><br><span class="line">y_pred_2 = pipeline_2.predict(data_test)</span><br></pre></td></tr></table></figure>
+<p>对预测数据进行打分</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">from sklearn.metrics import r2_score</span><br><span class="line">r2_score(y_test, y_pred_2)</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/6e06a73ef9d7.html">https://xhua.eu.org/posts/6e06a73ef9d7.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/e8b881018f34.html" title="晒一晒Jenkins那些常用插件"><img class="cover" src="https://img.xhua.eu.org/539d8edb707baa13cdb996df3f91fd91d6cb7c1471709dd3d3b3a6bcdedc4fa9.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">晒一晒Jenkins那些常用插件</div></div><div class="info-2"><div class="info-item-1">作为 CI&#x2F;CD 的调度中心，Jenkins 具有十八般武艺，目前已有 1700 多个插件，功能强大到似乎有点过分了。本文主要列出平时我们常用的插件。 以下这两个网站是 Jenkins 所有的插件及说明 Jenkins Plugins https://plugins.jenkins.ioJinkins Plugins Wiki https://wiki.jenkins.io  ConfigurationJenkins CASC: configuration-as-code将Jenkins的配置以Code的方式进行保存，方便Jenkins的迁移与重建。该插件对于敏捷管理Jenkins服务非常有用。 jobConfigHistory记录和跟踪Jenkins作业配置的历史变更，方便查看配置修改记录和回滚操作。 ParameterGit Parameter这是一个参数构建扩展，可以在构建的时候选择git的某一个分支来构建服务。 file-parameters这个让Jenkinsfile支持将文件作为参数。 Hidden Parameter参数化构建时，隐藏相关参数。可用于设置默...</div></div></div></a><a class="pagination-related" href="/posts/4eeb40a1b77e.html" title="个性化聚类推荐Kmeans实战"><img class="cover" src="https://img.xhua.eu.org/5ae1615aa2fafc541a8e59472c4404f8ce96fe5f3d236161817451fedde95785.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">个性化聚类推荐Kmeans实战</div></div><div class="info-2"><div class="info-item-1">数据预处理1. 去除不需要的数据目标是：一个用户，后面全是用户的特征  列数据中 Null 数据 &gt; 80% 所有数据 isnull().sum() 列数据中一样的数据 &gt; 80%所有数据 value_counts() 表示同一个意思的字段，只需要保留一个：如用户名、用户账号、支付账号、收货人姓名 根据场景分析不需要的字段：如买家应付货款、应付邮费等  2. 只获取指定的列数据12df_order.ix[:, &#x27;订单编号&#x27;, &#x27;买家会员名&#x27;, &#x27;买家实际支付金额&#x27;, &#x27;收货地址&#x27;, &#x27;种类&#x27;, &#x27;数量&#x27;, &#x27;退款金额&#x27;]# ix是loc与iloc的合集，其中loc是按照列名来取数据，iloc是按照列的index来取数据  或者 1df_order[[&#x27;订单编号&#x27;, &#x27;买家会员名&#x27;, &#x27;买家实际支付金额&#x27;, &#x27;收货地址&#x27;, &#x27;种类&#x27;,...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/ab8fb20764a5.html" title="SciKit-Learn-机器学习入门（一）"><img class="cover" src="https://img.xhua.eu.org/6a69692f8029838c65bcd9b34503c35e7121862f69c5120fddb9081658b2fa60.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-20</div><div class="info-item-2">SciKit-Learn-机器学习入门（一）</div></div><div class="info-2"><div class="info-item-1">   安装SciKit Learn123pip install numpypip install sklearnpip install matplotlib sklean中自带的数据  iris 鸢尾属植物数据（分类）   12from sklearn import datasetsiris = datasets.load_iris()   Boston房价信息（线性回归）   12from sklearn import datasetsboston = datasets.load_boston()   等等   分类器实例12345678910111213141516from sklearn import datasetsfrom sklearn.neighbors import KNeighborsClassifierfrom sklearn.model_selection import train_test_splitiris = datasets.load_iris()  ## 加载数据iris_X = iris.data  ## X坐标，叶子长宽等属性iris_Y = ...</div></div></div></a><a class="pagination-related" href="/posts/4eeb40a1b77e.html" title="个性化聚类推荐Kmeans实战"><img class="cover" src="https://img.xhua.eu.org/5ae1615aa2fafc541a8e59472c4404f8ce96fe5f3d236161817451fedde95785.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-20</div><div class="info-item-2">个性化聚类推荐Kmeans实战</div></div><div class="info-2"><div class="info-item-1">数据预处理1. 去除不需要的数据目标是：一个用户，后面全是用户的特征  列数据中 Null 数据 &gt; 80% 所有数据 isnull().sum() 列数据中一样的数据 &gt; 80%所有数据 value_counts() 表示同一个意思的字段，只需要保留一个：如用户名、用户账号、支付账号、收货人姓名 根据场景分析不需要的字段：如买家应付货款、应付邮费等  2. 只获取指定的列数据12df_order.ix[:, &#x27;订单编号&#x27;, &#x27;买家会员名&#x27;, &#x27;买家实际支付金额&#x27;, &#x27;收货地址&#x27;, &#x27;种类&#x27;, &#x27;数量&#x27;, &#x27;退款金额&#x27;]# ix是loc与iloc的合集，其中loc是按照列名来取数据，iloc是按照列的index来取数据  或者 1df_order[[&#x27;订单编号&#x27;, &#x27;买家会员名&#x27;, &#x27;买家实际支付金额&#x27;, &#x27;收货地址&#x27;, &#x27;种类&#x27;,...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解">OpenClaw：开源AI代理与技能生态系统详解</a><time datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

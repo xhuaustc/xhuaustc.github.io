@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="《持续交付发布可靠软件的系统方法》读书笔记 持续集成要求每当有人提交代码时，就对整个应用进行构建，并对其执行全面的自动化测试集合，一旦出现问题，开发团队应停下手中的工作，修复问题。持续集成的目标是：让正在研发的软件一直处于可工作的状态。 实施持续集成的先决条件 版本控制，与项目相关的所有内容都必须提交到一个版本控制库中（产品代码、测试代码、数据库脚本、构建与部署脚本、以及所有用于创建安装运行和测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成">
+<meta property="og:url" content="https://xhua.eu.org/posts/895381bf27ed.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="《持续交付发布可靠软件的系统方法》读书笔记 持续集成要求每当有人提交代码时，就对整个应用进行构建，并对其执行全面的自动化测试集合，一旦出现问题，开发团队应停下手中的工作，修复问题。持续集成的目标是：让正在研发的软件一直处于可工作的状态。 实施持续集成的先决条件 版本控制，与项目相关的所有内容都必须提交到一个版本控制库中（产品代码、测试代码、数据库脚本、构建与部署脚本、以及所有用于创建安装运行和测试">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.632Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成",
+  "url": "https://xhua.eu.org/posts/895381bf27ed.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.632Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/895381bf27ed.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">持续交付发布可靠软件的系统方法（基础篇）第三章：持续集成</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.632Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><a href="/DevOps/%E3%80%8A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%8F%91%E5%B8%83%E5%8F%AF%E9%9D%A0%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%96%B9%E6%B3%95%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">《持续交付发布可靠软件的系统方法》读书笔记</a></p>
+<p>持续集成要求每当有人提交代码时，就对整个应用进行构建，并对其执行全面的自动化测试集合，一旦出现问题，开发团队应停下手中的工作，修复问题。<br>持续集成的目标是：让正在研发的软件一直处于可工作的状态。</p>
+<h2 id="实施持续集成的先决条件"><a href="#实施持续集成的先决条件" class="headerlink" title="实施持续集成的先决条件"></a>实施持续集成的先决条件</h2><ul>
+<li>版本控制，与项目相关的所有内容都必须提交到一个版本控制库中（产品代码、测试代码、数据库脚本、构建与部署脚本、以及所有用于创建安装运行和测试该应用的程序的东西）</li>
+<li>自动化构建：必须满足人和计算机都能通过命令行自动执行应用的构建、测试以及部署过程</li>
+<li>团队共识：持续集成是一种实践，需要团队所有成员都遵循规则</li>
+</ul>
+<h2 id="一个基本持续集成系统"><a href="#一个基本持续集成系统" class="headerlink" title="一个基本持续集成系统"></a>一个基本持续集成系统</h2><ul>
+<li>第一次在持续集成工具上执行构建时，可能会缺少一些必须的软件及配置，请将所操作的工作记录下来，并放在自己项目的知识共享库中，应花一些时间将应用程序所依赖的所有软件和配置项提交到版本控制系统中，并将重建全新环境的整个活动变成一个自动化的过程</li>
+<li>查看一下是否有构建正在运行，如果有，等它运行完。如果它失败了，则与团队其他人一起将它修复，后再提交自己的代码</li>
+<li>一量构建完成且测试全部通过，就从版本控制库中将该版本的代码更新到自己的开发环境上</li>
+<li>在自己的开发机上执行构建脚本、运行测试，以确保所有代码在本地工作正常</li>
+<li>如果本地构建成功，就将代码提交到版本控制库中，然后等待包含本次提交的构建结果</li>
+<li>如果构建失败，就停下手中的工作，立即修复这个问题，本地测试通过后，再次提交代码到版本控制库中</li>
+<li>如果构建成功，开始下一项任务</li>
+</ul>
+<h2 id="持续集成的前提条件"><a href="#持续集成的前提条件" class="headerlink" title="持续集成的前提条件"></a>持续集成的前提条件</h2><ul>
+<li>频繁提交，开发始终在主干上提交代码</li>
+<li>创建全面的自动化测试套件【单元测试（10m），组件测试（较长），验收测试（长）】</li>
+</ul>
+<p>理想情况下，提交前的预编译和测试过程与持续集成服务器上的编译和测试过程都应在几分钟内结束，10m是极限，90s内完成最理想。<br>如果测试过程太久，则需要找出那些运行较慢的测试，优化它，缩短测试时间。<br>测试分为两个阶段：提交阶段、提交后阶段</p>
+<ul>
+<li>提交阶段：运行所有类别的单元测试，并构建部署的二进制文件。提交前运行一次，通过后再提交到持续集成环境再运行一次</li>
+<li>提交后阶段：进行验收测试、集成测试，一旦提交测试通过，立马运行验收测试。如果超过30m，就要考虑采用高性能多进程机器缩短测试时间</li>
+</ul>
+<h2 id="使用持续集成软件"><a href="#使用持续集成软件" class="headerlink" title="使用持续集成软件"></a>使用持续集成软件</h2><ul>
+<li>触发Job或轮询版本控制系统，如果有更新，运行构建脚本及测试</li>
+<li>提供展示这个流程运行结果的视图，并通知报告 ，拿到生成它的安装文件等</li>
+</ul>
+<h2 id="必不可少的实践"><a href="#必不可少的实践" class="headerlink" title="必不可少的实践"></a>必不可少的实践</h2><ul>
+<li>构建失败之后不要提交新代码</li>
+<li>提交前在本地运行所有的提交测试或让持续集成服务器完成此事</li>
+<li>等提交测试通过后再继续工作</li>
+<li>回家之前，构建必须处于成功状态</li>
+<li>时刻准备着回滚到前一个版本</li>
+<li>在回滚之前需要规定一个修复时间</li>
+<li>不要将失败的测试注释掉</li>
+<li>为自己导致的问题负责</li>
+<li>测试驱动的开发</li>
+</ul>
+<h2 id="推荐的实践"><a href="#推荐的实践" class="headerlink" title="推荐的实践"></a>推荐的实践</h2><ul>
+<li>极限编程开发实践</li>
+<li>若违背架构原则，就让构建失败</li>
+<li>若测试运行变慢，就让测试失败（2s)</li>
+<li>若有编译警告或代码风格问题，就让构建失败</li>
+</ul>
+<h2 id="在持续集成系统之上的扩展"><a href="#在持续集成系统之上的扩展" class="headerlink" title="在持续集成系统之上的扩展"></a>在持续集成系统之上的扩展</h2><p>持续集成的实施迫使你遵循两个重要的实践：</p>
+<ul>
+<li>良好的配置管理</li>
+<li>创建并维护一个自动化构建和测试流程</li>
+</ul>
+<p>一个好的持续集成系统是基石，在此之上你可以构建更多的基础设置：</p>
+<ul>
+<li>一个巨大的可视化指示器，用于显示构建系统所收集的信息，以提供高质量的反馈</li>
+<li>结果报告系统，以及针对自己测试团队的安装包</li>
+<li>为项目经理提供关于应用程序质量的数据的提供程序</li>
+<li>使用部署流水线，可以将其延展到生产环境，为测试人员和运维团队提供一键式部署系统</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/895381bf27ed.html">https://xhua.eu.org/posts/895381bf27ed.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/014831746fe2.html" title="持续交付发布可靠软件的系统方法（基础篇）第一章：软件交付的问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（基础篇）第一章：软件交付的问题</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 软件构成部分：可执行的代码、配置信息、运行环境、数据 不同环境下只进行一次编译 对环境的任何修改都应该作为配置信息管理，配置信息的更改都需要经过测试 如果运行环境需要修改，则修改后的环境也需要进行测试。环境包括：操作系统配置、应用程序依赖的软件集、网络配置及任何基础设置、外部系统 数据结构发生变化，同样需要经过测试  反馈流程：指完全以自动化的方式尽可能地测试每一次变更 创建可执行代码的流程 单元测试 质量检测：测试覆盖率以及其他与技术相关的度量项 功能测试验收 性能、有效性、安全性等非功能测试 探索性测试，给客户&#x2F;最终应用演示  自动化测试反馈【commit阶段】  运行速度快 尽可能全面，75%代码库覆盖率 环境中立，相对生产环境简单廉价 如果出现问题，绝不发布【commit之后测试】 运行速度慢一些，适合并行执行 即使有些测试问题，也可以发布应用程序 运行环境尽可能与生产相同  不同版本、不同环境的配置放在版本控制中 开发人员都拥有自己的专属开发环境 无论部署在什么目标环境都应采用同一种部署方法 开发环境是特例，可以有多...</div></div></div></a><a class="pagination-related" href="/posts/b682fb75753a.html" title="持续交付发布可靠软件的系统方法（交付生态圈）第十四章：版本控制进阶"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（交付生态圈）第十四章：版本控制进阶</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 版本控制用来维护应用程序每次修改的完整历史，包括源代码、文档、数据库定义、构建脚本和测试等。团队可以在一个代码版本控制库上一起开发应用程序的不同部分。一旦团队人数超过一定数量，就需要规划版本控制库的使用，让开发更加高效。 分支与合并分支，即为选择的基线创建一个副本，该副本与原基线相互独立，开发者能在两个工作流上同时开发。团队为什么使用分支？  物理上：系统物理配置而分支，即为文件、组件和子系统而分支 功能上【最常见】：系统功能配置而分支，即为特性、逻辑修改、缺陷修复和功能增加，以及其他可交付的功能而分支 环境上：系统运行环境而分支，即由构建平台和运行时平台的不同而分支 组织上：团队的工作量而分支，即为活动&#x2F;任务、子项目、角色和群组而分支 流程上：团队的工作行为而分支，支持不同规章政策、流程和状态而分支  在开发中，经常会遇到分支合并的情况，除非那些为了发布或者技术预研而创建的分支。两次合并时间间隔越长，每个分支上工作的人越多，合并发生冲突的可能性就越大。以下两种方法来减小冲突：  创建更多的分支来减少在每个分支上的修改。这只是...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/d5f034c0aad2.html" title="使用NSSM将程序注册为Windows服务"><img class="cover" src="https://img.xhua.eu.org/88ad7211da4e3599c4a8dae59a774a98a9a1c63b082aaa4b58e781f29ad00f7e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-03-24</div><div class="info-item-2">使用NSSM将程序注册为Windows服务</div></div><div class="info-2"><div class="info-item-1">NSSM (Non-Sucking Service Manager) 是一个非常实用的Windows服务管理工具，它可以将任何应用程序注册为Windows服务，支持开机自启动、失败自动重启等功能，本文将介绍如何使用NSSM，并以Nginx为例进行实践。 NSSM简介NSSM的主要特点：  可以将任何可执行程序注册为Windows服务 支持服务失败自动重启 支持开机自动启动 可以捕获程序的标准输出和错误输出到日志文件 提供图形界面和命令行两种操作方式 完全免费开源  安装NSSM 下载NSSM访问 NSSM官网 下载最新版本或使用 Chocolatey 包管理器安装：  1choco install nssm   解压下载的zip文件（如果是手动下载）将win64目录下的nssm.exe复制到一个固定目录，比如：C:\Program Files\nssm  添加环境变量（可选）将nssm.exe所在目录添加到系统PATH环境变量中   使用NSSM注册Nginx服务图形界面方式 打开命令提示符，输入：  1nssm install nginx   在弹出的图形界面中配置：   Pa...</div></div></div></a><a class="pagination-related" href="/posts/bddce2843d8e.html" title="Windows-WSL2开发环境，一点不逊色于Mac"><img class="cover" src="https://img.xhua.eu.org/8f7e11d04583892dc1b4415f2fd68e5cceb3bfc793426b53acefb2c1b90020c5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-20</div><div class="info-item-2">Windows-WSL2开发环境，一点不逊色于Mac</div></div><div class="info-2"><div class="info-item-1">一直使用Mac来做开发，但没想到现在Windows也这么好用。通过WSL，拥有了Windows酣畅的操作特性，又有了Linux的兼容性。作为开发环境一点不逊色于Mac，甚至更易使用。下面就操练起来吧。 WSL21. 安装控制面板 -&gt; 程序和功能 -&gt; 启用和关闭windows 功能， 勾选如下功能：    - 适用于Linux的Windows子系统    - 虚拟机平台 确定。   2. 升级WSLhttps://docs.microsoft.com/en-us/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package下载 Linux 内核更新包 WSL2 Linux kernel update package for x64 machines，并安装。 设置wsl默认版本为 `2`， PowerShell 1wsl --set-default-version 2   升级已安装的分发，可使用wsl --set-version, PowerShell 1wsl --set...</div></div></div></a><a class="pagination-related" href="/posts/99938be39f4b.html" title="gogs创建用户"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">gogs创建用户</div></div><div class="info-2"><div class="info-item-1">&#x2F;opt&#x2F;gogs&#x2F;gogs admin create-user –name&#x3D;root –password&#x3D;123456 –admin&#x3D;true --email&#x3D;abc@123.com –config&#x3D;&#x2F;etc&#x2F;gogs&#x2F;conf&#x2F;app.ini 123oc project cicd &amp;&amp;gogspodname=$(oc get pod | grep gogs | grep -v postgresql| awk &#x27;&#123;print $1&#125;&#x27;)oc rsh $gogspodname /opt/gogs/gogs admin create-user --name=root --password=123456 --admin=true --email=abc@123.com --config=/etc/gogs/conf/app.ini </div></div></div></a><a class="pagination-related" href="/posts/0b2e9fb9bf3f.html" title="selenium+Xvfb+ffmpeg实现服务器录屏"><img class="cover" src="https://img.xhua.eu.org/3699f0dc0039aa39a20cdf12a48352920020a72ece5829eadc646dc32f50f9e2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-28</div><div class="info-item-2">selenium+Xvfb+ffmpeg实现服务器录屏</div></div><div class="info-2"><div class="info-item-1">在现代软件开发中，自动化测试变得越来越重要，而录屏功能则为测试结果的验证提供了直观的方式。通过结合Selenium、Xvfb和FFmpeg这三个强大的工具，我们可以在服务器上实现无头(headless)的录屏环境，这对于没有图形界面的服务器尤其有用。 Selenium是一个自动化测试工具，它可以模拟用户对网页的操作，如点击、输入文本等。Xvfb（X虚拟帧缓冲）提供了一个虚拟的显示环境，使得我们可以在不需要实际显示器的情况下运行图形应用程序。FFmpeg是一个强大的多媒体框架，能够处理视频和音频的录制、转换和流式传输。 将这三个工具结合起来，我们可以创建一个自动化的录屏流程，这个流程可以在后台运行，录制Selenium驱动的浏览器会话。这样，无论是进行自动化测试验证，还是生成用户操作教程，都可以通过这种方式来实现。 例如，我们可以使用Selenium启动一个浏览器会话，然后用Xvfb创建一个虚拟的显示环境来捕获这个会话的屏幕。接着，使用FFmpeg开始录制屏幕内容，直到测试完成。这个过程完全自动化，可以集成到持续集成&#x2F;持续部署（CI&#x2F;CD）的流程中，提高开发效率...</div></div></div></a><a class="pagination-related" href="/posts/76fde87cf7cd.html" title="《持续交付发布可靠软件的系统方法》读书笔记"><img class="cover" src="https://img.xhua.eu.org/9aceae35b4b34c39894b12d393be17b9ed54961d4bfee66801c81a7302460e69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《持续交付发布可靠软件的系统方法》读书笔记</div></div><div class="info-2"><div class="info-item-1">基础篇第一章：软件交付的问题第二章：配置管理第三章：持续集成第四章：测试策略的实现 部署流水线第五章：部署流水线解析第六章：构建与部署的脚本化第七章：提交阶段第八章：自动化验收测试第九章：非功能需求的测试第十章：应用程序的部署与发布 交付生态圈第十一章：基础设施与环境管理第十二章：数据管理第十三章：组件和依赖管理第十四章：版本控制进阶第十五章：持续交付管理  </div></div></div></a><a class="pagination-related" href="/posts/27114569557b.html" title="WSL2-+-microK8s-+-K8s"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">WSL2-+-microK8s-+-K8s</div></div><div class="info-2"><div class="info-item-1"> Windowns 10 (WSL2) + Ubuntu 20.04   enable systemd snapd microk8s  启动systemd，并使用snap安装   123$  sudo apt install daemonize$ sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target$ sudo nsenter -t $(pidof systemd) -a su - $LOGNAME  安装microk8s  12$ snap info microk8s$ sudo snap install microk8s --classic   使用microk8s  123$ microk8s status$ sudo usermod -a -G microk8s mpan$ sudo chown -f -R mpan ~/.kube   添加节点  1$ microk8s add-node   注意 每次使用micr...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E6%96%BD%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90%E7%9A%84%E5%85%88%E5%86%B3%E6%9D%A1%E4%BB%B6"><span class="toc-text">实施持续集成的先决条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%9F%BA%E6%9C%AC%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90%E7%B3%BB%E7%BB%9F"><span class="toc-text">一个基本持续集成系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90%E7%9A%84%E5%89%8D%E6%8F%90%E6%9D%A1%E4%BB%B6"><span class="toc-text">持续集成的前提条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90%E8%BD%AF%E4%BB%B6"><span class="toc-text">使用持续集成软件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%85%E4%B8%8D%E5%8F%AF%E5%B0%91%E7%9A%84%E5%AE%9E%E8%B7%B5"><span class="toc-text">必不可少的实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E7%9A%84%E5%AE%9E%E8%B7%B5"><span class="toc-text">推荐的实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%B8%8A%E7%9A%84%E6%89%A9%E5%B1%95"><span class="toc-text">在持续集成系统之上的扩展</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

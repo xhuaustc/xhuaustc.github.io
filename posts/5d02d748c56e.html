@@ -1,0 +1,217 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubernetes工具集（持续收集------） | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Kubescope cliKubescope cli 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 cAdvisor 等其他集群指标收集服务一样， kubescope cli 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes工具集（持续收集------）">
+<meta property="og:url" content="https://xhua.eu.org/posts/5d02d748c56e.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Kubescope cliKubescope cli 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 cAdvisor 等其他集群指标收集服务一样， kubescope cli 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvi">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.635Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Kubernetes工具集（持续收集------）",
+  "url": "https://xhua.eu.org/posts/5d02d748c56e.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.635Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/5d02d748c56e.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubernetes工具集（持续收集------）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Kubernetes工具集（持续收集------）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Kubernetes工具集（持续收集------）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.635Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="Kubescope-cli"><a href="#Kubescope-cli" class="headerlink" title="Kubescope cli"></a>Kubescope cli</h2><p><a target="_blank" rel="noopener" href="https://github.com/hharnisc/kubescope-cli">Kubescope cli</a> 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 <code>cAdvisor</code> 等其他集群指标收集服务一样， <code>kubescope cli</code> 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvisor 进行测试，每次都要使用新的 Pod 作为测试对象，因为 Kubernetes 在超过资源限制时就会将 Pod 杀死，然后重新启动一个全新的 Pod。而 <code>kubescope cli</code> 就没有这方面的忧虑，它直接从 Docker Daemon 中收集容器指标（你可以自定义收集指标的时间间隔），并使用正则表达式来选择和过滤你想要显示的容器。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-27566fb3d2a4d92b.gif?imageMogr2/auto-orient/strip" alt="kubescope-cli"></p>
+<h2 id="KubeMark"><a href="#KubeMark" class="headerlink" title="KubeMark"></a>KubeMark</h2><p><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/kubemark-guide.md">Kubemark</a>是K8s官方提供的一个对K8s集群进行性能测试的工具。它可以模拟出一个K8s cluster（Kubemark cluster），不受资源限制，从而能够测试的集群规模比真实集群大的多。这个cluster中master是真实的机器，所有的nodes是Hollow nodes。Hollow nodes执行的还是真实的K8s程序，只是不会调用Docker，因此测试会走一套K8s API调用的完整流程，但是不会真正创建pod。</p>
+<h2 id="Kubefwd"><a href="#Kubefwd" class="headerlink" title="Kubefwd"></a>Kubefwd</h2><p><a target="_blank" rel="noopener" href="https://github.com/txn2/kubefwd/blob/master/README_CN.md">kubefwd</a> 是一个用于端口转发Kubernetes中指定namespace下的全部或者部分pod的命令行工具。 kubefwd 使用本地的环回IP地址转发需要访问的service，并且使用与service相同的端口。 kubefwd 会临时将service的域条目添加到 &#x2F;etc&#x2F;hosts 文件中。</p>
+<p><img src="https://img.xhua.eu.org/131045874b5f63548f32c7206962fc25048b4931bf29c615c539e2fa5904f3bd.jpg" alt="kubefwd">  </p>
+<h2 id="kubectl-debug"><a href="#kubectl-debug" class="headerlink" title="kubectl-debug"></a>kubectl-debug</h2><p><a target="_blank" rel="noopener" href="https://github.com/aylei/kubectl-debug">kubectl-debug</a> 是一个简单的 kubectl 插件, 能够帮助你便捷地进行 Kubernetes 上的 Pod 排障诊断. 背后做的事情很简单: 在运行中的 Pod 上额外起一个新容器, 并将新容器加入到目标容器的 pid, network, user 以及 ipc namespace 中, 这时我们就可以在新容器中直接用 netstat, tcpdump 这些熟悉的工具来解决问题了, 而旧容器可以保持最小化, 不需要预装任何额外的排障工具.</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-be51ec5e0f312a8d.gif?imageMogr2/auto-orient/strip" alt="kubectl-debug"></p>
+<h2 id="nsenter命令"><a href="#nsenter命令" class="headerlink" title="nsenter命令"></a>nsenter命令</h2><p><a target="_blank" rel="noopener" href="https://staight.github.io/2019/09/23/nsenter%E5%91%BD%E4%BB%A4%E7%AE%80%E4%BB%8B/">nsenter</a> 命令是一个可以在指定进程的命令空间下运行指定程序的命令。它位于util-linux包中。<br>它的命令语法如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">nsenter [options] [program [arguments]]</span><br><span class="line"></span><br><span class="line">options:</span><br><span class="line">-t, --target pid：指定被进入命名空间的目标进程的pid</span><br><span class="line">-m, --mount[=file]：进入mount命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-u, --uts[=file]：进入uts命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-i, --ipc[=file]：进入ipc命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-n, --net[=file]：进入net命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-p, --pid[=file]：进入pid命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-U, --user[=file]：进入user命令空间。如果指定了file，则进入file的命令空间</span><br><span class="line">-G, --setgid gid：设置运行程序的gid</span><br><span class="line">-S, --setuid uid：设置运行程序的uid</span><br><span class="line">-r, --root[=directory]：设置根目录</span><br><span class="line">-w, --wd[=directory]：设置工作目录</span><br><span class="line"></span><br><span class="line">如果没有给出program，则默认执行$SHELL。</span><br></pre></td></tr></table></figure>
+<p>具体使用实例</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect -f &#123;&#123;.State.Pid&#125;&#125; nginx <span class="comment">## 其中nginx为需要查看的容器名，也可以使用用Container ID</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">nsenter --target 3326 --mount --uts --ipc --net --pid</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="kt-connect"><a href="#kt-connect" class="headerlink" title="kt-connect"></a>kt-connect</h2><p><a target="_blank" rel="noopener" href="https://alibaba.github.io/kt-connect/#/zh-cn/">kt-connect</a> 是一个可以让开发环境访问K8S集群下应用的工具</p>
+<h2 id="Lens"><a href="#Lens" class="headerlink" title="Lens"></a>Lens</h2><p>Kubernetes可视化管理工具</p>
+<h2 id="Container-diff"><a href="#Container-diff" class="headerlink" title="Container-diff"></a>Container-diff</h2><p><a target="_blank" rel="noopener" href="https://github.com/GoogleContainerTools/container-diff">container-diff</a><br>这是一个可对两个镜像进行内容对比的工具。比较本地镜像使用<code>daemon://</code>。例如：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">container-diff diff daemon://modified_debian:latest remote://gcr.io/google-appengine/debian8:latest</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="kube-score"><a href="#kube-score" class="headerlink" title="kube-score"></a>kube-score</h2><p><a target="_blank" rel="noopener" href="https://github.com/zegl/kube-score/releases">Kube-Score</a>是一款针对Kubernetes的性能及安全分析工具，该工具能够对Kubernetes对象定义进行静态代码分析，并给出提升Kubernetes性能和安全性方面的建议。<br><img src="https://upload-images.jianshu.io/upload_images/5793257-37f5373c17bbfcc5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Kube-Score"></p>
+<h2 id="kubectx、kubens"><a href="#kubectx、kubens" class="headerlink" title="kubectx、kubens"></a>kubectx、kubens</h2><p><a target="_blank" rel="noopener" href="https://github.com/ahmetb/kubectx">kubectx</a>快速切换管理k8s的集群<br><a target="_blank" rel="noopener" href="https://github.com/ahmetb/kubectx">kubens</a>快速切换K8s集群的namespace<br>将多个kubectl config配置文件进行合并</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">KUBECONFIG=a.conf:b.conf:c.conf kubectl config view --flatten &gt; .kube/config</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-ec72dadfc5c1927e.gif?imageMogr2/auto-orient/strip" alt="kubectx"></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-110880b8459302a0.gif?imageMogr2/auto-orient/strip" alt="kubens"></p>
+<h2 id="kubecm"><a href="#kubecm" class="headerlink" title="kubecm"></a>kubecm</h2><p><a target="_blank" rel="noopener" href="https://github.com/sunny0826/kubecm">kubecm</a> : Manage your kubeconfig more easily.<br><a target="_blank" rel="noopener" href="https://kubecm.cloud/">doc</a></p>
+<h2 id="webkubectl"><a href="#webkubectl" class="headerlink" title="webkubectl"></a>webkubectl</h2><p><a target="_blank" rel="noopener" href="https://github.com/KubeOperator/webkubectl">webkubectl</a>: 页面版k9s&#x2F;kubectl</p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a target="_blank" rel="noopener" href="https://supereagle.github.io/2017/03/09/kubemark/">Kubernetes集群性能测试</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/32e6794cda0e">kubemark 搭建测试集群和性能测试</a><br><a target="_blank" rel="noopener" href="https://juejin.im/post/5cf2905de51d4577614760ea">简化 Pod 故障诊断: kubectl-debug 介绍</a><br><a target="_blank" rel="noopener" href="https://karlkfi.medium.com/a-select-list-of-kubernetes-tools-38249fc27155">A Select List of Kubernetes Tools</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/5d02d748c56e.html">https://xhua.eu.org/posts/5d02d748c56e.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a><a class="pagination-related" href="/posts/d7d0952ffadb.html" title="Kubernetes安装手册"><img class="cover" src="https://img.xhua.eu.org/a465c3466a5318408ddd64c812540b7dcf92eb902e889a1eb23fac97f6942d69.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Kubernetes安装手册</div></div><div class="info-2"><div class="info-item-1">Kubernetes在2014年开源后，很快便占据了容器编排的主导地位，成为容器编排的事实标准。那么Kubernetes的安装是了解它的第一步。目前有非常多的工具方法来实现Kubernetes的安装，收集了一些如下。  kubeadm：https://github.com/kubernetes/kubeadmkubeadm是官方提供的最为通用的一种部署方案。 kops：https://github.com/kubernetes/kopskops通过命令行创建，销毁，升级和维护生产级，高可用性的Kubernetes集群。目前正式支持AWS（Amazon Web Services），其中GCE和OpenStack处于beta测试阶段，而VMware vSphere处于alpha阶段。 kubespray：https://github.com/kubernetes-sigs/kubespraykubespray通过 Ansible Playbook 来定义系统与 Kubernetes 集群部署的任务。 KubeOperator: https://github.com/KubeOpera...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/6a6e96f6251d.html" title="Openshift生产环境部署配置事项"><img class="cover" src="https://img.xhua.eu.org/7f22b77f268e751b9611748deb43413ac72d9958c04521eaa06eaa2632fac6b3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift生产环境部署配置事项</div></div><div class="info-2"><div class="info-item-1">1. 主机配置推荐 master 16核 32GB 网卡带宽不低于1Gb。CPU x86_64架构，核数和主机数线性递增，每增加一台主机增加0.1核。5台主机4.5核，总的核数为4+0.1 * 主机数内存与主机数线性递增，每增一台主机增加200M内存，5台8G，总的内存数为7+0.2 * 主机数 node 40核 256GB  网卡带宽不低于1Gb根据应用场景估算  2. 磁盘目录挂载 master磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var&#x2F;lib&#x2F;docker：100GB 做raid高可用&#x2F;var&#x2F;lib&#x2F;etcd [ssd]：20GB 做raid高可用&#x2F;var ：50GB 可根据实际进行调整，主要emptyDir的存储在&#x2F;var&#x2F;lib&#x2F;origin目录下 node磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var...</div></div></div></a><a class="pagination-related" href="/posts/ac610158c667.html" title="OpenShift-Route支持TCP负载均衡改造与使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route支持TCP负载均衡改造与使用</div></div><div class="info-2"><div class="info-item-1"> Route作为TCP负载均衡器的部署 获取当前Route的haproxy-template配置  12345# oc project default# oc get podNAME              READY     STATUS    RESTARTS   AGErouter-16-5rv4q    2/2         Running   2            18h# oc rsh router-16-5rv4q cat haproxy-config.template &gt; haproxy-config.template  编辑导出的haproxy-config.template文件在内容&#123;&#123;- end &#125;&#125;&#123;&#123;/*end tls==passthrough*/&#125;&#125;下一行，添加以下内容：  1234567891011&#123;&#123;/*TCP support*/&#125;&#125;&#123;&#123;- if eq &quot;tcp&quot; (index...</div></div></div></a><a class="pagination-related" href="/posts/67a6791f98e4.html" title="OpenShift-4-3部署安装（国内需要使用科学上网支持）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-4-3部署安装（国内需要使用科学上网支持）</div></div><div class="info-2"><div class="info-item-1">准备好本机访问科学上网环境 安装pip软件  1$ yum install python2-pip  安装shadowsocks包  1pip install shadowsocks -i https://pypi.douban.com/simple  编辑文件&#x2F;etc&#x2F;shadowsocks.json  123456789101112$ cat &gt; /etc/shadowsocks.json &lt;&lt;EOF&#123;    &quot;server&quot;:&quot;shadowsocks的IP&quot;,    &quot;server_port&quot;:8388,    &quot;local_address&quot;: &quot;0.0.0.0&quot;,    &quot;local_port&quot;:1080,    &quot;password&quot;:&quot;fuuuuuuuuuuuuckgfw&quot;,    &quot;timeout&quot;:300,    &quot;method&q...</div></div></div></a><a class="pagination-related" href="/posts/17fd09f230fb.html" title="Openshift网络插件动态切换"><img class="cover" src="https://img.xhua.eu.org/8fa378a33eeba62f347cc799820c761a8ae6a3ecb2ce55c0fcf7d8bc709a09f3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift网络插件动态切换</div></div><div class="info-2"><div class="info-item-1">Openshift 3.11版本Openshift SDN网络插件ovs-subnet 与 ovs-multitenant切换  更改节点上的networkPluginName的配置    master节点：/etc/origin/master/master-config.yaml node节点：/etc/origin/node/node-config.yaml 将networkPluginName中的redhat/openshift-ovs-subnet换成redhat/openshift-ovs-multitenant,或者反过来。  12$ ansible all -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshift-ovs-multitenant/g&quot; /etc/origin/node/node-config.yaml&#x27;$ ansible masters  -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshif...</div></div></div></a><a class="pagination-related" href="/posts/34b58d420e4b.html" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/posts/c641acf49761.html" title="网络相关工具简单汇总"><img class="cover" src="https://img.xhua.eu.org/4fd807ce8f1b1ee40a0878c42f81a791d0ab68115d9747b84b0402cc88b8bb4a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">网络相关工具简单汇总</div></div><div class="info-2"><div class="info-item-1">lscpi查看Mac地址和网卡带宽12[root@localhost] $ yum install pciutils -y[root@localhost] $ lspci -vvv 里面的mac地址格式：46-8d-80-6d-06-07 ip a查看Mac地址与IP12[root@localhost] $ yum install iproute[root@localhost] $ ip a 里面的mac地址格式：46:8d:80:6d:06:07 iperf 对集群进行网络流量测试启动服务端 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -s 客户端进行测试 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -c 10.2.2.2 -P 5 以上默认为作TCP测试，如果要UDP测试，服务端启动与客户端测试都需要加上-u 1234## 服务端iperf3 -s -u## 客户端iperf3 -c 10.2....</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Kubescope-cli"><span class="toc-text">Kubescope cli</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#KubeMark"><span class="toc-text">KubeMark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kubefwd"><span class="toc-text">Kubefwd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubectl-debug"><span class="toc-text">kubectl-debug</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nsenter%E5%91%BD%E4%BB%A4"><span class="toc-text">nsenter命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kt-connect"><span class="toc-text">kt-connect</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lens"><span class="toc-text">Lens</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Container-diff"><span class="toc-text">Container-diff</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-score"><span class="toc-text">kube-score</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubectx%E3%80%81kubens"><span class="toc-text">kubectx、kubens</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubecm"><span class="toc-text">kubecm</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#webkubectl"><span class="toc-text">webkubectl</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

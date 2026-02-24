@@ -1,0 +1,618 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-Kafka-Operator测试报告 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-Kafka-Operator测试报告">
+<meta property="og:url" content="https://xhua.eu.org/posts/ca6a355f0867.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.636Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-Kafka-Operator测试报告",
+  "url": "https://xhua.eu.org/posts/ca6a355f0867.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.636Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/ca6a355f0867.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-Kafka-Operator测试报告',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-Kafka-Operator测试报告</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-Kafka-Operator测试报告</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.636Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="1-测试环境"><a href="#1-测试环境" class="headerlink" title="1. 测试环境"></a>1. 测试环境</h1><p>物理机设备：集群（3 master 2 infra 3 node）<br>  管理（1manager 部署LB+外部镜像仓库+DNS）<br>物理机配置：40c 378G<br>Openshift：v3.11.0+1a90c5c-83<br>Kubernetes：v1.11.0+d4cacc0<br>Kafka Operator：amq-streams-1.1.0<br>Kafka：2.1.1</p>
+<h1 id="2-测试要求和内容"><a href="#2-测试要求和内容" class="headerlink" title="2. 测试要求和内容"></a>2. 测试要求和内容</h1><p>根据测试要求，本次具体测试的功能点如下：</p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>测试项目</th>
+<th>测试项</th>
+<th>优先级</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Kafka Operator部署</td>
+<td>Kafka Operator部署</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka集群创建</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka监控部署</td>
+<td>高</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Kafka功能测试</td>
+<td>Kafka创建Topic</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Openshift集群内部Kafka producer与consumer测试</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Openshift集群外部Kafka producer与consumer测试（NodePort方案）</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Openshift集群外部Kafka producer与consumer测试（Router方案）</td>
+<td>高</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Kafka性能测试</td>
+<td>Kafka写入消息压力测试[集群内部]</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka 消费消息压力测试[集群内部]</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka写入消息压力测试[集群外部NodePort方案]</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka 消费消息压力测试[集群外部NodePort方案]</td>
+<td>高</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka写入消息压力测试[集群外部Router方案]</td>
+<td>中</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Kafka 消费消息压力测试[集群外部Router方案]</td>
+<td>中</td>
+</tr>
+<tr>
+<td>4</td>
+<td>高可用性测试</td>
+<td>Broker异常，恢复时长</td>
+<td>中</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>磁盘故障，数据影响</td>
+<td>中</td>
+</tr>
+</tbody></table>
+<h1 id="3-测试方法和结果"><a href="#3-测试方法和结果" class="headerlink" title="3. 测试方法和结果"></a>3. 测试方法和结果</h1><h2 id="3-1-Kafka-Operator部署"><a href="#3-1-Kafka-Operator部署" class="headerlink" title="3.1 Kafka Operator部署"></a>3.1 Kafka Operator部署</h2><h3 id="3-1-1-Kafka-Operator部署"><a href="#3-1-1-Kafka-Operator部署" class="headerlink" title="3.1.1 Kafka Operator部署"></a>3.1.1 Kafka Operator部署</h3><h4 id="3-1-1-1-测试方法和步骤"><a href="#3-1-1-1-测试方法和步骤" class="headerlink" title="3.1.1.1 测试方法和步骤"></a>3.1.1.1 测试方法和步骤</h4><p><strong>测试准备</strong></p>
+<p>步骤一：拉取需要镜像，并将它们导入内部镜像仓库</p>
+<p>步骤二：下载部署脚本，并解压服务器上</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">wget http://sha.stor.mbcloud.com/openshift-deploy-material/amq-streams-1.1.0-ocp-install-examples.zip</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">unzip amq-streams-1.1.0-ocp-install-examples.zip</span></span><br></pre></td></tr></table></figure>
+<p>步骤三：将脚本中访问外网镜像仓库地址，改成内网镜像地址<br>将install&#x2F;cluster-operator&#x2F;050-Deployment-strimzi-cluster-operator.yaml中的registry.access.redhat.com更改为harbor.apps.it.mbcloud.com</p>
+<p><strong>测试过程</strong></p>
+<p>步骤一：创建项目myproject</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc new-project myproject</span><br></pre></td></tr></table></figure>
+
+<p>步骤二：安装部署Operator</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc apply -f install/cluster-operator</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-1-2-测试结果"><a href="#3-1-1-2-测试结果" class="headerlink" title="3.1.1.2 测试结果"></a>3.1.1.2 <strong>测试结果</strong></h4><p>完成Kafka Operator部署<br><img src="https://upload-images.jianshu.io/upload_images/5793257-5b379016e3a0f845.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="kafka operator部署"></p>
+<h3 id="3-1-2-Kafka集群创建"><a href="#3-1-2-Kafka集群创建" class="headerlink" title="3.1.2  Kafka集群创建"></a>3.1.2  Kafka集群创建</h3><h4 id="3-1-2-1-测试方法和步骤"><a href="#3-1-2-1-测试方法和步骤" class="headerlink" title="3.1.2.1 测试方法和步骤"></a>3.1.2.1 <strong>测试方法和步骤</strong></h4><p>步骤一：进入myproject项目</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc project myproject</span><br></pre></td></tr></table></figure>
+
+<p>步骤二：创建Kafka集群my-cluster,三副本，存储无持久化</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">$ cat &lt;&lt; EOF | oc create -f -</span><br><span class="line">apiVersion: kafka.strimzi.io/v1alpha1</span><br><span class="line">kind: Kafka</span><br><span class="line">metadata:</span><br><span class="line">  name: my-cluster</span><br><span class="line">spec:</span><br><span class="line">  kafka:</span><br><span class="line">    version: 2.1.1</span><br><span class="line">    replicas: 3</span><br><span class="line">    listeners:</span><br><span class="line">      plain: &#123;&#125;</span><br><span class="line">      tls: &#123;&#125;</span><br><span class="line">      external:</span><br><span class="line">        type: route</span><br><span class="line">    config:</span><br><span class="line">      offsets.topic.replication.factor: 3</span><br><span class="line">      transaction.state.log.replication.factor: 3</span><br><span class="line">      transaction.state.log.min.isr: 2</span><br><span class="line">      log.message.format.version: &quot;2.1&quot;</span><br><span class="line">    storage:</span><br><span class="line">      type: ephemeral</span><br><span class="line">  zookeeper:</span><br><span class="line">    replicas: 3</span><br><span class="line">    storage:</span><br><span class="line">      type: ephemeral</span><br><span class="line">  entityOperator:</span><br><span class="line">    topicOperator: &#123;&#125;</span><br><span class="line">    userOperator: &#123;&#125;</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p>步骤三：查看部署结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ oc get pod</span><br><span class="line">NAME                                              READY     STATUS    RESTARTS   AGE</span><br><span class="line">my-cluster-entity-operator-78dc68cc86-9ghmw       3/3       Running   0          6d</span><br><span class="line">my-cluster-kafka-0                                2/2       Running   0          6d</span><br><span class="line">my-cluster-kafka-1                                2/2       Running   0          6d</span><br><span class="line">my-cluster-kafka-2                                2/2       Running   0          6d</span><br><span class="line">my-cluster-zookeeper-0                            2/2       Running   0          6d</span><br><span class="line">my-cluster-zookeeper-1                            2/2       Running   0          6d</span><br><span class="line">my-cluster-zookeeper-2                            2/2       Running   0          6d</span><br><span class="line">strimzi-cluster-operator-7f46bcb9c6-s8x5r         1/1       Running   0          6d</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-2-2-测试结果"><a href="#3-1-2-2-测试结果" class="headerlink" title="3.1.2.2 测试结果"></a>3.1.2.2 <strong>测试结果</strong></h4><p>部署Kafka集群my-cluster。3 zookeeper + 3 kafka</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-4110354afaaed944.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Kafka集群部署"></p>
+<h3 id="3-1-3-Kafka监控部署"><a href="#3-1-3-Kafka监控部署" class="headerlink" title="3.1.3 Kafka监控部署"></a>3.1.3 Kafka监控部署</h3><h4 id="3-1-3-1-测试方法和步骤"><a href="#3-1-3-1-测试方法和步骤" class="headerlink" title="3.1.3.1 测试方法和步骤"></a>3.1.3.1 <strong>测试方法和步骤</strong></h4><p>步骤一：在kafka my-cluster的配置中添加metrics设置，</p>
+<p>参考example&#x2F;metrics&#x2F;kafka-metrics.yaml文件中metrics的属性</p>
+<p>步骤二：给prometheus添加查看myproject权限</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc policy add-role-to-user view system:serviceaccount:openshift-monitoring:prometheus-k8s -n myproject</span><br></pre></td></tr></table></figure>
+<p>步骤三：在openshift-monitoring下新建servicemonitor</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ cat &lt;&lt; EOF | oc create -f -</span><br><span class="line">apiVersion: monitoring.coreos.com/v1</span><br><span class="line">kind: ServiceMonitor</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: prometheus</span><br><span class="line">  name: my-cluster-kafka</span><br><span class="line">  namespace: openshift-monitoring</span><br><span class="line">spec:</span><br><span class="line">  endpoints:</span><br><span class="line">  - port: metrics</span><br><span class="line">  namespaceSelector:</span><br><span class="line">    matchNames:</span><br><span class="line">    - myproject</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      strimzi.io/name: my-cluster-kafka-bootstrap</span><br></pre></td></tr></table></figure>
+<p>步骤四：在grafana中添加Kafka的监控Dashboard</p>
+<p>Dashboard配置参考examples&#x2F;metrics&#x2F;grafana-dashboards&#x2F;strimzi-kafka.json</p>
+<h4 id="3-1-3-2-测试结果"><a href="#3-1-3-2-测试结果" class="headerlink" title="3.1.3.2 测试结果"></a>3.1.3.2 <strong>测试结果</strong></h4><p>在grafana上查看Kafka的监控图表</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-ed22de273ffd7c4f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="grafana kafka监控.png"></p>
+<h2 id="3-2-Kafka功能测试"><a href="#3-2-Kafka功能测试" class="headerlink" title="3.2.Kafka功能测试"></a>3.2.Kafka功能测试</h2><h3 id="3-2-1-Kafka创建Topic"><a href="#3-2-1-Kafka创建Topic" class="headerlink" title="3.2.1 Kafka创建Topic"></a>3.2.1 <strong>Kafka创建Topic</strong></h3><h4 id="3-2-1-1-测试方法和步骤"><a href="#3-2-1-1-测试方法和步骤" class="headerlink" title="3.2.1.1 测试方法和步骤"></a>3.2.1.1 <strong>测试方法和步骤</strong></h4><p>步骤一：进入myproject项目</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc project myproject</span><br></pre></td></tr></table></figure>
+<p>步骤二：创建Topic</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">$ cat &lt;&lt; EOF | oc create -f -</span><br><span class="line">apiVersion: kafka.strimzi.io/v1alpha1</span><br><span class="line">kind: KafkaTopic</span><br><span class="line">metadata:</span><br><span class="line">  name: my-topic</span><br><span class="line">  labels:</span><br><span class="line">    strimzi.io/cluster: my-cluster</span><br><span class="line">spec:</span><br><span class="line">  partitions: 3</span><br><span class="line">  replicas: 3</span><br><span class="line">  config:</span><br><span class="line">    retention.ms: 7200000</span><br><span class="line">    segment.bytes: 1073741824</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p>步骤三：验证Topic状态</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ oc exec -c zookeeper  my-cluster-zookeeper-0 --  bin/kafka-topics.sh --zookeeper 127.0.0.1:21810 --topic my-topic --describe</span><br><span class="line">OpenJDK 64-Bit Server VM warning: If the number of processors is expected to increase from one, then you should configure the number of parallel GC threads appropriately using -XX:ParallelGCThreads=N</span><br><span class="line">Topic:my-topic  PartitionCount:3  ReplicationFactor:3  Configs:message.format.version=2.1-IV2</span><br><span class="line">Topic: my-topic  Partition: 0  Leader: 0  Replicas: 0,1,2  Isr: 0,1,2</span><br><span class="line">Topic: my-topic  Partition: 1  Leader: 1  Replicas: 1,2,0  Isr: 0,1,2</span><br><span class="line">Topic: my-topic  Partition: 2  Leader: 2  Replicas: 2,0,1  Isr: 0,1,2</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-1-2-测试结果"><a href="#3-2-1-2-测试结果" class="headerlink" title="3.2.1.2 测试结果"></a>3.2.1.2 <strong>测试结果</strong></h4><p>my-topic Topic创建成功。为3分区3复本。</p>
+<h3 id="3-2-2-Openshift集群内部Kafka-producer与consumer测试"><a href="#3-2-2-Openshift集群内部Kafka-producer与consumer测试" class="headerlink" title="3.2.2 Openshift集群内部Kafka producer与consumer测试"></a>3.2.2 <strong>Openshift集群内部Kafka producer与consumer测试</strong></h3><h4 id="3-2-2-1-测试方法和步骤"><a href="#3-2-2-1-测试方法和步骤" class="headerlink" title="3.2.2.1 测试方法和步骤"></a>3.2.2.1 <strong>测试方法和步骤</strong></h4><p>步骤一：运行consumer端</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc run kafka-consumer -ti --image=amq7/amq-streams-kafka:1.1.0-kafka-2.1.1 --rm=true --restart=Never -- bin/kafka-console-consumer.sh --bootstrap-server my-cluster-kafka-bootstrap:9092 --topic my-topic</span><br></pre></td></tr></table></figure>
+<p>步骤二：运行producer端</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc run kafka-producer -ti --image=amq7/amq-streams-kafka:1.1.0-kafka-2.1.1 --rm=true --restart=Never -- bin/kafka-console-producer.sh --broker-list my-cluster-kafka-bootstrap:9092 --topic my-topic</span><br></pre></td></tr></table></figure>
+<p>步骤三：在producer端发送数据，在consumer端显示发送的数据</p>
+<h4 id="3-2-2-2-测试结果"><a href="#3-2-2-2-测试结果" class="headerlink" title="3.2.2.2 测试结果"></a>3.2.2.2 <strong>测试结果</strong></h4><p>通过my-topic Topic，producer端产生数据，consumer端消费数据</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-7d09a3a383dddd4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="生产压测.png"></p>
+<h3 id="3-2-3-Openshift集群外部Kafka-producer与consumer测试（NodePort方案）"><a href="#3-2-3-Openshift集群外部Kafka-producer与consumer测试（NodePort方案）" class="headerlink" title="3.2.3 Openshift集群外部Kafka producer与consumer测试（NodePort方案）"></a>3.2.3 <strong>Openshift集群外部Kafka producer与consumer测试（NodePort方案）</strong></h3><h4 id="3-2-3-1-测试方法和步骤"><a href="#3-2-3-1-测试方法和步骤" class="headerlink" title="3.2.3.1 测试方法和步骤"></a>3.2.3.1 <strong>测试方法和步骤</strong></h4><p><strong>TLS设置为False</strong></p>
+<p>步骤一：将Kafka的配置项中添加external为nodeport，并固定nodeport为32678</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">listeners:</span><br><span class="line">      external:</span><br><span class="line">        tls: false</span><br><span class="line">        type: nodeport</span><br><span class="line">        overrides:</span><br><span class="line">          bootstrap:</span><br><span class="line">            nodePort: 32678</span><br></pre></td></tr></table></figure>
+<p>步骤二：集群外网环境创建Kafka Producer，连接Kafka</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaProducer</span><br><span class="line">producer = KafkaProducer(bootstrap_servers=[&#x27;99.248.81.70:32678&#x27;])</span><br><span class="line">producer.send(&#x27;my-topic&#x27;, &#x27;hello world&#x27;)</span><br><span class="line">producer.close()</span><br></pre></td></tr></table></figure>
+<p>步骤三：集群外网环境新建Kafka Consumer，消费Kafka中my-topic主题的数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaConsumer</span><br><span class="line">consumer = KafkaConsumer(&#x27;my-topic&#x27;, bootstrap_servers=[&#x27;99.248.81.70:32678&#x27;])</span><br><span class="line">for msg in consumer:</span><br><span class="line">    print(msg)</span><br></pre></td></tr></table></figure>
+<p><strong>TLS设置为True</strong></p>
+<p>步骤一：将Kafka的配置项中添加external为nodeport，并固定nodeport为32678</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">listeners:</span><br><span class="line">      external:</span><br><span class="line">        type: nodeport</span><br><span class="line">        overrides:</span><br><span class="line">          bootstrap:</span><br><span class="line">            nodePort: 32678</span><br></pre></td></tr></table></figure>
+<p>步骤二：获得secret&#x2F;my-cluster-clients-ca&#x2F;ca.key与secret&#x2F;my-cluster-clients-ca-cert&#x2F;ca.crt</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc extract secret/my-cluster-cluster-ca-cert --keys=ca.crt --to=- &gt; ca.crt</span><br><span class="line">$ oc extract secret/my-cluster-clients-ca --keys=ca.key --to=- &gt; ca.key</span><br></pre></td></tr></table></figure>
+<p>步骤三：集群外网环境创建Kafka Producer，连接Kafka</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaProducer</span><br><span class="line">producer = KafkaProducer(bootstrap_servers=[&#x27;99.248.81.70:32678&#x27;], ssl_check_hostname=False, ssl_cafile=&#x27;ca.crt&#x27;, ssl_certfile=&#x27;ca.key&#x27;, security_protocol=&#x27;SSL&#x27;)</span><br><span class="line">producer.send(&#x27;my-topic&#x27;, &#x27;hello world&#x27;)</span><br><span class="line">producer.close()</span><br></pre></td></tr></table></figure>
+<p>步骤三：集群外网环境新建Kafka Consumer，消费Kafka中my-topic主题的数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaConsumer</span><br><span class="line">consumer = KafkaConsumer(&#x27;my-topic&#x27;, bootstrap_servers=[&#x27;99.248.81.70:32678&#x27;], ssl_check_hostname=False, ssl_cafile=&#x27;ca.crt&#x27;, ssl_certfile=&#x27;ca.key&#x27;, security_protocol=&#x27;SSL&#x27;)</span><br><span class="line">for msg in consumer:</span><br><span class="line">    print(msg)</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-3-2-测试结果"><a href="#3-2-3-2-测试结果" class="headerlink" title="3.2.3.2 测试结果"></a>3.2.3.2 <strong>测试结果</strong></h4><p>与TLS设置为False一样</p>
+<p>通过nodePort连接到Kafka集群，Producer将会往Topic my-topic发送一条“hello world”的消息，Consumer将会将消息输出到console端</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C:\Python27\python.exe D:/workspace/mb_autopf/utils/kafka-test/consumer.py</span><br><span class="line">ConsumerRecord(topic=u&#x27;my-topic&#x27;, partition=0, offset=333338, timestamp=1558511698388L, timestamp_type=0, key=None, value=&#x27;hello world&#x27;, checksum=-1265845277, serialized_key_size=-1, serialized_value_size=11)</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-4-Openshift集群外部Kafka-producer与consumer测试（Router方案）"><a href="#3-2-4-Openshift集群外部Kafka-producer与consumer测试（Router方案）" class="headerlink" title="3.2.4 Openshift集群外部Kafka producer与consumer测试（Router方案）"></a>3.2.4 <strong>Openshift集群外部Kafka producer与consumer测试（Router方案）</strong></h3><h4 id="3-2-4-1-测试方法和步骤"><a href="#3-2-4-1-测试方法和步骤" class="headerlink" title="3.2.4.1 测试方法和步骤"></a>3.2.4.1 <strong>测试方法和步骤</strong></h4><p>步骤一：将Kafka的配置项中添加external为nodeport，并固定nodeport为32678</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">listeners:</span><br><span class="line">      external:</span><br><span class="line">        type: route</span><br></pre></td></tr></table></figure>
+<p>步骤二：获得secret&#x2F;my-cluster-clients-ca&#x2F;ca.key与secret&#x2F;my-cluster-clients-ca-cert&#x2F;ca.crt</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc extract secret/my-cluster-cluster-ca-cert --keys=ca.crt --to=- &gt; ca.crt</span><br><span class="line">$ oc extract secret/my-cluster-clients-ca --keys=ca.key --to=- &gt; ca.key</span><br></pre></td></tr></table></figure>
+<p>步骤三：获取对外的router域名</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route my-cluster-kafka-bootstrap --template=&#123;&#123;range.status.ingress&#125;&#125;&#123;&#123;.host&#125;&#125;&#123;&#123;println&#125;&#125;&#123;&#123;end&#125;&#125;</span><br><span class="line">my-cluster-kafka-bootstrap-myproject.apps.paas1.mbcloud.com</span><br></pre></td></tr></table></figure>
+<p>步骤四：集群外网环境创建Kafka Producer，连接Kafka</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaProducer</span><br><span class="line">producer = KafkaProducer(bootstrap_servers=[&#x27;my-cluster-kafka-bootstrap-myproject.apps.paas1.mbcloud.com:443&#x27;], ssl_check_hostname=False, ssl_cafile=&#x27;ca.crt&#x27;, ssl_certfile=&#x27;ca.key&#x27;, security_protocol=&#x27;SSL&#x27;)</span><br><span class="line">producer.send(&#x27;my-topic&#x27;, &#x27;hello world&#x27;)</span><br><span class="line">producer.close()</span><br></pre></td></tr></table></figure>
+<p>步骤三：集群外网环境新建Kafka Consumer，消费Kafka中my-topic主题的数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">from kafka import KafkaConsumer</span><br><span class="line">consumer = KafkaConsumer(&#x27;my-topic&#x27;, bootstrap_servers=[&#x27;my-cluster-kafka-bootstrap-myproject.apps.paas1.mbcloud.com:443&#x27;], ssl_check_hostname=False, ssl_cafile=&#x27;ca.crt&#x27;, ssl_certfile=&#x27;ca.key&#x27;, security_protocol=&#x27;SSL&#x27;)</span><br><span class="line">for msg in consumer:</span><br><span class="line">    print(msg)</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-4-2-测试结果"><a href="#3-2-4-2-测试结果" class="headerlink" title="3.2.4.2 测试结果"></a>3.2.4.2 <strong>测试结果</strong></h4><p>通过Route域名连接到Kafka集群，Producer将会往Topic my-topic发送一条“hello world”的消息，Consumer将会将消息输出到console端</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C:\Python27\python.exe D:/workspace/mb_autopf/utils/kafka-test/consumer.py</span><br><span class="line">ConsumerRecord(topic=u&#x27;my-topic&#x27;, partition=0, offset=333340, timestamp=1558514729435L, timestamp_type=0, key=None, value=&#x27;hello world&#x27;, checksum=-459554926, serialized_key_size=-1, serialized_value_size=11)</span><br></pre></td></tr></table></figure>
+<h2 id="3-3-Kafka性能测试"><a href="#3-3-Kafka性能测试" class="headerlink" title="3.3 Kafka性能测试"></a>3.3 <strong>Kafka性能测试</strong></h2><h3 id="3-3-1-测试工具：Kafka自带的压测脚本"><a href="#3-3-1-测试工具：Kafka自带的压测脚本" class="headerlink" title="3.3.1 测试工具：Kafka自带的压测脚本"></a>3.3.1 <strong>测试工具：Kafka自带的压测脚本</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-producer-perf-test.sh</span><br><span class="line">bin/kafka-consumer-perf-test.sh</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-1-1-参数说明"><a href="#3-3-1-1-参数说明" class="headerlink" title="3.3.1.1 参数说明:"></a>3.3.1.1 <strong>参数说明:</strong></h4><p><strong>bin&#x2F;kafka-producer-perf-test.sh</strong><br>–num-records：发送的总的消息数  –record-size：消息大小<br>–throughput：最大消息吞吐限制<br>–producer-props：kafka集群参数<br>acks：1默认值副本收到数据得到确认后发送下一条数据，0可靠性最低无需确认副本是否收到数据，-1可靠性最高等待副本所有的follower都确认收到数据后再发送下一条数据<br>retries：2<br>linger.ms:基于时间的batching策略1<br>batch.size:基于大小的batching策略100000<br>compression.type:压缩类型,速度排序lz4 &#x3D; snappy &lt; gzip</p>
+<p>以下条件之一达到了,认为一个batch是完毕的</p>
+<p>1. batch.size达到<br>2. linger.ms达到<br>3. 同一个broker的其他batch已经完毕<br>4. flush()和close()被调用</p>
+<p><strong>bin&#x2F;kafka-consumer-perf-test.sh</strong><br>–zookeeper：zookeeper连接信息<br>–broker-list：kafka连接信息<br>–topic：topic名称<br>–fetch-size：每次fetch的数据大小，1048576为1M<br>–messages：总共要消费的消息数</p>
+<h4 id="3-3-1-2-测试命令"><a href="#3-3-1-2-测试命令" class="headerlink" title="3.3.1.2 测试命令"></a>3.3.1.2 <strong>测试命令</strong></h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-producer-perf-test.sh --topic my-topic --num-records 100000000 --record-size 100 --throughput 5000000 --producer-props bootstrap.servers=my-cluster-kafka-bootstrap.myproject.svc:9092 retries=2 batch.size=100000</span><br><span class="line">bin/kafka-consumer-perf-test.sh --broker-list my-cluster-kafka-bootstrap.myproject.svc:9092 --topic my-topic --messages 100000000</span><br></pre></td></tr></table></figure>
+<h3 id="3-3-2-Kafka生产消息压力测试-集群内部"><a href="#3-3-2-Kafka生产消息压力测试-集群内部" class="headerlink" title="3.3.2 Kafka生产消息压力测试[集群内部]"></a>3.3.2 <strong>Kafka<strong><strong>生产</strong></strong>消息压力测试[集群内部]</strong></h3><h4 id="3-3-2-1-测试方法和步骤"><a href="#3-3-2-1-测试方法和步骤" class="headerlink" title="3.3.2.1 测试方法和步骤"></a>3.3.2.1 <strong>测试方法和步骤</strong></h4><p>步骤一：创建4种类型Topic：1副本1分区、1副本3分区、3副本1分区、3副本3分区</p>
+<p>步骤二：运行kafka写入压测命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-producer-perf-test.sh --topic my-topic --num-records 10000000 --record-size 100 --throughput 5000000 --producer-props bootstrap.servers=my-cluster-kafka-bootstrap.myproject.svc:9092 linger.ms=1</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-2-2-测试结果"><a href="#3-3-2-2-测试结果" class="headerlink" title="3.3.2.2 测试结果"></a>3.3.2.2 <strong>测试结果</strong></h4><p>使用kafka-producer-perf-test.sh测试Kafka消息写入性能：</p>
+<table>
+<thead>
+<tr>
+<th>副本数</th>
+<th>分区数</th>
+<th>线程数</th>
+<th>消息&#x2F;s</th>
+<th>流量MB&#x2F;s</th>
+<th>延时99th ms</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1514692</td>
+<td>144.45</td>
+<td>2</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>1462009</td>
+<td>139.43</td>
+<td>7</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>987069</td>
+<td>94.13</td>
+<td>9</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>1</td>
+<td>918020</td>
+<td>87.55</td>
+<td>23</td>
+</tr>
+</tbody></table>
+<h3 id="3-3-3-Kafka-消费消息压力测试-集群内部"><a href="#3-3-3-Kafka-消费消息压力测试-集群内部" class="headerlink" title="3.3.3 Kafka 消费消息压力测试[集群内部]"></a>3.3.3 <strong>Kafka 消费消息压力测试[集群内部]</strong></h3><h4 id="3-3-3-1-测试方法和步骤"><a href="#3-3-3-1-测试方法和步骤" class="headerlink" title="3.3.3.1 测试方法和步骤"></a>3.3.3.1 <strong>测试方法和步骤</strong></h4><p>步骤一：使用3.3.2中创建的消息进行消费</p>
+<p>步骤二：运行kafka消费压测命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-consumer-perf-test.sh --broker-list my-cluster-kafka-bootstrap.myproject.svc:9092 --topic my-topic --fetch-size 1048576 --messages 100000000 --threads 1</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-3-2-测试结果"><a href="#3-3-3-2-测试结果" class="headerlink" title="3.3.3.2 测试结果"></a>3.3.3.2 <strong>测试结果</strong></h4><p>使用kafka-consumer-perf-test.sh测试Kafka消息消费性能：</p>
+<table>
+<thead>
+<tr>
+<th>副本数</th>
+<th>分区数</th>
+<th>线程数</th>
+<th>消息&#x2F;s</th>
+<th>流量MB&#x2F;s</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>800262.4861</td>
+<td>76.3190</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>1000100.0100</td>
+<td>95.3770</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>3037667.0717</td>
+<td>289.6945</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>1</td>
+<td>796854.8513</td>
+<td>75.9940</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>800409.8098</td>
+<td>76.3330</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>3</td>
+<td>974896.4173</td>
+<td>92.9734</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>3033060.3579</td>
+<td>289.2552</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td>795820.1480</td>
+<td>75.8953</td>
+</tr>
+</tbody></table>
+<h3 id="3-3-4-Kafka生产消息压力测试-集群外部NodePort方案"><a href="#3-3-4-Kafka生产消息压力测试-集群外部NodePort方案" class="headerlink" title="3.3.4 Kafka生产消息压力测试[集群外部NodePort方案]"></a>3.3.4 <strong>Kafka<strong><strong>生产</strong></strong>消息压力测试[集群外部NodePort方案]</strong></h3><h4 id="3-3-4-1-测试方法和步骤"><a href="#3-3-4-1-测试方法和步骤" class="headerlink" title="3.3.4.1 测试方法和步骤"></a>3.3.4.1 <strong>测试方法和步骤</strong></h4><p>步骤一：创建4种类型Topic：1副本1分区、1副本3分区、3副本1分区、3副本3分区</p>
+<p>步骤二：运行kafka写入压测命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-producer-perf-test.sh --topic my-topic --num-records 10000000 --record-size 100 --throughput 5000000 --producer-props bootstrap.servers=99.248.82.11:32678 linger.ms=1</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-4-2-测试结果"><a href="#3-3-4-2-测试结果" class="headerlink" title="3.3.4.2 测试结果"></a>3.3.4.2 <strong>测试结果</strong></h4><p>使用kafka-producer-perf-test.sh测试Kafka消息写入性能：</p>
+<table>
+<thead>
+<tr>
+<th>副本数</th>
+<th>分区数</th>
+<th>线程数</th>
+<th>消息&#x2F;s</th>
+<th>流量MB&#x2F;s</th>
+<th>延时99th ms</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>884486</td>
+<td>84.35</td>
+<td>34</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>880669</td>
+<td>83.99</td>
+<td>73</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>822842</td>
+<td>78.47</td>
+<td>258</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>1</td>
+<td>607053</td>
+<td>57.89</td>
+<td>193</td>
+</tr>
+</tbody></table>
+<h3 id="3-3-5-Kafka-消费消息压力测试-集群外部NodePort方案"><a href="#3-3-5-Kafka-消费消息压力测试-集群外部NodePort方案" class="headerlink" title="3.3.5 Kafka 消费消息压力测试[集群外部NodePort方案]"></a>3.3.5 <strong>Kafka 消费消息压力测试[集群外部NodePort方案]</strong></h3><h4 id="3-3-5-1-测试方法和步骤"><a href="#3-3-5-1-测试方法和步骤" class="headerlink" title="3.3.5.1 测试方法和步骤"></a>3.3.5.1 <strong>测试方法和步骤</strong></h4><p>步骤一：使用3.3.2中创建的消息进行消费</p>
+<p>步骤二：运行kafka消费压测命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin/kafka-consumer-perf-test.sh --broker-list 99.248.82.11:32678 --topic my-topic --fetch-size 1048576 --messages 100000000 --threads 1</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-5-2-测试结果"><a href="#3-3-5-2-测试结果" class="headerlink" title="3.3.5.2 测试结果"></a>3.3.5.2 <strong>测试结果</strong></h4><table>
+<thead>
+<tr>
+<th>副本数</th>
+<th>分区数</th>
+<th>线程数</th>
+<th>消息&#x2F;s</th>
+<th>流量MB&#x2F;s</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>387672.0295</td>
+<td>36.9713</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>389226.2183</td>
+<td>37.1195</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>564939.8339</td>
+<td>53.8769</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>1</td>
+<td>432991.3929</td>
+<td>41.2932</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+<td>386488.3667</td>
+<td>36.8584</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>3</td>
+<td>389468.7646</td>
+<td>37.1426</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>563920.3744</td>
+<td>53.7796</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td>433067.1543</td>
+<td>41.3004</td>
+</tr>
+</tbody></table>
+<h2 id="3-4-附录"><a href="#3-4-附录" class="headerlink" title="3.4 附录"></a>3.4 附录</h2><h3 id="3-4-1-镜像列表"><a href="#3-4-1-镜像列表" class="headerlink" title="3.4.1 镜像列表"></a>3.4.1 镜像列表</h3><p>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-cluster-operator:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-zookeeper:1.1.0-kafka-2.1.1<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka:1.1.0-kafka-2.1.1<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka-connect:1.1.0-kafka-2.1.1<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka-connect-s2i:1.1.0-kafka-2.1.1<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka-mirror-maker:1.1.0-kafka-2.1.1<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-topic-operator:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-user-operator:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka-init:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-zookeeper-stunnel:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-kafka-stunnel:1.1.0<br>harbor.apps.it.mbcloud.com&#x2F;amq7&#x2F;amq-streams-entity-operator-stunnel:1.1.0</p>
+<h3 id="3-4-2-部署脚本"><a href="#3-4-2-部署脚本" class="headerlink" title="3.4.2 部署脚本"></a>3.4.2 部署脚本</h3><p><a target="_blank" rel="noopener" href="https://github.com/strimzi/strimzi-kafka-operator/releases">strimzi-kafka-operator</a></p>
+<p>百度云盘：&#x2F;招银云创&#x2F;openshift&#x2F;redhat-kafka&#x2F;</p>
+<p>while true; do a&#x3D;$(date); echo $a; echo $a &gt; ~&#x2F;a.txt; .&#x2F;kafka-console-producer.sh –broker-list 99.248.82.11:31761,99.248.82.12:31304,99.248.82.21:31271 –topic my_topic &lt; ~&#x2F;a.txt; done</p>
+<p>.&#x2F;kafka-console-consumer.sh –bootstrap-server 99.248.82.11:31761,99.248.82.12:31304,99.248.82.21:31271 –topic my_topic</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/ca6a355f0867.html">https://xhua.eu.org/posts/ca6a355f0867.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/4b14c7672798.html" title="OpenShift-Kubernetes集群-Calico-BGP管理工具calicoctl配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-Kubernetes集群-Calico-BGP管理工具calicoctl配置</div></div><div class="info-2"><div class="info-item-1"> calico 是容器网络的一种解决方案，也是当前最流行的方案之一。它完全利用路由规则实现动态组网，通过BGP协议通告路由。Calico BGP没有像ovs那样需要封包解包，所以它的网络性能更好。管理calico网络免不了使用calicoctl工具，本篇介绍如何在OpenShift&#x2F;Kubernetes环境下，配置calicoctl来管理集群网络。 calico元数据支持两种存储类：etcd与kubernetes  安装calicoctl  12$ curl -O -L https://github.com/projectcalico/calicoctl/releases/download/v3.10.0/calicoctl$ chmod a+x calicoctl  确认Calico部署时使用的元数据存储类型，查看calico-config  1$ oc describe cm calico-config -n kube-system | grep datastore_type 可以为kubernetes、etcdv3。默认为etcdv3。设置为kubernetes时...</div></div></div></a><a class="pagination-related" href="/posts/fcc1189de870.html" title="OpenShift-ImageStream指向的镜像是否为内部镜像仓库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-ImageStream指向的镜像是否为内部镜像仓库</div></div><div class="info-2"><div class="info-item-1"> ImageStream是OpenShift中的一个特有的资源。在DeploymentConfig&#x2F;BuildConfig中使用ImageStream和ImageStreamTag时经常会有这样的疑惑：究竟它指向的镜像有没有pull到OpenShift内部的镜像仓库呢？我们使用DeploymentConfig发布应用时，集群会从内部镜像仓库中pull镜像，还是从指向的外部镜像仓库中拉取？大家来看一下下面这个例子： 1$ oc import-image openshift/jenkins:v3.10 --from=docker.io/openshift/jenkins-2-centos7:v3.10 --confirm 猜一猜，以上这条命令是否会将镜像拉取到内部镜像仓库？答案是否定的，内部镜像仓库并不会拉取镜像本身，只是获取镜像的元数据，将创建的ImageStreamTag openshift/jenkins:v3.10指向镜像docker.io/openshift/jenkins-2-centos7:v3.10。这里的关键就是ImageStream[Tag]的一个配置项...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b3c5c4960a4e.html" title="如何为运行OpenShift容器的数字用户设置用户名"><img class="cover" src="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何为运行OpenShift容器的数字用户设置用户名</div></div><div class="info-2"><div class="info-item-1">OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。 **解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：:x:::&lt;说明&gt;::&#x2F;sbin&#x2F;nologin。 执行步骤  基础镜像中为&#x2F;etc&#x2F;passwd设置root组用户可写的权限  1RUN chmod g=u /etc/passwd  应用启动时为用户设置用户名，要在ENTRYPOINT&#x2F;CMD的脚本中添加如下代码  123456789USER_NAME=$&#123;USER_NAME:-uidname&#125;USER_ID=$(id -u)if ! whoami &amp;&gt; /dev/nullthen    if [ -w /etc/passwd ]    then      echo &quot;$&#123;USER_NAME&#125;:x:$&#123;USER_ID&#125;...</div></div></div></a><a class="pagination-related" href="/posts/7a15051d8249.html" title="OpenShift节点kubelet证书过期异常的解决步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift节点kubelet证书过期异常的解决步骤</div></div><div class="info-2"><div class="info-item-1"> 环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig fileatomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new oneatomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed...</div></div></div></a><a class="pagination-related" href="/posts/406da41e46f6.html" title="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行"><img class="cover" src="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</div></div><div class="info-2"><div class="info-item-1">来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。 基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。 2 需求分析2.1 业务需求2.1.1 应用架构****改造需求某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭...</div></div></div></a><a class="pagination-related" href="/posts/191ce310ef24.html" title="查看Java应用状态"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">查看Java应用状态</div></div><div class="info-2"><div class="info-item-1"> jps查看  123$ jps16 jar547 Jps  jmap -heap  1$ jmap -heap 16  jstat -class pid  1$ jstat -class 16 </div></div></div></a><a class="pagination-related" href="/posts/3c19c6380d6c.html" title="一条命令解决Kubernetes更改默认的namespace"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">一条命令解决Kubernetes更改默认的namespace</div></div><div class="info-2"><div class="info-item-1"> K8S默认是在default的namespace下，但是很多时候我们是在一个新的namespace下部署应用，每个操作都需要指定namespace，非常不方便。那么有没有办法切换namespce呢？如果可以切换的话，那有没有更简单的办法。 最简单的方式切换namespace，赠送一个方便的脚本可以将它alias到一个新的命令”kubectl ns” 12$  alias kubectl=&#x27;_kubectl_custom()&#123; if [[ &quot;$1&quot; == &quot;project&quot; &amp;&amp; &quot;$2&quot; != &quot;&quot; ]]; then ccontext=`kubectl config current-context`; kubectl config set-context $ccontext --namespace=$2; elif [[ &quot;$1&quot; == &quot;projects&quot; &amp;&amp; &quot;$2&quot; == &quo...</div></div></div></a><a class="pagination-related" href="/posts/5d02d748c56e.html" title="Kubernetes工具集（持续收集------）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes工具集（持续收集------）</div></div><div class="info-2"><div class="info-item-1">Kubescope cliKubescope cli 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 cAdvisor 等其他集群指标收集服务一样， kubescope cli 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvisor 进行测试，每次都要使用新的 Pod 作为测试对象，因为 Kubernetes 在超过资源限制时就会将 Pod 杀死，然后重新启动一个全新的 Pod。而 kubescope cli 就没有这方面的忧虑，它直接从 Docker Daemon 中收集容器指标（你可以自定义收集指标的时间间隔），并使用正则表达式来选择和过滤你想要显示的容器。  KubeMarkKubemark是K8s官方提供的一个对K8s集群进行性能测试的工具。它可以模拟出一个K8s cluster（Kubemark cluster），不受资源限制，从而能够测试的集群规模比真实集群大的多。这个cluster中master...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-text">1. 测试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E6%B5%8B%E8%AF%95%E8%A6%81%E6%B1%82%E5%92%8C%E5%86%85%E5%AE%B9"><span class="toc-text">2. 测试要求和内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E7%BB%93%E6%9E%9C"><span class="toc-text">3. 测试方法和结果</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-Kafka-Operator%E9%83%A8%E7%BD%B2"><span class="toc-text">3.1 Kafka Operator部署</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1-Kafka-Operator%E9%83%A8%E7%BD%B2"><span class="toc-text">3.1.1 Kafka Operator部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-1-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.1.1.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-1-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.1.1.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-2-Kafka%E9%9B%86%E7%BE%A4%E5%88%9B%E5%BB%BA"><span class="toc-text">3.1.2  Kafka集群创建</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-2-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.1.2.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-2-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.1.2.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-3-Kafka%E7%9B%91%E6%8E%A7%E9%83%A8%E7%BD%B2"><span class="toc-text">3.1.3 Kafka监控部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-3-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.1.3.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-3-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.1.3.2 测试结果</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-Kafka%E5%8A%9F%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="toc-text">3.2.Kafka功能测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-1-Kafka%E5%88%9B%E5%BB%BATopic"><span class="toc-text">3.2.1 Kafka创建Topic</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-1-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.2.1.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-1-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.2.1.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-2-Openshift%E9%9B%86%E7%BE%A4%E5%86%85%E9%83%A8Kafka-producer%E4%B8%8Econsumer%E6%B5%8B%E8%AF%95"><span class="toc-text">3.2.2 Openshift集群内部Kafka producer与consumer测试</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-2-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.2.2.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-2-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.2.2.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-3-Openshift%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8Kafka-producer%E4%B8%8Econsumer%E6%B5%8B%E8%AF%95%EF%BC%88NodePort%E6%96%B9%E6%A1%88%EF%BC%89"><span class="toc-text">3.2.3 Openshift集群外部Kafka producer与consumer测试（NodePort方案）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-3-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.2.3.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-3-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.2.3.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-4-Openshift%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8Kafka-producer%E4%B8%8Econsumer%E6%B5%8B%E8%AF%95%EF%BC%88Router%E6%96%B9%E6%A1%88%EF%BC%89"><span class="toc-text">3.2.4 Openshift集群外部Kafka producer与consumer测试（Router方案）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-4-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.2.4.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-4-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.2.4.2 测试结果</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-Kafka%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="toc-text">3.3 Kafka性能测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-1-%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7%EF%BC%9AKafka%E8%87%AA%E5%B8%A6%E7%9A%84%E5%8E%8B%E6%B5%8B%E8%84%9A%E6%9C%AC"><span class="toc-text">3.3.1 测试工具：Kafka自带的压测脚本</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-1-%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E"><span class="toc-text">3.3.1.1 参数说明:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-2-%E6%B5%8B%E8%AF%95%E5%91%BD%E4%BB%A4"><span class="toc-text">3.3.1.2 测试命令</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-2-Kafka%E7%94%9F%E4%BA%A7%E6%B6%88%E6%81%AF%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95-%E9%9B%86%E7%BE%A4%E5%86%85%E9%83%A8"><span class="toc-text">3.3.2 Kafka生产消息压力测试[集群内部]</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.3.2.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.3.2.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-3-Kafka-%E6%B6%88%E8%B4%B9%E6%B6%88%E6%81%AF%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95-%E9%9B%86%E7%BE%A4%E5%86%85%E9%83%A8"><span class="toc-text">3.3.3 Kafka 消费消息压力测试[集群内部]</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-3-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.3.3.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-3-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.3.3.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-4-Kafka%E7%94%9F%E4%BA%A7%E6%B6%88%E6%81%AF%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95-%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8NodePort%E6%96%B9%E6%A1%88"><span class="toc-text">3.3.4 Kafka生产消息压力测试[集群外部NodePort方案]</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-4-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.3.4.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-4-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.3.4.2 测试结果</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-5-Kafka-%E6%B6%88%E8%B4%B9%E6%B6%88%E6%81%AF%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95-%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8NodePort%E6%96%B9%E6%A1%88"><span class="toc-text">3.3.5 Kafka 消费消息压力测试[集群外部NodePort方案]</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-5-1-%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95%E5%92%8C%E6%AD%A5%E9%AA%A4"><span class="toc-text">3.3.5.1 测试方法和步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-5-2-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-text">3.3.5.2 测试结果</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4-%E9%99%84%E5%BD%95"><span class="toc-text">3.4 附录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-1-%E9%95%9C%E5%83%8F%E5%88%97%E8%A1%A8"><span class="toc-text">3.4.1 镜像列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-2-%E9%83%A8%E7%BD%B2%E8%84%9A%E6%9C%AC"><span class="toc-text">3.4.2 部署脚本</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

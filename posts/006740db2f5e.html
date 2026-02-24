@@ -1,0 +1,254 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-All-In-One一键部署工具上线 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Openshift All In One工具制作的初衷： 工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。 Openshift3.9部署手册，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-All-In-One一键部署工具上线">
+<meta property="og:url" content="https://xhua.eu.org/posts/006740db2f5e.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Openshift All In One工具制作的初衷： 工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。 Openshift3.9部署手册，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.638Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-All-In-One一键部署工具上线",
+  "url": "https://xhua.eu.org/posts/006740db2f5e.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.638Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/006740db2f5e.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-All-In-One一键部署工具上线',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-All-In-One一键部署工具上线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-All-In-One一键部署工具上线</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.638Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="Openshift-All-In-One工具制作的初衷："><a href="#Openshift-All-In-One工具制作的初衷：" class="headerlink" title="Openshift All In One工具制作的初衷："></a>Openshift All In One工具制作的初衷：</h3><ul>
+<li>工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。</li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3e8db6a34af5">Openshift3.9部署手册</a>，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的操作还是会遇到一些问题，毕竟步骤有那么多，差了一步，就很容易就会失败。有了这个脚本工具后，想要部署测试Openshift的朋友就很容易去部署测试了，而不是在部署这一步就放弃了。</li>
+<li>有些厂商提供了Openshift的解决方案，但是做支持的厂商朋友并不太熟悉容器平台环境，也想在自己的环境下部署一套Openshift来测试，最后往往困难重重，从展望到放弃。</li>
+</ul>
+<p><strong>做个自动化工具，让所有关心Openshift&#x2F;K8s的朋友就可以跳过部署的步骤，快速进入到Paas这个神奇的世界，去了解到自己真正关心的内容。</strong></p>
+<h3 id="进入正题"><a href="#进入正题" class="headerlink" title="进入正题"></a>进入正题</h3><ul>
+<li><p>什么是正题？直接上工具git地址<br>OpenshiftOneClick：<a target="_blank" rel="noopener" href="https://gitee.com/xhua/OpenshiftOneClick">https://gitee.com/xhua/OpenshiftOneClick</a></p>
+</li>
+<li><p>开发工具： Ansible + Shell</p>
+</li>
+</ul>
+<h3 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h3><ol>
+<li><p>准备一台主机&#x2F;虚拟机(CentOS 7.4以上, CPU &gt; 2core, Memory &gt; 4G)</p>
+</li>
+<li><p>将一键部署脚本拷贝到主机上</p>
+</li>
+<li><p>cd到openshift-oneclick-allinone目录</p>
+</li>
+</ol>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd openshift-oneclick-allinone</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>运行部署(必须切到root账号)</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">/bin/bash deploy_openshift.sh</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>本地绑定hosts</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># HOSTNAME 默认为os39.test.it.example.com</span><br><span class="line">&lt;ip&gt; os39.test.it.example.com</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>浏览器访问</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># HOSTNAME 默认为os39.test.it.example.com</span><br><span class="line">https://os39.test.it.example.com:8443</span><br></pre></td></tr></table></figure>
+<p>默认账号：<strong>admin</strong><br>默认密码：<strong>admin</strong></p>
+<h3 id="结果展示"><a href="#结果展示" class="headerlink" title="结果展示"></a>结果展示</h3><ul>
+<li>用本地的Vagrant创建的Centos 7.4的虚拟机（VirtualBox）</li>
+<li>配置2核4G</li>
+</ul>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-aba0f980b502b61d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="一键部署的Openshift3.9"></p>
+<h3 id="工具说明"><a href="#工具说明" class="headerlink" title="工具说明"></a>工具说明</h3><blockquote>
+<p>该工具具有一定的可配置性</p>
+</blockquote>
+<p>查看config.yml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CHANGEREPO: true</span><br><span class="line">HOSTNAME: os39.test.it.example.com</span><br><span class="line"></span><br><span class="line">Change_Base_Registry: false</span><br><span class="line">Harbor_Url: harbor.apps.it.example.com</span><br><span class="line"></span><br><span class="line">FULL_INSTALL: false</span><br></pre></td></tr></table></figure>
+<p>   说明:</p>
+<ul>
+<li><strong>CHANGEREPO</strong>: 是否使用files&#x2F;all.repo替换系统默认repo源</li>
+<li><strong>HOSTNAME</strong>：安装Openshift的主机的hostname，也是集群的访问域名</li>
+<li><strong>Change_Base_Registry</strong>：是否使用私有镜像仓库</li>
+<li><strong>Harbor_Url</strong>：私有镜像仓库地址，Change_Base_Registry为True时有效</li>
+<li><strong>FULL_INSTALL</strong>：是否全量安装（包括日志，监控等）<br>如果选择全量安装(FULL_INSTALL&#x3D;true)，请保证主机内存有<strong>16G</strong>.</li>
+</ul>
+<blockquote>
+<p>如果执行过程中出现异常，不用怕。工具是基于ansible的，幂等性。</p>
+</blockquote>
+<p>重新运行deploy_openshift.sh就OK了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">/bin/bash deploy_openshift.sh</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>有什么疑问和改进的想法，欢迎留言。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 报错 ERROR! | failed expects hostvars is a dict</span><br><span class="line">In /etc/ansible/playbooks/openshift-ansible/roles/openshift_master_certificates/tasks/main.yml around line 63 I simply changed the with_items clause from</span><br><span class="line">- &quot;&#123;&#123; hostvars[inventory_hostname] | certificates_to_synchronize &#125;&#125;&quot;</span><br><span class="line">to</span><br><span class="line">- &quot;&#123;&#123; hostvars[inventory_hostname][&#x27;ansible_facts&#x27;] | certificates_to_synchronize &#125;&#125;&quot;</span><br><span class="line">and everything progressed.</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/006740db2f5e.html">https://xhua.eu.org/posts/006740db2f5e.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/420369a1c884.html" title="Openshift-Build构建详解"><img class="cover" src="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-Build构建详解</div></div><div class="info-2"><div class="info-item-1">Build是什么Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。 Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。 Openshift构建有四种主要策略  Docker 构建 源代码构建（S2i) 自定义构建 Pipeline构建可以实现复杂的工作流  Docker构建、S2i构建、Pipeline构建是默认支持的。 不同的构建有六种源  Git Dockerfile Binary Image Input secrets External artifacts  其中Binary和Git不能同时使用。 Dockerfile和Image可以单独使用，也可以与Git或Binary一起使用。 如果使用Binary作为BuildConfig.spec.source.type，只能通过命令行工具oc start-build来构建。 BuildConfig实例 123456789101112131415161718192021222324252627282930kind: ...</div></div></div></a><a class="pagination-related" href="/posts/3e4333ef6f0f.html" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/ab2bfd6bf012.html" title="OpenShift中节点的垃圾收集——容器与镜像"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中节点的垃圾收集——容器与镜像</div></div><div class="info-2"><div class="info-item-1">参考文档https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;garbage_collection.html </div></div></div></a><a class="pagination-related" href="/posts/8b9a311fc207.html" title="OpenShift自带的日志搜索引擎ES服务的扩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift自带的日志搜索引擎ES服务的扩容</div></div><div class="info-2"><div class="info-item-1"> 有以下两种扩容方式：  存储扩容 节点扩容  存储扩容 查看集群的状态  1$ oc exec $es-pod-name -c elasticsearch -- health  停止ES节点分片平衡  1$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;none&quot;&#125;&#125;&#x27;  为每个ES节点的DC执行以下操作3.1 获取需要暂停的ES pod所在的Node节点 ...</div></div></div></a><a class="pagination-related" href="/posts/34b58d420e4b.html" title="OpenShift-Prometheus添加Alert-Rules"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus添加Alert-Rules</div></div><div class="info-2"><div class="info-item-1">  prometheus.yml配置中绑定alertmanager服务  1234567......alerting:  alertmanagers:  - scheme: http    static_configs:    - targets:      - &quot;localhost:9093&quot;   prometheus.rules设置prometheus告警规则  12345678910...rules:- alert: TooManyPods  expr: kuberlet_running_pod_count &gt; 10  for: 2m  labels:    team: node  annotations:    summary: &quot;&#123;&#123;$labels.instance&#125;&#125;: has &#123;&#123;$value&#125;&#125; pods&quot;    description: &quot;&#123;&#123;$labels.instance&#125;&#125; be c...</div></div></div></a><a class="pagination-related" href="/posts/f9994802a76a.html" title="OpenShift数据库挂了问题解决"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift数据库挂了问题解决</div></div><div class="info-2"><div class="info-item-1">每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCertificate:true RotateKubeletClientCertificate:true]&#125;Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.902964    4307 mount_linux.go:211] Detected OS with systemdJan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.908967    4307 server.go:383] Version: v1.10....</div></div></div></a><a class="pagination-related" href="/posts/d5eceb7414d3.html" title="Openshift-GitLab安装及使用Nodeport支持ssh访问"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-GitLab安装及使用Nodeport支持ssh访问</div></div><div class="info-2"><div class="info-item-1"> 部署Gitlab 创建gitlab项目  1oc new-project gitlab  创建cicd serviceaccount  1$ oc create serviceaccount cicd -n gitlab  导入Gitlab模板  12wget https://gitee.com/xhua/OpenshiftOneClick/raw/3.11/openshift-templates/gitlab-template.yamloc create -f openshift-template.json -n openshift  创建持久化存储（如果没有pv的情况下）  123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384$ cat gitlab-pv.yamlapiVersion: v1items:- ap...</div></div></div></a><a class="pagination-related" href="/posts/191ce310ef24.html" title="查看Java应用状态"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">查看Java应用状态</div></div><div class="info-2"><div class="info-item-1"> jps查看  123$ jps16 jar547 Jps  jmap -heap  1$ jmap -heap 16  jstat -class pid  1$ jstat -class 16 </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Openshift-All-In-One%E5%B7%A5%E5%85%B7%E5%88%B6%E4%BD%9C%E7%9A%84%E5%88%9D%E8%A1%B7%EF%BC%9A"><span class="toc-text">Openshift All In One工具制作的初衷：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E5%85%A5%E6%AD%A3%E9%A2%98"><span class="toc-text">进入正题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-text">安装步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E5%B1%95%E7%A4%BA"><span class="toc-text">结果展示</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E8%AF%B4%E6%98%8E"><span class="toc-text">工具说明</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

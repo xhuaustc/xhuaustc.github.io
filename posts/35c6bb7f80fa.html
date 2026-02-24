@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Docker安装镜像仓库的三种方法 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一、docker-distribution 安装docker-distribution软件  1yum install docker-distribution  配置registry&#x2F;config.yml文件  123456789101112# &#x2F;etc&#x2F;docker-distribution&#x2F;registry&#x2F;config.ymlversion: 0.1log:fields:servi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker安装镜像仓库的三种方法">
+<meta property="og:url" content="https://xhua.eu.org/posts/35c6bb7f80fa.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="一、docker-distribution 安装docker-distribution软件  1yum install docker-distribution  配置registry&#x2F;config.yml文件  123456789101112# &#x2F;etc&#x2F;docker-distribution&#x2F;registry&#x2F;config.ymlversion: 0.1log:fields:servi">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.635Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Docker安装镜像仓库的三种方法",
+  "url": "https://xhua.eu.org/posts/35c6bb7f80fa.html",
+  "image": "https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.635Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/35c6bb7f80fa.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Docker安装镜像仓库的三种方法',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Docker安装镜像仓库的三种方法</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Docker安装镜像仓库的三种方法</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.635Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="一、docker-distribution"><a href="#一、docker-distribution" class="headerlink" title="一、docker-distribution"></a>一、docker-distribution</h2><ol>
+<li>安装docker-distribution软件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install docker-distribution</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>配置registry&#x2F;config.yml文件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># /etc/docker-distribution/registry/config.yml</span><br><span class="line">version: 0.1</span><br><span class="line">log:</span><br><span class="line">fields:</span><br><span class="line">service: registry</span><br><span class="line">storage:</span><br><span class="line">cache:</span><br><span class="line">layerinfo: inmemory</span><br><span class="line">filesystem:</span><br><span class="line">rootdirectory: /var/lib/registry</span><br><span class="line">http:</span><br><span class="line">addr: :5000</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>启动docker-distribution服务</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl start docker-distribution</span><br><span class="line">systemctl enable docker-distribution</span><br></pre></td></tr></table></figure>
+<p>运维</p>
+<h2 id="二、运行容器registry"><a href="#二、运行容器registry" class="headerlink" title="二、运行容器registry"></a>二、运行容器registry</h2><p>直接运行docker run</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -p 5000:5000 -v /data/registry:/var/lib/registry --name registry --r</span><br><span class="line">estart=always registry</span><br></pre></td></tr></table></figure>
+<p>Docker安装镜像仓库的三种方法</p>
+<h2 id="三、搭建Harbor"><a href="#三、搭建Harbor" class="headerlink" title="三、搭建Harbor"></a>三、搭建Harbor</h2><p>Harbor部署在主机上<br>部署相关资料地址：Harbor 地址<br>下载offline部署文件：Harbor offline installer<br>部署手册：Harbor部署手册</p>
+<ol>
+<li>安装必要软件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install docker-1.12.6 docker-compose -y</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在 &#x2F;etc&#x2F;hosts 添加harbor地址</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># /etc/hosts</span><br><span class="line">192.168.2.3 harbor.openshift</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>在 harbor&#x2F;harbor.cfg 修改hostname</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># harbor/harbor.cfg</span><br><span class="line">hostname = harbor.openshift:1080</span><br></pre></td></tr></table></figure>
+<p>Harbor默认镜像存储在 <code>/data/ </code>目录下<br>4. 更新Harbor对外服务端口号</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># harbor/docker-compose.yml 123行</span><br><span class="line">- 1080:80</span><br><span class="line">- 1443:443</span><br><span class="line">- 4443:4443</span><br><span class="line"># harbor/harbor.cfg</span><br><span class="line">hostname = harbor.openshift:1080</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>启动docker</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 执行之前请确认/var/lib/docker文件夹是否单独挂盘</span><br><span class="line"># 更新 /etc/sysconfig/docker 配置</span><br><span class="line"># 添加</span><br><span class="line">OPTIONS=&#x27;--selinux-enabled --log-driver=journald --signature-verification=false</span><br><span class="line">--insecure-registry=0.0.0.0/0 --registry-mirror=https://docker.mirrors.ustc.ed</span><br><span class="line">u.cn&#x27;</span><br><span class="line">systemctl start docker</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>安装Harbor</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./install.sh</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>测试Harbor</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker login harbor.openshift</span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>维护Harbor<br>a. 暂停</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose stop</span><br></pre></td></tr></table></figure>
+<p>b. 暂停后重新启动</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose start</span><br></pre></td></tr></table></figure>
+<p>c. 更新harbor.cfg后启动</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker-compose down -v</span><br><span class="line">./prepare</span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+<p>d. 删除Harbor</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker-compose down -v</span><br><span class="line">rm -r /data/database</span><br><span class="line">rm -r /data/registry</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/35c6bb7f80fa.html">https://xhua.eu.org/posts/35c6bb7f80fa.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/e710e9d4a5d7.html" title="K8S-JFrog-DevOps实战训练营"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">K8S-JFrog-DevOps实战训练营</div></div><div class="info-2"><div class="info-item-1">DevOps CAMS模型C 文化 CultureA 自动化 AutomationM 指标维度 MeasurementS 分享 Sharing DevOps Five Stages 规范化技术栈 推进标准化 &amp; 降低不一致性因素 扩展DevOps实践，开始从一个团队，再到第二个第三个，最后到整个公司 自动化基础框架交付（PaaS平台） 提供自服务能力（自定义编排）  DevOps三步落地法  基于价值流的自动化持续交付，有六个实践，分别是：可视化、限制在制品、减少规模、减少交接数量、持续识别和拓展约束，以及在价值流中消除浪费。 每种架构一套标准化流水线   gitlab &#x2F; jenkins &#x2F; nexus &#x2F; ansible Kanban 或 Sprint计划板实现可视化工作，价值流交付可视化   快速反馈，PaaS监控、应用监控prometheus &#x2F; grafana持续反馈，交付之前快速反馈jmeter &#x2F; redmood &#x2F; senium DevOps度量Hygieia  Docker跨主机网络  大二层网...</div></div></div></a><a class="pagination-related" href="/posts/309756197f32.html" title="Jira容器化-+-Openshift-Jira模板创建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Jira容器化-+-Openshift-Jira模板创建</div></div><div class="info-2"><div class="info-item-1">因为应用容器化部署已经是标准化的流程，无需再详篇介绍具体的部署流程。所以本文只提供相关的配置文档。如果对部署过程不了解的同学，请先自学容器基础。镜像已经创建好了，如下 12docker.io/xhuaustc/jira-software:7.11.0docker.io/xhuaustc/atlassian-mysql:5.7 镜像构建配置Jira容器构建 1git clone https://github.com/cptactionhank/docker-atlassian-jira-software 将setenv.sh与atlassian-extras-3.2.jar拷贝到docker-atlassian-jira-software 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/fcfcc308c797.html" title="使用Vagrant+Ansible一键部署Rancher2-0"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用Vagrant+Ansible一键部署Rancher2-0</div></div><div class="info-2"><div class="info-item-1"> Kubernetes的流行程度就不说了，前两天关注了另一个产品Rancher。使用它可以快速部署与接管Kubernetes。而且Rancher的部署非常简单，只需要跑一个容器就完事了。 既然这么简单，那我们就使用Vagrant与Ansible让它更简单。 安装Vagrant + VirtualBox    具体安装不表了，不是本文知识。相信大家多半都使用过，如果没有使用过，赶紧学习起来。  导入Vagrant Box。这里使用的是Centos 7.5  centos75-with-boxadditions.box下载链接: https://pan.baidu.com/s/1U-kJhbY2JirHgw0eP9TBXw 密码: 1a6b 1vagrant box add centos/75 centos75-with-boxadditions.box 或者安装vagrant插件 1$ vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest  定义Vagrantfile，设置好虚拟机的配置，具...</div></div></div></a><a class="pagination-related" href="/posts/c1cb5e8c61ba.html" title="OpenShift灾备的方案及步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift灾备的方案及步骤</div></div><div class="info-2"><div class="info-item-1">https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restoring-cluster.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-master-host.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restore-etcd-quorum.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-etcd-member.html </div></div></div></a><a class="pagination-related" href="/posts/88502991e28c.html" title="OpenShift制作NginxLB-Operator实战"><img class="cover" src="https://img.xhua.eu.org/05192a9b59e1bb159a631b2825ff084c2a7f3b2cef53c59ea30b60ca5f770d9d.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift制作NginxLB-Operator实战</div></div><div class="info-2"><div class="info-item-1">背景近期需要在OpenShift集群中部署Nginx服务做为负载均衡器，负载集群外部服务，如NTP、DNS、项目App等。因为不同的服务的配置都是不一样的，不仅后台服务的IP不一样，而且使用的协议也不一样，HTTP&#x2F;TCP&#x2F;UDP都有可能，如果按照传统的方式来实施的话，每一个应用单独定义Nginx配置，分别部署，每增加一个新的应用被负载都需要做一次复杂的过程，那么有没有办法能够让这过程变得简单呢，甚至能够自动化处理，我们只需要提供最简单的信息？下面我们来分析下常用的几种方法。 打包方案选择1. Template对于OpenShift熟悉的朋友，会马上想到使用Template模板来实现。Template模板是OpenShift特有的应用打包方式，它描述了一组对象，同时对这些对象的配置可以进行参数化处理，生成OpenShift 容器平台创建的对象列表。在模板中可以设置所有在项目中有权限创建的任何资源。 不足之处：  OpenShift特有，如果是使用OpenShift容器平台的话，这个不足可忽略。 无法保证线上资源状态始终与参数设定的结果一致，如手动增加rc的副本...</div></div></div></a><a class="pagination-related" href="/posts/471d3cbe64a8.html" title="OpenShift管理节点Master与计算节点Node的配置说明"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift管理节点Master与计算节点Node的配置说明</div></div><div class="info-2"><div class="info-item-1">配置文件Master节点的配置文件地址：&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yamlNode节点的配置文件在：openshift-node项目下的configmap中。OpenShift集群的配置信息都在这两个文件中，包括有覆盖默认插件，连接到etcd，自动创建服务帐户，构建映像名称，自定义项目请求，配置卷插件等等。 参考文章Master and Node Configuration </div></div></div></a><a class="pagination-related" href="/posts/fbd2703af665.html" title="Docker中使用命令COPY-ADD导入文件对权限的影响"><img class="cover" src="https://img.xhua.eu.org/dafb05d9920eff85c9bc37cc048b382a74876c704e19731457294aca239cacf1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker中使用命令COPY-ADD导入文件对权限的影响</div></div><div class="info-2"><div class="info-item-1">1、文件保留权限原文件的权限所属用户与组为镜像中的用户可以使用--chown=jenkins:jenkins来指定用户所属 1COPY --chown=1001:1001 sample.txt sample.txt  2、压缩包（ADD）保留权限原文件的权限保留压缩包内文件的用户与组 </div></div></div></a><a class="pagination-related" href="/posts/87d0ba016aa6.html" title="OpenShift中如何通过脚本获取Alertmanager的告警数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中如何通过脚本获取Alertmanager的告警数据</div></div><div class="info-2"><div class="info-item-1">一、为什么需要通过脚本获取告警信息 二、Alertmanager的告警信息 三、amtool工具获取告警信息 12# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093 -o extended -o：默认值为simple，输出格式，还可以是extended，json 四、amtool更多功能 </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81docker-distribution"><span class="toc-text">一、docker-distribution</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%BF%90%E8%A1%8C%E5%AE%B9%E5%99%A8registry"><span class="toc-text">二、运行容器registry</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%90%AD%E5%BB%BAHarbor"><span class="toc-text">三、搭建Harbor</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

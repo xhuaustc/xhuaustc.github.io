@@ -1,0 +1,366 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>企业生产系统迁移至容器云平台的众多难题 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="该篇是twt论坛交流活动《企业生产系统迁移至容器云平台的网络及安全方案探讨—暨红帽容器化混合云解决方案在线发布活动》的总结。原文：http:&#x2F;&#x2F;www.talkwithtrend.com&#x2F;Article&#x2F;245665活动地址：http:&#x2F;&#x2F;www.talkwithtrend.com&#x2F;activity&#x2F;?id&#x3D;1459 自从2013年Docker应用开源以来，容器技术飞速发展，它彻底改变了PaaS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="企业生产系统迁移至容器云平台的众多难题">
+<meta property="og:url" content="https://xhua.eu.org/posts/2970a12120e5.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="该篇是twt论坛交流活动《企业生产系统迁移至容器云平台的网络及安全方案探讨—暨红帽容器化混合云解决方案在线发布活动》的总结。原文：http:&#x2F;&#x2F;www.talkwithtrend.com&#x2F;Article&#x2F;245665活动地址：http:&#x2F;&#x2F;www.talkwithtrend.com&#x2F;activity&#x2F;?id&#x3D;1459 自从2013年Docker应用开源以来，容器技术飞速发展，它彻底改变了PaaS">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.643Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "企业生产系统迁移至容器云平台的众多难题",
+  "url": "https://xhua.eu.org/posts/2970a12120e5.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.643Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/2970a12120e5.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '企业生产系统迁移至容器云平台的众多难题',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">企业生产系统迁移至容器云平台的众多难题</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">企业生产系统迁移至容器云平台的众多难题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.643Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-c3bfd7dddf354123.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="云原生"></p>
+<p>该篇是twt论坛交流活动《企业生产系统迁移至容器云平台的网络及安全方案探讨—暨红帽容器化混合云解决方案在线发布活动》的总结。<br>原文：<a target="_blank" rel="noopener" href="http://www.talkwithtrend.com/Article/245665">http://www.talkwithtrend.com/Article/245665</a><br>活动地址：<a target="_blank" rel="noopener" href="http://www.talkwithtrend.com/activity/?id=1459">http://www.talkwithtrend.com/activity/?id=1459</a></p>
+<p>自从2013年Docker应用开源以来，容器技术飞速发展，它彻底改变了PaaS原先的发展轨迹。2014年Google发布的容器编排应用Kubernetes，经过5年的发展，更是已经成为了现代容器平台的事实标准，容器平台应用于生产环境也已经现实可落地。</p>
+<p>与之前的虚拟技术相比，容器技术具有更快、更轻、更强的优势。</p>
+<p>更快，体现在容器可以实现秒级启动。</p>
+<p>更轻，体现在容器更加轻量，往往一个容器镜像只有几十兆，可以快速在主机之间迁移，而虚拟机镜像往往是几个G。</p>
+<p>更强，体现在容器的性能更好。容器是直接调用硬件资源，不存在虚拟化层，所以它的性能接近于原生应用。</p>
+<p>容器以应用为中心，能够快速地在各个平台下部署运行，可以很好地满足应用的快速部署。</p>
+<p>但是容器运行时使用的是宿主机的内核，在同一台宿主机上的容器也会共享系统的资源，如果没有做好资源的规划及权限的控制，不仅容器之间会互相影响，甚至会让整个系统的受到威胁。那么怎样能够避免这些问题呢？这是在容器平台上生产前必须考虑的问题。</p>
+<p>另外，容器的网络也是在容器平台规划时需要考虑的一个重点，我们很多网络安全策略都是基于IP做的规则，但是一般而言同一个镜像运行的不同容器的IP是不一样的，一旦容器被重新调度，之前的安全策略便失效了，而新的容器并没有受到安全策略管理。另外生产中的主机一般会配置多个网络，有业务网，管理网等，那么容器化后是否有办法支持多网络平面呢？</p>
+<p>当然容器平台上生产需要考虑的问题不止这一些，比如说容器的调度，存储的规划等等。</p>
+<p>但随着容器技术的不断演进，以及企业应用的不断加深，容器平台上生产中遇到的问题也得到了很大程度的突破。此外，容器生态圈中的重要力量——容器平台厂家为更能满足企业客户生产的要求，实现容器平台上生产，也在不断优化各自的产品，推出新的解决方案。</p>
+<p>其中，2019年5月红帽推出了RHEL8和第四代OpenShift容器平台，该版本融合了OpenShift与CoreOS两家容器平台大玩家的技术。相对于第三代OpenShift，新一代OpenShift拥有很多新的特性，比如说Operator管理组件的生命周期，添加了多集群管理等。同时网络及安全方面也是OpenShift4.1版本升级的一个重要部分。</p>
+<p>为解决容器平台上生产中的诸多问题，本次<a target="_blank" rel="noopener" href="http://www.talkwithtrend.com/Activity/?id=1459" title="活动">活动</a>不仅邀请到招银云创专家和某股份制银行专家一起，基于企业生产系统迁移至容器云平台的网络及安全方案进行探讨；并同时邀请红帽专家，围绕OpenShift4的特性，如何帮助企业基于OpenShift实现企业容器化混合云的价值进行答疑。</p>
+<p>答疑结束后，对活动中提出的问题进行了分类总结，供大家参考。</p>
+<h2 id="容器平台价值"><a href="#容器平台价值" class="headerlink" title="容器平台价值"></a>容器平台价值</h2><p><strong>容器云和传统的虚拟机比有什么优势呢？</strong></p>
+<p>解答1：</p>
+<p>优势：</p>
+<p>a. 更快，可以实现秒级启动。</p>
+<p>b. 更轻，更加轻量，往往一个容器镜像只有几十兆，可以快速在主机之间迁移，而虚拟机镜像往往是几个G。</p>
+<p>c. 更强，性能更好。</p>
+<p>并且有了Kubernetes容器编排引擎后，应用的水平扩展、服务发现、滚动升级、应用高可用等等特性变得非常容易实现。</p>
+<p>基于此容器可以大大降低于低企业成本，资源成本及运维管理成本。当然容器也有较虚拟机不足的地方。</p>
+<p>劣势：</p>
+<p>a. 容器共用内核，隔离性低于虚拟机，也不够虚拟机安全。</p>
+<p>b. 跨平台性低于虚拟机，容器只能运行在linux系统，而虚机可运行在windows&#x2F;Linux&#x2F;Unix系统。</p>
+<p>解答2：</p>
+<p>拿容器和虚拟机比较更准确，不是容器云</p>
+<p>容器优势明显，缺点也很明显</p>
+<p>容器轻量，可快速弹性伸缩，适合部署轻量的分布式应用或服务，但带来管理的复杂性，需要借助容器管理调度工具或者实现的容器云平台</p>
+<p>标准化，容器引擎使基础设施标准化，容器镜像使应用交付标准化，容器使运维调度管理标准化，容器镜像仓库使分发部署标准化</p>
+<p>一致性，容器的标准化使开发、测试、生产环境具备一致性，可以快速构建一致性的环境</p>
+<p>维护简单，一个容器通常部署一个服务或实例，而虚拟机通常很多服务和应用，所以其准备、启动、维护都相对简单很多</p>
+<p>另外需要强调一点的是，容器并不节省资源，在容器规模达到一定程度，能实现资源分时共享时才能节省资源</p>
+<p>解答3：</p>
+<p>轻量级，资源利用率高扩展容易，最重要的是和微服务结合的好，当然用了PAAS以后你的蓝绿发布，应用构建，灰度发布都更简单</p>
+<p><strong>传统应用是否应该迁移到容器环境，有没有意义，有什么值得参考的迁移方法论？</strong></p>
+<p>解答1：</p>
+<p>不同应用有不同的要求，比如稳定性、可靠性、可扩展性等，在迁移之前需要明确容器是否满足应用的要求。应用迁云或迁容器云需要遵循相应的原则和方法，难以一概论之，具体的应用需要根据实际确定具体的方案</p>
+<p>解答2：</p>
+<p>如果是传统应用做容器话的迁移，那没啥方法轮，如果是为服务改造有很多方法论，比如 绞杀模式 （Strangler） 以及 修缮者模式</p>
+<h2 id="容器平台架构方案"><a href="#容器平台架构方案" class="headerlink" title="容器平台架构方案"></a>容器平台架构方案</h2><p><strong>传统架构模式和云与docker模式结合后如何解决网络和SDN的问题？</strong></p>
+<p>解答1：</p>
+<p>我们采用的方案是，容器建设在虚拟机或者物理机上，集群中的容器使用SDN网络方案，互相间通讯，同时也可以与宿主机同一网络的主机通信。但是集群外部机器要访问集群内部的服务，只能通过route&#x2F;ingress&#x2F;NodePort。</p>
+<p>pod与pod之间网络通过networkpolicy做网络隔离，主机与主机之间的使用传统的防火墙来做隔离。</p>
+<p>另外macvlan网络方案，可以让pod与宿主机在同一个网络，这种方式下容器间的网络隔离与传统方式一样，每个容器可以当作一个单独的主机。但这种方案生产应用并不常见。</p>
+<p>解答2：</p>
+<p>目前来看没有什么问题啊，传统网络和SDN的问题本身就可以通过网络厂家的设备来解决，如果你说的是PAAS自身的SDN如何同集群外的服务互联互通，那就是通过router来实现（或者是ingress和egress）。安全域的问题更多的是通过多集群和设计的问题来规避。</p>
+<p><strong>在私有云，在容器环境下安全区域怎么划分，是否设置DMZ区域？</strong></p>
+<p>解答1：</p>
+<p>可以考虑部署多个容器集群来设置不同区域。测试环境、生产环境完全隔离的情况下，可考虑建设DMZ区以实现可能需要的镜像流转等场景。</p>
+<p>解答2：</p>
+<p>安全组网在容器环境下并不需要改变，按照安全规范实施即可，确保安全优先</p>
+<p>解答3：</p>
+<p>为了安全，可以部署多个容器集群来设置不同区域。一个集群作为DMZ区，另一个集群作为核心区，还可以有一个互联区的集群。</p>
+<p>解答4：</p>
+<p>在多个网络区域布署不同的容器集群，DMZ，业务区可以分别多套集群，做为多可用区，提高可用性</p>
+<p><strong>容器云是否有和SDN集成的方案？</strong></p>
+<p>解答1：</p>
+<p>有很多，但是界面或者说管理能力展示的集成需要自己做，也就是openshift 并不会有第三方SDN的管理功能，通常来说只要这个SDN厂家有CNI的呃插件，那么OCP4 就可以和他集成，当然如果需要提供售后支持的话，还需要该SDN厂家和红帽做认证。</p>
+<p>解答2：</p>
+<p>有啊 比如和neutron集成 你可以根据需要自己开发cni的插件，开源实现里面也有kury（python实现）</p>
+<p><strong>虚拟机与容器并行承载同一套应用系统是否可行？</strong></p>
+<p>解答1：</p>
+<p>负载均衡实现虚拟机应用与容器应用共同支撑业务系统, 这个业务场景没有先例</p>
+<p>既然上容器就需要服务治理等一系列微服务框架运维,</p>
+<p>vm技术和容器技术对应用来说如果不进行微服务化改造, 是没有任何区分的,</p>
+<p>所以你这个场景 是可以实现但 vm 会比 容器快很多, 容器需要多层网络转换</p>
+<p>解答2：</p>
+<p>我们公司的业务生产环境便是虚拟机与容器并行，容器中运行的是无状态的app及前端静态界面，而中间件及数据库等仍然运行在虚拟机中。</p>
+<p>解答3：</p>
+<p>完全没有问题，简单的你可以看做两个虚拟数据中心，分别部署一套应用系统，前端负载均衡器实现负载分发。所以部署在容器或者虚拟机对前端是不可见的，只要可访问就行</p>
+<p><strong>如何按照网络隔离区域对容器集群规划？</strong></p>
+<p>解答：</p>
+<p>这个主要看公司对网络安全的要求和成本的平衡。</p>
+<p>a 方案每个区都部署一套集群的话，安全性高，但成本高，包括资源成本及维护成本等。</p>
+<p>b 方案成本低，也能满足一定的隔离要求</p>
+<p>开发测试环境一般更偏向于使用b方案，k8s&#x2F;openshift网络支持多租户，能实现软隔离，及通过给节点作标记Label，定向调度的方式就能够满足隔离的要求。</p>
+<p>但是生产环境是需要单独构建集群与开发测试环境隔离的。</p>
+<p><strong>如何保障容器镜像的安全防护？</strong></p>
+<p>解答1：</p>
+<p>我们使用的是集成在harbor中的clair容器镜像静态扫描工具。它会定期同步公共源镜像漏洞数据，并对harbor镜像仓库中的镜像做扫描。如果发现有问题会发出通知，且也支持webhook的方式对接公司统一的告警平台。</p>
+<p>解答2：</p>
+<p>红帽又一款产品叫QUAY可以做到你提到的所有功能，更详细的信息还请看红帽工程师的博客： <a target="_blank" rel="noopener" href="http://www.10tiao.com/html/360/201806/2663487906/1.html">http://www.10tiao.com/html/360/201806/2663487906/1.html</a></p>
+<h2 id="容器平台应用"><a href="#容器平台应用" class="headerlink" title="容器平台应用"></a>容器平台应用</h2><p><strong>容器平台、微服务平台、devops平台在规划建设的时候如何能有序整合起来？</strong></p>
+<p>解答1：</p>
+<p>容器平台是DevOps中的一部分， 不需要微服务平台，微服务部署于容器平台，在容器平台实现微服务管理和治理能力</p>
+<p>解答2：</p>
+<ol>
+<li>容器平台与服务治理在以下维度相同，需要从统一化进行管理：1、应用管理；2、服务管理；3、实例管理；4、聚合管理；采用统一权限中心管理，数据权限与操作权限灵活设置，以用户+权限定义产品形态和管理范畴。平台管理（重点在于资源管理），租户管理（重点在于应用管理和服务治理能力）。</li>
+<li>在建设DevOps的过程中，需要结合企业自身开发运维的流程，与容器云与微服务治理平台的结合的过程中，更多的考虑整体DevOps过程中需要实现的场景，而不是仅仅考虑CICD。</li>
+</ol>
+<p>解答3：</p>
+<p>容器平台更多的是规范运维操作以及故障处理，微服务跟多的是做开发规范，DevOps工作的是工作流工具链的梳理，三个各有侧重点。</p>
+<p>解答4：</p>
+<p>从不同的角度看才有了容器平台、微服务平台、devops平台。它们之间并不是独立的平台。</p>
+<p>首先，容器平台是基础设施，微服务平台和devops平台部署在上面。</p>
+<p>其次，devops平台建设过程中，需要考虑微服务架构，采用不同的方案在构建devops流水线时也会有所不同。</p>
+<p>最后，如果要做持续部署的话，需要考虑公司的安全规范与流程规范。</p>
+<p>以下是我们的实践：</p>
+<ol>
+<li>分别部署了开发测试容器集群与生产容器集群。</li>
+<li>devops工具链与流水线构建只在开发测试环境上，构建与测试完成后，通过人工审核后才允许将镜像同步到生产集群，再单独走部署流水线。</li>
+<li>统一微服务架构，及规范。我们互联网应用都采用spring cloud微服务架构，技术统一后devops流水线也方便统一及优化、维护。</li>
+</ol>
+<p><strong>容器平台上生产的可靠性及容器平台与devops能否对接？</strong></p>
+<p>解答1：</p>
+<p>技术上是完全可行的，还需要考虑一些非技术的因素。</p>
+<p>由于生产环境的特殊性，公司会有很多复杂的安全规范及流程规范，它们限制devops直接对接生产环境。这个其实与是否在容器平台无关。</p>
+<p>安全规范、流程规范，很多公司是一条红线，特别是金融行业，因为多年来正是遵循它们才保证了业务的安全可靠，还有各种认证、审计的需要。</p>
+<p>当然技术和规范也都是与时俱进，不断发展的。现在有些公司把流程规范开始融入到持续部署的流程中了，包括临时授权等，也都可以作为流水线中的一个环节。</p>
+<p>解答2：</p>
+<p>容器平台是devops的一部分，devops不是一个平台</p>
+<p>需求提议、项目管理、开发测试、部署交付、运维运营、监控反馈、持续改进，容器平台的定位和价值在这些闭环过程中。</p>
+<p><strong>如何更好地实现现有系统的容器化迁移？</strong></p>
+<p>解答：</p>
+<p>这个真没有，你不能指望平台解决应用的问题</p>
+<p><strong>部署流计算框架和机器学习平台在红帽容器平台上有什么要注意的？</strong></p>
+<p>解答：</p>
+<p>主要是用到GPU的话，务必做好PAAS集群和GPU的配置，其他没有太多需要注意的，很多框架已经在k8s上部署运行了很长时间了。OCP没有额外的要求</p>
+<h2 id="Openshift4特性"><a href="#Openshift4特性" class="headerlink" title="Openshift4特性"></a>Openshift4特性</h2><p><strong>Openshift 4推荐的直接部署物理机还是虚拟机？为物理机部署提供了什么便利？</strong></p>
+<p>解答：</p>
+<p>Openshift4 部署在物理机和虚拟机都行，但是红帽推荐部署在虚拟化平台上，因为OCP4以后增加了很多基础架构的管理功能，其中就包括针对openshift 节点的自动扩容和缩容。很有用</p>
+<p><strong>OpenShift 4对单集群多租户的支持怎么样？</strong></p>
+<p>解答：</p>
+<p>OpenShift中不仅有用户,还有用户组。OpenShift的账号管理最简单是使用HtPasswd方式，同时OpenShift可以与多种系统账号对接，如OpenLdap，KeyStore，GitLab，GitHub，OpenID等。</p>
+<p><strong>OpenShift 4对Serverless的支持情况？</strong></p>
+<p>解答：</p>
+<p>红帽ocp4 支持knative 啊，不过目前应该是beta版。具体请看 <a target="_blank" rel="noopener" href="https://github.com/openshift-knative/docs/">https://github.com/openshift-knative/docs/</a></p>
+<p><strong>正在生产运行的OpenShift3是否可以原地升级到OpenShift4？如果不行，该如何升级？</strong></p>
+<p>解答：</p>
+<p>不行，未来从OCP3系列到OCP4系列都是迁移，当然红帽会有官方的迁移工具来帮助客户做这个事情，但是也需要准备停机窗口，并且两套集群一个是老得ocp3 集群一个是ocp4集群。</p>
+<p><strong>金融行业对安全非常重视，OpenShift4和RHEL8在安全方面改进的体现有哪些？</strong></p>
+<p>解答：</p>
+<p>openshift一直关注安全 我们的10层安全体系从基础设施层到标准化基础中间件镜像都在层层为客户企业安全进行保障。ocp4的比以前多了coreos作为操作系统选项：CoreOS裁减了传统linux中无用的软件，减少了依赖冲突和attack surface，系统更小、更紧凑、更安全。另外 用来取代传统docker容器的另一种选择其中podman是最重要的组件之一。其主要优势是无需docker守护进程，以普通用户形式启动，是一种更安全的容器管理器。</p>
+<h2 id="OpenShift与其它容器平台比较"><a href="#OpenShift与其它容器平台比较" class="headerlink" title="OpenShift与其它容器平台比较"></a>OpenShift与其它容器平台比较</h2><p><strong>Openshift与Rancher如何选择，是否有可比较性？</strong></p>
+<p>解答：</p>
+<p>OpenShift有开源版本，是免费的。</p>
+<p>它们俩各有各的特点。</p>
+<p>OpenShift:</p>
+<ol>
+<li>设计了ImageStream，BuildConfig与DeploymentConfig等资源对象，及s2i构建方法，方便了开发者实施Devops。</li>
+<li>添加了一个内部镜像仓库。</li>
+<li>使用Route资源，为应用提供了一个公共统一的访问入口。类似于Ingress，使用起来比Ingress方便。</li>
+<li>提供了一个友好的可视化界面。</li>
+<li>对容器有更多的安全策略，更安全</li>
+<li>有更高的可靠性。 作为RedHat的企业级容器平台，红帽会对集群做详细的测试，修复bug。</li>
+<li>一般版本会落后K8S一个大版本</li>
+<li>一般为只管理单个OpenShift集群</li>
+</ol>
+<p>Rancher:</p>
+<ol>
+<li>具有良好的界面</li>
+<li>方便管理多个K8S集群</li>
+<li>对网络插件的选择会比OpenShift更加灵活</li>
+<li>与K8S版本同步，及时拥有K8S最新的特性</li>
+</ol>
+<p>个人认为，单集群管理使用OpenShift，更稳定，更简单，也更安全，而如果是要管理多集群，选择Rancher。不过OpenShift 4起红帽也支持多集群管理，但还不能私有化部署。</p>
+<p>两种方案都有不少的企业客户选择，因为都是基于K8S， 功能上都差不多 。不管是构建DevOps流水线，还是生产部署原生应用上。</p>
+<p><strong>openshift 与其他容器云厂商产品的异同点有哪些？</strong></p>
+<p>解答：</p>
+<p>上一个问题中介绍了Openshift与Rancher的差异，可以作为参考。</p>
+<p>还有需要补充一点的是，红帽是继google和社区之后k8s最大的贡献者，不少K8S中的特性是来自于OpenShift，比如说RBAC。同时目前很热的operator是coreos的产品，而coreos现在也是红帽的了。</p>
+<p><strong>红帽容器化混合云跟其他友商的方案在稳定性、安全性上有哪些不同，是否有更好的表现？</strong></p>
+<p>解答：</p>
+<p>容器就是linux，红帽的RHEL是最安全的，因此红帽的PAAS平台必然也是最安全的，当然红帽的研发策略一直是做减法，把最重要和最稳定的特性和代码放到自己的企业版，因此在你说的稳定性和安全性上，红帽一定是全球第一，但是特性上不一定，国内创业公司都在做加法，所以特性上都会比红帽PAAS多那么一点</p>
+<h2 id="Redhat"><a href="#Redhat" class="headerlink" title="Redhat"></a>Redhat</h2><p><strong>RHEL8否对6上的命令还能继续兼容，比如服务命令，6迁移到8有什么注意点？</strong></p>
+<p>解答1：</p>
+<p>rhel8.x 在上线前 一般会等到8.3 第三个维护版本进行上线系统更新</p>
+<p>目前在8.0和8.1还有8.2不建议使用</p>
+<p>而且从6版本直接升级到8版本,跨度过大业务系统是否支持,都要考虑</p>
+<p>只是命令变化不会有太多技术问题,修改下运维脚本没问难度</p>
+<p>解答2：</p>
+<p>命令会有所改变，关键是8 比6 新太多了，迁移前务必做应用测试，然后再迁移</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/2970a12120e5.html">https://xhua.eu.org/posts/2970a12120e5.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/bf5cf0d71deb.html" title="企业级容器云平台建设之功能汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">企业级容器云平台建设之功能汇总</div></div><div class="info-2"><div class="info-item-1">  多集群管理与运维 多区建设（DMZ&#x2F;业务区&#x2F;核心区） 应用商店（模板管理、Operator管理等） 集群监控、告警、日志管理 权限管理，多租户管理&#x2F;账号管理 管理员资源分配 资源列表及管理 应用管理，部署&#x2F;更新&#x2F;下线 应用多集群部署，灰度发布、蓝绿部署 应用网络方案&#x2F;存储&#x2F;运行权限&#x2F;南北流量方案选择 NodePort端口管理 网络隔离策略控制 集群边界路由管理 DNS域名申请管理 自动化运维，集群巡检，集群扩缩容，集群备份 审批流程管理 审计管理 DevOps流水线 容器安全与镜像安全 业务网与管理网，多网络平面 外部负载均衡管理器 镜像仓库，高可用，多区域镜像仓库同步 镜像仓库漏洞扫描、镜像签名 应用日志管理 APM应用性能监控  </div></div></div></a><a class="pagination-related" href="/posts/fe3ee29ea046.html" title="从0开始构建CI-CD持续集成流水线[Openshift]"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">从0开始构建CI-CD持续集成流水线[Openshift]</div></div><div class="info-2"><div class="info-item-1">开始前的话 完成一只大象装进冰箱需要几步？三步： 1. 有一个冰箱；2. 有一只大象；3. 把大象装进冰箱 构建CI&#x2F;CD流水线[Openshift]需要几步？三步： 1. 有Openshift平台；2. 部署CI&#x2F;CD流水线应用；3. 启动流水线  </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/863aac1da72a.html" title="OpenShift-Route会话保持与负载均衡策略"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route会话保持与负载均衡策略</div></div><div class="info-2"><div class="info-item-1">Route会话保持OpenShift Router是基于Haproxy反向代理实现的，客户端请求与后端应用POD通过cookie来实现会话保持。  默认是开启会话保持的，基于cookie的会话保持。 如果设置haproxy.router.openshift.io/disable_cookies为True，将会禁用基于cookie的会话保持，而使用balance的负载策略。  此过程分为两个阶段：第一次请求阶段、再次发起请求阶段 第一次请求阶段客户端发起第一次请求时，Router会给返回的数据中添加一条指定的cookie。  客户端请求到达Router节点。 Router节点通过默认的负载均衡策略选择后端应用POD。 后端应用POD返回数据到Router节点。 Router根据后端应用POD,给返回的数据包set-cookie: cookiename[HASH值]&#x3D;cookievalue(HASH值），有效期为SESSION(浏览器客户端关闭前有效)。  再次发起请求阶段客户端再次发起请求时，会带上第一次Router设置的cookie,Router根据该cookie值选择...</div></div></div></a><a class="pagination-related" href="/posts/10615d84af1c.html" title="应用日志方案"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">应用日志方案</div></div><div class="info-2"><div class="info-item-1">    原生方式 DaemonSet方式 Sidecar方式    集日志类型 标准输出 标准输出 文件   部署运维 低，原生支持 一般，需维护DaemonSet 较高，需要为每个容器采集日志的   日志分类存储 无法实现 可通过容器、路径映射实现 每个Pod可单独配置，灵活性高   支持集群规模 本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制 取决于配置数 无限制   资源占用 低，docker引擎提供 较低，每个节点运行一个容器 较高，每个Pod运行一个容器   查询便捷性 低，grep原始日志 较高，自定义查询、统计 高，根据业务特点定制   适用场景 测试、POC等非生产环境 日志分类明确的集群 大型、混合型集群   </div></div></div></a><a class="pagination-related" href="/posts/95364a8cb9ef.html" title="OpenShift日志级别相关"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift日志级别相关</div></div><div class="info-2"><div class="info-item-1">总共需要考虑的服务日志有  OpenShift 服务日志 Docker 守护进程日志 Etcd 日志 命令行日志 Pod&#x2F;容器日志 OpenShift Builder 日志 OpenShift 路由器日志  OpenShift服务日志 docker的日志级别docker日志级别总共有以下：”debug”, “info”, “warn”, “error”, “fatal”五个。docker –log-level默认为info  参考文章https://access.redhat.com/zh_CN&#x2F;solutions&#x2F;3345021 </div></div></div></a><a class="pagination-related" href="/posts/de0ae4c0444d.html" title="快速使用SonarQube对应用进行静态代码扫描"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">快速使用SonarQube对应用进行静态代码扫描</div></div><div class="info-2"><div class="info-item-1">1、启动SonarQube服务 12$ mkdir -p /sonar/&#123;conf,data,extensions&#125;$ docker run -v /sonar/conf:/opt/sonarqube/conf -v /sonar/data:/opt/sonarqube/data -v /sonar/extensions:/opt/sonarqube/extensions -p 9000:9000 xhuaustc/sonarqube:7.9.1 本地目录为~/Downloads/sonar/2、登录SonarQube服务端：http://127.0.0.1:9000/projects，登录用户名：admin，密码：admin3、创建新的项目,获得projectKey与token值4、下载对应版本的sonar scanner工具：SonarScanner下载地址5、请在代码目录中执行扫描工具 123456/xx/bin/sonar-scanner \  -Dsonar.projectKey=test \  -Dsonar.sources=. \  -Dsona...</div></div></div></a><a class="pagination-related" href="/posts/3fb7f39636aa.html" title="Openshift-F5集成（续）——实现灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（续）——实现灰度发布</div></div><div class="info-2"><div class="info-item-1">上篇：Openshift-F5集成（南北流量走F5）中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。 为什么要使用灰度发布 什么是灰度发布灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  灰度发布的价值使用灰度发布可以在产品正式上线前针对特定一些目标用户进行开放，获得这些目标用户的反馈，及早发现问题，修复问题，完善产品的不足。如果发现新的版本价值不大，能够及早更换思路，避免产品直接上线后产生不好的影响。  Openshift Route自带的灰度发布功能 Openshift Route自带的灰度发布，是通过Route下“挂载”两个或两个以上Service，并调整各个Service的权值进行控制流量的分布。 例如...</div></div></div></a><a class="pagination-related" href="/posts/e57e3c101040.html" title="云原生简介"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">云原生简介</div></div><div class="info-2"><div class="info-item-1">什么是云原生云原生（Cloud Native）的概念由Pivotal的Matt Stine于2013年首次提出。它是Matt Stine根据多年的架构和咨询经验总结出来的一个思想集合，并得到社区的不断完善和补充，包括DevOps、持续交付、微服务、敏捷基础设施和12要素等几大主题。包括根据业务能力对公司进行文化、组织架构的重组与建设、方法论与原则、还有具体的操作工具。将云计算从传统的以资源为中心，改变为以应用为中心，聚焦于业务，从而满足应用快速迭代的要求。 CNCF（Cloud Native Computing Foundation）云原生计算基金会2015年把云原生定义为三个方面  应用容器化 面向微服务架构 应用支持容器的编排调度  随着CNCF中的项目越来越多，原先的定义已经限制了云原生生态的发展，于是更新了定义  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦合系统。结合可靠的自动化手段，云原生技术使工...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E4%BB%B7%E5%80%BC"><span class="toc-text">容器平台价值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E6%9E%B6%E6%9E%84%E6%96%B9%E6%A1%88"><span class="toc-text">容器平台架构方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E5%BA%94%E7%94%A8"><span class="toc-text">容器平台应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openshift4%E7%89%B9%E6%80%A7"><span class="toc-text">Openshift4特性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenShift%E4%B8%8E%E5%85%B6%E5%AE%83%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E6%AF%94%E8%BE%83"><span class="toc-text">OpenShift与其它容器平台比较</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Redhat"><span class="toc-text">Redhat</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

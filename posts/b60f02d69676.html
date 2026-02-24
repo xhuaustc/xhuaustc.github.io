@@ -1,0 +1,238 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Ceph集群监控Prometheus+Grafana | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Ceph是一个分布式存储系统。同时Ceph除了能提供块存储，还可以提供文件存储、对象存储。 这里不介绍如何搭建Ceph及原理，只记录使用Ceph_exporter + Prometheus + Grafana 来对Ceph集群作监控的部署过程 Ceph集群有三种节点：Admin + Monitor + Node  Admin节点上部署Ceph_exporter 安装需要的软件golang  1y">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ceph集群监控Prometheus+Grafana">
+<meta property="og:url" content="https://xhua.eu.org/posts/b60f02d69676.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Ceph是一个分布式存储系统。同时Ceph除了能提供块存储，还可以提供文件存储、对象存储。 这里不介绍如何搭建Ceph及原理，只记录使用Ceph_exporter + Prometheus + Grafana 来对Ceph集群作监控的部署过程 Ceph集群有三种节点：Admin + Monitor + Node  Admin节点上部署Ceph_exporter 安装需要的软件golang  1y">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.635Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Ceph集群监控Prometheus+Grafana",
+  "url": "https://xhua.eu.org/posts/b60f02d69676.html",
+  "image": "https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.635Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/b60f02d69676.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Ceph集群监控Prometheus+Grafana',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Ceph集群监控Prometheus+Grafana</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Ceph集群监控Prometheus+Grafana</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.635Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ul>
+<li>Ceph是一个分布式存储系统。同时Ceph除了能提供块存储，还可以提供文件存储、对象存储。</li>
+<li>这里不介绍如何搭建Ceph及原理，只记录使用Ceph_exporter + Prometheus + Grafana 来对Ceph集群作监控的部署过程</li>
+<li>Ceph集群有三种节点：Admin + Monitor + Node</li>
+</ul>
+<h3 id="Admin节点上部署Ceph-exporter"><a href="#Admin节点上部署Ceph-exporter" class="headerlink" title="Admin节点上部署Ceph_exporter"></a>Admin节点上部署Ceph_exporter</h3><blockquote>
+<p>安装需要的软件golang</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install golang git librados2-devel librbd1-devel -y</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>设置go的环境变量</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># /etc/profile.d/go.sh</span><br><span class="line">export GOROOT=/usr/lib/golang</span><br><span class="line">export GOBIN=$GOROOT/bin</span><br><span class="line">export GOPATH=/home/golang</span><br><span class="line">export PATH=$PATH:$GOROOT/bin:$GOPATH/bin</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /etc/profile.d/go.sh</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>安装ceph_exporter</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get -u github.com/digitalocean/ceph_exporter</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>运行ceph_exporter</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/lib/golang/bin/</span><br><span class="line">nohup ./ceph_exporter &amp;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p> 检验结果</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl 127.0.0.1:9128</span><br></pre></td></tr></table></figure>
+<h3 id="Prometheus上添加ceph-exporter的job"><a href="#Prometheus上添加ceph-exporter的job" class="headerlink" title="Prometheus上添加ceph_exporter的job"></a>Prometheus上添加ceph_exporter的job</h3><blockquote>
+<p>添加scraper的job</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># prometheus.yml</span><br><span class="line">...</span><br><span class="line">scrape_configs:</span><br><span class="line">  - job_name: &#x27;ceph&#x27;</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [&#x27;ceph_host:9128&#x27;]</span><br><span class="line">        labels:</span><br><span class="line">          instance: ceph</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>重启prometheus</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pkill -9 prometheus</span><br><span class="line">nohup ./prometheus &gt;/dev/null 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>检验结果</p>
+</blockquote>
+<p>检查prometheus的status-&gt;targets中Ceph(1&#x2F;1up)</p>
+<h3 id="Grafana中添加Ceph监控展示"><a href="#Grafana中添加Ceph监控展示" class="headerlink" title="Grafana中添加Ceph监控展示"></a>Grafana中添加Ceph监控展示</h3><blockquote>
+<p>下载Ceph集群监控配置json：<a target="_blank" rel="noopener" href="https://grafana.com/dashboards/917">Ceph-Cluster Dashboard</a></p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Revisions -&gt; Download</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>展示最终效果图</p>
+</blockquote>
+<p><img src="https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg" alt="ceph-cluster.JPG">  </p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/b60f02d69676.html">https://xhua.eu.org/posts/b60f02d69676.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/524b504cfed1.html" title="Confluence容器化-+-Openshift-Confluence模板创建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Confluence容器化-+-Openshift-Confluence模板创建</div></div><div class="info-2"><div class="info-item-1">因为应用容器化部署已经是标准化的流程，无需再详篇介绍具体的部署流程。所以本文只提供相关的配置文档。如果对部署过程不了解的同学，请先自学容器基础。镜像已经创建好了，如下 12docker.io/xhuaustc/confluence:6.7.1docker.io/xhuaustc/atlassian-mysql:5.7 镜像构建配置mysql镜像12345678910111213141516171819# my.cnf[mysqld]# Disabling symbolic-links is recommended to prevent assorted security riskssymbolic-links = 0# http://www.percona.com/blog/2008/05/31/dns-achilles-heel-mysql-installation/skip_name_resolve# http://www.chriscalender.com/ignoring-the-lostfound-directory-in-your-datadir/ignore-db-...</div></div></div></a><a class="pagination-related" href="/posts/e6f145ab3bbb.html" title="Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储"><img class="cover" src="https://img.xhua.eu.org/4328c75cf6fc869f4b312ec595d7c5ea52567c3ba061d57733a7ddb5f01cbf25.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储</div></div><div class="info-2"><div class="info-item-1">Ceph分布式块存储部署机器列表   名称 核数 内存 ip hostname 外挂磁盘大小（G）    管理节点admin 2 4 192.168.1.2 admin.ceph.com    监控节点monitor 2 4 192.168.1.3 monitor.ceph.com    存储节点node1 2 4 192.168.1.4 node1.ceph.com 100G   存储节点node2 2 4 192.168.1.5 node2.ceph.com 100G   部署Ceph RBD 1、给每台机器设置hostname  12345# 设置hostname  hostnamectl --static set-hostname admin.ceph.com   #192.168.1.2 hostnamectl --static set-hostname monitor.ceph.com #192.168.1.3 hostnamectl --static set-hostname node1.ceph.com   #192.168.1.4 hostnamectl --s...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/37f8f369f5b6.html" title="白化Kubernetes网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">白化Kubernetes网络</div></div><div class="info-2"><div class="info-item-1">引自：http://www.10tiao.com/html/217/201708/2649694873/1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清本质，用形象的例子展示Weave、Flannel、Calico和Romana等网络解决方案背后的原理。  这次讲一讲容器集群中的网络。其实不同的容器集群解决方案，在网络方面的核心原理都是相似的，只不过这次我们将以Kubernetes为线索，来窥斑见豹的一睹容器网络的发展过程。  我是来自ThoughtWorks的林帆，我们从Docker的0.x版本开始就在对容器的应用场景进行探索，积累了一线的容器运用经验。这次分享会用简洁易懂的方式告诉大家我们对容器网络方面的一些知识归纳。  初入容器集群的人往往会发现，和单节点的容器运用相比，容器的网络和存储是两个让人望而却步的领域。在这些领域里，存在...</div></div></div></a><a class="pagination-related" href="/posts/b9fba3e32e8f.html" title="OpenShift应用补丁检查与升级"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift应用补丁检查与升级</div></div><div class="info-2"><div class="info-item-1">OpenShift版本补丁查看：https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; -------------------------------------------------    File Name：     get_update_v3.11 ------------------------------------------------- &quot;&quot;&quot;  last_index=&quot;RHSA-2020:2992&quot;  last_flag = False  import requests from pyquery import PyQuery  url=&quot;https://docs.openshift.com/container-platform/3.11/release_note...</div></div></div></a><a class="pagination-related" href="/posts/3be580fc375b.html" title="oc的常用命令整理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">oc的常用命令整理</div></div><div class="info-2"><div class="info-item-1"> oc process   oc new-app   oc new-build   oc create imagestream   oc run   oc create -f    oc policy add-role-to-user edit system:serviceaccount:jenkins:jenkins -n dev   oc adm policy add-scc-to-user anyuid -z gitlab -n gitlab   oc new-project   oc set volumes   oc expose   oc start-build   oc rollback   oc rollout   oc rsync   oc rsh   oc set triggers dc&#x2F;flask-app-s2i –remove-all &amp;&amp; oc set triggers dc&#x2F;flask-app-s2i –from-image&#x3D;flask-app-s2i:v1 -c flask-app-s2i &amp;&am...</div></div></div></a><a class="pagination-related" href="/posts/7a15051d8249.html" title="OpenShift节点kubelet证书过期异常的解决步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift节点kubelet证书过期异常的解决步骤</div></div><div class="info-2"><div class="info-item-1"> 环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig fileatomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new oneatomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed...</div></div></div></a><a class="pagination-related" href="/posts/420369a1c884.html" title="Openshift-Build构建详解"><img class="cover" src="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Build构建详解</div></div><div class="info-2"><div class="info-item-1">Build是什么Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。 Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。 Openshift构建有四种主要策略  Docker 构建 源代码构建（S2i) 自定义构建 Pipeline构建可以实现复杂的工作流  Docker构建、S2i构建、Pipeline构建是默认支持的。 不同的构建有六种源  Git Dockerfile Binary Image Input secrets External artifacts  其中Binary和Git不能同时使用。 Dockerfile和Image可以单独使用，也可以与Git或Binary一起使用。 如果使用Binary作为BuildConfig.spec.source.type，只能通过命令行工具oc start-build来构建。 BuildConfig实例 123456789101112131415161718192021222324252627282930kind: ...</div></div></div></a><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Admin%E8%8A%82%E7%82%B9%E4%B8%8A%E9%83%A8%E7%BD%B2Ceph-exporter"><span class="toc-text">Admin节点上部署Ceph_exporter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Prometheus%E4%B8%8A%E6%B7%BB%E5%8A%A0ceph-exporter%E7%9A%84job"><span class="toc-text">Prometheus上添加ceph_exporter的job</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Grafana%E4%B8%AD%E6%B7%BB%E5%8A%A0Ceph%E7%9B%91%E6%8E%A7%E5%B1%95%E7%A4%BA"><span class="toc-text">Grafana中添加Ceph监控展示</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

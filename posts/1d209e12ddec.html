@@ -1,0 +1,319 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>使用Python开发自己的MCP服务：AI能力扩展入门指南 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引言随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Python开发自己的MCP服务：AI能力扩展入门指南">
+<meta property="og:url" content="https://xhua.eu.org/posts/1d209e12ddec.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引言随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg">
+<meta property="article:published_time" content="2025-04-16T13:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.628Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI开发">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="大语言模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "使用Python开发自己的MCP服务：AI能力扩展入门指南",
+  "url": "https://xhua.eu.org/posts/1d209e12ddec.html",
+  "image": "https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg",
+  "datePublished": "2025-04-16T13:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.628Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/1d209e12ddec.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '使用Python开发自己的MCP服务：AI能力扩展入门指南',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">使用Python开发自己的MCP服务：AI能力扩展入门指南</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">使用Python开发自己的MCP服务：AI能力扩展入门指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-04-16T13:30:00.000Z" title="发表于 2025-04-16 21:30:00">2025-04-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.628Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/%E5%BC%80%E5%8F%91/">开发</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的能力。</p>
+<h2 id="什么是MCP？"><a href="#什么是MCP？" class="headerlink" title="什么是MCP？"></a>什么是MCP？</h2><h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h3><p>模型上下文协议（MCP）是一个开放标准，用于AI应用程序与大型语言模型之间的通信。它定义了一套标准接口，使应用程序能够向模型提供上下文信息，并允许模型调用应用程序暴露的工具。</p>
+<p>简单来说，MCP就像是AI模型和外部世界之间的一座桥梁，让模型能够”看见”和”操作”外部的数据和功能。</p>
+<h3 id="为什么需要MCP？"><a href="#为什么需要MCP？" class="headerlink" title="为什么需要MCP？"></a>为什么需要MCP？</h3><p>想象一下，如果你正在与ChatGPT聊天，希望它能够：</p>
+<ul>
+<li>查询你的个人日历</li>
+<li>分析你的Excel数据</li>
+<li>控制你的智能家居设备</li>
+<li>从你的私有数据库中获取信息</li>
+</ul>
+<p>这些功能都需要AI模型能够访问外部系统和数据，而MCP正是为解决这一需求而生的。</p>
+<h2 id="MCP的核心组件"><a href="#MCP的核心组件" class="headerlink" title="MCP的核心组件"></a>MCP的核心组件</h2><p>MCP协议定义了三个核心原语，每一个都扮演着重要的角色：</p>
+<table>
+<thead>
+<tr>
+<th>原语</th>
+<th>控制权</th>
+<th>描述</th>
+<th>示例应用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Prompts（提示）</td>
+<td>用户控制</td>
+<td>用户可以选择调用的交互式模板</td>
+<td>快捷命令、应用菜单</td>
+</tr>
+<tr>
+<td>Resources（资源）</td>
+<td>应用程序控制</td>
+<td>应用程序管理的上下文数据</td>
+<td>文件内容、数据库记录</td>
+</tr>
+<tr>
+<td>Tools（工具）</td>
+<td>模型控制</td>
+<td>AI模型可调用的函数</td>
+<td>API请求、数据处理</td>
+</tr>
+</tbody></table>
+<p>这三种原语共同构成了MCP的基础，使模型能够以结构化的方式与外部世界交互。</p>
+<h2 id="准备工作：安装MCP-Python-SDK"><a href="#准备工作：安装MCP-Python-SDK" class="headerlink" title="准备工作：安装MCP Python SDK"></a>准备工作：安装MCP Python SDK</h2><p>在开始开发MCP服务之前，我们需要安装MCP的Python SDK。打开你的终端并运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install mcp</span><br></pre></td></tr></table></figure>
+
+<p>这个简单的命令将安装所有必要的依赖，让你能够立即开始开发。</p>
+<h2 id="创建你的第一个MCP服务"><a href="#创建你的第一个MCP服务" class="headerlink" title="创建你的第一个MCP服务"></a>创建你的第一个MCP服务</h2><p>让我们从一个简单的例子开始，创建一个能够执行基本数学运算的MCP服务。</p>
+<h3 id="基本加法计算器"><a href="#基本加法计算器" class="headerlink" title="基本加法计算器"></a>基本加法计算器</h3><p>创建一个名为<code>calculator.py</code>的文件，并添加以下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个名为&quot;简易计算器&quot;的MCP服务器</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;简易计算器&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个加法工具</span></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">a: <span class="built_in">int</span>, b: <span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Add two numbers together&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> a + b</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    mcp.run()</span><br></pre></td></tr></table></figure>
+
+<p>这段代码创建了一个简单的MCP服务，它提供了一个<code>add</code>工具，可以将两个数字相加。</p>
+<h3 id="运行你的MCP服务"><a href="#运行你的MCP服务" class="headerlink" title="运行你的MCP服务"></a>运行你的MCP服务</h3><p>现在，你可以在终端中运行这个服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">python calculator.py</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">mcp run calculator.py</span><br></pre></td></tr></table></figure>
+
+<p>一旦服务启动，它就可以被支持MCP的AI模型或应用程序使用了。</p>
+<h2 id="进阶：创建功能丰富的MCP服务"><a href="#进阶：创建功能丰富的MCP服务" class="headerlink" title="进阶：创建功能丰富的MCP服务"></a>进阶：创建功能丰富的MCP服务</h2><p>在了解了基础知识后，让我们创建一个更复杂的MCP服务，它包含了所有三种核心原语：提示、资源和工具。</p>
+<h3 id="多功能助手服务"><a href="#多功能助手服务" class="headerlink" title="多功能助手服务"></a>多功能助手服务</h3><p>创建一个名为<code>assistant.py</code>的文件，并添加以下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个名为&quot;多功能助手&quot;的MCP服务器</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;多功能助手&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个资源：当前时间</span></span><br><span class="line"><span class="meta">@mcp.resource(<span class="params"><span class="string">&quot;time://current&quot;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">current_time</span>() -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Return the current time as a resource&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> datetime.datetime.now().strftime(<span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个工具：掷骰子</span></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">roll_dice</span>(<span class="params">sides: <span class="built_in">int</span> = <span class="number">6</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Roll a dice with the specified number of sides&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> random.randint(<span class="number">1</span>, sides)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个工具：计算BMI</span></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">calculate_bmi</span>(<span class="params">weight_kg: <span class="built_in">float</span>, height_m: <span class="built_in">float</span></span>) -&gt; <span class="built_in">float</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Calculate BMI given weight in kg and height in meters&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> weight_kg / (height_m * height_m)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个提示：创建健康建议</span></span><br><span class="line"><span class="meta">@mcp.prompt()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">health_advice</span>(<span class="params">user_name: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Generate a prompt for health advice&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;请为<span class="subst">&#123;user_name&#125;</span>提供一些基于科学的健康生活方式建议。考虑饮食、运动和睡眠方面的建议。&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    mcp.run()</span><br></pre></td></tr></table></figure>
+
+<p>这个多功能助手服务提供了:</p>
+<ul>
+<li>一个资源：获取当前时间</li>
+<li>两个工具：掷骰子和计算BMI</li>
+<li>一个提示模板：生成健康建议</li>
+</ul>
+<h2 id="高级功能：整合外部API"><a href="#高级功能：整合外部API" class="headerlink" title="高级功能：整合外部API"></a>高级功能：整合外部API</h2><p>MCP服务的真正力量在于它能够将AI模型与外部系统和API集成。下面是一个示例，展示如何创建一个能够获取天气信息的MCP服务：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个名为&quot;天气助手&quot;的MCP服务器</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;天气助手&quot;</span>)</span><br><span class="line"></span><br><span class="line">API_KEY = <span class="string">&quot;your_api_key_here&quot;</span>  <span class="comment"># 替换为你的API密钥</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_weather</span>(<span class="params">city: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Get current weather for a specified city&quot;&quot;&quot;</span></span><br><span class="line">    url = <span class="string">f&quot;https://api.weatherapi.com/v1/current.json?key=<span class="subst">&#123;API_KEY&#125;</span>&amp;q=<span class="subst">&#123;city&#125;</span>&quot;</span></span><br><span class="line">    response = requests.get(url)</span><br><span class="line">    <span class="keyword">if</span> response.status_code == <span class="number">200</span>:</span><br><span class="line">        data = response.json()</span><br><span class="line">        temp_c = data[<span class="string">&quot;current&quot;</span>][<span class="string">&quot;temp_c&quot;</span>]</span><br><span class="line">        condition = data[<span class="string">&quot;current&quot;</span>][<span class="string">&quot;condition&quot;</span>][<span class="string">&quot;text&quot;</span>]</span><br><span class="line">        humidity = data[<span class="string">&quot;current&quot;</span>][<span class="string">&quot;humidity&quot;</span>]</span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;City: <span class="subst">&#123;city&#125;</span>, Temperature: <span class="subst">&#123;temp_c&#125;</span>°C, Condition: <span class="subst">&#123;condition&#125;</span>, Humidity: <span class="subst">&#123;humidity&#125;</span>%&quot;</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;Error fetching weather data: <span class="subst">&#123;response.status_code&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    mcp.run()</span><br></pre></td></tr></table></figure>
+
+<p>这个服务通过调用外部的天气API，为模型提供了获取实时天气信息的能力。</p>
+<h2 id="将MCP服务与现有应用集成"><a href="#将MCP服务与现有应用集成" class="headerlink" title="将MCP服务与现有应用集成"></a>将MCP服务与现有应用集成</h2><p>如果你已经有一个现有的Web应用程序，你可以将MCP服务集成到其中。以下是如何将MCP服务与Starlette（一个轻量级的ASGI框架）集成的示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> starlette.applications <span class="keyword">import</span> Starlette</span><br><span class="line"><span class="keyword">from</span> starlette.routing <span class="keyword">import</span> Mount</span><br><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建MCP服务</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;集成服务&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">greet</span>(<span class="params">name: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Generate a greeting message&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;Hello, <span class="subst">&#123;name&#125;</span>! Welcome to our integrated service.&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 将MCP服务挂载到Starlette应用</span></span><br><span class="line">app = Starlette(</span><br><span class="line">    routes=[</span><br><span class="line">        Mount(<span class="string">&#x27;/mcp&#x27;</span>, app=mcp.sse_app()),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    <span class="keyword">import</span> uvicorn</span><br><span class="line">    uvicorn.run(app, host=<span class="string">&quot;0.0.0.0&quot;</span>, port=<span class="number">8000</span>)</span><br></pre></td></tr></table></figure>
+
+<p>通过这种方式，你可以在不改变现有应用架构的情况下，为它添加AI能力。</p>
+<h2 id="高级概念：状态管理"><a href="#高级概念：状态管理" class="headerlink" title="高级概念：状态管理"></a>高级概念：状态管理</h2><p>有时，你需要在不同的请求之间保持状态。下面是一个简单的待办事项管理器，它展示了如何在MCP服务中管理状态：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp.server.fastmcp <span class="keyword">import</span> FastMCP</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个名为&quot;待办事项管理器&quot;的MCP服务器</span></span><br><span class="line">mcp = FastMCP(<span class="string">&quot;待办事项管理器&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用一个简单的列表来存储待办事项</span></span><br><span class="line">todos = []</span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add_todo</span>(<span class="params">task: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Add a new task to the todo list&quot;&quot;&quot;</span></span><br><span class="line">    todos.append(task)</span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;Task added: <span class="subst">&#123;task&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">list_todos</span>() -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;List all tasks in the todo list&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> todos:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;No tasks in the todo list.&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;\n&quot;</span>.join([<span class="string">f&quot;<span class="subst">&#123;i+<span class="number">1</span>&#125;</span>. <span class="subst">&#123;task&#125;</span>&quot;</span> <span class="keyword">for</span> i, task <span class="keyword">in</span> <span class="built_in">enumerate</span>(todos)])</span><br><span class="line"></span><br><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">complete_todo</span>(<span class="params">task_number: <span class="built_in">int</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Mark a task as completed and remove it from the list&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> todos <span class="keyword">or</span> task_number &lt;= <span class="number">0</span> <span class="keyword">or</span> task_number &gt; <span class="built_in">len</span>(todos):</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Invalid task number.&quot;</span></span><br><span class="line">    task = todos.pop(task_number - <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;Completed task: <span class="subst">&#123;task&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动服务器</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    mcp.run()</span><br></pre></td></tr></table></figure>
+
+<p>这个示例展示了如何使用全局变量来保存状态。在实际应用中，你可能需要使用数据库或其他持久化存储方案。</p>
+<h2 id="客户端与MCP服务的交互"><a href="#客户端与MCP服务的交互" class="headerlink" title="客户端与MCP服务的交互"></a>客户端与MCP服务的交互</h2><p>MCP不仅定义了服务器端的接口，还定义了客户端如何与这些服务交互。下面是一个简单的客户端示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> mcp <span class="keyword">import</span> ClientSession, StdioServerParameters</span><br><span class="line"><span class="keyword">from</span> mcp.client.stdio <span class="keyword">import</span> stdio_client</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建服务器参数</span></span><br><span class="line">server_params = StdioServerParameters(</span><br><span class="line">    command=<span class="string">&quot;python&quot;</span>,</span><br><span class="line">    args=[<span class="string">&quot;calculator.py&quot;</span>],</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">run</span>():</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">with</span> stdio_client(server_params) <span class="keyword">as</span> (read, write):</span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> ClientSession(read, write) <span class="keyword">as</span> session:</span><br><span class="line">            <span class="comment"># 初始化连接</span></span><br><span class="line">            <span class="keyword">await</span> session.initialize()</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 列出可用的工具</span></span><br><span class="line">            tools = <span class="keyword">await</span> session.list_tools()</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Available tools: <span class="subst">&#123;tools&#125;</span>&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 调用add工具</span></span><br><span class="line">            result = <span class="keyword">await</span> session.call_tool(<span class="string">&quot;add&quot;</span>, arguments=&#123;<span class="string">&quot;a&quot;</span>: <span class="number">5</span>, <span class="string">&quot;b&quot;</span>: <span class="number">3</span>&#125;)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;5 + 3 = <span class="subst">&#123;result&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    <span class="keyword">import</span> asyncio</span><br><span class="line">    asyncio.run(run())</span><br></pre></td></tr></table></figure>
+
+<p>这个客户端脚本连接到我们之前创建的计算器服务，列出可用的工具，然后调用<code>add</code>工具计算5+3的结果。</p>
+<h2 id="cursor中配置自己开发的MCP"><a href="#cursor中配置自己开发的MCP" class="headerlink" title="cursor中配置自己开发的MCP"></a>cursor中配置自己开发的MCP</h2><p>在mcp.json中添加mcp server</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;mcpServers&quot;: &#123;</span><br><span class="line">        &quot;server&quot;: &#123;</span><br><span class="line">            &quot;command&quot;: &quot;python&quot;,</span><br><span class="line">            &quot;args&quot;: [</span><br><span class="line">                &quot;/User/admin/workspace/mcp-server/main.py&quot;</span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img.xhua.eu.org/e2a4744b18a4848844e6beb59757aab4357b5fd724a1902d19c4af7ac386a349.jpg" alt="customize mcp">  </p>
+<p><img src="https://img.xhua.eu.org/639a2155efa3163c6849d401ffdbd926cb45322509f9801dd8f5672bf3c6d3de.jpg" alt="mcp 示例">  </p>
+<h2 id="实际应用场景"><a href="#实际应用场景" class="headerlink" title="实际应用场景"></a>实际应用场景</h2><p>MCP服务的应用场景非常广泛，以下是一些可能的使用案例：</p>
+<ol>
+<li><p><strong>个人助手</strong>：创建一个能够访问你的日历、邮件和文档的个人助手</p>
+</li>
+<li><p><strong>数据分析工具</strong>：开发一个能够处理和分析数据集的服务，让AI模型可以直接操作数据</p>
+</li>
+<li><p><strong>内容管理系统</strong>：构建一个服务，允许AI模型创建、编辑和发布内容到你的网站或博客</p>
+</li>
+<li><p><strong>企业知识库</strong>：开发一个能够安全访问企业内部文档和知识库的服务</p>
+</li>
+<li><p><strong>智能家居控制</strong>：创建一个服务，让AI能够控制你的智能家居设备</p>
+</li>
+</ol>
+<h2 id="调试技巧"><a href="#调试技巧" class="headerlink" title="调试技巧"></a>调试技巧</h2><p>在开发MCP服务时，调试是一个重要的环节。以下是一些有用的调试技巧：</p>
+<ol>
+<li><strong>启用详细日志</strong>：在创建FastMCP实例时，可以启用详细日志：</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mcp = FastMCP(<span class="string">&quot;调试服务&quot;</span>, verbose=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>添加自定义日志</strong>：在工具和资源处理函数中，添加打印语句：</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@mcp.tool()</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">my_tool</span>(<span class="params">param: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;my_tool called with param: <span class="subst">&#123;param&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="comment"># 处理逻辑</span></span><br><span class="line">    <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><strong>使用调试客户端</strong>：创建一个简单的客户端脚本，专门用于测试你的服务</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>MCP为开发者提供了一种强大的方式，让AI模型能够与外部世界交互，从而扩展其能力范围。通过使用Python和MCP SDK，即使是初学者也能轻松地开发出功能丰富的MCP服务，为AI模型赋予更强大的能力。</p>
+<p>无论你是想创建个人助手、企业工具，还是创新的AI应用，MCP都为你提供了所需的基础设施。随着对MCP的深入学习和实践，你将能够构建出更加复杂和强大的系统，充分发挥AI技术的潜力。</p>
+<h2 id="学习资源"><a href="#学习资源" class="headerlink" title="学习资源"></a>学习资源</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/modelcontextprotocol/python-sdk">MCP Python SDK GitHub 仓库</a></li>
+<li><a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/docs/">Model Context Protocol 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/">Python 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.anthropic.com/claude/">Anthropic Claude 开发者文档</a></li>
+</ul>
+<p>开始你的MCP开发之旅吧，相信不久的将来，你将能够创建出令人惊叹的AI驱动应用！</p>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。 </p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/1d209e12ddec.html">https://xhua.eu.org/posts/1d209e12ddec.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/mcp/">MCP</a><a class="post-meta__tags" href="/tags/python/">Python</a><a class="post-meta__tags" href="/tags/ai%E5%BC%80%E5%8F%91/">AI开发</a><a class="post-meta__tags" href="/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/">大语言模型</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/ae11adc18d45.html" title="Kubernetes云原生存储解决方案 - Longhorn安装指南"><img class="cover" src="https://img.xhua.eu.org/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Kubernetes云原生存储解决方案 - Longhorn安装指南</div></div><div class="info-2"><div class="info-item-1">简介Longhorn 是一个轻量级、可靠且功能强大的分布式块存储系统，专为 Kubernetes 而设计。它实现了可靠的持久化存储，支持快照、备份和跨集群灾难恢复等企业级功能。 主要特性 企业级分布式块存储 跨节点数据复制和自动重建 无中心化架构 非侵入式架构 图形化管理界面 快照和备份支持 跨集群灾备能力  环境要求在安装 Longhorn 之前，请确保您的环境满足以下要求： 环境检查在部署 Longhorn 之前，强烈建议运行环境检查脚本来验证您的环境是否满足所有必要条件： 12# 下载环境检查脚本curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash  这个脚本会检查：  操作系统依赖 内核模块 挂载点 系统工具 网络配置 SELinux 状态 iscsi 服务状态  硬件要求 CPU: 最低 1 核 内存: 最低 1GB 磁盘: 每个节点至少 20GB 可用空间  软件要求 Kubernetes v1.21+ 所有节点...</div></div></div></a><a class="pagination-related" href="/posts/d5f034c0aad2.html" title="使用NSSM将程序注册为Windows服务"><img class="cover" src="https://img.xhua.eu.org/88ad7211da4e3599c4a8dae59a774a98a9a1c63b082aaa4b58e781f29ad00f7e.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">使用NSSM将程序注册为Windows服务</div></div><div class="info-2"><div class="info-item-1">NSSM (Non-Sucking Service Manager) 是一个非常实用的Windows服务管理工具，它可以将任何应用程序注册为Windows服务，支持开机自启动、失败自动重启等功能，本文将介绍如何使用NSSM，并以Nginx为例进行实践。 NSSM简介NSSM的主要特点：  可以将任何可执行程序注册为Windows服务 支持服务失败自动重启 支持开机自动启动 可以捕获程序的标准输出和错误输出到日志文件 提供图形界面和命令行两种操作方式 完全免费开源  安装NSSM 下载NSSM访问 NSSM官网 下载最新版本或使用 Chocolatey 包管理器安装：  1choco install nssm   解压下载的zip文件（如果是手动下载）将win64目录下的nssm.exe复制到一个固定目录，比如：C:\Program Files\nssm  添加环境变量（可选）将nssm.exe所在目录添加到系统PATH环境变量中   使用NSSM注册Nginx服务图形界面方式 打开命令提示符，输入：  1nssm install nginx   在弹出的图形界面中配置：   Pa...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b0a1603977e7.html" title="生产级大语言模型平台系统设计：多期落地方案与实践"><img class="cover" src="https://img.xhua.eu.org/0c48a51774caee38ab8195ab16d9895325b3056f41cb0b06ee3bff5c009bc2d4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-18</div><div class="info-item-2">生产级大语言模型平台系统设计：多期落地方案与实践</div></div><div class="info-2"><div class="info-item-1">背景与目标随着大语言模型在企业内的应用场景不断扩展，单一模型服务或简单的 API + 网关 架构已经难以满足生产环境下的多租户管理、资源隔离、安全合规、可观测性以及快速迭代等要求。企业需要一套生产级别的大语言模型平台系统，以平台化的方式统一承载模型推理、Agent 编排、MCP 工具生态及 RAG 检索能力。 本文面向有一定 DevOps&#x2F;平台工程基础的读者，设计一套可生产落地的大语言模型平台，从整体架构到关键模块拆解，涵盖：  模型部署与运行时管理 多集群 &#x2F; 多云资源管理与调度 监控、日志、链路追踪与容量管理 安全与访问控制 RAG 平台 Agent 平台 MCP（Model Context Protocol）生态集成 平台运维与发布管理  并按照优先级划分为多期落地路线，便于企业按阶段实施。  本文更偏向平台架构设计与关键实现要点，不绑定某个具体云厂商，可结合 Kubernetes、Service Mesh、向量数据库等基础设施实施。  多期落地规划概览为了降低一次性建设的复杂度，建议将大模型平台拆分为多期，逐步演进：  一期（核心推理与基础运维能力，必...</div></div></div></a><a class="pagination-related" href="/posts/c076d9f3f05d.html" title="vLLM高性能大模型推理引擎使用指南"><img class="cover" src="https://img.xhua.eu.org/daaca0b411fbe28fb31f728aff34d87083919fff6300004fea34ff5fce7ad91b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-05</div><div class="info-item-2">vLLM高性能大模型推理引擎使用指南</div></div><div class="info-2"><div class="info-item-1">在当今AI快速发展的时代，大模型推理性能直接影响着应用的用户体验和成本效益。vLLM作为一个高性能的大模型推理引擎，为开发者提供了快速、高效的模型服务解决方案。本文将详细介绍如何使用vLLM进行离线推理和在线服务部署，特别是如何利用uv工具进行快速环境管理，以及如何部署兼容OpenAI API的模型服务。 什么是vLLMvLLM（Very Large Language Model）是由UC Berkeley开发的高性能大语言模型推理和服务引擎。它具有以下特点：  高吞吐量：通过PagedAttention等技术优化，显著提升推理速度 内存效率：动态内存管理，减少显存占用 易于使用：提供简洁的Python API和OpenAI兼容接口 灵活部署：支持批量推理和在线服务两种模式  环境准备与安装系统要求 操作系统：Linux Python版本：3.9 - 3.12 硬件：NVIDIA GPU（推荐）  使用uv工具快速安装uv是一个超快的Python环境管理器，可以显著加速环境创建和包安装过程。 1. 安装uv工具12345# 在Linux/macOS上安装uvcurl -LsSf ...</div></div></div></a><a class="pagination-related" href="/posts/e0a2af663124.html" title="SRE MCP Tools：运维工程师的AI助手工具箱"><img class="cover" src="https://img.xhua.eu.org/e16beb5e1fd69876853b76d350682f3eb62d53d60bd29d2b5dd0307b1bb62f80.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">SRE MCP Tools：运维工程师的AI助手工具箱</div></div><div class="info-2"><div class="info-item-1">引言在现代互联网时代，站点可靠性工程（SRE）已成为确保服务稳定运行的核心实践。随着系统复杂性的不断增加，运维工程师需要管理的工具和平台也越来越多。从监控告警到事件响应，从部署管理到成本优化，每个环节都需要专业的工具支持。 但是，在面对海量的监控数据、复杂的告警规则、频繁的部署需求时，传统的手工操作已经无法满足现代运维的需求。这时，MCP（Model Context Protocol）工具的出现，为SRE工程师提供了全新的解决方案。 今天，我将为大家介绍一套完整的SRE MCP Tools工具箱，涵盖监控可观测性、部署编排、事件响应、数据库管理等多个方面，帮助运维工程师构建智能化的运维体系。 什么是SRE MCP Tools？SRE MCP Tools是一套基于模型上下文协议（MCP）的运维工具集合，它允许AI助手直接与各种运维工具和平台进行集成，实现自动化的运维操作。通过这些工具，运维工程师可以使用自然语言与AI助手交互，让AI帮助完成复杂的运维任务。 核心优势 🚨 快速发现问题：自动化监控和告警，第一时间发现系统异常 🔧 快速解决问题：自动化故障响应和修复，减少人工干预 ...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a><a class="pagination-related" href="/posts/b9e5a0c5a4ad.html" title="Cursor创建一个python项目的所有交互"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-27</div><div class="info-item-2">Cursor创建一个python项目的所有交互</div></div><div class="info-2"><div class="info-item-1">本文内容主要参考自《用cursor玩转AI辅助编程》，将详细记录如何借助 Cursor AI 高效开发一个基于 FastAPI 和 Vue.js 的销售数据分析系统。适合希望了解 AI 辅助编程实践的 Python 全栈开发者。文章涵盖了从项目初始化、依赖配置、数据库设计、后端与前端开发、数据处理、API 实现、测试到前后端联调的完整流程。通过真实的对话与操作示例，帮助读者掌握在实际开发场景下如何高效利用 Cursor 进行协作，显著提升开发效率与代码质量。 后端开发需求分析 chat  1234我需要开发一个销售数据分析系统，主要功能包括数据处理、统计分析和API。 请推荐合适的Python框架和技术栈，并帮助我搭建基础项目结构。 系统需要处理CSV格式的销售数据，进行数据清洗和分析，最后通过Web API框架提供查询API。 请帮我细化开发步骤，以便后续和你沟通时，能够一步一步实现。  chat  12345感谢你的建议！不过我想做一些调整： 1. 我希望使用MySQL而不是PostgreSQL，因为我在本地电脑已经安装了MySQL 2. 暂时不需要Docker，我们先在本地...</div></div></div></a><a class="pagination-related" href="/posts/6aa04c23d95b.html" title="Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）"><img class="cover" src="https://img.xhua.eu.org/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-13</div><div class="info-item-2">Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）</div></div><div class="info-2"><div class="info-item-1">本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：  如何创建标准的 Python 包工程骨架（src 布局） 在 pyproject.toml 中使用 PEP 621 声明元数据与 project.scripts 生成命令行脚本 使用 build 本地构建分发产物（sdist&#x2F;wheel） 使用 twine 校验并上传到 TestPyPI 与 PyPI 常见问题与排错要点  参考标准：PEP 517&#x2F;518（构建系统），PEP 621（项目元数据）。 适用环境 Python ≥ 3.8（推荐 3.10+） macOS&#x2F;Linux&#x2F;Windows 包管理：pip 或 pipx   一、项目骨架（src 布局）推荐使用「src 布局」以避免导入歧义，目录结构如下： 1234567891011mycli/├─ pyproject.toml├─ README.md├─ LICENSE├─ src/│  └─ mycli/│     ├─ __init__.py│     ├─ __main__....</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMCP%EF%BC%9F"><span class="toc-text">什么是MCP？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81MCP%EF%BC%9F"><span class="toc-text">为什么需要MCP？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MCP%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-text">MCP的核心组件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C%EF%BC%9A%E5%AE%89%E8%A3%85MCP-Python-SDK"><span class="toc-text">准备工作：安装MCP Python SDK</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AAMCP%E6%9C%8D%E5%8A%A1"><span class="toc-text">创建你的第一个MCP服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E5%8A%A0%E6%B3%95%E8%AE%A1%E7%AE%97%E5%99%A8"><span class="toc-text">基本加法计算器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E4%BD%A0%E7%9A%84MCP%E6%9C%8D%E5%8A%A1"><span class="toc-text">运行你的MCP服务</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E9%98%B6%EF%BC%9A%E5%88%9B%E5%BB%BA%E5%8A%9F%E8%83%BD%E4%B8%B0%E5%AF%8C%E7%9A%84MCP%E6%9C%8D%E5%8A%A1"><span class="toc-text">进阶：创建功能丰富的MCP服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E5%8A%9F%E8%83%BD%E5%8A%A9%E6%89%8B%E6%9C%8D%E5%8A%A1"><span class="toc-text">多功能助手服务</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E5%8A%9F%E8%83%BD%EF%BC%9A%E6%95%B4%E5%90%88%E5%A4%96%E9%83%A8API"><span class="toc-text">高级功能：整合外部API</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86MCP%E6%9C%8D%E5%8A%A1%E4%B8%8E%E7%8E%B0%E6%9C%89%E5%BA%94%E7%94%A8%E9%9B%86%E6%88%90"><span class="toc-text">将MCP服务与现有应用集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E6%A6%82%E5%BF%B5%EF%BC%9A%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86"><span class="toc-text">高级概念：状态管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%8EMCP%E6%9C%8D%E5%8A%A1%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">客户端与MCP服务的交互</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#cursor%E4%B8%AD%E9%85%8D%E7%BD%AE%E8%87%AA%E5%B7%B1%E5%BC%80%E5%8F%91%E7%9A%84MCP"><span class="toc-text">cursor中配置自己开发的MCP</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">实际应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E8%AF%95%E6%8A%80%E5%B7%A7"><span class="toc-text">调试技巧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%BA%90"><span class="toc-text">学习资源</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

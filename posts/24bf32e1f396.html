@@ -1,0 +1,434 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Ansible常用模块 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="lookup 函数在 playbooks 中可以使用一个名为 lookup()的函数，该函数用于 ansible 从外部资源访问数据，根据第一个参数的不同，该函数具有不同的功能，典型的就是读取外部文件内容。lookup()只在本地执行，而不是在远程主机上执行。例子： 123456debug: msg&#x3D;&quot;&#123;&#123; lookup(&#x27;file&#x27;, &amp;#x27">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible常用模块">
+<meta property="og:url" content="https://xhua.eu.org/posts/24bf32e1f396.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="lookup 函数在 playbooks 中可以使用一个名为 lookup()的函数，该函数用于 ansible 从外部资源访问数据，根据第一个参数的不同，该函数具有不同的功能，典型的就是读取外部文件内容。lookup()只在本地执行，而不是在远程主机上执行。例子： 123456debug: msg&#x3D;&quot;&#123;&#123; lookup(&#x27;file&#x27;, &amp;#x27">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.629Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Ansible常用模块",
+  "url": "https://xhua.eu.org/posts/24bf32e1f396.html",
+  "image": "https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.629Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/24bf32e1f396.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Ansible常用模块',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Ansible常用模块</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Ansible常用模块</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.629Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="lookup-函数"><a href="#lookup-函数" class="headerlink" title="lookup 函数"></a>lookup 函数</h1><p>在 playbooks 中可以使用一个名为 lookup()的函数，该函数用于 ansible 从外部资源访问数据，根据第一个参数的不同，该函数具有不同的功能，典型的就是读取外部文件内容。lookup()只在本地执行，而不是在远程主机上执行。<br>例子：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">debug: msg=&quot;&#123;&#123; lookup(&#x27;file&#x27;, &#x27;/etc/foo.txt&#x27;) &#125;&#125;&quot;</span><br><span class="line">debug: msg=&quot;password - &#123;&#123; lookup(&#x27;password&#x27;, &#x27;/tmp/random_pass.txt length=10&#x27;) &#125;&#125;&quot;</span><br><span class="line">debug: msg=&quot;&#123;&#123; lookup(&#x27;env&#x27;,&#x27;HOME&#x27;) &#125;&#125; is an environment variable&quot;</span><br><span class="line">debug: msg=&quot;&#123;&#123; lookup(&#x27;pipe&#x27;,&#x27;date&#x27;) &#125;&#125; is the raw result of running this command&quot;</span><br><span class="line">debug: msg=&quot;&#123;&#123; lookup(&#x27;dnstxt&#x27;, &#x27;example.com&#x27;) &#125;&#125; is a DNS TXT record for example.com&quot;</span><br><span class="line">debug: msg=&quot;&#123;&#123; lookup(&#x27;template&#x27;, &#x27;./some_template.j2&#x27;) &#125;&#125; is a value from evaluation of this template&quot;</span><br></pre></td></tr></table></figure>
+
+<p>k8s 模块使用 lookup 实例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- name: Read definition file from file after jinja templating</span><br><span class="line">  k8s:</span><br><span class="line">      state: present</span><br><span class="line">      definition: &quot;&#123;&#123; lookup(&#x27;template&#x27;, &#x27;/testing/deployment.yml&#x27;) | from_yaml &#125;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<h1 id="git-模块"><a href="#git-模块" class="headerlink" title="git 模块"></a>git 模块</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>此模块用于 checkout 远程 git 仓库中的文件</p>
+<h2 id="使用要求（在执行模块的主机上）"><a href="#使用要求（在执行模块的主机上）" class="headerlink" title="使用要求（在执行模块的主机上）"></a>使用要求（在执行模块的主机上）</h2><p>git&gt;&#x3D;1.7.1 (命令行工具)</p>
+<h2 id="模块参数"><a href="#模块参数" class="headerlink" title="模块参数"></a>模块参数</h2><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>必选</th>
+<th>默认值</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>accept_hostkey</td>
+<td>no</td>
+<td>no</td>
+<td>如果<code>yes</code>，请确保“-o StrictHostKeyChecking &#x3D; no”作为 ssh 选项存在。</td>
+</tr>
+<tr>
+<td>archive</td>
+<td>no</td>
+<td></td>
+<td>使用扩展名指定存档文件路径。 如果指定，则创建包含源树树结构的指定格式的存档文件。 允许的存档格式[“zip”，“tar.gz”，“tar”，“tgz”]<br>这将从本地目录克隆并执行 git archive</td>
+</tr>
+<tr>
+<td>bare</td>
+<td>no</td>
+<td>no</td>
+<td>如果<code>yes</code>，则将创建存储库作为裸存储库，否则它将是具有工作空间的标准存储库。</td>
+</tr>
+<tr>
+<td>clone</td>
+<td>no</td>
+<td>yes</td>
+<td>如果<code>no</code>，即使它本地不存在，也不要克隆存储库</td>
+</tr>
+<tr>
+<td>depth</td>
+<td>no</td>
+<td></td>
+<td>clone 的深度，最小值为 1， git&gt;&#x3D;1.9.1 才支持</td>
+</tr>
+<tr>
+<td>dest</td>
+<td>yes</td>
+<td></td>
+<td>应该检出存储库的路径。 除非将 clone 设置为 no，否则此参数是必需的。</td>
+</tr>
+<tr>
+<td>executable</td>
+<td>no</td>
+<td></td>
+<td>要使用的 git 可执行文件的路径</td>
+</tr>
+<tr>
+<td>force</td>
+<td>no</td>
+<td>no</td>
+<td>如果<code>yes</code>，则将丢弃工作存储库中的任何已修改文件。</td>
+</tr>
+<tr>
+<td>key_file</td>
+<td>no</td>
+<td></td>
+<td>私钥存放地址</td>
+</tr>
+<tr>
+<td>recursive</td>
+<td>no</td>
+<td>yes</td>
+<td>如果<code>no</code>，将使用–recursive 选项克隆存储库，跳过子模块。</td>
+</tr>
+<tr>
+<td>reference</td>
+<td>no</td>
+<td></td>
+<td>参考 git clone –reference</td>
+</tr>
+<tr>
+<td>refspec</td>
+<td>no</td>
+<td>no</td>
+<td>添加要获取的其他 refspec。 如果将版本设置为无法从任何分支或标记访问的 SHA-1，则可能需要此选项来指定包含 SHA-1 的 ref。 使用与’git fetch’命令相同的语法。 示例值可以是“refs &#x2F; meta &#x2F; config”。</td>
+</tr>
+<tr>
+<td>remote</td>
+<td>no</td>
+<td>origin</td>
+<td> 远程仓库名</td>
+</tr>
+<tr>
+<td>repo</td>
+<td>yes</td>
+<td></td>
+<td>git 仓库地址</td>
+</tr>
+<tr>
+<td>separate_git_dir</td>
+<td>no</td>
+<td></td>
+<td> 设置 git 仓库目录的存储</td>
+</tr>
+<tr>
+<td>ssh_opts</td>
+<td>no</td>
+<td></td>
+<td>ssh 命令参数，覆盖默认的 ssh 参数</td>
+</tr>
+<tr>
+<td>track_submodules</td>
+<td>no</td>
+<td>no</td>
+<td>如果 <code>yes</code>，子模块将跟踪其主分支（或.gitmodules 中指定的其他分支）上的最新提交。 如果<code>no</code>，则子模块将保留在主项目指定的修订版本中。 这相当于为 git 子模块更新指定了–remote 标志。</td>
+</tr>
+<tr>
+<td>umask</td>
+<td>no</td>
+<td></td>
+<td>在执行任何检出或任何其他存储库维护之前设置的 umask。</td>
+</tr>
+<tr>
+<td>update</td>
+<td>no</td>
+<td>yes</td>
+<td>如果<code>no</code>，请不要从源存储库中检索新修订</td>
+</tr>
+<tr>
+<td>verify_commit</td>
+<td>no</td>
+<td>no</td>
+<td>如果<code>yes</code>，则在克隆或签出版本时验证 GPG 签名提交的签名。git&gt;2.1.0</td>
+</tr>
+<tr>
+<td>version</td>
+<td>no</td>
+<td>HEAD</td>
+<td>clone 代码的版本号</td>
+</tr>
+</tbody></table>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"># Example git checkout from Ansible Playbooks</span><br><span class="line">- git:</span><br><span class="line">    repo: &#x27;https://foosball.example.org/path/to/repo.git&#x27;</span><br><span class="line">    dest: /srv/checkout</span><br><span class="line">    version: release-0.22</span><br><span class="line"></span><br><span class="line"># Example read-write git checkout from github</span><br><span class="line">- git:</span><br><span class="line">    repo: git@github.com:mylogin/hello.git</span><br><span class="line">    dest: /home/mylogin/hello</span><br><span class="line"></span><br><span class="line"># Example just ensuring the repo checkout exists</span><br><span class="line">- git:</span><br><span class="line">    repo: &#x27;https://foosball.example.org/path/to/repo.git&#x27;</span><br><span class="line">    dest: /srv/checkout</span><br><span class="line">    update: no</span><br><span class="line"></span><br><span class="line"># Example just get information about the repository whether or not it has</span><br><span class="line"># already been cloned locally.</span><br><span class="line">- git:</span><br><span class="line">    repo: &#x27;https://foosball.example.org/path/to/repo.git&#x27;</span><br><span class="line">    dest: /srv/checkout</span><br><span class="line">    clone: no</span><br><span class="line">    update: no</span><br><span class="line"></span><br><span class="line"># Example checkout a github repo and use refspec to fetch all pull requests</span><br><span class="line">- git:</span><br><span class="line">    repo: https://github.com/ansible/ansible-examples.git</span><br><span class="line">    dest: /src/ansible-examples</span><br><span class="line">    refspec: &#x27;+refs/pull/*:refs/heads/*&#x27;</span><br><span class="line"></span><br><span class="line"># Example Create git archive from repo</span><br><span class="line">- git:</span><br><span class="line">    repo: https://github.com/ansible/ansible-examples.git</span><br><span class="line">    dest: /src/ansible-examples</span><br><span class="line">    archive: /tmp/ansible-examples.zip</span><br><span class="line"></span><br><span class="line"># Example clone a repo with separate git directory</span><br><span class="line">- git:</span><br><span class="line">    repo: https://github.com/ansible/ansible-examples.git</span><br><span class="line">    dest: /src/ansible-examples</span><br></pre></td></tr></table></figure>
+
+<h1 id="expect-模块"><a href="#expect-模块" class="headerlink" title="expect 模块"></a>expect 模块</h1><h2 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h2><ul>
+<li><code>expect</code>模块用于在给的的节点上执行一个命令并响应提示。</li>
+<li>它不会通过 shell 处理命令，因此不支持像<code>$HOME</code>这样的变量和，以及<code>&lt;</code>, <code>&gt;</code>, <code>|</code>, <code>;</code>和<code>&amp;</code>等都是无效的。也就是在<code>command</code>模块中无法使用管道符。</li>
+</ul>
+<h2 id="使用要求（在执行模块的主机上）-1"><a href="#使用要求（在执行模块的主机上）-1" class="headerlink" title="使用要求（在执行模块的主机上）"></a>使用要求（在执行模块的主机上）</h2><p>python &gt;&#x3D; 2.6<br>pexpect &gt;&#x3D; 3.3</p>
+<h2 id="模块参数-1"><a href="#模块参数-1" class="headerlink" title="模块参数"></a>模块参数</h2><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>必选</th>
+<th>默认值</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>chdir</td>
+<td>no</td>
+<td></td>
+<td>运行 command 命令前先 cd 到这个目录</td>
+</tr>
+<tr>
+<td>command</td>
+<td>yes</td>
+<td></td>
+<td>命令模块执行命令运行</td>
+</tr>
+<tr>
+<td>echo</td>
+<td>no</td>
+<td>no</td>
+<td>是否回显你的回应字符串</td>
+</tr>
+<tr>
+<td>responses</td>
+<td>yes</td>
+<td></td>
+<td>期望的字符串&#x2F;正则表达式和字符串的映射来响应。 如果响应是一个列表，则连续的匹配将返回连续的响应。 列表功能是 2.1 中的新功能。</td>
+</tr>
+<tr>
+<td>creates</td>
+<td>no</td>
+<td></td>
+<td>如果这个参数对应的文件存在，就不运行 command</td>
+</tr>
+<tr>
+<td>removes</td>
+<td>no</td>
+<td></td>
+<td>如果这个参数对应的文件不存在，就不运行 command，与 creates 参数的作用相反</td>
+</tr>
+<tr>
+<td>timeout</td>
+<td>no</td>
+<td>30</td>
+<td>以秒为单位等待预期时间</td>
+</tr>
+</tbody></table>
+<h2 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h2><ul>
+<li>在远程主机上执行脚本</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">- name: Case insensitve password string match</span><br><span class="line">  expect:</span><br><span class="line">    command: passwd username</span><br><span class="line">    responses:</span><br><span class="line">      (?i)password: &quot;MySekretPa$$word&quot;</span><br><span class="line"></span><br><span class="line">- name: Generic question with multiple different responses</span><br><span class="line">  expect:</span><br><span class="line">    command: /path/to/custom/command</span><br><span class="line">    responses:</span><br><span class="line">      Question:</span><br><span class="line">        - response1</span><br><span class="line">        - response2</span><br><span class="line">        - response3</span><br></pre></td></tr></table></figure>
+
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ul>
+<li>如果你想通过 shell 运行一个命令（比如你正在使用&lt;,&gt;,|等），你必须在命令中指定一个 shell，比如<code>/bin/bash -c &quot;/path/to/something | grep else&quot;</code>。</li>
+<li>在<code>responses</code>下关键是一个 python 正则表达式匹配，不区分大小写的搜索用前缀?i。</li>
+<li>默认情况下，如果多次遇到问题，则会重复其字符串响应。 如果连续问题匹配需要不同的响应，而不是字符串响应，请使用字符串列表作为响应。</li>
+<li><code>expect</code>模块设计用于简单场景，对于更复杂的需求，应该考虑在<code>shell</code>或<code>script</code>模块中使用 expect 代码</li>
+</ul>
+<h1 id="Ansible-执行命令小技巧"><a href="#Ansible-执行命令小技巧" class="headerlink" title="Ansible 执行命令小技巧"></a>Ansible 执行命令小技巧</h1><ol>
+<li>执行时选择在某个 host 组而不在另一个 host 组的机器</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ansible all:&#x27;!masters&#x27; --list-hosts</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>如果主机的密码都是一样的，可以在 inventory 中添加变量</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[k8s:children]</span><br><span class="line">masters</span><br><span class="line">infras</span><br><span class="line">nodes</span><br><span class="line"></span><br><span class="line">[k8s:vars]</span><br><span class="line">ansible_user=root</span><br><span class="line">ansible_password=password</span><br><span class="line"></span><br><span class="line">[masters]</span><br><span class="line">master1.example.com ansible_host=192.168.0.2</span><br><span class="line">master2.example.com ansible_host=192.168.0.3</span><br><span class="line"></span><br><span class="line">[infras]</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="Ansible-注册结果数据"><a href="#Ansible-注册结果数据" class="headerlink" title="Ansible 注册结果数据"></a>Ansible 注册结果数据</h1><p>ansible playbook 中使用 register 注册数据，实现不同 playbook 中数据共享。当完成 regster 后，下游 playbook 可以直接使用注册的变量，这时获取的数据为第一个 hosts 中匹配的服务器执行完成任务后注册的数据。<br>如果需要获取全部数据，需要通过<code>hostvars</code>获取，它会根据主机名为 key，注册的数据为 value 保存在 hostvars 中。<br>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">- name: get results</span><br><span class="line">  get_results:</span><br><span class="line">  register: results</span><br><span class="line">- name: out host1 result</span><br><span class="line">  run_once: yes</span><br><span class="line">  debug:</span><br><span class="line">    msg: &quot;&#123;&#123; hostvars[&#x27;host1&#x27;].results &#125;&#125;&quot;</span><br><span class="line">- name: out host2 result</span><br><span class="line">  run_once: yes</span><br><span class="line">  debug:</span><br><span class="line">    msg: &quot;&#123;&#123; hostvars[&#x27;host2&#x27;].results &#125;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<p>另外通过<code>ansible_play_hosts</code>可获取当前运行任务的所有主机。</p>
+<h1 id="Ansible-学习资料"><a href="#Ansible-学习资料" class="headerlink" title="Ansible 学习资料"></a>Ansible 学习资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/09/ansible-getting-started">ansible 学习之一：Getting Started</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/10/ansible-inventory">ansible 学习之二：Inventory</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/10/ansible-host-pattern">ansible 学习之三：Host Patterns</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/21/ansible-playbook">ansible 学习之四：Playbooks</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/21/ansible-roles-include">ansible 学习之五：Roles and Include Statements</a></li>
+<li><a href="ansible%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%85%AD%EF%BC%9AVariables">https://sapser.github.io/ansible/2014/07/21/ansible-variables</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/21/ansible-conditionals">ansible 学习之七：条件判断</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/21/ansible-loops">ansible 学习之八：循环</a></li>
+<li><a href="ansible%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%B9%9D%EF%BC%9ATags">https://sapser.github.io/ansible/2014/07/22/ansible-tags</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/22/ansible-error-handling">ansible 学习之十：Error Handling In Playbooks</a></li>
+<li><a href="ansible%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8D%81%E4%B8%80%EF%BC%9APrompts">https://sapser.github.io/ansible/2014/07/22/ansible-prompts</a></li>
+<li><a target="_blank" rel="noopener" href="https://sapser.github.io/ansible/2014/07/22/ansible-using-lookups">ansible 学习之十二：Using Lookups</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/24bf32e1f396.html">https://xhua.eu.org/posts/24bf32e1f396.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/d1a90c6e8453.html" title="CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式"><img class="cover" src="https://img.xhua.eu.org/02c300ae74aa07d1b945e64f2afe3899b96a9638cc87741acd13bcd5866daee6.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式</div></div><div class="info-2"><div class="info-item-1"> 命令行模式 环境准备   克隆代码  1git clone  启动私有docker hub  12 docker run -d -p 5000:5000 -v /data/registry:/var/lib/registry --name registry --restart=always registry  制作建置环境  1docker build -t localhost:5000/maven dockers/maven  dockers&#x2F;maven&#x2F;Dockerfile 1234FROM ## 安装openjdk## 安装MavenCMD [&quot;mvn&quot;]  集成、测试、验证  进行自动化测试   1docker-compose run --rm test docker-compose.yaml 123456789101112131415161718192021222324data：  image: alpine  volumes:    - ~/.m2:/root/.m2  command: &quot;/bin/bash&quo...</div></div></div></a><a class="pagination-related" href="/posts/9dbd81598681.html" title="Airflow简单介绍及测试安装"><img class="cover" src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Airflow简单介绍及测试安装</div></div><div class="info-2"><div class="info-item-1">Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。 先看下这篇介绍 ：浅谈调度工具——Airflow   为什么使用 Airflow 智能调度 图形化展示任务关系 程序化流水线定义 流水线间数据交互 扩展性强 分布式，可靠性高 执行方式多样化，除了定时执行还可手动触发，api 触发等  Airflow 常用的场景Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。  系统或运用的日常维护任务，批量作业 CD 部署任务，灰度发布，蓝绿部署等 数据分析，数据流管道管理  一句话：任何批量任务或者需要手动去触发执...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/76fde87cf7cd.html" title="《持续交付发布可靠软件的系统方法》读书笔记"><img class="cover" src="https://img.xhua.eu.org/9aceae35b4b34c39894b12d393be17b9ed54961d4bfee66801c81a7302460e69.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《持续交付发布可靠软件的系统方法》读书笔记</div></div><div class="info-2"><div class="info-item-1">基础篇第一章：软件交付的问题第二章：配置管理第三章：持续集成第四章：测试策略的实现 部署流水线第五章：部署流水线解析第六章：构建与部署的脚本化第七章：提交阶段第八章：自动化验收测试第九章：非功能需求的测试第十章：应用程序的部署与发布 交付生态圈第十一章：基础设施与环境管理第十二章：数据管理第十三章：组件和依赖管理第十四章：版本控制进阶第十五章：持续交付管理  </div></div></div></a><a class="pagination-related" href="/posts/9dbd81598681.html" title="Airflow简单介绍及测试安装"><img class="cover" src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Airflow简单介绍及测试安装</div></div><div class="info-2"><div class="info-item-1">Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。 先看下这篇介绍 ：浅谈调度工具——Airflow   为什么使用 Airflow 智能调度 图形化展示任务关系 程序化流水线定义 流水线间数据交互 扩展性强 分布式，可靠性高 执行方式多样化，除了定时执行还可手动触发，api 触发等  Airflow 常用的场景Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。  系统或运用的日常维护任务，批量作业 CD 部署任务，灰度发布，蓝绿部署等 数据分析，数据流管道管理  一句话：任何批量任务或者需要手动去触发执...</div></div></div></a><a class="pagination-related" href="/posts/6a949e5f3291.html" title="持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第七章：提交阶段</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 提交阶段的运行应该少于5分钟，一定不要超过10分钏提交阶段的首要目标是创建可部署的产物 提交阶段的原则与实践 提供快速有用的反馈 何时令提交阶段失败 编译错误 测试失败（包括单元覆盖率低于60%）   精心对待提交阶段 提交阶段中有构建用的脚本和运行单元测试、静态分析等脚本。 随着项目的进行，不断改进提交阶段的脚本的质量、设计和性能 确保将脚本做成模块化，将那些经常使用且很少变化的常见任务与需要修改的任务分开 将部署流水线中不同阶段所用的代码分别写在不同脚本中 不要写出与具体环境相关的脚本，即要把具体环境配置与构建脚本分离   让开发人员也拥有所有权如果必要的话，即使是很普通的变更也都应该由开发人员和运维人员来执行 在超大项目团队中指定一个构建负责人 监督和指导对构建的维护 鼓励和加强构建纪律 在团队开始接触持续集成时，构建纪律还没建立起来时，提醒作用   团队成员轮流当，比如每星期轮换一次    提交阶段结果提交阶段的输入是源代码，输出是二进制包和报告（测试结果和代码分析报告） 制品库 制品库仅保存某些版本，而不是全部。如果在部署流水...</div></div></div></a><a class="pagination-related" href="/posts/522406dc14b5.html" title="Scrum敏捷开发"><img class="cover" src="https://img.xhua.eu.org/08610d5404f631e65e15a4035506b037ef8df6428b0dd1dd53d8a400c00525a6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Scrum敏捷开发</div></div><div class="info-2"><div class="info-item-1">团队成员 一般情况人数在5~9个左右 团队要跨职能(包含开发人员、测试人员、用户介面设计师等) 团队成员构成在Sprint内不允许变化。  用户故事建模为开发任务需求编写用户故事    重要性 用户故事 测试方法 预估时间    30 做为一个会员，可以查看自己的购物清单，以便一起购买 登录，点击购买清单Tab 16h   Sprint计划会议（两周一次，4个小时） 设定本Sprint目标及优先级 挑选本Sprint所要开发的需求（Story) 逐一将Story细分成Task 确定每日站会时间和地点 确定演示会议和回顾会议日期计划会议输出：     Story Task Hour    A 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   B 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   第日立会为早上9：00至9：15     Demo演示时间为：2018-07-1...</div></div></div></a><a class="pagination-related" href="/posts/12af42c297f6.html" title="Openshift上使用Nginx-Pod作灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上使用Nginx-Pod作灰度发布</div></div><div class="info-2"><div class="info-item-1">参考文章：使用 Nginx 实现灰度发布 什么是灰度发布 **【百度百科】**灰度发布（又名金丝雀发布）是指在黑与白之间，能够平滑过渡的一种发布方式。 在其上可以进行A&#x2F;B testing，即让一部分用户继续用产品特性A，一部分用户开始用产品特性B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。 除了AB test灰度发布另一种思想是，只发布给一小部分用户，如：App在发布之前，针对性的给一小批用户测试下新版本，用小流量发布的方式来检验新版会不会有问题。 灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  Openshift上实现蓝绿部署   在openshift上的部署两个版本的Service：service01, service02。在创建Route的时候，可以非常简单地指定同一个Route流量访问两个service的百分比service01（25%流量）, service02（75%流量）。所有请求该Route的流量会被按指定的比例访问后service。      对应的Route yaml配置文...</div></div></div></a><a class="pagination-related" href="/posts/e8b881018f34.html" title="晒一晒Jenkins那些常用插件"><img class="cover" src="https://img.xhua.eu.org/539d8edb707baa13cdb996df3f91fd91d6cb7c1471709dd3d3b3a6bcdedc4fa9.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-22</div><div class="info-item-2">晒一晒Jenkins那些常用插件</div></div><div class="info-2"><div class="info-item-1">作为 CI&#x2F;CD 的调度中心，Jenkins 具有十八般武艺，目前已有 1700 多个插件，功能强大到似乎有点过分了。本文主要列出平时我们常用的插件。 以下这两个网站是 Jenkins 所有的插件及说明 Jenkins Plugins https://plugins.jenkins.ioJinkins Plugins Wiki https://wiki.jenkins.io  ConfigurationJenkins CASC: configuration-as-code将Jenkins的配置以Code的方式进行保存，方便Jenkins的迁移与重建。该插件对于敏捷管理Jenkins服务非常有用。 jobConfigHistory记录和跟踪Jenkins作业配置的历史变更，方便查看配置修改记录和回滚操作。 ParameterGit Parameter这是一个参数构建扩展，可以在构建的时候选择git的某一个分支来构建服务。 file-parameters这个让Jenkinsfile支持将文件作为参数。 Hidden Parameter参数化构建时，隐藏相关参数。可用于设置默...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#lookup-%E5%87%BD%E6%95%B0"><span class="toc-text">lookup 函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-%E6%A8%A1%E5%9D%97"><span class="toc-text">git 模块</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%A6%81%E6%B1%82%EF%BC%88%E5%9C%A8%E6%89%A7%E8%A1%8C%E6%A8%A1%E5%9D%97%E7%9A%84%E4%B8%BB%E6%9C%BA%E4%B8%8A%EF%BC%89"><span class="toc-text">使用要求（在执行模块的主机上）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%9D%97%E5%8F%82%E6%95%B0"><span class="toc-text">模块参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-text">示例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#expect-%E6%A8%A1%E5%9D%97"><span class="toc-text">expect 模块</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B-1"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%A6%81%E6%B1%82%EF%BC%88%E5%9C%A8%E6%89%A7%E8%A1%8C%E6%A8%A1%E5%9D%97%E7%9A%84%E4%B8%BB%E6%9C%BA%E4%B8%8A%EF%BC%89-1"><span class="toc-text">使用要求（在执行模块的主机上）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%9D%97%E5%8F%82%E6%95%B0-1"><span class="toc-text">模块参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="toc-text">示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-text">注意事项</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ansible-%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4%E5%B0%8F%E6%8A%80%E5%B7%A7"><span class="toc-text">Ansible 执行命令小技巧</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ansible-%E6%B3%A8%E5%86%8C%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE"><span class="toc-text">Ansible 注册结果数据</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ansible-%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99"><span class="toc-text">Ansible 学习资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

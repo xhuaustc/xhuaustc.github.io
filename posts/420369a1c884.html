@@ -1,0 +1,618 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-Build构建详解 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Build是什么Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。 Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。 Openshift构建有四种主要策略  Docker 构建 源代码构建（S2i) 自定义构建 Pipeline构建可以实现复杂的工作流  Docker构建、S2i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-Build构建详解">
+<meta property="og:url" content="https://xhua.eu.org/posts/420369a1c884.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Build是什么Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。 Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。 Openshift构建有四种主要策略  Docker 构建 源代码构建（S2i) 自定义构建 Pipeline构建可以实现复杂的工作流  Docker构建、S2i">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.639Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-Build构建详解",
+  "url": "https://xhua.eu.org/posts/420369a1c884.html",
+  "image": "https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.639Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/420369a1c884.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-Build构建详解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-Build构建详解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-Build构建详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.639Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="Build是什么"><a href="#Build是什么" class="headerlink" title="Build是什么"></a>Build是什么</h2><p>Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。</p>
+<p>Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。</p>
+<p>Openshift构建有四种主要策略</p>
+<ul>
+<li>Docker 构建</li>
+<li>源代码构建（S2i)</li>
+<li>自定义构建</li>
+<li>Pipeline构建可以实现复杂的工作流</li>
+</ul>
+<p>Docker构建、S2i构建、Pipeline构建是默认支持的。</p>
+<p>不同的构建有六种源</p>
+<ul>
+<li>Git</li>
+<li>Dockerfile</li>
+<li>Binary</li>
+<li>Image</li>
+<li>Input secrets</li>
+<li>External artifacts</li>
+</ul>
+<p>其中Binary和Git不能同时使用。 Dockerfile和Image可以单独使用，也可以与Git或Binary一起使用。 如果使用Binary作为BuildConfig.spec.source.type，只能通过命令行工具<code>oc start-build</code>来构建。</p>
+<p>BuildConfig实例</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;ruby-sample-build&quot; </span><br><span class="line">spec:</span><br><span class="line">  runPolicy: &quot;Serial&quot; </span><br><span class="line">  triggers: </span><br><span class="line">    -</span><br><span class="line">      type: &quot;GitHub&quot;</span><br><span class="line">      github:</span><br><span class="line">        secret: &quot;secret101&quot;</span><br><span class="line">    - type: &quot;Generic&quot;</span><br><span class="line">      generic:</span><br><span class="line">        secret: &quot;secret101&quot;</span><br><span class="line">    -</span><br><span class="line">      type: &quot;ImageChange&quot;</span><br><span class="line">  source: </span><br><span class="line">    git:</span><br><span class="line">      uri: &quot;https://github.com/openshift/ruby-hello-world&quot;</span><br><span class="line">  strategy: </span><br><span class="line">    sourceStrategy:</span><br><span class="line">      from:</span><br><span class="line">        kind: &quot;ImageStreamTag&quot;</span><br><span class="line">        name: &quot;ruby-20-centos7:latest&quot;</span><br><span class="line">  output: </span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;origin-ruby-sample:latest&quot;</span><br><span class="line">  postCommit: </span><br><span class="line">      script: &quot;bundle exec rake test&quot;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>metadata.name</td>
+<td>BuildConfig名</td>
+</tr>
+<tr>
+<td>spec.runPolicy</td>
+<td>运行策略，默认是顺序运行</td>
+</tr>
+<tr>
+<td>spec.triggers</td>
+<td>触发器，这个可以触发新的构建</td>
+</tr>
+<tr>
+<td>spec.source</td>
+<td>定义了构建的源。 源类型确定输入的主要来源，可以是Git，指向代码存储库位置，Dockerfile，从内联Dockerfile构建，或Binary，以接受二进制有效负载。 可以同时拥有多个源，有关详细信息，请参阅每种源类型的文档。</td>
+</tr>
+<tr>
+<td>spec.strategy</td>
+<td>策略部分描述了用于执行构建的构建策略。 您可以在此处指定Source，Docker或Custom策略。</td>
+</tr>
+<tr>
+<td>spec.output</td>
+<td>成功构建容器映像后，它将被推送到输出部分中描述的存储库中。</td>
+</tr>
+<tr>
+<td>spec.postCommit</td>
+<td>postCommit部分定义了一个可选的构建钩子。</td>
+</tr>
+</tbody></table>
+<p>postCommit支持多种不同方式的配置</p>
+<p>script: 默认会使用&#x2F;bin&#x2F;sh -ic来运行内容</p>
+<p>command: 如果镜像没有&#x2F;bin&#x2F;sh，则使用command</p>
+<p>args: 给Entrypoint传递参数，镜像必须支持传入参数</p>
+<p>例子：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">postCommit:</span><br><span class="line">  script: &quot;bundle exec rake test --verbose&quot;</span><br><span class="line">  </span><br><span class="line">postCommit:</span><br><span class="line">  command: [&quot;/bin/bash&quot;, &quot;-c&quot;, &quot;bundle exec rake test --verbose&quot;]</span><br><span class="line">  </span><br><span class="line">postCommit:</span><br><span class="line">  args: [&quot;bundle&quot;, &quot;exec&quot;, &quot;rake&quot;, &quot;test&quot;, &quot;--verbose&quot;]</span><br><span class="line"></span><br><span class="line">postCommit:</span><br><span class="line">  script: &quot;bundle exec rake test $1&quot;</span><br><span class="line">  args: [&quot;--verbose&quot;]</span><br><span class="line">  </span><br><span class="line">postCommit:</span><br><span class="line">  command: [&quot;bundle&quot;, &quot;exec&quot;, &quot;rake&quot;, &quot;test&quot;]</span><br><span class="line">  args: [&quot;--verbose&quot;]</span><br></pre></td></tr></table></figure>
+
+<p>通过命令行设置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ oc set build-hook bc/mybc \</span><br><span class="line">    --post-commit \</span><br><span class="line">    --command \</span><br><span class="line">    -- bundle exec rake test --verbose</span><br><span class="line">$ oc set build-hook bc/mybc --post-commit --script=&quot;bundle exec rake test --verbose&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="基础的构建操作"><a href="#基础的构建操作" class="headerlink" title="基础的构建操作"></a>基础的构建操作</h2><p>启动一个Build</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build &lt;buildconfig_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#使用--from-build启动</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build --from-build=&lt;build_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#添加--follow参数，在终端输出日志</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build &lt;buildconfig_name&gt; --follow</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#给构建传入环境变量</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build &lt;buildconfig_name&gt; --<span class="built_in">env</span>=&lt;key&gt;=&lt;value&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>您可以通过直接推送源代码来启动构建，而不是依赖于Git源代码拉取或Dockerfile构建构建，这可能是Git或SVN工作目录的内容，也就是您想要的一组预构建二进制工件。 部署或单个文件。 这可以通过为start-build命令指定以下选项之一来完成：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–from-dir&#x3D;<directory></td>
+<td>指定将归档并用作构建的二进制输入的目录。</td>
+</tr>
+<tr>
+<td>–from-file&#x3D;<file></td>
+<td>指定将成为构建源中唯一文件的单个文件。 该文件放在空目录的根目录中，其文件名与提供的原始文件相同。</td>
+</tr>
+<tr>
+<td>–from-repo&#x3D;<local_source_repo></td>
+<td>指定本地存储库的路径，以用作构建的二进制输入。 添加–commit选项以控制用于构建的分支，标记或提交。</td>
+</tr>
+</tbody></table>
+<p> 将任何这些选项直接传递给构建时，内容将流式传输到构建并覆盖当前构建源设置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 将本地Git仓库的v2分支/tag的内容作为存档并启动构建</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build hello-world --from-repo=../hello-world --commit=v2</span></span><br></pre></td></tr></table></figure>
+
+<p>取消一个构建</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc cancel-build &lt;build_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#取消多个构建</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc cancel-build &lt;build1_name&gt; &lt;build2_name&gt; &lt;build3_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#取消通过buildconfig构建的所有构建</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc cancel-build bc/&lt;buildconfig_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#取消指定状态的构建</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc cancel-build bc/&lt;buildconfig_name&gt;  --state=&lt;state&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>删除构建</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#删除BuildConfig，同时删除之前的Build</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc delete bc &lt;BuildConfigName&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#删除BuildConfig，但保留之前的Build</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc delete --cascade=<span class="literal">false</span> bc &lt;BuildConfigName&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>查看Build的详情</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc describe build &lt;build_name&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>查看Build的日志</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc logs -f build/&lt;build_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#查看最新的一个Build的日志</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc logs -f bc/&lt;buildconfig_name&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#查看指定版本的Build日志</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc logs --version=&lt;number&gt; bc/&lt;buildconfig_name&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>设置Build的日志级别</p>
+<p>要启用更详细的输出，请在BuildConfig中将BUILD_LOGLEVEL环境变量作为sourceStrategy或dockerStrategy的一部分传递：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sourceStrategy:</span><br><span class="line">...</span><br><span class="line">  env:</span><br><span class="line">    - name: &quot;BUILD<span class="built_in">_</span>LOGLEVEL&quot;</span><br><span class="line">      value: &quot;2&quot; </span><br></pre></td></tr></table></figure>
+
+<h2 id="Build的输入"><a href="#Build的输入" class="headerlink" title="Build的输入"></a>Build的输入</h2><p>构建输入需要提供输入源</p>
+<ol>
+<li>内联Dockerfile定义</li>
+<li>从现有图像中提取的内容</li>
+<li>Git仓库</li>
+<li>本地输入</li>
+<li>输入Secret和ConfigMaps</li>
+<li>额外的文件</li>
+</ol>
+<p>不同的输入可以组合成一个构建。 由于内联Dockerfile优先，它可以覆盖另一个输入提供的名为Dockerfile的任何其他文件。 二进制（本地）输入和Git仓库是不能同时使用。</p>
+<p>当您不希望构建期间使用的某些资源或凭据在构建生成的最终应用程序映像中可用时，或者想要使用在Secret资源中定义的值时，输入机密很有用。 外部工件可用于提取其他文件，这些文件不可用作其他构建输入类型之一。</p>
+<ol>
+<li><p>构造工作目录，并将所有输入内容放在工作目录中。 例如，输入Git存储库被克隆到工作目录中，并且使用目标路径将从输入镜像指定的文件复制到工作目录中。</p>
+</li>
+<li><p>构建过程将目录更改为contextDir（如果已定义）。</p>
+</li>
+<li><p>内联Dockerfile（如果有）将写入当前目录。</p>
+</li>
+<li><p>来自当前目录的内容将提供给构建过程，以供Dockerfile。 这意味着构建将忽略驻留在contextDir之外的任何输入内容。</p>
+</li>
+</ol>
+<p>以下例子中设置了多个输入源</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git:</span><br><span class="line">    uri: https://github.com/openshift/ruby-hello-world.git </span><br><span class="line">  images:</span><br><span class="line">  - from:</span><br><span class="line">      kind: ImageStreamTag</span><br><span class="line">      name: myinputimage:latest</span><br><span class="line">      namespace: mynamespace</span><br><span class="line">    paths:</span><br><span class="line">    - destinationDir: app/dir/injected/dir </span><br><span class="line">      sourcePath: /usr/lib/somefile.jar</span><br><span class="line">  contextDir: &quot;app/dir&quot; </span><br><span class="line">  dockerfile: &quot;FROM centos:7<span class="keyword">\nRUN</span> yum install -y httpd&quot; </span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>git仓库将会被clone到构建的工作目录中。</li>
+<li>myinputimage:latest镜像中的&#x2F;usr&#x2F;lib&#x2F;somefile.jar文件，将会被拷贝到工作目录中的app&#x2F;dir&#x2F;injected&#x2F;dir文件夹下</li>
+<li>构建的工作目录将变为原工作目录下的&#x2F;app&#x2F;dir</li>
+<li>具有此内容的Dockerfile将在<original_workingdir> &#x2F; app &#x2F; dir中创建，覆盖具有该名称的任何现有文件。</li>
+</ol>
+<h3 id="Dockerfile源"><a href="#Dockerfile源" class="headerlink" title="Dockerfile源"></a>Dockerfile源</h3><p>当提供dockerfile值时，该字段的内容将作为名为Dockerfile的文件写入磁盘。 这是在处理完其他输入源之后完成的，因此如果输入源存储库在根目录中包含Dockerfile，则它将被此内容覆盖。</p>
+<p>该字段的典型用途是为Docker策略提供Dockerfile</p>
+<p>该字段是定义在BuildConfig中的spec下</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  dockerfile: &quot;FROM centos:7<span class="keyword">\nRUN</span> yum install -y httpd&quot; </span><br></pre></td></tr></table></figure>
+
+<h3 id="镜像源"><a href="#镜像源" class="headerlink" title="镜像源"></a>镜像源</h3><p>可以通过图像向构建过程提供其他文件。 输入图像的引用方式与定义From和To图像目标的方式相同。 这意味着可以引用容器图像和图像流标记。 与映像一起使用时，必须提供一个或多个路径对，以指示要复制映像的文件或目录的路径以及将它们放置在构建上下文中的目标。</p>
+<p>源路径可以是指定图像中的任何绝对路径。 目标必须是相对目录路径。 在构建时，将加载映像，并将指示的文件和目录复制到构建过程的上下文目录中。 这是克隆源存储库内容（如果有）的目录。 如果源路径以&#x2F;结尾。 然后将复制目录的内容，但不会在目标上创建目录本身。</p>
+<p>该字段是定义在BuildConfig中的spec下</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git:</span><br><span class="line">    uri: https://github.com/openshift/ruby-hello-world.git</span><br><span class="line">  images: </span><br><span class="line">  - from: </span><br><span class="line">      kind: ImageStreamTag</span><br><span class="line">      name: myinputimage:latest</span><br><span class="line">      namespace: mynamespace</span><br><span class="line">    paths: </span><br><span class="line">    - destinationDir: injected/dir </span><br><span class="line">      sourcePath: /usr/lib/somefile.jar </span><br><span class="line">  - from:</span><br><span class="line">      kind: ImageStreamTag</span><br><span class="line">      name: myotherinputimage:latest</span><br><span class="line">      namespace: myothernamespace</span><br><span class="line">    pullSecret: mysecret </span><br><span class="line">    paths:</span><br><span class="line">    - destinationDir: injected/dir</span><br><span class="line">      sourcePath: /usr/lib/somefile.jar</span><br></pre></td></tr></table></figure>
+
+<h3 id="Git源"><a href="#Git源" class="headerlink" title="Git源"></a>Git源</h3><p>设置了Git源后，将从指定的Git源clone下代码</p>
+<p>如果设置了dockerfile源，那么它将会覆盖掉代码中目录下的Dockerfile文件</p>
+<p>git源字段也是BuildConfig中的spec下</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git: </span><br><span class="line">    uri: &quot;https://github.com/openshift/ruby-hello-world&quot;</span><br><span class="line">    ref: &quot;master&quot;</span><br><span class="line">  contextDir: &quot;app/dir&quot; </span><br><span class="line">  dockerfile: &quot;FROM openshift/ruby-22-centos7<span class="keyword">\nUSER</span> example&quot; </span><br></pre></td></tr></table></figure>
+
+<p>Git源设置中还可以指定代码</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git:</span><br><span class="line">    uri: &quot;https://github.com/openshift/ruby-hello-world&quot;</span><br><span class="line">    httpProxy: http://proxy.example.com</span><br><span class="line">    httpsProxy: https://proxy.example.com</span><br><span class="line">    noProxy: somedomain.com, otherdomain.com</span><br></pre></td></tr></table></figure>
+
+<p>Git源设置下载的用户及密码</p>
+<p>Builder pods需要访问定义为构建源的任何Git存储库。 源克隆密钥用于为构建器窗格提供通常无法访问的访问权限，例如具有自签名或不可信SSL证书的私有存储库或存储库。</p>
+<ol>
+<li>.gitconfig配置文件</li>
+<li>Basic Authentication</li>
+<li>SSH Key Authentication</li>
+<li>Trusted Certificate Authorities</li>
+</ol>
+<p>使用builder服务帐户运行构建，该帐户必须能够访问所使用的任何源克隆密钥。 使用以下命令授予访问权限：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc secrets <span class="built_in">link</span> builder mysecret</span></span><br></pre></td></tr></table></figure>
+
+<p>说明：默认情况下是不需要主动绑定builder与secret的，除非在masterconfig中的serviceAccountConfig.limitSecretReferences设置为true。</p>
+<p>自动将源克隆密码添加到构建配置中</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-build&quot;</span><br><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;sample-image:latest&quot;</span><br><span class="line">  source:</span><br><span class="line">    git:</span><br><span class="line">      uri: &quot;https://github.com/user/app.git&quot;</span><br><span class="line">    sourceSecret:</span><br><span class="line">      name: &quot;basicsecret&quot;</span><br><span class="line">  strategy:</span><br><span class="line">    sourceStrategy:</span><br><span class="line">      from:</span><br><span class="line">        kind: &quot;ImageStreamTag&quot;</span><br><span class="line">        name: &quot;python-33-centos7:latest&quot;</span><br></pre></td></tr></table></figure>
+
+<p>secret构建</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create secret generic &lt;secret_name&gt; \</span></span><br><span class="line"><span class="language-bash">    --from-literal=username=&lt;user_name&gt; \</span></span><br><span class="line"><span class="language-bash">    --from-literal=password=&lt;password&gt; \</span></span><br><span class="line"><span class="language-bash">    --<span class="built_in">type</span>=kubernetes.io/basic-auth</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create secret generic &lt;secret_name&gt; \</span></span><br><span class="line"><span class="language-bash">    --from-literal=password=&lt;token&gt; \</span></span><br><span class="line"><span class="language-bash">    --<span class="built_in">type</span>=kubernetes.io/basic-auth</span></span><br><span class="line">    </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create secret generic &lt;secret_name&gt; \</span></span><br><span class="line"><span class="language-bash">    --from-file=ssh-privatekey=&lt;path/to/ssh/private/key&gt; \</span></span><br><span class="line"><span class="language-bash">    --<span class="built_in">type</span>=kubernetes.io/ssh-auth</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="本地源"><a href="#本地源" class="headerlink" title="本地源"></a>本地源</h3><p>从本地文件系统到构建器的流内容称为二进制类型构建。 对于此类构建，BuildConfig.spec.source.type的对应值为Binary。</p>
+<p>此源类型的独特之处在于它仅基于您对oc start-build的使用而被利用。</p>
+<p>在star-build构建时需要指定以下参数之一</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–from-dir&#x3D;<directory></td>
+<td>指定将归档并用作构建的二进制输入的目录。</td>
+</tr>
+<tr>
+<td>–from-file&#x3D;<file></td>
+<td>指定将成为构建源中唯一文件的单个文件。 该文件放在空目录的根目录中，其文件名与提供的原始文件相同。</td>
+</tr>
+<tr>
+<td>–from-repo&#x3D;<local_source_repo></td>
+<td>指定本地存储库的路径，以用作构建的二进制输入。 添加–commit选项以控制用于构建的分支，标记或提交。</td>
+</tr>
+<tr>
+<td>–from-archive</td>
+<td>指定的压缩包文件将发送到构建器，在构建器上下文目录中将其解压缩。 此选项与–from-dir的行为相同; 只要这些选项的参数是目录，就会首先在主机上创建压缩文件。</td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>如果您的BuildConfig已经定义为binary类型，那它将会被客户端发送的内容给替代。</p>
+</li>
+<li><p>如果您的BuildConfig定义了Git源类型，则会动态禁用Git源类型，因为Binary和Git是互斥的，并且提供给构建器的二进制流中的数据优先。</p>
+</li>
+</ul>
+<p>您可以将带有HTTP或HTTPS架构的URL传递给–from-file和–from-archive，而不是文件名。 将-from-file与URL一起使用时，构建器映像中文件的名称由Web服务器发送的Content-Disposition标头确定，如果标头不存在，则由URL路径的最后一个组件确定。 不支持任何形式的身份验证，也无法使用自定义TLS证书或禁用证书验证。</p>
+<p>使用<code>oc new-build --binary = true</code>时，该命令可确保强制执行与二进制构建关联的限制。 生成的BuildConfig将具有Binary的源类型，这意味着为此BuildConfig运行构建的唯一有效方法是使用oc start-build和其中一个–from选项来提供必需的二进制数据。</p>
+<p>dockerfile和contextDir源选项对二进制构建具有特殊含义。</p>
+<p>dockerfile可以与任何二进制构建源一起使用。 如果使用dockerfile且二进制流是存档，则其内容将作为存档中任何Dockerfile的替换Dockerfile。 如果dockerfile与–from-file参数一起使用，并且file参数名为dockerfile，则dockerfile中的值将替换二进制流中的值。</p>
+<p> 在二进制流封装提取的存档内容的情况下，contextDir字段的值被解释为存档中的子目录，并且如果有效，则构建器在执行构建之前更改为该子目录。</p>
+<p>本地源构建的一个实例：</p>
+<ol>
+<li><p>创建本地文件夹，存放代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> myapp</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> myapp</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在目录下创建一个Dockerfile文件</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">FROM centos:centos7</span><br><span class="line"></span><br><span class="line">EXPOSE 8080</span><br><span class="line"></span><br><span class="line">COPY index.html /var/run/web/index.html</span><br><span class="line"></span><br><span class="line">CMD cd /var/run/web <span class="built_in">&amp;</span><span class="built_in">&amp;</span> python -m SimpleHTTPServer 8080</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在目录下添加一个index.html文件</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;head&gt;</span><br><span class="line">    &lt;title&gt;My local app&lt;/title&gt;</span><br><span class="line">  &lt;/head&gt;</span><br><span class="line">  &lt;body&gt;</span><br><span class="line">    &lt;h1&gt;Hello World&lt;/h1&gt;</span><br><span class="line">    &lt;p&gt;This is my local application&lt;/p&gt;</span><br><span class="line">  &lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建一个buildConfig</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-build --strategy docker --binary --docker-image centos:centos7 --name myapp</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>开始一个构建，使用当前文件夹</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc start-build myapp --from-dir . --follow</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>根据生成的镜像部署应用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-app myapp</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc expose svc/myapp</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看当前应用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get route myapp</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://docs.openshift.com/dedicated/dev_guide/dev_tutorials/binary_builds.html#binary-builds-local-code-changes">https://docs.openshift.com/dedicated/dev_guide/dev_tutorials/binary_builds.html#binary-builds-local-code-changes</a></p>
+<h3 id="导入Secret与ConfigMap"><a href="#导入Secret与ConfigMap" class="headerlink" title="导入Secret与ConfigMap"></a>导入Secret与ConfigMap</h3><p> 在某些情况下，构建操作需要凭据或其他配置数据来访问相关资源，但不希望将该信息放置在源代码管理中。 您可以为此目的定义输入密钥并输入ConfigMaps。</p>
+<p>例如：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#创建configmap</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create configmap settings-mvn --from-file=settings.xml=&lt;path/to/settings.xml&gt;</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 创建Secret</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create secret generic secret-mvn --from-file=id_rsa=&lt;path/to/.ssh/id_rsa&gt;</span></span><br></pre></td></tr></table></figure>
+<p>将ConfigMap与Secret加入到构建目录</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git:</span><br><span class="line">    uri: https://github.com/wildfly/quickstart.git</span><br><span class="line">  contextDir: helloworld</span><br><span class="line">  configMaps:</span><br><span class="line">    - configMap:</span><br><span class="line">        name: settings-mvn</span><br><span class="line">  secrets:</span><br><span class="line">    - secret:</span><br><span class="line">        name: secret-mvn</span><br></pre></td></tr></table></figure>
+
+<p>要在新的构建中添加</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-build \</span></span><br><span class="line"><span class="language-bash">    openshift/wildfly-101-centos7~https://github.com/wildfly/quickstart.git \</span></span><br><span class="line"><span class="language-bash">    --context-dir helloworld --build-secret “secret-mvn” \</span></span><br><span class="line"><span class="language-bash">    --build-config-map <span class="string">&quot;settings-mvn&quot;</span></span></span><br></pre></td></tr></table></figure>
+<p>指定文件保存的工作目录下的子目录</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">source:</span><br><span class="line">  git:</span><br><span class="line">    uri: https://github.com/wildfly/quickstart.git</span><br><span class="line">  contextDir: helloworld</span><br><span class="line">  configMaps:</span><br><span class="line">    - configMap:</span><br><span class="line">        name: settings-mvn</span><br><span class="line">      destinationDir: &quot;.m2&quot;</span><br><span class="line">  secrets:</span><br><span class="line">    - secret:</span><br><span class="line">        name: secret-mvn</span><br><span class="line">      destinationDir: &quot;.ssh&quot;</span><br></pre></td></tr></table></figure>
+
+<p>在新建构建时指定</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-build \</span></span><br><span class="line"><span class="language-bash">    openshift/wildfly-101-centos7~https://github.com/wildfly/quickstart.git \</span></span><br><span class="line"><span class="language-bash">    --context-dir helloworld --build-secret “secret-mvn:.ssh” \</span></span><br><span class="line"><span class="language-bash">    --build-config-map <span class="string">&quot;settings-mvn:.m2&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>setting.xml将会被放在.&#x2F;.m2目录下</p>
+<p>id_rsa文件将会放在.&#x2F;.ssh目录下</p>
+<h2 id="Build输出"><a href="#Build输出" class="headerlink" title="Build输出"></a>Build输出</h2><p>Build构建好的镜像输出可以是ImageStreamTag，也可以是外部的镜像仓库</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;sample-image:latest&quot;</span><br></pre></td></tr></table></figure>
+
+<p>或者</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;DockerImage&quot;</span><br><span class="line">      name: &quot;my-registry.mycompany.com:5000/myimages/myimage:tag&quot;</span><br></pre></td></tr></table></figure>
+
+<p>Docker和Source策略，在构建好的镜像中会写入以下环境变量</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OPENSHIFT_BUILD_NAME</td>
+<td>构建名</td>
+</tr>
+<tr>
+<td>OPENSHIFT_BUILD_NAMESPACE</td>
+<td>构建的namespace</td>
+</tr>
+<tr>
+<td>OPENSHIFT_BUILD_SOURCE</td>
+<td>构建的代码地址</td>
+</tr>
+<tr>
+<td>OPENSHIFT_BUILD_REFERENCE</td>
+<td>构建的代码所在的分支</td>
+</tr>
+<tr>
+<td>OPENSHIFT_BUILD_COMMIT</td>
+<td>构建的代码的Commit</td>
+</tr>
+</tbody></table>
+<p>输出的镜像ImageStreamTag有以下label</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>io.openshift.build.commit.author</td>
+<td>代码提交的作者</td>
+</tr>
+<tr>
+<td>io.openshift.build.commit.date</td>
+<td>代码提交的时间</td>
+</tr>
+<tr>
+<td>io.openshift.build.commit.id</td>
+<td>代码提交的Commit ID</td>
+</tr>
+<tr>
+<td>io.openshift.build.commit.message</td>
+<td>代码提交的Message</td>
+</tr>
+<tr>
+<td>io.openshift.build.commit.ref</td>
+<td>代码构建所在的分支</td>
+</tr>
+<tr>
+<td>io.openshift.build.source-location</td>
+<td>构建的地址</td>
+</tr>
+</tbody></table>
+<p>也可以通过设置<strong>imageLabels</strong>给镜像添加新的lable</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;my-image:latest&quot;</span><br><span class="line">    imageLabels:</span><br><span class="line">    - name: &quot;vendor&quot;</span><br><span class="line">      value: &quot;MyCompany&quot;</span><br><span class="line">    - name: &quot;authoritative-source-url&quot;</span><br><span class="line">      value: &quot;registry.mycompany.com&quot;</span><br></pre></td></tr></table></figure>
+
+<p>镜像输出到外部的镜像仓库，需要添加外部镜像仓库的权限</p>
+<p>您可以使用.docker &#x2F; config.json文件为私有容器注册表提供有效凭据。 这允许您将输出图像推送到私有容器映像注册表，或从需要身份验证的私有容器映像注册表中提取构建器映像。</p>
+<p>默认情况下，.docker&#x2F;config.json文件位于主目录中，格式如下：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">auths:</span><br><span class="line">  https://index.docker.io/v1/: </span><br><span class="line">    auth: &quot;YWRfbGzhcGU6R2labnRib21ifTE=&quot; </span><br><span class="line">    email: &quot;user@example.com&quot; </span><br></pre></td></tr></table></figure>
+
+<p>在Openshift平台上，可以将它保存在Secret中，供build时调用</p>
+<ol>
+<li><p>根据本地的.docker&#x2F;config.json文件创建Secret</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create secret generic dockerhub \</span></span><br><span class="line"><span class="language-bash">    --from-file=.dockerconfigjson=&lt;path/to/.docker/config.json&gt; \</span></span><br><span class="line"><span class="language-bash">    --<span class="built_in">type</span>=kubernetes.io/dockerconfigjson</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将该secret授权给builder，一般这一步不需要，默认是已经授过权的</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc secrets <span class="built_in">link</span> builder dockerhub</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将pushSecret字段添加到BuildConfig的输出部分，并将其设置为您创建的秘密的名称，在上面的示例中为dockerhub：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: &quot;DockerImage&quot;</span><br><span class="line">      name: &quot;private.registry.com/org/private-image:latest&quot;</span><br><span class="line">    pushSecret:</span><br><span class="line">      name: &quot;dockerhub&quot;</span><br></pre></td></tr></table></figure>
+
+<p>或者使用oc命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> build-secret --push bc/sample-build dockerhub</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>通过指定pullSecret字段从私有容器映像注册表中提取构建器容器映像，该字段是构建策略定义的一部分：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  sourceStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;DockerImage&quot;</span><br><span class="line">      name: &quot;docker.io/user/private<span class="built_in">_</span>repository&quot;</span><br><span class="line">    pullSecret:</span><br><span class="line">      name: &quot;dockerhub&quot;</span><br></pre></td></tr></table></figure>
+
+<p>或者使用oc命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> build-secret --pull bc/sample-build dockerhub</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="Build策略"><a href="#Build策略" class="headerlink" title="Build策略"></a>Build策略</h2><h3 id="s2i策略"><a href="#s2i策略" class="headerlink" title="s2i策略"></a>s2i策略</h3><p>强制更新镜像</p>
+<p>默认情况下，通过ImageStreamTag构建时，如果构建容器所在的主机上已存在镜像，就会直接使用该镜像，除非添加<code>forcePull:true</code>属性</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  sourceStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;builder-image:latest&quot; </span><br><span class="line">    forcePull: true </span><br></pre></td></tr></table></figure>
+
+<p>增量构建</p>
+<p>S2I可以执行增量构建，这意味着它可以重用先前构建的图像中的工件。 要创建增量构建，请创建一个BuildConfig，并对策略定义进行以下修改</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  sourceStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;incremental-image:latest&quot; </span><br><span class="line">    incremental: true </span><br></pre></td></tr></table></figure>
+
+<p>替换默认的构建脚本</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  sourceStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;builder-image:latest&quot;</span><br><span class="line">    scripts: &quot;http://somehost.com/scripts<span class="built_in">_</span>directory&quot; </span><br></pre></td></tr></table></figure>
+
+<h3 id="Docker策略"><a href="#Docker策略" class="headerlink" title="Docker策略"></a>Docker策略</h3><p> Dockerfile的FROM指令将替换为BuildConfig的from：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  dockerStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;debian:latest&quot;</span><br></pre></td></tr></table></figure>
+
+<p>默认情况下，Docker构建使用位于BuildConfig.spec.source.contextDir字段中指定的上下文根的Dockerfile（名为Dockerfile）。</p>
+<p>dockerfilePath字段允许构建使用不同的路径来定位Dockerfile，相对于BuildConfig.spec.source.contextDir字段。 它可以是除默认Dockerfile之外的其他文件名（例如，MyDockerfile），或者是子目录中Dockerfile的路径（例如，dockerfiles &#x2F; app1 &#x2F; Dockerfile）</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  dockerStrategy:</span><br><span class="line">    dockerfilePath: dockerfiles/app1/Dockerfile</span><br></pre></td></tr></table></figure>
+
+<p>Docker构建通常重用在执行构建的主机上找到的缓存层。 将noCache选项设置为true会强制构建忽略缓存层并重新运行Dockerfile的所有步骤：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  dockerStrategy:</span><br><span class="line">    noCache: true</span><br></pre></td></tr></table></figure>
+
+<p>默认情况下，通过ImageStreamTag构建时，如果构建容器所在的主机上已存在镜像，就会直接使用该镜像，除非添加<code>forcePull:true</code>属性</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  dockerStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;ImageStreamTag&quot;</span><br><span class="line">      name: &quot;debian:latest&quot; </span><br><span class="line">    forcePull: true </span><br></pre></td></tr></table></figure>
+
+<p>构建添加环境变量</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">dockerStrategy:</span><br><span class="line">...</span><br><span class="line">  env:</span><br><span class="line">    - name: &quot;HTTP<span class="built_in">_</span>PROXY&quot;</span><br><span class="line">      value: &quot;http://myproxy.net:5187/&quot;</span><br></pre></td></tr></table></figure>
+
+<p>构建参数</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">dockerStrategy:</span><br><span class="line">...</span><br><span class="line">  buildArgs:</span><br><span class="line">    - name: &quot;foo&quot;</span><br><span class="line">      value: &quot;bar&quot;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="自定义策略"><a href="#自定义策略" class="headerlink" title="自定义策略"></a>自定义策略</h3><p>根据镜像构建</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  customStrategy:</span><br><span class="line">    from:</span><br><span class="line">      kind: &quot;DockerImage&quot;</span><br><span class="line">      name: &quot;openshift/sti-image-builder&quot;</span><br></pre></td></tr></table></figure>
+
+<p>为了允许从容器内部运行Docker命令和构建容器映像，必须将构建容器绑定到可访问的套接字。 为此，请将exposeDockerSocket选项设置为true：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  customStrategy:</span><br><span class="line">    exposeDockerSocket: true</span><br></pre></td></tr></table></figure>
+
+<p>强制更新镜像</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">strategy:</span><br><span class="line">  customStrategy:</span><br><span class="line">    forcePull: true </span><br></pre></td></tr></table></figure>
+
+<p>构建添加环境变量</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">customStrategy:</span><br><span class="line">...</span><br><span class="line">  env:</span><br><span class="line">    - name: &quot;HTTP<span class="built_in">_</span>PROXY&quot;</span><br><span class="line">      value: &quot;http://myproxy.net:5187/&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pipeline流水线策略"><a href="#Pipeline流水线策略" class="headerlink" title="Pipeline流水线策略"></a>Pipeline流水线策略</h3><p>通过两种方式提供jenkinsfile文件</p>
+<ol>
+<li><p>在BuildConfig配置文件中写</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-pipeline&quot;</span><br><span class="line">spec:</span><br><span class="line">  strategy:</span><br><span class="line">    jenkinsPipelineStrategy:</span><br><span class="line">      jenkinsfile: |-</span><br><span class="line">        node(&#x27;agent&#x27;) &#123;</span><br><span class="line">          stage &#x27;build&#x27;</span><br><span class="line">          openshiftBuild(buildConfig: &#x27;ruby-sample-build&#x27;, showBuildLogs: &#x27;true&#x27;)</span><br><span class="line">          stage &#x27;deploy&#x27;</span><br><span class="line">          openshiftDeploy(deploymentConfig: &#x27;frontend&#x27;)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在git代码文件中添加jenkinsfile文件</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-pipeline&quot;</span><br><span class="line">spec:</span><br><span class="line">  source:</span><br><span class="line">    git:</span><br><span class="line">      uri: &quot;https://github.com/openshift/ruby-hello-world&quot;</span><br><span class="line">  strategy:</span><br><span class="line">    jenkinsPipelineStrategy:</span><br><span class="line">      jenkinsfilePath: some/repo/dir/filename </span><br></pre></td></tr></table></figure>
+
+<p>可选的jenkinsfilePath字段指定要使用的文件的名称，相对于源contextDir。 如果省略了contextDir，则默认为存储库的根。 如果省略jenkinsfilePath，则默认为Jenkinsfile。</p>
+</li>
+</ol>
+<p>环境变量</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">jenkinsPipelineStrategy:</span><br><span class="line">...</span><br><span class="line">  env:</span><br><span class="line">    - name: &quot;FOO&quot;</span><br><span class="line">      value: &quot;BAR&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Build构建的高级用法"><a href="#Build构建的高级用法" class="headerlink" title="Build构建的高级用法"></a>Build构建的高级用法</h2><h3 id="设置构建时对资源进行限制-cpu-memory"><a href="#设置构建时对资源进行限制-cpu-memory" class="headerlink" title="设置构建时对资源进行限制(cpu&#x2F;memory)"></a>设置构建时对资源进行限制(cpu&#x2F;memory)</h3><figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-build&quot;</span><br><span class="line">spec:</span><br><span class="line">  resources:</span><br><span class="line">    limits:</span><br><span class="line">      cpu: &quot;100m&quot; </span><br><span class="line">      memory: &quot;256Mi&quot; </span><br></pre></td></tr></table></figure>
+
+<h3 id="设置构建的超时时间"><a href="#设置构建的超时时间" class="headerlink" title="设置构建的超时时间"></a>设置构建的超时时间</h3><figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  completionDeadlineSeconds: 1800</span><br></pre></td></tr></table></figure>
+
+<h3 id="构建pod与Node绑定，只在指定的Node上执行构建"><a href="#构建pod与Node绑定，只在指定的Node上执行构建" class="headerlink" title="构建pod与Node绑定，只在指定的Node上执行构建"></a>构建pod与Node绑定，只在指定的Node上执行构建</h3><figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-build&quot;</span><br><span class="line">spec:</span><br><span class="line">  nodeSelector:</span><br><span class="line">    key1: value1</span><br><span class="line">    key2: value2</span><br></pre></td></tr></table></figure>
+
+<h3 id="Build链"><a href="#Build链" class="headerlink" title="Build链"></a>Build链</h3><p>有一些构建，比如说Java应用，在构建的过程中会产生大量的中间文件与缓存，及一些构建的工具包，这些资源在运行时是不需要的，但它们会导致最终的镜像包很大。所以运行时的镜像中只需要存在构建的结果，而不需要构建过程中的文件与工作包。这就需要将构建拆分成两部分，第一部分执行构建，生成最终的制品文件，第二部分将制品文件放在可运行环境中进行运行。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-f9e0b0dbf046ccd6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Build构建链.png"></p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: BuildConfig</span><br><span class="line">metadata:</span><br><span class="line">  name: artifact-build</span><br><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: ImageStreamTag</span><br><span class="line">      name: artifact-image:latest</span><br><span class="line">  source:</span><br><span class="line">    git:</span><br><span class="line">      uri: https://github.com/openshift/openshift-jee-sample.git</span><br><span class="line">    type: Git</span><br><span class="line">  strategy:</span><br><span class="line">    sourceStrategy:</span><br><span class="line">      from:</span><br><span class="line">        kind: ImageStreamTag</span><br><span class="line">        name: wildfly:10.1</span><br><span class="line">        namespace: openshift</span><br><span class="line">    type: Source</span><br></pre></td></tr></table></figure>
+
+<p>将上一个构建的输出，作为新的构建的输入</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: BuildConfig</span><br><span class="line">metadata:</span><br><span class="line">  name: image-build</span><br><span class="line">spec:</span><br><span class="line">  output:</span><br><span class="line">    to:</span><br><span class="line">      kind: ImageStreamTag</span><br><span class="line">      name: image-build:latest</span><br><span class="line">  source:</span><br><span class="line">    type: Dockerfile</span><br><span class="line">    dockerfile: |-</span><br><span class="line">      FROM jee-runtime:latest</span><br><span class="line">      COPY ROOT.war /deployments/ROOT.war</span><br><span class="line">    images:</span><br><span class="line">    - from: </span><br><span class="line">        kind: ImageStreamTag</span><br><span class="line">        name: artifact-image:latest</span><br><span class="line">      paths: </span><br><span class="line">      - sourcePath: /wildfly/standalone/deployments/ROOT.war</span><br><span class="line">        destinationDir: &quot;.&quot;</span><br><span class="line">  strategy:</span><br><span class="line">    dockerStrategy:</span><br><span class="line">      from: </span><br><span class="line">        kind: ImageStreamTag</span><br><span class="line">        name: jee-runtime:latest</span><br><span class="line">    type: Docker</span><br><span class="line">  triggers:</span><br><span class="line">  - imageChange: &#123;&#125;</span><br><span class="line">    type: ImageChange</span><br></pre></td></tr></table></figure>
+
+<h3 id="Build清理"><a href="#Build清理" class="headerlink" title="Build清理"></a>Build清理</h3><p>只保留构建成功的2个历史构建，和2个失败的历史构建</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: &quot;v1&quot;</span><br><span class="line">kind: &quot;BuildConfig&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;sample-build&quot;</span><br><span class="line">spec:</span><br><span class="line">  successfulBuildsHistoryLimit: 2 </span><br><span class="line">  failedBuildsHistoryLimit: 2 </span><br></pre></td></tr></table></figure>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/dev_guide/dev_tutorials/binary_builds.html">二进制文件构建</a><br><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/dev_guide/dev_tutorials/openshift_pipeline.html">Pipeline流水线构建</a><br><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/dev_guide/builds/index.html">BuildConfig</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/420369a1c884.html">https://xhua.eu.org/posts/420369a1c884.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/ed13f1158553.html" title="Openshift-F5集成（总结）——与Router方案对比"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-F5集成（总结）——与Router方案对比</div></div><div class="info-2"><div class="info-item-1">这篇文章来自9月份自己在F5年度会议上分享的PPT，感谢过程中帮忙一起联调的小伙伴。PPT也分享出来，地址如下：openshift与F5的联合解决方案Openshift-F5集成（南北流量走F5）Openshift-F5集成（续）——实现灰度发布 Openshift的基础概念Openshift简介红帽® OpenShift 是一款性能强大的开源企业级PaaS产品。不仅是企业级的Kubernetes，可以构建、部署与管理容器应用，还提供从开发到投入生产的整个应用生命周期内使用的完整解决方案，帮助客户享受快速创新带来的收益，同时保持企业级平台的稳定性、可靠性和安全性。Openshift支持多种环境下部署，无论是在企业内部，公共云，或是托管环境中。 Openshift Pod Pod是Openshift调度的最小单元 一个Pod包含一个或多个容器 Pod内的容器共享网络，IP不固定  实例： 12345678910111213apiVersion: v1kind: Podmetadata:  name: MyApp       labels:    app: MyApp    spec...</div></div></div></a><a class="pagination-related" href="/posts/006740db2f5e.html" title="Openshift-All-In-One一键部署工具上线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-All-In-One一键部署工具上线</div></div><div class="info-2"><div class="info-item-1">Openshift All In One工具制作的初衷： 工作中为了测试各种情况，比如备份恢复等，经常需要部署一套全新的Openshift环境，虽然镜像与安装包都是现成，但是部署过程中还是很容易出错，毕竟还是有些复杂的。竟然部署过程是一致的，那就干脆用脚本化，一键到位得了。 Openshift3.9部署手册，这是我之前整理的一篇单机部署Openshift 3.9的手册，有一些朋友看了后，按照上面的操作还是会遇到一些问题，毕竟步骤有那么多，差了一步，就很容易就会失败。有了这个脚本工具后，想要部署测试Openshift的朋友就很容易去部署测试了，而不是在部署这一步就放弃了。 有些厂商提供了Openshift的解决方案，但是做支持的厂商朋友并不太熟悉容器平台环境，也想在自己的环境下部署一套Openshift来测试，最后往往困难重重，从展望到放弃。  做个自动化工具，让所有关心Openshift&#x2F;K8s的朋友就可以跳过部署的步骤，快速进入到Paas这个神奇的世界，去了解到自己真正关心的内容。 进入正题 什么是正题？直接上工具git地址OpenshiftOneClick：http...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/558c69203e45.html" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a><a class="pagination-related" href="/posts/67c1601a81ee.html" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a><a class="pagination-related" href="/posts/60ecf55a7e34.html" title="CentOS上搭建双主高可用OpenLDAP-Server"><img class="cover" src="https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">CentOS上搭建双主高可用OpenLDAP-Server</div></div><div class="info-2"><div class="info-item-1">OpenLDAP单机搭建手册参考：CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 配置双主高可用OpenLDAP 准备两台centos 7服务器，作为两台OpenLDAP Server的运行主机     Server ID 系统版本 IP    1 centos 7 192.168.1.2   2 centos 7 192.168.1.3    按照CentOS上OpenLDAP Server使用cn&#x3D;config方式配置的方式在两台主机上部署好OpenLDAP Server。做到第6步即可，即启动openldap server 在两台主机上启动syncprov模块  1234567891011$ cat syncprov_mod.ldifdn: cn=module,cn=configobjectClass: olcModuleListcn: moduleolcModulePath: /usr/lib64/openldapolcModuleLoad: syncprov.la$ ldapadd -Y EXTERNAL -H ldapi...</div></div></div></a><a class="pagination-related" href="/posts/01fb942a14a1.html" title="企业级容器云平台建设之资源管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">企业级容器云平台建设之资源管理</div></div><div class="info-2"><div class="info-item-1"> 计算资源管理 多租户权限管理 多集群管理，及集群大小 资源配额与资源限制管理 NodePort端口号管理  网络资源管理 网络业务网、管理网、存储网分离 网卡做bond，提高网络可靠性 网络方案选型 网络策略NetworkPolicy机制 集群边界路由器管理（Ingress&#x2F;Route) 集群DNS域名服务管理  存储资源管理 存储PV选型，动态&#x2F;静态 存储类型，hostpath&#x2F;local&#x2F;NFS&#x2F;Ceph&#x2F;Solidfile等  镜像资源管理 镜像生命周期管理 ，创建&#x2F;查询&#x2F;更新&#x2F;删除 镜像库多租户权限管理 远程复制管理，至少两级镜像库设置，总镜像库&#x2F;子镜像库 镜像库操作审计管理 镜像漏洞安全扫描 镜像签名  补充说明在企业级容器平台建设中，资源管理只是其中的基础部分，另外还需要考虑：监控、告警、日志管理以及运维、安全、审计等方面。 来自：《Kubernetes权威指南：企业级容器云实战》 </div></div></div></a><a class="pagination-related" href="/posts/370dfa8a122e.html" title="OpenShift使用MetalLB，打开了Service通向外界的大门"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用MetalLB，打开了Service通向外界的大门</div></div><div class="info-2"><div class="info-item-1"> #背景在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。  Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。 NodePort：在私有集群中也常用来暴露服务，但是它必须使用30000以上的端口，数量有限，不便于管理，而且对于一些特殊的服务，如DNS，必须使用小端口号，那么使用NodePort则无法满足。 HostNetwork：对于集群中的一些特殊服务使用该方式，它将容器与宿主机的网络绑定，如OpenShift中的Router服务就是使用HostNetwork与Router节点绑定。它的缺点是pod必须与主机绑定，同时每个Node上只能运行一个Pod实例，因为端口无法被复用。 HostPort：与HostNetwork类似，将Pod指定的端口与Node对应的端口绑定。 LoadBalancer：一般只在公有云平台使用，可以使Service获得与主机同一平面...</div></div></div></a><a class="pagination-related" href="/posts/5c248e2fc353.html" title="使用ArgoCD实现多集群自动部署"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用ArgoCD实现多集群自动部署</div></div><div class="info-2"><div class="info-item-1">什么是Argo CD？Argo CD是用于Kubernetes的声明性GitOps连续交付工具，其优势为：  通过声明式定义应用、配置及环境信息，并且可以通过代码仓库实现版本控制 可通过自动或手动的方式同步应用到配置的期望状态 支持应用在多个环境、多个Kubernetes集群进行统一部署和管理 有UI及CLI多种方式，UI提供应用状态的可观测性，CLI方便与其它持续集成系统对接 支持多种SSO（OIDC，OAuth2，LDAP，SAML 2.0，GitHub，GitLab，Microsoft，LinkedIn） 支持Prometheus监控指标  参考文章https://www.openshift.com/blog/openshift-authentication-integration-with-argocdhttps://www.openshift.com/blog/introduction-to-gitops-with-openshifthttps://argoproj.github.io/argo-cd/ </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Build%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">Build是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%9A%84%E6%9E%84%E5%BB%BA%E6%93%8D%E4%BD%9C"><span class="toc-text">基础的构建操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Build%E7%9A%84%E8%BE%93%E5%85%A5"><span class="toc-text">Build的输入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dockerfile%E6%BA%90"><span class="toc-text">Dockerfile源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%95%9C%E5%83%8F%E6%BA%90"><span class="toc-text">镜像源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Git%E6%BA%90"><span class="toc-text">Git源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%BA%90"><span class="toc-text">本地源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%BC%E5%85%A5Secret%E4%B8%8EConfigMap"><span class="toc-text">导入Secret与ConfigMap</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Build%E8%BE%93%E5%87%BA"><span class="toc-text">Build输出</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Build%E7%AD%96%E7%95%A5"><span class="toc-text">Build策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#s2i%E7%AD%96%E7%95%A5"><span class="toc-text">s2i策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E7%AD%96%E7%95%A5"><span class="toc-text">Docker策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%96%E7%95%A5"><span class="toc-text">自定义策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%AD%96%E7%95%A5"><span class="toc-text">Pipeline流水线策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Build%E6%9E%84%E5%BB%BA%E7%9A%84%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95"><span class="toc-text">Build构建的高级用法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%9E%84%E5%BB%BA%E6%97%B6%E5%AF%B9%E8%B5%84%E6%BA%90%E8%BF%9B%E8%A1%8C%E9%99%90%E5%88%B6-cpu-memory"><span class="toc-text">设置构建时对资源进行限制(cpu&#x2F;memory)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%9E%84%E5%BB%BA%E7%9A%84%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4"><span class="toc-text">设置构建的超时时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%84%E5%BB%BApod%E4%B8%8ENode%E7%BB%91%E5%AE%9A%EF%BC%8C%E5%8F%AA%E5%9C%A8%E6%8C%87%E5%AE%9A%E7%9A%84Node%E4%B8%8A%E6%89%A7%E8%A1%8C%E6%9E%84%E5%BB%BA"><span class="toc-text">构建pod与Node绑定，只在指定的Node上执行构建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Build%E9%93%BE"><span class="toc-text">Build链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Build%E6%B8%85%E7%90%86"><span class="toc-text">Build清理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

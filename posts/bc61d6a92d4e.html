@@ -1,0 +1,792 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Claude Code 使用最佳实践与技巧 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code 使用最佳实践与技巧">
+<meta property="og:url" content="https://xhua.eu.org/posts/bc61d6a92d4e.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg">
+<meta property="article:published_time" content="2026-01-28T09:21:22.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.626Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI编程助手">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="开发效率">
+<meta property="article:tag" content="最佳实践">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude Code 使用最佳实践与技巧",
+  "url": "https://xhua.eu.org/posts/bc61d6a92d4e.html",
+  "image": "https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg",
+  "datePublished": "2026-01-28T09:21:22.000Z",
+  "dateModified": "2026-02-24T07:27:54.626Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/bc61d6a92d4e.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Claude Code 使用最佳实践与技巧',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Claude Code 使用最佳实践与技巧</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Claude Code 使用最佳实践与技巧</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.626Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。</p>
+<p>本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从基础使用提升到专家级别，真正释放 AI 辅助编程的生产力。</p>
+<h2 id="Claude-Code-核心理解"><a href="#Claude-Code-核心理解" class="headerlink" title="Claude Code 核心理解"></a>Claude Code 核心理解</h2><h3 id="什么是-Claude-Code"><a href="#什么是-Claude-Code" class="headerlink" title="什么是 Claude Code"></a>什么是 Claude Code</h3><p>Claude Code 是 Anthropic 开发的<strong>自主编程代理</strong>（Agentic Coding Tool），而非传统的代码补全工具。它的核心特点包括：</p>
+<ul>
+<li><strong>终端优先</strong>：通过 <code>claude</code> 命令在终端中交互，也支持 Web、桌面应用、IDE 插件等多种形式</li>
+<li><strong>自主执行</strong>：能够独立规划任务、执行多文件操作、运行命令、验证结果</li>
+<li><strong>大上下文</strong>：支持 200k+ token 的上下文窗口，适合处理大型代码库</li>
+<li><strong>多模态能力</strong>：不仅限于编程，还能处理文档编写、构建运行、文件搜索、主题研究等任何可从命令行执行的任务</li>
+</ul>
+<h3 id="Claude-Code-vs-Cursor：选择指南"><a href="#Claude-Code-vs-Cursor：选择指南" class="headerlink" title="Claude Code vs Cursor：选择指南"></a>Claude Code vs Cursor：选择指南</h3><p>理解两者的差异有助于选择合适的工具：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Claude Code</th>
+<th>Cursor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>核心定位</strong></td>
+<td>终端自主代理</td>
+<td>AI 增强 IDE</td>
+</tr>
+<tr>
+<td><strong>工作方式</strong></td>
+<td>探索式、并行执行</td>
+<td>聚焦式、精准控制</td>
+</tr>
+<tr>
+<td><strong>最佳场景</strong></td>
+<td>复杂重构、架构决策、多文件任务</td>
+<td>快速原型、MVP 开发、实时补全</td>
+</tr>
+<tr>
+<td><strong>上下文窗口</strong></td>
+<td>200k+ tokens</td>
+<td>相对较小</td>
+</tr>
+<tr>
+<td><strong>学习曲线</strong></td>
+<td>需要理解 Agent 工作方式</td>
+<td>熟悉 VS Code 即可上手</td>
+</tr>
+<tr>
+<td><strong>定价</strong></td>
+<td>Pro 订阅 $17-20&#x2F;月，无免费版</td>
+<td>有免费 Hobby 计划</td>
+</tr>
+</tbody></table>
+<p><strong>选择建议</strong>：</p>
+<ul>
+<li>需要处理大型代码库的复杂重构 → Claude Code</li>
+<li>快速迭代和原型开发 → Cursor</li>
+<li>深度代码审查和理解 → Cursor</li>
+<li>并行处理多个独立任务 → Claude Code</li>
+</ul>
+<p>两者并非互斥，很多团队同时使用两者，根据任务特点灵活选择。</p>
+<h2 id="环境配置与初始化"><a href="#环境配置与初始化" class="headerlink" title="环境配置与初始化"></a>环境配置与初始化</h2><h3 id="快速安装"><a href="#快速安装" class="headerlink" title="快速安装"></a>快速安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># macOS - Homebrew</span></span><br><span class="line">brew install anthropics/claude/claude</span><br><span class="line"></span><br><span class="line"><span class="comment"># macOS/Linux - 原生安装</span></span><br><span class="line">curl -fsSL https://code.claude.com/install.sh | sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># Windows - WinGet</span></span><br><span class="line">winget install Anthropic.Claude</span><br></pre></td></tr></table></figure>
+
+<p>安装后运行 <code>claude</code> 命令即可开始使用，首次运行需要登录 Claude 账号（需要 Pro、Max、Teams 或 Enterprise 订阅）。</p>
+<h3 id="创建-CLAUDE-md：项目上下文的关键"><a href="#创建-CLAUDE-md：项目上下文的关键" class="headerlink" title="创建 CLAUDE.md：项目上下文的关键"></a>创建 CLAUDE.md：项目上下文的关键</h3><p><strong>CLAUDE.md 是 Claude Code 最重要的配置文件</strong>，它为 Claude 提供持久化的项目上下文。这个文件应该放在项目根目录或父目录（适用于 monorepo）。</p>
+<h4 id="CLAUDE-md-应该包含什么"><a href="#CLAUDE-md-应该包含什么" class="headerlink" title="CLAUDE.md 应该包含什么"></a>CLAUDE.md 应该包含什么</h4><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># CLAUDE.md</span></span><br><span class="line"></span><br><span class="line">This file provides guidance to Claude Code when working with code in this repository.</span><br><span class="line"></span><br><span class="line"><span class="section">## Project Overview</span></span><br><span class="line">[项目简介、技术栈、架构概述]</span><br><span class="line"></span><br><span class="line"><span class="section">## Common Commands</span></span><br><span class="line"><span class="code">```bash</span></span><br><span class="line"><span class="code"># Development</span></span><br><span class="line"><span class="code">npm run dev          # Start dev server</span></span><br><span class="line"><span class="code">npm run test         # Run tests</span></span><br><span class="line"><span class="code">npm run build        # Production build</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Code-Style-Guidelines"><a href="#Code-Style-Guidelines" class="headerlink" title="Code Style Guidelines"></a>Code Style Guidelines</h2><ul>
+<li>Use TypeScript strict mode</li>
+<li>Follow ESLint rules in .eslintrc.js</li>
+<li>Prefer functional components with hooks</li>
+<li>Write tests for all business logic</li>
+</ul>
+<h2 id="Testing-Instructions"><a href="#Testing-Instructions" class="headerlink" title="Testing Instructions"></a>Testing Instructions</h2><ul>
+<li>Unit tests: <code>npm run test:unit</code></li>
+<li>E2E tests: <code>npm run test:e2e</code></li>
+<li>Coverage threshold: 80%</li>
+</ul>
+<h2 id="Repository-Etiquette"><a href="#Repository-Etiquette" class="headerlink" title="Repository Etiquette"></a>Repository Etiquette</h2><ul>
+<li>Create feature branches from <code>main</code></li>
+<li>Squash commits before merging</li>
+<li>Update CHANGELOG.md for user-facing changes</li>
+</ul>
+<h2 id="Developer-Environment-Setup"><a href="#Developer-Environment-Setup" class="headerlink" title="Developer Environment Setup"></a>Developer Environment Setup</h2><ul>
+<li>Node.js 18+</li>
+<li>PostgreSQL 14+</li>
+<li>Redis for caching</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#### CLAUDE.md 最佳实践</span><br><span class="line"></span><br><span class="line">1. **保持更新**：随着项目演进及时更新 CLAUDE.md</span><br><span class="line">2. **团队共识**：CLAUDE.md 应该反映团队的开发规范，纳入代码审查流程</span><br><span class="line">3. **分层配置**：Monorepo 可以在根目录放通用配置，子项目放特定配置</span><br><span class="line">4. **避免过度详细**：聚焦高频操作和容易出错的地方，不要写成完整文档</span><br><span class="line"></span><br><span class="line">### 环境优化配置</span><br><span class="line"></span><br><span class="line">#### 跳过权限提示（谨慎使用）</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line"># 开发环境快速迭代时可以跳过权限确认</span><br><span class="line">claude --dangerously-skip-permissions</span><br><span class="line"></span><br><span class="line"># 或设置别名</span><br><span class="line">alias cc=&#x27;claude --dangerously-skip-permissions&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>⚠️ <strong>警告</strong>：此选项会让 Claude 直接执行文件修改、命令运行等操作，仅在信任的项目中使用。</p>
+<h4 id="企业代理配置"><a href="#企业代理配置" class="headerlink" title="企业代理配置"></a>企业代理配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置 HTTP 代理</span></span><br><span class="line"><span class="built_in">export</span> HTTP_PROXY=http://proxy.company.com:8080</span><br><span class="line"><span class="built_in">export</span> HTTPS_PROXY=http://proxy.company.com:8080</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或在 Claude 配置中设置</span></span><br><span class="line">claude config <span class="built_in">set</span> proxy http://proxy.company.com:8080</span><br></pre></td></tr></table></figure>
+
+<h2 id="核心工作流程与最佳实践"><a href="#核心工作流程与最佳实践" class="headerlink" title="核心工作流程与最佳实践"></a>核心工作流程与最佳实践</h2><h3 id="黄金法则：探索-→-规划-→-编码"><a href="#黄金法则：探索-→-规划-→-编码" class="headerlink" title="黄金法则：探索 → 规划 → 编码"></a>黄金法则：探索 → 规划 → 编码</h3><p><strong>不要直接让 Claude 开始编码</strong>，这是最常见的误区。正确的流程是：</p>
+<h4 id="1-探索阶段（Exploration）"><a href="#1-探索阶段（Exploration）" class="headerlink" title="1. 探索阶段（Exploration）"></a>1. 探索阶段（Exploration）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 让 Claude 先理解代码库</span></span><br><span class="line">claude <span class="string">&quot;分析这个项目的认证流程实现&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 探索特定功能</span></span><br><span class="line">claude <span class="string">&quot;找出所有使用 Redis 缓存的地方&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 理解依赖关系</span></span><br><span class="line">claude <span class="string">&quot;这个 UserService 被哪些模块依赖？&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-规划阶段（Planning）"><a href="#2-规划阶段（Planning）" class="headerlink" title="2. 规划阶段（Planning）"></a>2. 规划阶段（Planning）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 让 Claude 制定计划</span></span><br><span class="line">claude <span class="string">&quot;我需要添加用户登录限流功能，请先制定一个实现计划&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 审查计划并调整</span></span><br><span class="line"><span class="comment"># Claude 会列出步骤、涉及的文件、潜在风险</span></span><br><span class="line"><span class="comment"># 此时你可以提供反馈：&quot;不要修改 auth.ts，在 middleware 层实现&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么规划重要？</strong></p>
+<ul>
+<li>让你有机会在代码修改前调整方向</li>
+<li>Claude 会考虑更全面的影响范围</li>
+<li>避免返工和错误修改</li>
+</ul>
+<h4 id="3-编码阶段（Coding）"><a href="#3-编码阶段（Coding）" class="headerlink" title="3. 编码阶段（Coding）"></a>3. 编码阶段（Coding）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 执行计划</span></span><br><span class="line">claude <span class="string">&quot;按照刚才的计划实现登录限流功能&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 增量验证</span></span><br><span class="line">claude <span class="string">&quot;实现第一步后，写个测试验证是否工作&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-Plan-Mode-进行安全分析"><a href="#使用-Plan-Mode-进行安全分析" class="headerlink" title="使用 Plan Mode 进行安全分析"></a>使用 Plan Mode 进行安全分析</h3><p>Plan Mode 是一个<strong>只读模式</strong>，适合在不修改代码的情况下进行深度分析：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 进入 Plan Mode</span></span><br><span class="line">claude plan <span class="string">&quot;分析这个重构方案的影响范围&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Plan Mode 适用场景</span></span><br><span class="line">- 复杂重构前的影响分析</span><br><span class="line">- 代码审查和安全检查</span><br><span class="line">- 架构决策评估</span><br><span class="line">- 性能瓶颈诊断</span><br></pre></td></tr></table></figure>
+
+<p>Plan Mode 会给出详细的分析报告，但不会修改任何文件，让你可以安全地探索各种可能性。</p>
+<h3 id="频繁使用-clear-保持会话清晰"><a href="#频繁使用-clear-保持会话清晰" class="headerlink" title="频繁使用 /clear 保持会话清晰"></a>频繁使用 <code>/clear</code> 保持会话清晰</h3><p><strong>长对话会让 AI 代理变得不可预测</strong>，这是所有 LLM 的共性问题。最佳实践：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 完成一个任务后立即清空</span></span><br><span class="line">/clear</span><br><span class="line"></span><br><span class="line"><span class="comment"># 切换到新任务前清空</span></span><br><span class="line">/clear</span><br><span class="line"></span><br><span class="line"><span class="comment"># 感觉 Claude 理解偏离时清空</span></span><br><span class="line">/clear</span><br></pre></td></tr></table></figure>
+
+<p><strong>何时应该 <code>/clear</code>？</strong></p>
+<ul>
+<li>✅ 完成一个独立功能</li>
+<li>✅ 开始新的不相关任务</li>
+<li>✅ Claude 的回复开始偏离预期</li>
+<li>✅ 上下文已经很长（&gt;10 轮对话）</li>
+</ul>
+<p><strong>何时不应该 <code>/clear</code>？</strong></p>
+<ul>
+<li>❌ 正在进行多步骤的复杂任务中途</li>
+<li>❌ 需要 Claude 记住之前的决策和上下文</li>
+<li>❌ 正在调试一个问题的过程中</li>
+</ul>
+<h3 id="提供丰富的上下文"><a href="#提供丰富的上下文" class="headerlink" title="提供丰富的上下文"></a>提供丰富的上下文</h3><p><strong>好的提示词 &#x3D; 清晰的意图 + 丰富的上下文</strong></p>
+<h4 id="差的提示词示例"><a href="#差的提示词示例" class="headerlink" title="差的提示词示例"></a>差的提示词示例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ❌ 太模糊</span></span><br><span class="line">claude <span class="string">&quot;优化这个函数&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ❌ 缺少上下文</span></span><br><span class="line">claude <span class="string">&quot;修复这个 bug&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ❌ 没有验证方式</span></span><br><span class="line">claude <span class="string">&quot;添加缓存功能&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="好的提示词示例"><a href="#好的提示词示例" class="headerlink" title="好的提示词示例"></a>好的提示词示例</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ✅ 清晰的意图 + 具体指标</span></span><br><span class="line">claude <span class="string">&quot;优化 src/utils/parser.ts 中的 parseUserData 函数，</span></span><br><span class="line"><span class="string">目标是将处理 10000 条记录的时间从 5 秒降低到 1 秒以内。</span></span><br><span class="line"><span class="string">当前瓶颈是 JSON.parse 调用过于频繁。&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 包含错误信息和环境</span></span><br><span class="line">claude <span class="string">&quot;修复登录失败的问题。错误信息：</span></span><br><span class="line"><span class="string">Error: Invalid token signature</span></span><br><span class="line"><span class="string">  at jwt.verify (auth.ts:45)</span></span><br><span class="line"><span class="string">环境：Node.js 18, JWT 库版本 9.0.0</span></span><br><span class="line"><span class="string">复现步骤：使用过期 token 调用 /api/user 接口&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 明确验证方式</span></span><br><span class="line">claude <span class="string">&quot;为 UserService 添加 Redis 缓存。</span></span><br><span class="line"><span class="string">要求：</span></span><br><span class="line"><span class="string">1. 缓存用户基本信息，TTL 5分钟</span></span><br><span class="line"><span class="string">2. 提供缓存失效机制</span></span><br><span class="line"><span class="string">3. 添加单元测试验证缓存命中率</span></span><br><span class="line"><span class="string">4. 实现后运行 npm test 验证所有测试通过&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="让-Claude-验证自己的工作"><a href="#让-Claude-验证自己的工作" class="headerlink" title="让 Claude 验证自己的工作"></a>让 Claude 验证自己的工作</h3><p><strong>不要假设 Claude 的输出是正确的</strong>，而是给它验证的方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 要求运行测试</span></span><br><span class="line">claude <span class="string">&quot;实现用户注册功能，完成后运行 npm test 验证&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 要求检查 linter</span></span><br><span class="line">claude <span class="string">&quot;重构这个组件，完成后运行 eslint 检查是否有错误&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 要求构建验证</span></span><br><span class="line">claude <span class="string">&quot;修改 Webpack 配置，完成后运行 npm run build 确保构建成功&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 要求手动验证</span></span><br><span class="line">claude <span class="string">&quot;添加新的 API 端点，完成后用 curl 测试并展示响应&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>Claude 会自动执行这些验证命令，并根据结果调整代码，直到验证通过。</p>
+<h2 id="高级技巧与模式"><a href="#高级技巧与模式" class="headerlink" title="高级技巧与模式"></a>高级技巧与模式</h2><h3 id="使用-Subagents-进行任务委派"><a href="#使用-Subagents-进行任务委派" class="headerlink" title="使用 Subagents 进行任务委派"></a>使用 Subagents 进行任务委派</h3><p><strong>Subagent 是 Claude Code 的杀手级特性</strong>，允许你将复杂任务分解为并行的子任务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 主 Claude 会话</span></span><br><span class="line">claude <span class="string">&quot;我需要重构整个认证模块，包括：</span></span><br><span class="line"><span class="string">1. 将 JWT 验证逻辑从 controller 移到 middleware</span></span><br><span class="line"><span class="string">2. 添加 refresh token 机制</span></span><br><span class="line"><span class="string">3. 更新所有相关的单元测试</span></span><br><span class="line"><span class="string">4. 更新 API 文档</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">请创建 subagents 并行处理这些任务&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>Claude 会自动：</p>
+<ol>
+<li>创建多个 subagent</li>
+<li>为每个 subagent 分配明确的任务</li>
+<li>监控各个 subagent 的进度</li>
+<li>整合所有结果</li>
+</ol>
+<p><strong>Subagent 适用场景</strong>：</p>
+<ul>
+<li>✅ 多个独立模块的修改</li>
+<li>✅ 大规模重构</li>
+<li>✅ 并行的测试编写</li>
+<li>✅ 多文件的格式化和清理</li>
+</ul>
+<p><strong>Subagent 不适用场景</strong>：</p>
+<ul>
+<li>❌ 有强依赖关系的任务（必须按顺序执行）</li>
+<li>❌ 需要频繁交互的任务</li>
+<li>❌ 简单的单文件修改</li>
+</ul>
+<h3 id="使用-Git-Worktrees-进行并行开发"><a href="#使用-Git-Worktrees-进行并行开发" class="headerlink" title="使用 Git Worktrees 进行并行开发"></a>使用 Git Worktrees 进行并行开发</h3><p><strong>Git Worktrees 允许你在同一个仓库的不同分支上同时工作</strong>，结合 Claude Code 可以实现真正的并行开发：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建 worktree 用于新特性</span></span><br><span class="line">git worktree add ../myproject-feature-auth feature/auth</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在新 worktree 中启动 Claude</span></span><br><span class="line"><span class="built_in">cd</span> ../myproject-feature-auth</span><br><span class="line">claude <span class="string">&quot;实现 OAuth2 登录功能&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时在主 worktree 中处理其他任务</span></span><br><span class="line"><span class="built_in">cd</span> ../myproject</span><br><span class="line">claude <span class="string">&quot;修复用户头像上传的 bug&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Worktrees 的优势</strong>：</p>
+<ul>
+<li>无需频繁切换分支</li>
+<li>可以同时运行多个 Claude 会话</li>
+<li>避免未提交代码的冲突</li>
+<li>方便对比不同实现方案</li>
+</ul>
+<h3 id="使用-Extended-Thinking-Mode"><a href="#使用-Extended-Thinking-Mode" class="headerlink" title="使用 Extended Thinking Mode"></a>使用 Extended Thinking Mode</h3><p>对于特别复杂的问题，可以启用<strong>扩展思考模式</strong>，让 Claude 进行更深入的分析：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启用扩展思考</span></span><br><span class="line">claude --extended-thinking <span class="string">&quot;分析这个分布式事务的死锁问题，</span></span><br><span class="line"><span class="string">考虑所有可能的竞态条件和解决方案&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>Extended Thinking Mode 会：</p>
+<ul>
+<li>花费更多时间分析问题</li>
+<li>考虑更多边缘情况</li>
+<li>提供更详细的推理过程</li>
+<li>适合架构级别的复杂决策</li>
+</ul>
+<p><strong>何时使用</strong>：</p>
+<ul>
+<li>复杂的并发问题</li>
+<li>性能优化决策</li>
+<li>架构重构方案</li>
+<li>安全漏洞分析</li>
+</ul>
+<h3 id="Checkpointing：时光机功能"><a href="#Checkpointing：时光机功能" class="headerlink" title="Checkpointing：时光机功能"></a>Checkpointing：时光机功能</h3><p><strong>Checkpointing 允许你保存会话状态并随时回退</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建检查点</span></span><br><span class="line">/checkpoint save <span class="string">&quot;完成用户认证基础功能&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 继续开发...</span></span><br><span class="line">claude <span class="string">&quot;添加多因素认证&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果不满意，回退到检查点</span></span><br><span class="line">/checkpoint restore <span class="string">&quot;完成用户认证基础功能&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看所有检查点</span></span><br><span class="line">/checkpoint list</span><br></pre></td></tr></table></figure>
+
+<p><strong>Checkpointing 最佳实践</strong>：</p>
+<ul>
+<li>在每个重要里程碑创建检查点</li>
+<li>使用描述性的检查点名称</li>
+<li>尝试激进方案前先创建检查点</li>
+<li>定期清理不再需要的检查点</li>
+</ul>
+<h2 id="Model-Context-Protocol-MCP-集成"><a href="#Model-Context-Protocol-MCP-集成" class="headerlink" title="Model Context Protocol (MCP) 集成"></a>Model Context Protocol (MCP) 集成</h2><h3 id="什么是-MCP"><a href="#什么是-MCP" class="headerlink" title="什么是 MCP"></a>什么是 MCP</h3><p><strong>MCP（Model Context Protocol）是 AI 应用的”USB-C 接口”</strong>，提供标准化的方式让 Claude Code 连接外部系统：</p>
+<ul>
+<li><strong>数据源</strong>：本地文件、数据库、API</li>
+<li><strong>工具</strong>：搜索引擎、计算器、代码分析工具</li>
+<li><strong>工作流</strong>：GitHub、Sentry、Jira、Slack</li>
+</ul>
+<h3 id="配置-MCP-服务器"><a href="#配置-MCP-服务器" class="headerlink" title="配置 MCP 服务器"></a>配置 MCP 服务器</h3><p>MCP 服务器通过 JSON 配置文件连接：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ~/.config/claude/mcp_servers.json</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;github&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;stdio&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-github&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">:</span> <span class="string">&quot;your_token_here&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;postgres&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;stdio&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@modelcontextprotocol/server-postgres&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;DATABASE_URL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;postgresql://localhost/mydb&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;figma&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;http&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;url&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://mcp.figma.com&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;headers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;Authorization&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Bearer your_figma_token&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="MCP-实际应用场景"><a href="#MCP-实际应用场景" class="headerlink" title="MCP 实际应用场景"></a>MCP 实际应用场景</h3><h4 id="场景-1：从-GitHub-Issue-生成代码"><a href="#场景-1：从-GitHub-Issue-生成代码" class="headerlink" title="场景 1：从 GitHub Issue 生成代码"></a>场景 1：从 GitHub Issue 生成代码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude <span class="string">&quot;读取 GitHub Issue #123，根据需求实现对应功能&quot;</span></span><br><span class="line"><span class="comment"># Claude 会通过 MCP GitHub 服务器获取 Issue 内容，理解需求后实现</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="场景-2：数据库驱动开发"><a href="#场景-2：数据库驱动开发" class="headerlink" title="场景 2：数据库驱动开发"></a>场景 2：数据库驱动开发</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude <span class="string">&quot;连接到生产数据库（只读），分析 users 表的查询性能问题，</span></span><br><span class="line"><span class="string">找出慢查询并优化索引&quot;</span></span><br><span class="line"><span class="comment"># Claude 通过 MCP Postgres 服务器执行 EXPLAIN ANALYZE</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="场景-3：从设计稿生成代码"><a href="#场景-3：从设计稿生成代码" class="headerlink" title="场景 3：从设计稿生成代码"></a>场景 3：从设计稿生成代码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude <span class="string">&quot;从 Figma 设计稿 &#x27;User Dashboard&#x27; 生成 React 组件&quot;</span></span><br><span class="line"><span class="comment"># Claude 通过 MCP Figma 服务器获取设计规范，生成匹配的代码</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="常用-MCP-服务器"><a href="#常用-MCP-服务器" class="headerlink" title="常用 MCP 服务器"></a>常用 MCP 服务器</h3><table>
+<thead>
+<tr>
+<th>MCP 服务器</th>
+<th>用途</th>
+<th>安装</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@modelcontextprotocol/server-github</code></td>
+<td>GitHub 集成</td>
+<td><code>npx -y @modelcontextprotocol/server-github</code></td>
+</tr>
+<tr>
+<td><code>@modelcontextprotocol/server-postgres</code></td>
+<td>PostgreSQL 数据库</td>
+<td><code>npx -y @modelcontextprotocol/server-postgres</code></td>
+</tr>
+<tr>
+<td><code>@modelcontextprotocol/server-sentry</code></td>
+<td>错误追踪</td>
+<td><code>npx -y @modelcontextprotocol/server-sentry</code></td>
+</tr>
+<tr>
+<td><code>@modelcontextprotocol/server-filesystem</code></td>
+<td>文件系统访问</td>
+<td><code>npx -y @modelcontextprotocol/server-filesystem</code></td>
+</tr>
+</tbody></table>
+<p>完整的 MCP 服务器列表：<a target="_blank" rel="noopener" href="https://github.com/modelcontextprotocol/servers">https://github.com/modelcontextprotocol/servers</a></p>
+<h2 id="自定义与扩展"><a href="#自定义与扩展" class="headerlink" title="自定义与扩展"></a>自定义与扩展</h2><h3 id="Hooks：自动化工作流"><a href="#Hooks：自动化工作流" class="headerlink" title="Hooks：自动化工作流"></a>Hooks：自动化工作流</h3><p><strong>Hooks 是在 Claude Code 生命周期特定点执行的 Shell 命令</strong>，提供确定性的自动化控制：</p>
+<h4 id="创建-Hooks-配置"><a href="#创建-Hooks-配置" class="headerlink" title="创建 Hooks 配置"></a>创建 Hooks 配置</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// .claude/hooks.json</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;pre-edit&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npm run lint&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Run linter before editing&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;post-edit&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npm run format&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Auto-format after editing&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;pre-commit&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npm test&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Run tests before commit&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;on-error&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;notify-send &#x27;Claude Code Error&#x27; &#x27;$ERROR_MESSAGE&#x27;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Desktop notification on error&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Hooks-应用场景"><a href="#Hooks-应用场景" class="headerlink" title="Hooks 应用场景"></a>Hooks 应用场景</h4><ol>
+<li><strong>自动格式化</strong>：每次编辑后运行 Prettier</li>
+<li><strong>自动测试</strong>：提交前运行测试套件</li>
+<li><strong>通知集成</strong>：任务完成后发送 Slack 通知</li>
+<li><strong>日志记录</strong>：记录所有 Claude 操作到审计日志</li>
+<li><strong>自定义权限</strong>：根据文件路径实现细粒度权限控制</li>
+</ol>
+<h3 id="Skills：扩展-Claude-的能力"><a href="#Skills：扩展-Claude-的能力" class="headerlink" title="Skills：扩展 Claude 的能力"></a>Skills：扩展 Claude 的能力</h3><p><strong>Skills 是 Claude Code 最强大的扩展机制之一</strong>，它允许你创建可重用的指令集，让 Claude 自动获得特定领域的知识和能力。</p>
+<h4 id="什么是-Skills"><a href="#什么是-Skills" class="headerlink" title="什么是 Skills"></a>什么是 Skills</h4><p>Skills 是遵循 <a target="_blank" rel="noopener" href="https://agentskills.io/">Agent Skills</a> 开放标准的扩展，通过创建 <code>SKILL.md</code> 文件来定义。Claude 会：</p>
+<ul>
+<li><strong>自动发现</strong>：在相关场景下自动加载 Skills</li>
+<li><strong>手动调用</strong>：通过 <code>/skill-name</code> 命令直接调用</li>
+<li><strong>跨工具兼容</strong>：Skills 标准可在多个 AI 工具中使用</li>
+</ul>
+<h4 id="创建第一个-Skill"><a href="#创建第一个-Skill" class="headerlink" title="创建第一个 Skill"></a>创建第一个 Skill</h4><p>让我们创建一个代码解释 Skill，教会 Claude 用可视化图表和类比来解释代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 创建 Skill 目录</span></span><br><span class="line"><span class="built_in">mkdir</span> -p ~/.claude/skills/explain-code</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建 SKILL.md</span></span><br><span class="line"><span class="built_in">cat</span> &gt; ~/.claude/skills/explain-code/SKILL.md &lt;&lt; <span class="string">&#x27;EOF&#x27;</span></span><br><span class="line">---</span><br><span class="line">name: explain-code</span><br><span class="line">description: 用可视化图表和类比解释代码。当用户询问<span class="string">&quot;这段代码如何工作&quot;</span>或需要理解代码逻辑时使用。</span><br><span class="line">---</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代码解释 Skill</span></span><br><span class="line"></span><br><span class="line">当解释代码时，始终包含以下内容：</span><br><span class="line"></span><br><span class="line"><span class="comment">## 1. 从类比开始</span></span><br><span class="line">将代码与日常生活中的事物进行比较，帮助理解抽象概念。</span><br><span class="line"></span><br><span class="line"><span class="comment">## 2. 绘制图表</span></span><br><span class="line">使用 ASCII 艺术展示流程、结构或关系：</span><br></pre></td></tr></table></figure>
+<p>┌─────────┐     ┌─────────┐     ┌─────────┐<br>│ 输入数据 │ ──&gt; │ 处理逻辑 │ ──&gt; │ 输出结果 │<br>└─────────┘     └─────────┘     └─────────┘</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## 3. 逐步讲解</span><br><span class="line">分步骤解释代码执行过程，标注关键决策点。</span><br><span class="line"></span><br><span class="line">## 4. 指出常见陷阱</span><br><span class="line">说明容易出错的地方或常见误解。</span><br><span class="line"></span><br><span class="line">保持解释对话化，对于复杂概念使用多个类比。</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<h4 id="Skill-存放位置"><a href="#Skill-存放位置" class="headerlink" title="Skill 存放位置"></a>Skill 存放位置</h4><p>Skills 可以放在不同位置，影响其作用范围：</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>路径</th>
+<th>适用范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>企业级</strong></td>
+<td>通过管理配置部署</td>
+<td>组织内所有用户</td>
+</tr>
+<tr>
+<td><strong>个人级</strong></td>
+<td><code>~/.claude/skills/&lt;skill-name&gt;/SKILL.md</code></td>
+<td>你的所有项目</td>
+</tr>
+<tr>
+<td><strong>项目级</strong></td>
+<td><code>.claude/skills/&lt;skill-name&gt;/SKILL.md</code></td>
+<td>当前项目</td>
+</tr>
+<tr>
+<td><strong>插件级</strong></td>
+<td><code>&lt;plugin&gt;/skills/&lt;skill-name&gt;/SKILL.md</code></td>
+<td>插件启用的地方</td>
+</tr>
+</tbody></table>
+<p>优先级：企业级 &gt; 个人级 &gt; 项目级。插件 Skills 使用 <code>plugin-name:skill-name</code> 命名空间，不会冲突。</p>
+<h4 id="Skill-结构最佳实践"><a href="#Skill-结构最佳实践" class="headerlink" title="Skill 结构最佳实践"></a>Skill 结构最佳实践</h4><p><strong>基础结构</strong>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: skill-name</span><br><span class="line"><span class="section">description: 简洁描述 Skill 的功能和使用场景</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># Skill 主体内容</span></span><br><span class="line"></span><br><span class="line">[具体的指令和指导]</span><br></pre></td></tr></table></figure>
+
+<p><strong>高级结构（支持文件）</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">my-skill/</span><br><span class="line">├── SKILL.md              # 主指令（必需）</span><br><span class="line">├── reference.md          # 详细参考文档（按需加载）</span><br><span class="line">├── examples.md           # 使用示例（按需加载）</span><br><span class="line">└── scripts/</span><br><span class="line">    ├── validate.sh       # 验证脚本（可执行）</span><br><span class="line">    └── helper.py         # 辅助脚本</span><br></pre></td></tr></table></figure>
+
+<p><strong>渐进式披露模式</strong>：</p>
+<p>SKILL.md 作为概览，指向详细资料：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># PDF 处理 Skill</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 快速开始</span></span><br><span class="line">使用 pdfplumber 提取文本：</span><br><span class="line"><span class="code">```python</span></span><br><span class="line"><span class="code">import pdfplumber</span></span><br><span class="line"><span class="code">with pdfplumber.open(&quot;file.pdf&quot;) as pdf:</span></span><br><span class="line"><span class="code">    text = pdf.pages[0].extract_text()</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="高级功能"><a href="#高级功能" class="headerlink" title="高级功能"></a>高级功能</h2><ul>
+<li><strong>表单填充</strong>：详见 <a href="FORMS.md">FORMS.md</a></li>
+<li><strong>API 参考</strong>：详见 <a href="REFERENCE.md">REFERENCE.md</a></li>
+<li><strong>示例代码</strong>：详见 <a href="EXAMPLES.md">EXAMPLES.md</a></li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Claude 只在需要时才加载这些额外文件，节省 token。</span><br><span class="line"></span><br><span class="line">#### Skill 配置选项</span><br><span class="line"></span><br><span class="line">通过 frontmatter 控制 Skill 行为：</span><br><span class="line"></span><br><span class="line">```yaml</span><br><span class="line">---</span><br><span class="line">name: deploy</span><br><span class="line">description: 部署应用到生产环境</span><br><span class="line">disable-model-invocation: true  # 仅允许手动调用</span><br><span class="line">allowed-tools: Bash(*)          # 限制可用工具</span><br><span class="line">context: fork                   # 在独立上下文中运行</span><br><span class="line">agent: Explore                  # 指定使用的 agent 类型</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键配置项</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>说明</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disable-model-invocation: true</code></td>
+<td>禁止 Claude 自动调用</td>
+<td>有副作用的操作（部署、提交）</td>
+</tr>
+<tr>
+<td><code>user-invocable: false</code></td>
+<td>从菜单隐藏，仅 Claude 可用</td>
+<td>背景知识类 Skills</td>
+</tr>
+<tr>
+<td><code>allowed-tools</code></td>
+<td>限制可用工具</td>
+<td>只读模式、安全限制</td>
+</tr>
+<tr>
+<td><code>context: fork</code></td>
+<td>在子 agent 中运行</td>
+<td>隔离执行、并行任务</td>
+</tr>
+</tbody></table>
+<h4 id="实用-Skill-示例"><a href="#实用-Skill-示例" class="headerlink" title="实用 Skill 示例"></a>实用 Skill 示例</h4><p><strong>示例 1：Git Commit 消息生成器</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: commit-message</span><br><span class="line"><span class="section">description: 分析 git diff 生成规范的 commit 消息。当用户需要提交代码或询问如何写 commit 消息时使用。</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># Commit 消息生成器</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 格式规范</span></span><br><span class="line">遵循 Conventional Commits 标准：</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><type>(<scope>): <subject></p>
+<body>
+
+<footer>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## Type 类型</span><br><span class="line">- `feat`: 新功能</span><br><span class="line">- `fix`: Bug 修复</span><br><span class="line">- `docs`: 文档更新</span><br><span class="line">- `style`: 代码格式（不影响功能）</span><br><span class="line">- `refactor`: 重构</span><br><span class="line">- `test`: 测试相关</span><br><span class="line">- `chore`: 构建/工具配置</span><br><span class="line"></span><br><span class="line">## 示例</span><br><span class="line"></span><br><span class="line">**输入**：添加用户认证功能</span><br><span class="line">**输出**：</span><br></pre></td></tr></table></figure>
+feat(auth): implement JWT-based authentication
+
+<ul>
+<li>Add login endpoint with email&#x2F;password validation</li>
+<li>Implement token generation and verification middleware</li>
+<li>Add refresh token mechanism for session management</li>
+</ul>
+<p>Closes #123</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## 生成步骤</span><br><span class="line">1. 运行 `git diff --staged` 查看变更</span><br><span class="line">2. 分析变更类型和影响范围</span><br><span class="line">3. 生成简洁但完整的消息</span><br><span class="line">4. 包含相关 issue 编号（如有）</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 2：代码审查 Skill</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: code-review</span><br><span class="line">description: 系统化审查代码变更，检查质量、安全和最佳实践。用于 PR 审查或代码质量检查。</span><br><span class="line"><span class="section">disable-model-invocation: true</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 代码审查 Skill</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 审查清单</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 1. 功能正确性</span></span><br><span class="line"><span class="bullet">-</span> [ ] 代码实现符合需求</span><br><span class="line"><span class="bullet">-</span> [ ] 边缘情况处理完善</span><br><span class="line"><span class="bullet">-</span> [ ] 错误处理适当</span><br><span class="line"></span><br><span class="line"><span class="section">### 2. 代码质量</span></span><br><span class="line"><span class="bullet">-</span> [ ] 命名清晰有意义</span><br><span class="line"><span class="bullet">-</span> [ ] 函数职责单一</span><br><span class="line"><span class="bullet">-</span> [ ] 避免重复代码</span><br><span class="line"><span class="bullet">-</span> [ ] 注释必要且准确</span><br><span class="line"></span><br><span class="line"><span class="section">### 3. 安全性</span></span><br><span class="line"><span class="bullet">-</span> [ ] 输入验证充分</span><br><span class="line"><span class="bullet">-</span> [ ] 无 SQL 注入风险</span><br><span class="line"><span class="bullet">-</span> [ ] 敏感数据加密</span><br><span class="line"><span class="bullet">-</span> [ ] 权限检查正确</span><br><span class="line"></span><br><span class="line"><span class="section">### 4. 性能</span></span><br><span class="line"><span class="bullet">-</span> [ ] 无明显性能瓶颈</span><br><span class="line"><span class="bullet">-</span> [ ] 数据库查询优化</span><br><span class="line"><span class="bullet">-</span> [ ] 避免 N+1 查询</span><br><span class="line"></span><br><span class="line"><span class="section">### 5. 测试</span></span><br><span class="line"><span class="bullet">-</span> [ ] 有对应单元测试</span><br><span class="line"><span class="bullet">-</span> [ ] 测试覆盖关键路径</span><br><span class="line"><span class="bullet">-</span> [ ] 测试用例有意义</span><br><span class="line"></span><br><span class="line"><span class="section">## 审查流程</span></span><br><span class="line"><span class="bullet">1.</span> 阅读变更概述和相关 issue</span><br><span class="line"><span class="bullet">2.</span> 逐文件审查代码</span><br><span class="line"><span class="bullet">3.</span> 运行测试套件</span><br><span class="line"><span class="bullet">4.</span> 检查是否符合项目规范</span><br><span class="line"><span class="bullet">5.</span> 提供具体、可操作的反馈</span><br></pre></td></tr></table></figure>
+
+<p><strong>示例 3：数据库查询优化 Skill</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: optimize-queries</span><br><span class="line">description: 分析和优化数据库查询性能。当遇到慢查询或需要性能优化时使用。</span><br><span class="line"><span class="section">allowed-tools: Bash(psql <span class="emphasis">*), Read, Grep</span></span></span><br><span class="line"><span class="emphasis"><span class="section">---</span></span></span><br><span class="line"><span class="emphasis"><span class="section"></span></span></span><br><span class="line"><span class="emphasis"><span class="section"># 数据库查询优化 Skill</span></span></span><br><span class="line"><span class="emphasis"><span class="section"></span></span></span><br><span class="line"><span class="emphasis"><span class="section">## 诊断流程</span></span></span><br><span class="line"><span class="emphasis"><span class="section"></span></span></span><br><span class="line"><span class="emphasis"><span class="section">### 1. 识别慢查询</span></span></span><br><span class="line"><span class="emphasis"><span class="section">```bash</span></span></span><br><span class="line"><span class="emphasis"><span class="section"># PostgreSQL 慢查询日志</span></span></span><br><span class="line"><span class="emphasis"><span class="section">grep &quot;duration:&quot; /var/log/postgresql/postgresql.log | sort -k3 -n | tail -20</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-分析查询计划"><a href="#2-分析查询计划" class="headerlink" title="2. 分析查询计划"></a>2. 分析查询计划</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">EXPLAIN ANALYZE</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> email <span class="operator">=</span> <span class="string">&#x27;user@example.com&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-检查关键指标"><a href="#3-检查关键指标" class="headerlink" title="3. 检查关键指标"></a>3. 检查关键指标</h3><ul>
+<li><strong>Seq Scan</strong>：全表扫描，通常需要添加索引</li>
+<li><strong>Nested Loop</strong>：嵌套循环，数据量大时性能差</li>
+<li><strong>Cost</strong>：查询成本，越低越好</li>
+</ul>
+<h2 id="常见优化策略"><a href="#常见优化策略" class="headerlink" title="常见优化策略"></a>常见优化策略</h2><h3 id="添加索引"><a href="#添加索引" class="headerlink" title="添加索引"></a>添加索引</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 单列索引</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_users_email <span class="keyword">ON</span> users(email);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 复合索引（注意顺序）</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_orders_user_date <span class="keyword">ON</span> orders(user_id, created_at);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 部分索引（减少索引大小）</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX idx_active_users <span class="keyword">ON</span> users(email) <span class="keyword">WHERE</span> active <span class="operator">=</span> <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="查询重写"><a href="#查询重写" class="headerlink" title="查询重写"></a>查询重写</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- ❌ 避免：SELECT *</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> users;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ✅ 推荐：只选择需要的列</span></span><br><span class="line"><span class="keyword">SELECT</span> id, email, name <span class="keyword">FROM</span> users;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ❌ 避免：子查询</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> orders <span class="keyword">WHERE</span> user_id <span class="keyword">IN</span> (<span class="keyword">SELECT</span> id <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> active <span class="operator">=</span> <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ✅ 推荐：JOIN</span></span><br><span class="line"><span class="keyword">SELECT</span> o.<span class="operator">*</span> <span class="keyword">FROM</span> orders o</span><br><span class="line"><span class="keyword">INNER</span> <span class="keyword">JOIN</span> users u <span class="keyword">ON</span> o.user_id <span class="operator">=</span> u.id</span><br><span class="line"><span class="keyword">WHERE</span> u.active <span class="operator">=</span> <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用缓存"><a href="#使用缓存" class="headerlink" title="使用缓存"></a>使用缓存</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Redis 缓存热点数据</span></span><br><span class="line"><span class="keyword">import</span> redis</span><br><span class="line">r = redis.Redis()</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_user</span>(<span class="params">user_id</span>):</span><br><span class="line">    <span class="comment"># 先查缓存</span></span><br><span class="line">    cached = r.get(<span class="string">f&quot;user:<span class="subst">&#123;user_id&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> cached:</span><br><span class="line">        <span class="keyword">return</span> json.loads(cached)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 缓存未命中，查数据库</span></span><br><span class="line">    user = db.query(<span class="string">&quot;SELECT * FROM users WHERE id = %s&quot;</span>, user_id)</span><br><span class="line">    r.setex(<span class="string">f&quot;user:<span class="subst">&#123;user_id&#125;</span>&quot;</span>, <span class="number">300</span>, json.dumps(user))  <span class="comment"># 5分钟 TTL</span></span><br><span class="line">    <span class="keyword">return</span> user</span><br></pre></td></tr></table></figure>
+
+<h2 id="验证优化效果"><a href="#验证优化效果" class="headerlink" title="验证优化效果"></a>验证优化效果</h2><ol>
+<li>记录优化前的查询时间</li>
+<li>应用优化方案</li>
+<li>运行 EXPLAIN ANALYZE 对比</li>
+<li>在生产环境监控性能指标</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#### Skills 编写最佳实践</span><br><span class="line"></span><br><span class="line">**1. 简洁至上**</span><br><span class="line"></span><br><span class="line">Claude 已经很聪明，只添加它不知道的信息：</span><br><span class="line"></span><br><span class="line">```markdown</span><br><span class="line"># ❌ 过于啰嗦（150 tokens）</span><br><span class="line">## 提取 PDF 文本</span><br><span class="line">PDF（Portable Document Format）是一种常见的文件格式，包含文本、图像等内容。</span><br><span class="line">要提取 PDF 文本，需要使用库。有很多库可用，但我们推荐 pdfplumber...</span><br><span class="line"></span><br><span class="line"># ✅ 简洁明了（50 tokens）</span><br><span class="line">## 提取 PDF 文本</span><br><span class="line">使用 pdfplumber：</span><br><span class="line">```python</span><br><span class="line">import pdfplumber</span><br><span class="line">with pdfplumber.open(&quot;file.pdf&quot;) as pdf:</span><br><span class="line">    text = pdf.pages[0].extract_text()</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">**2. 设置适当的自由度**</span><br><span class="line"></span><br><span class="line">- **高自由度**（文本指令）：多种方法都有效时</span><br><span class="line">- **中等自由度**（伪代码/带参数脚本）：有推荐模式但允许变化</span><br><span class="line">- **低自由度**（具体脚本）：操作易错或需要严格一致性</span><br><span class="line"></span><br><span class="line">**3. 使用工作流模式**</span><br><span class="line"></span><br><span class="line">对于复杂任务，提供清晰的步骤和检查清单：</span><br><span class="line"></span><br><span class="line">```markdown</span><br><span class="line">## 部署工作流</span><br><span class="line"></span><br><span class="line">复制此清单并跟踪进度：</span><br></pre></td></tr></table></figure>
+<p>部署进度：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 步骤 1：运行测试套件</li>
+<li><input disabled="" type="checkbox"> 步骤 2：构建生产版本</li>
+<li><input disabled="" type="checkbox"> 步骤 3：备份当前版本</li>
+<li><input disabled="" type="checkbox"> 步骤 4：部署到生产环境</li>
+<li><input disabled="" type="checkbox"> 步骤 5：验证部署成功</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">**步骤 1：运行测试套件**</span><br><span class="line">```bash</span><br><span class="line">npm run test</span><br></pre></td></tr></table></figure>
+<p>所有测试必须通过才能继续。</p>
+<p><strong>步骤 2：构建生产版本</strong><br>…</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">**4. 实现反馈循环**</span><br><span class="line"></span><br><span class="line">关键操作要有验证步骤：</span><br><span class="line"></span><br><span class="line">```markdown</span><br><span class="line">## 文档编辑流程</span><br><span class="line">1. 修改 `word/document.xml`</span><br><span class="line">2. **立即验证**：`python scripts/validate.py`</span><br><span class="line">3. 如果验证失败：</span><br><span class="line">   - 仔细查看错误信息</span><br><span class="line">   - 修复 XML 中的问题</span><br><span class="line">   - 再次运行验证</span><br><span class="line">4. **只有验证通过才能继续**</span><br><span class="line">5. 重新打包：`python scripts/pack.py`</span><br></pre></td></tr></table></figure>
+
+<p><strong>5. 提供实用脚本</strong></p>
+<p>预制脚本比让 Claude 生成更可靠：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 实用脚本</span></span><br><span class="line"></span><br><span class="line"><span class="strong">**analyze<span class="emphasis">_form.py**：从 PDF 提取表单字段</span></span></span><br><span class="line"><span class="emphasis"><span class="strong">```bash</span></span></span><br><span class="line"><span class="emphasis"><span class="strong">python scripts/analyze_</span>form.py input.pdf &gt; fields.json</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>validate.py</strong>：验证字段映射</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python scripts/validate.py fields.json</span><br><span class="line"><span class="comment"># 返回：&quot;OK&quot; 或列出冲突</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#### Skills 与其他功能的配合</span><br><span class="line"></span><br><span class="line">**Skills + Subagents**：</span><br><span class="line"></span><br><span class="line">```markdown</span><br><span class="line">---</span><br><span class="line">name: deep-research</span><br><span class="line">description: 深度研究某个主题</span><br><span class="line">context: fork</span><br><span class="line">agent: Explore</span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">研究 $ARGUMENTS：</span><br><span class="line">1. 使用 Glob 和 Grep 查找相关文件</span><br><span class="line">2. 阅读并分析代码</span><br><span class="line">3. 总结发现，包含具体文件引用</span><br></pre></td></tr></table></figure>
+
+<p><strong>Skills + MCP</strong>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: github-issue-workflow</span><br><span class="line"><span class="section">description: 从 GitHub Issue 创建实现</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 工作流</span></span><br><span class="line"><span class="bullet">1.</span> 使用 <span class="code">`GitHub:get_issue`</span> 工具获取 Issue 详情</span><br><span class="line"><span class="bullet">2.</span> 分析需求并制定计划</span><br><span class="line"><span class="bullet">3.</span> 实现功能</span><br><span class="line"><span class="bullet">4.</span> 使用 <span class="code">`GitHub:create_pr`</span> 创建 Pull Request</span><br></pre></td></tr></table></figure>
+
+<p><strong>Skills + Hooks</strong>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;post-edit&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;python scripts/format.py&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Auto-format after editing&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="管理和分享-Skills"><a href="#管理和分享-Skills" class="headerlink" title="管理和分享 Skills"></a>管理和分享 Skills</h4><p><strong>查看可用 Skills</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 列出所有 Skills</span></span><br><span class="line">claude <span class="string">&quot;有哪些可用的 Skills？&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 Skill 详情</span></span><br><span class="line">/help explain-code</span><br></pre></td></tr></table></figure>
+
+<p><strong>分享 Skills</strong>：</p>
+<ul>
+<li><strong>项目级</strong>：将 <code>.claude/skills/</code> 提交到版本控制</li>
+<li><strong>插件</strong>：在插件中创建 <code>skills/</code> 目录</li>
+<li><strong>企业级</strong>：通过管理配置部署</li>
+</ul>
+<p><strong>Skills 故障排查</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>可能原因</th>
+<th>解决方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill 未触发</td>
+<td>description 不够具体</td>
+<td>添加关键词和使用场景</td>
+</tr>
+<tr>
+<td>触发过于频繁</td>
+<td>description 太宽泛</td>
+<td>更具体的描述或添加 <code>disable-model-invocation: true</code></td>
+</tr>
+<tr>
+<td>Claude 看不到 Skill</td>
+<td>超出字符预算</td>
+<td>简化 description 或增加 <code>SLASH_COMMAND_TOOL_CHAR_BUDGET</code></td>
+</tr>
+</tbody></table>
+<h3 id="创建自定义-Subagent"><a href="#创建自定义-Subagent" class="headerlink" title="创建自定义 Subagent"></a>创建自定义 Subagent</h3><p>对于重复的专业任务，可以创建自定义 subagent：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># .claude/subagents/test-writer.py</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">Custom subagent for writing comprehensive tests</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">generate_tests</span>(<span class="params">file_path, coverage_target=<span class="number">80</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    Generate unit tests for given file</span></span><br><span class="line"><span class="string">    Args:</span></span><br><span class="line"><span class="string">        file_path: Path to source file</span></span><br><span class="line"><span class="string">        coverage_target: Target coverage percentage</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># Subagent logic here</span></span><br><span class="line">    <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用自定义 subagent</span></span><br><span class="line">claude <span class="string">&quot;使用 test-writer subagent 为 src/services/ 下所有文件生成测试，</span></span><br><span class="line"><span class="string">目标覆盖率 90%&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="插件系统"><a href="#插件系统" class="headerlink" title="插件系统"></a>插件系统</h3><p>Claude Code 支持插件扩展功能：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装插件</span></span><br><span class="line">claude plugin install code-review-assistant</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启用插件</span></span><br><span class="line">claude plugin <span class="built_in">enable</span> code-review-assistant</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用插件功能</span></span><br><span class="line">claude <span class="string">&quot;使用 code-review-assistant 审查最近的 commit&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>常用插件类型：</p>
+<ul>
+<li>代码质量检查</li>
+<li>安全漏洞扫描</li>
+<li>性能分析</li>
+<li>文档生成</li>
+<li>依赖管理</li>
+</ul>
+<h2 id="团队协作与规模化"><a href="#团队协作与规模化" class="headerlink" title="团队协作与规模化"></a>团队协作与规模化</h2><h3 id="编写团队级-CLAUDE-md"><a href="#编写团队级-CLAUDE-md" class="headerlink" title="编写团队级 CLAUDE.md"></a>编写团队级 CLAUDE.md</h3><p>团队使用 Claude Code 时，CLAUDE.md 应该成为<strong>团队知识库的一部分</strong>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># CLAUDE.md - Team Edition</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Project Overview</span></span><br><span class="line">[项目背景、业务领域、技术栈]</span><br><span class="line"></span><br><span class="line"><span class="section">## Team Conventions</span></span><br><span class="line"><span class="bullet">-</span> <span class="strong">**Branch naming**</span>: feature/<span class="emphasis">*, bugfix/*</span>, hotfix/*</span><br><span class="line"><span class="bullet">-</span> <span class="strong">**Commit messages**</span>: Follow Conventional Commits</span><br><span class="line"><span class="bullet">-</span> <span class="strong">**PR process**</span>: Require 2 approvals, all checks must pass</span><br><span class="line"><span class="bullet">-</span> <span class="strong">**Code ownership**</span>: See CODEOWNERS file</span><br><span class="line"></span><br><span class="line"><span class="section">## Common Workflows</span></span><br><span class="line"></span><br><span class="line"><span class="section">### Adding a New API Endpoint</span></span><br><span class="line"><span class="bullet">1.</span> Define schema in <span class="code">`src/schemas/`</span></span><br><span class="line"><span class="bullet">2.</span> Implement handler in <span class="code">`src/handlers/`</span></span><br><span class="line"><span class="bullet">3.</span> Add route in <span class="code">`src/routes/`</span></span><br><span class="line"><span class="bullet">4.</span> Write integration test in <span class="code">`tests/integration/`</span></span><br><span class="line"><span class="bullet">5.</span> Update OpenAPI spec in <span class="code">`docs/api.yaml`</span></span><br><span class="line"></span><br><span class="line"><span class="section">### Database Migrations</span></span><br><span class="line"><span class="code">```bash</span></span><br><span class="line"><span class="code">npm run migration:create -- --name add_user_roles</span></span><br><span class="line"><span class="code"># Edit migration file</span></span><br><span class="line"><span class="code">npm run migration:run</span></span><br><span class="line"><span class="code">npm run migration:test</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h2><ul>
+<li><strong>Build fails with “Module not found”</strong>: Run <code>npm ci</code> to clean install</li>
+<li><strong>Tests timeout</strong>: Increase timeout in jest.config.js</li>
+<li><strong>Database connection fails</strong>: Check VPN connection</li>
+</ul>
+<h2 id="Contact"><a href="#Contact" class="headerlink" title="Contact"></a>Contact</h2><ul>
+<li>Architecture questions: @architecture-team</li>
+<li>DevOps issues: @devops-team</li>
+<li>Security concerns: @security-team</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">### 多会话并行工作</span><br><span class="line"></span><br><span class="line">大型项目可以启动多个 Claude 会话并行工作：</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line"># Terminal 1: 前端开发</span><br><span class="line">cd frontend</span><br><span class="line">claude &quot;实现用户仪表板组件&quot;</span><br><span class="line"></span><br><span class="line"># Terminal 2: 后端 API</span><br><span class="line">cd backend</span><br><span class="line">claude &quot;实现用户统计 API&quot;</span><br><span class="line"></span><br><span class="line"># Terminal 3: 数据库迁移</span><br><span class="line">cd database</span><br><span class="line">claude &quot;创建用户活动日志表的迁移脚本&quot;</span><br><span class="line"></span><br><span class="line"># Terminal 4: 文档更新</span><br><span class="line">cd docs</span><br><span class="line">claude &quot;根据新 API 更新文档&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Headless-Mode：自动化与-CI-CD"><a href="#Headless-Mode：自动化与-CI-CD" class="headerlink" title="Headless Mode：自动化与 CI&#x2F;CD"></a>Headless Mode：自动化与 CI&#x2F;CD</h3><p>Claude Code 支持 headless 模式，适合集成到 CI&#x2F;CD 流程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 CI 中运行 Claude Code</span></span><br><span class="line">claude --headless --task <span class="string">&quot;运行所有测试，如果失败则分析原因并尝试修复&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># GitHub Actions 集成</span></span><br><span class="line"><span class="comment"># .github/workflows/claude-review.yml</span></span><br><span class="line">name: Claude Code Review</span><br><span class="line">on: [pull_request]</span><br><span class="line"><span class="built_in">jobs</span>:</span><br><span class="line">  review:</span><br><span class="line">    runs-on: ubuntu-latest</span><br><span class="line">    steps:</span><br><span class="line">      - uses: actions/checkout@v3</span><br><span class="line">      - name: Run Claude Code Review</span><br><span class="line">        run: |</span><br><span class="line">          claude --headless --task <span class="string">&quot;审查这个 PR 的代码变更，</span></span><br><span class="line"><span class="string">          检查是否符合团队规范，是否有潜在 bug&quot;</span></span><br><span class="line">        <span class="built_in">env</span>:</span><br><span class="line">          CLAUDE_API_KEY: <span class="variable">$&#123;&#123; secrets.CLAUDE_API_KEY &#125;</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="企业级配置管理"><a href="#企业级配置管理" class="headerlink" title="企业级配置管理"></a>企业级配置管理</h3><p>企业环境可以使用集中式配置管理：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// /etc/claude/enterprise-config.json</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;allowed_operations&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;read&quot;</span><span class="punctuation">,</span> <span class="string">&quot;write&quot;</span><span class="punctuation">,</span> <span class="string">&quot;execute&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;forbidden_paths&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;/etc&quot;</span><span class="punctuation">,</span> <span class="string">&quot;/var&quot;</span><span class="punctuation">,</span> <span class="string">&quot;~/.ssh&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;mcp_servers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;github&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;org&quot;</span><span class="punctuation">:</span> <span class="string">&quot;your-company&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;jira&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;project&quot;</span><span class="punctuation">:</span> <span class="string">&quot;PROJ&quot;</span> <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;audit_log&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;destination&quot;</span><span class="punctuation">:</span> <span class="string">&quot;syslog&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;rate_limits&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;requests_per_hour&quot;</span><span class="punctuation">:</span> <span class="number">1000</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="常见陷阱与解决方案"><a href="#常见陷阱与解决方案" class="headerlink" title="常见陷阱与解决方案"></a>常见陷阱与解决方案</h2><h3 id="陷阱-1：过度依赖长对话"><a href="#陷阱-1：过度依赖长对话" class="headerlink" title="陷阱 1：过度依赖长对话"></a>陷阱 1：过度依赖长对话</h3><p><strong>问题</strong>：在一个会话中处理太多不相关的任务，导致 Claude 混淆上下文。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>每完成一个独立任务就 <code>/clear</code></li>
+<li>使用 subagents 分离不同任务</li>
+<li>为不同类型的工作启动独立会话</li>
+</ul>
+<h3 id="陷阱-2：没有验证就信任输出"><a href="#陷阱-2：没有验证就信任输出" class="headerlink" title="陷阱 2：没有验证就信任输出"></a>陷阱 2：没有验证就信任输出</h3><p><strong>问题</strong>：假设 Claude 生成的代码是正确的，直接提交。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>始终要求 Claude 运行测试验证</li>
+<li>使用 hooks 自动运行 linter 和测试</li>
+<li>Code review 流程不能省略</li>
+<li>关键代码手动审查</li>
+</ul>
+<h3 id="陷阱-3：CLAUDE-md-过时或缺失"><a href="#陷阱-3：CLAUDE-md-过时或缺失" class="headerlink" title="陷阱 3：CLAUDE.md 过时或缺失"></a>陷阱 3：CLAUDE.md 过时或缺失</h3><p><strong>问题</strong>：项目规范变化了，但 CLAUDE.md 没有更新，导致 Claude 使用错误的模式。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>将 CLAUDE.md 纳入代码审查流程</li>
+<li>重大架构变更时同步更新 CLAUDE.md</li>
+<li>定期审查 CLAUDE.md 的准确性</li>
+<li>在 PR 模板中提醒更新 CLAUDE.md</li>
+</ul>
+<h3 id="陷阱-4：忽略权限和安全"><a href="#陷阱-4：忽略权限和安全" class="headerlink" title="陷阱 4：忽略权限和安全"></a>陷阱 4：忽略权限和安全</h3><p><strong>问题</strong>：使用 <code>--dangerously-skip-permissions</code> 在不信任的代码库中，导致安全风险。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>仅在信任的项目中使用 skip permissions</li>
+<li>使用 hooks 实现细粒度权限控制</li>
+<li>审计 Claude 的所有文件操作</li>
+<li>敏感项目使用沙箱环境</li>
+</ul>
+<h3 id="陷阱-5：不合理的任务分解"><a href="#陷阱-5：不合理的任务分解" class="headerlink" title="陷阱 5：不合理的任务分解"></a>陷阱 5：不合理的任务分解</h3><p><strong>问题</strong>：给 Claude 一个过于庞大的任务，如”重写整个应用”。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>将大任务分解为可管理的子任务</li>
+<li>使用 Plan Mode 先制定计划</li>
+<li>逐步验证每个子任务的结果</li>
+<li>使用 checkpoints 保存进度</li>
+</ul>
+<h2 id="性能优化建议"><a href="#性能优化建议" class="headerlink" title="性能优化建议"></a>性能优化建议</h2><h3 id="减少-Token-消耗"><a href="#减少-Token-消耗" class="headerlink" title="减少 Token 消耗"></a>减少 Token 消耗</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ❌ 低效：让 Claude 读取整个大文件</span></span><br><span class="line">claude <span class="string">&quot;优化 src/utils/large-file.ts&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 高效：指定具体函数</span></span><br><span class="line">claude <span class="string">&quot;优化 src/utils/large-file.ts 中的 processData 函数&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 使用 .claudeignore 排除无关文件</span></span><br><span class="line"><span class="comment"># .claudeignore</span></span><br><span class="line">node_modules/</span><br><span class="line">dist/</span><br><span class="line">*.<span class="built_in">log</span></span><br><span class="line">coverage/</span><br><span class="line">.git/</span><br></pre></td></tr></table></figure>
+
+<h3 id="利用缓存"><a href="#利用缓存" class="headerlink" title="利用缓存"></a>利用缓存</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Claude Code 会自动缓存：</span></span><br><span class="line">- 文件内容</span><br><span class="line">- 命令输出</span><br><span class="line">- MCP 响应</span><br><span class="line"></span><br><span class="line"><span class="comment"># 利用缓存的最佳实践：</span></span><br><span class="line">- 避免频繁修改 CLAUDE.md（会使缓存失效）</span><br><span class="line">- 重复的命令会直接使用缓存结果</span><br><span class="line">- 使用 /clear 会清空缓存，谨慎使用</span><br></pre></td></tr></table></figure>
+
+<h3 id="并行化操作"><a href="#并行化操作" class="headerlink" title="并行化操作"></a>并行化操作</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ❌ 串行处理</span></span><br><span class="line">claude <span class="string">&quot;为 A.ts 添加测试&quot;</span></span><br><span class="line"><span class="comment"># 等待完成...</span></span><br><span class="line">claude <span class="string">&quot;为 B.ts 添加测试&quot;</span></span><br><span class="line"><span class="comment"># 等待完成...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 并行处理</span></span><br><span class="line">claude <span class="string">&quot;为 A.ts 和 B.ts 添加测试，使用 subagents 并行处理&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="实战案例"><a href="#实战案例" class="headerlink" title="实战案例"></a>实战案例</h2><h3 id="案例-1：大规模重构"><a href="#案例-1：大规模重构" class="headerlink" title="案例 1：大规模重构"></a>案例 1：大规模重构</h3><p><strong>场景</strong>：将 REST API 迁移到 GraphQL</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 第 1 步：探索和规划</span></span><br><span class="line">claude plan <span class="string">&quot;分析当前 REST API 结构，制定迁移到 GraphQL 的计划&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 2 步：审查计划并调整</span></span><br><span class="line"><span class="comment"># Claude 会列出：</span></span><br><span class="line"><span class="comment"># - 需要创建的 GraphQL schema</span></span><br><span class="line"><span class="comment"># - 需要修改的 resolver</span></span><br><span class="line"><span class="comment"># - 需要更新的客户端代码</span></span><br><span class="line"><span class="comment"># - 测试策略</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 3 步：创建检查点</span></span><br><span class="line">/checkpoint save <span class="string">&quot;开始 GraphQL 迁移&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 4 步：使用 subagents 并行执行</span></span><br><span class="line">claude <span class="string">&quot;按照计划执行 GraphQL 迁移，创建 subagents 分别处理：</span></span><br><span class="line"><span class="string">1. 定义 GraphQL schema</span></span><br><span class="line"><span class="string">2. 实现 resolvers</span></span><br><span class="line"><span class="string">3. 更新客户端查询</span></span><br><span class="line"><span class="string">4. 迁移测试用例&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 5 步：验证</span></span><br><span class="line">claude <span class="string">&quot;运行完整测试套件，确保所有功能正常&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 6 步：文档更新</span></span><br><span class="line">claude <span class="string">&quot;更新 API 文档，添加 GraphQL 使用示例&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="案例-2：性能优化"><a href="#案例-2：性能优化" class="headerlink" title="案例 2：性能优化"></a>案例 2：性能优化</h3><p><strong>场景</strong>：优化慢查询</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 第 1 步：诊断问题</span></span><br><span class="line">claude <span class="string">&quot;连接到数据库（通过 MCP），找出最慢的 10 个查询&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 2 步：分析根因</span></span><br><span class="line">claude --extended-thinking <span class="string">&quot;分析这些慢查询的根本原因，</span></span><br><span class="line"><span class="string">考虑索引、查询计划、数据量等因素&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 3 步：制定优化方案</span></span><br><span class="line">claude <span class="string">&quot;为每个慢查询提供优化方案，包括：</span></span><br><span class="line"><span class="string">- 索引建议</span></span><br><span class="line"><span class="string">- 查询重写</span></span><br><span class="line"><span class="string">- 缓存策略</span></span><br><span class="line"><span class="string">评估每个方案的收益和风险&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 4 步：实施优化</span></span><br><span class="line">claude <span class="string">&quot;实施优化方案，先在开发环境验证效果&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 5 步：性能测试</span></span><br><span class="line">claude <span class="string">&quot;运行性能测试，对比优化前后的查询时间&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="案例-3：Bug-修复"><a href="#案例-3：Bug-修复" class="headerlink" title="案例 3：Bug 修复"></a>案例 3：Bug 修复</h3><p><strong>场景</strong>：生产环境出现间歇性错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 第 1 步：收集信息</span></span><br><span class="line">claude <span class="string">&quot;从 Sentry（通过 MCP）获取最近 24 小时的错误报告，</span></span><br><span class="line"><span class="string">聚焦 &#x27;UserService.updateProfile&#x27; 相关的错误&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 2 步：复现问题</span></span><br><span class="line">claude <span class="string">&quot;根据错误堆栈和用户报告，编写能够复现问题的测试用例&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 3 步：调试</span></span><br><span class="line">claude <span class="string">&quot;分析 UserService.updateProfile 的代码，</span></span><br><span class="line"><span class="string">找出可能导致间歇性错误的竞态条件或边缘情况&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 4 步：修复验证</span></span><br><span class="line">claude <span class="string">&quot;修复问题后，运行测试用例 100 次，确保问题不再出现&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第 5 步：回归测试</span></span><br><span class="line">claude <span class="string">&quot;运行完整测试套件，确保修复没有引入新问题&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="学习资源与社区"><a href="#学习资源与社区" class="headerlink" title="学习资源与社区"></a>学习资源与社区</h2><h3 id="官方资源"><a href="#官方资源" class="headerlink" title="官方资源"></a>官方资源</h3><ul>
+<li><strong>官方文档</strong>：<a target="_blank" rel="noopener" href="https://code.claude.com/docs">https://code.claude.com/docs</a></li>
+<li><strong>最佳实践指南</strong>：<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/claude-code-best-practices">https://www.anthropic.com/engineering/claude-code-best-practices</a></li>
+<li><strong>MCP 协议规范</strong>：<a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/">https://modelcontextprotocol.io/</a></li>
+<li><strong>GitHub Changelog</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/releases">https://github.com/anthropics/claude-code/releases</a></li>
+</ul>
+<h3 id="社区资源"><a href="#社区资源" class="headerlink" title="社区资源"></a>社区资源</h3><ul>
+<li><strong>Claude Code Discord</strong>：官方 Discord 服务器，活跃的社区支持</li>
+<li><strong>Reddit r&#x2F;ClaudeAI</strong>：用户分享使用技巧和案例</li>
+<li><strong>YouTube 教程</strong>：搜索 “Claude Code tutorial” 有大量视频教程</li>
+<li><strong>GitHub Awesome List</strong>：<a target="_blank" rel="noopener" href="https://github.com/topics/claude-code">https://github.com/topics/claude-code</a></li>
+</ul>
+<h3 id="进阶学习路径"><a href="#进阶学习路径" class="headerlink" title="进阶学习路径"></a>进阶学习路径</h3><ol>
+<li><p><strong>基础阶段</strong>（1-2 周）</p>
+<ul>
+<li>熟悉基本命令和工作流</li>
+<li>编写第一个 CLAUDE.md</li>
+<li>完成简单的代码生成任务</li>
+</ul>
+</li>
+<li><p><strong>进阶阶段</strong>（1 个月）</p>
+<ul>
+<li>掌握 Plan Mode 和 Subagents</li>
+<li>配置 MCP 服务器</li>
+<li>使用 Hooks 自动化工作流</li>
+</ul>
+</li>
+<li><p><strong>专家阶段</strong>（持续学习）</p>
+<ul>
+<li>创建自定义 Subagents</li>
+<li>开发 MCP 服务器</li>
+<li>优化团队协作流程</li>
+<li>贡献社区插件和最佳实践</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Claude Code 不仅仅是一个代码生成工具，而是一个<strong>自主编程伙伴</strong>。要充分发挥其价值，关键在于：</p>
+<h3 id="核心要点"><a href="#核心要点" class="headerlink" title="核心要点"></a>核心要点</h3><ol>
+<li><strong>建立正确的心智模型</strong>：理解 Claude Code 是自主代理，不是简单的补全工具</li>
+<li><strong>投资于配置</strong>：编写高质量的 CLAUDE.md，配置 MCP 和 Hooks</li>
+<li><strong>遵循最佳流程</strong>：探索 → 规划 → 编码，而非直接编码</li>
+<li><strong>保持会话清晰</strong>：频繁使用 <code>/clear</code>，避免长对话混乱</li>
+<li><strong>验证验证验证</strong>：永远不要盲目信任 AI 输出，要求自动化验证</li>
+<li><strong>善用高级特性</strong>：Subagents、Plan Mode、Checkpoints 是效率倍增器</li>
+<li><strong>团队协作</strong>：将 CLAUDE.md 纳入团队规范，统一工作方式</li>
+</ol>
+<h3 id="下一步行动"><a href="#下一步行动" class="headerlink" title="下一步行动"></a>下一步行动</h3><ul>
+<li><input disabled="" type="checkbox"> 为你的项目创建 CLAUDE.md</li>
+<li><input disabled="" type="checkbox"> 尝试使用 Plan Mode 分析一个复杂任务</li>
+<li><input disabled="" type="checkbox"> 配置至少一个 MCP 服务器（建议从 GitHub 开始）</li>
+<li><input disabled="" type="checkbox"> 使用 Subagents 处理一个多文件任务</li>
+<li><input disabled="" type="checkbox"> 设置 Hooks 自动化你的常用工作流</li>
+<li><input disabled="" type="checkbox"> 在团队中分享 Claude Code 最佳实践</li>
+</ul>
+<h3 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs">Claude Code 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/claude-code-best-practices">Anthropic 工程博客：Claude Code 最佳实践</a></li>
+<li><a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/">Model Context Protocol 规范</a></li>
+<li><a target="_blank" rel="noopener" href="https://northflank.com/blog/claude-code-vs-cursor-comparison">Claude Code vs Cursor 深度对比</a></li>
+<li><a target="_blank" rel="noopener" href="https://developertoolkit.ai/en/claude-code/tips-tricks/">100 Essential Claude Code Tips</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/bc61d6a92d4e.html">https://xhua.eu.org/posts/bc61d6a92d4e.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/mcp/">MCP</a><a class="post-meta__tags" href="/tags/claude/">Claude</a><a class="post-meta__tags" href="/tags/ai%E7%BC%96%E7%A8%8B%E5%8A%A9%E6%89%8B/">AI编程助手</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87/">开发效率</a><a class="post-meta__tags" href="/tags/%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">最佳实践</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a><a class="pagination-related" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Cursor IDE 使用最佳实践与技巧：从入门到精通</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCursor vs GitHub Copilot在选择 AI 编程助手时，了解不同工具的优势至关重要： Cursor 的核心优势：  全项目代码库理解：能够理解整个代码库的上下文，而不仅仅是当前文件 多文件编辑能力：通过 Composer 功能同时编辑多个文件 深度 AI 集成：AI 能力原生内置于 IDE，而非仅作为扩展 复杂项目优势：在处理大型、复杂代码库时表现出色，具备完整的架构感知能力 模型灵活性：支持切换不同的 AI 模型（Claude 4.5 Opus、Sonnet 等）  GitHub Copilot 的优势：  广泛的 IDE 兼容性：作为插件可在 VS Code、JetBrain...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/e0a2af663124.html" title="SRE MCP Tools：运维工程师的AI助手工具箱"><img class="cover" src="https://img.xhua.eu.org/e16beb5e1fd69876853b76d350682f3eb62d53d60bd29d2b5dd0307b1bb62f80.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">SRE MCP Tools：运维工程师的AI助手工具箱</div></div><div class="info-2"><div class="info-item-1">引言在现代互联网时代，站点可靠性工程（SRE）已成为确保服务稳定运行的核心实践。随着系统复杂性的不断增加，运维工程师需要管理的工具和平台也越来越多。从监控告警到事件响应，从部署管理到成本优化，每个环节都需要专业的工具支持。 但是，在面对海量的监控数据、复杂的告警规则、频繁的部署需求时，传统的手工操作已经无法满足现代运维的需求。这时，MCP（Model Context Protocol）工具的出现，为SRE工程师提供了全新的解决方案。 今天，我将为大家介绍一套完整的SRE MCP Tools工具箱，涵盖监控可观测性、部署编排、事件响应、数据库管理等多个方面，帮助运维工程师构建智能化的运维体系。 什么是SRE MCP Tools？SRE MCP Tools是一套基于模型上下文协议（MCP）的运维工具集合，它允许AI助手直接与各种运维工具和平台进行集成，实现自动化的运维操作。通过这些工具，运维工程师可以使用自然语言与AI助手交互，让AI帮助完成复杂的运维任务。 核心优势 🚨 快速发现问题：自动化监控和告警，第一时间发现系统异常 🔧 快速解决问题：自动化故障响应和修复，减少人工干预 ...</div></div></div></a><a class="pagination-related" href="/posts/b0a1603977e7.html" title="生产级大语言模型平台系统设计：多期落地方案与实践"><img class="cover" src="https://img.xhua.eu.org/0c48a51774caee38ab8195ab16d9895325b3056f41cb0b06ee3bff5c009bc2d4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-18</div><div class="info-item-2">生产级大语言模型平台系统设计：多期落地方案与实践</div></div><div class="info-2"><div class="info-item-1">背景与目标随着大语言模型在企业内的应用场景不断扩展，单一模型服务或简单的 API + 网关 架构已经难以满足生产环境下的多租户管理、资源隔离、安全合规、可观测性以及快速迭代等要求。企业需要一套生产级别的大语言模型平台系统，以平台化的方式统一承载模型推理、Agent 编排、MCP 工具生态及 RAG 检索能力。 本文面向有一定 DevOps&#x2F;平台工程基础的读者，设计一套可生产落地的大语言模型平台，从整体架构到关键模块拆解，涵盖：  模型部署与运行时管理 多集群 &#x2F; 多云资源管理与调度 监控、日志、链路追踪与容量管理 安全与访问控制 RAG 平台 Agent 平台 MCP（Model Context Protocol）生态集成 平台运维与发布管理  并按照优先级划分为多期落地路线，便于企业按阶段实施。  本文更偏向平台架构设计与关键实现要点，不绑定某个具体云厂商，可结合 Kubernetes、Service Mesh、向量数据库等基础设施实施。  多期落地规划概览为了降低一次性建设的复杂度，建议将大模型平台拆分为多期，逐步演进：  一期（核心推理与基础运维能力，必...</div></div></div></a><a class="pagination-related" href="/posts/7ef80ced6f51.html" title="GPT-4.1 提示指南（翻译）"><img class="cover" src="https://img.xhua.eu.org/a5bc40e344df82a2633906aa04eb55447b0890a6c2dacf23b585537f4838f7e4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-21</div><div class="info-item-2">GPT-4.1 提示指南（翻译）</div></div><div class="info-2"><div class="info-item-1">原文 GPT-4.1 Prompting Guide GPT-4.1 模型系列在编码、指令遵循和长上下文处理能力方面相比 GPT-4o 有了显著提升。在本提示指南中，我们整理了从大量内部测试中得出的重要提示技巧，以帮助开发者充分利用这个新模型系列的改进能力。 许多典型的最佳实践仍然适用于 GPT-4.1，例如提供上下文示例、使指令尽可能具体和清晰，以及通过提示诱导规划以最大化模型智能。然而，我们预计充分利用这个模型需要一些提示迁移。GPT-4.1 经过训练，比其前身更严格、更字面地遵循指令，而前身倾向于更自由地从用户和系统提示中推断意图。这也意味着，GPT-4.1 具有高度的可引导性，对明确指定的提示反应灵敏——如果模型行为与您期望的不同，一个坚定且明确澄清您期望行为的单句几乎总是足以引导模型回到正轨。 请继续阅读可用作参考的提示示例，并记住虽然这些指导广泛适用，但没有建议是万能的。AI 工程本质上是一门经验性学科，大型语言模型本质上是非确定性的；除了遵循本指南外，我们建议构建信息丰富的评估并经常迭代，以确保您的提示工程变更为您的用例带来好处。 1. 代理工作流GPT-4.1 是...</div></div></div></a><a class="pagination-related" href="/posts/1d209e12ddec.html" title="使用Python开发自己的MCP服务：AI能力扩展入门指南"><img class="cover" src="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-04-16</div><div class="info-item-2">使用Python开发自己的MCP服务：AI能力扩展入门指南</div></div><div class="info-2"><div class="info-item-1">引言随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的能力。 什么是MCP？基本概念模型上下文协议（MCP）是一个开放标准，用于AI应用程序与大型语言模型之间的通信。它定义了一套标准接口，使应用程序能够向模型提供上下文信息，并允许模型调用应用程序暴露的工具。 简单来说，MCP就像是AI模型和外部世界之间的一座桥梁，让模型能够”看见”和”操作”外部的数据和功能。 为什么需要MCP？想象一下，如果你正在与ChatGPT聊天，希望它能够：  查询你的个人日历 分析你的Excel数据 控制你的智能家居设备 从你的私有数据库中获取信息  这些功能都需要AI模型能够访问外部系统和数据，而MCP正是为解决这一需求而生的。 MCP的核心组件MCP协议定义了...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Claude-Code-%E6%A0%B8%E5%BF%83%E7%90%86%E8%A7%A3"><span class="toc-text">Claude Code 核心理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Claude-Code"><span class="toc-text">什么是 Claude Code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Claude-Code-vs-Cursor%EF%BC%9A%E9%80%89%E6%8B%A9%E6%8C%87%E5%8D%97"><span class="toc-text">Claude Code vs Cursor：选择指南</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E4%B8%8E%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">环境配置与初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%AE%89%E8%A3%85"><span class="toc-text">快速安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-CLAUDE-md%EF%BC%9A%E9%A1%B9%E7%9B%AE%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%B3%E9%94%AE"><span class="toc-text">创建 CLAUDE.md：项目上下文的关键</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#CLAUDE-md-%E5%BA%94%E8%AF%A5%E5%8C%85%E5%90%AB%E4%BB%80%E4%B9%88"><span class="toc-text">CLAUDE.md 应该包含什么</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Code-Style-Guidelines"><span class="toc-text">Code Style Guidelines</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Testing-Instructions"><span class="toc-text">Testing Instructions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Repository-Etiquette"><span class="toc-text">Repository Etiquette</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Developer-Environment-Setup"><span class="toc-text">Developer Environment Setup</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE"><span class="toc-text">企业代理配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">核心工作流程与最佳实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%BB%84%E9%87%91%E6%B3%95%E5%88%99%EF%BC%9A%E6%8E%A2%E7%B4%A2-%E2%86%92-%E8%A7%84%E5%88%92-%E2%86%92-%E7%BC%96%E7%A0%81"><span class="toc-text">黄金法则：探索 → 规划 → 编码</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%8E%A2%E7%B4%A2%E9%98%B6%E6%AE%B5%EF%BC%88Exploration%EF%BC%89"><span class="toc-text">1. 探索阶段（Exploration）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E8%A7%84%E5%88%92%E9%98%B6%E6%AE%B5%EF%BC%88Planning%EF%BC%89"><span class="toc-text">2. 规划阶段（Planning）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E7%BC%96%E7%A0%81%E9%98%B6%E6%AE%B5%EF%BC%88Coding%EF%BC%89"><span class="toc-text">3. 编码阶段（Coding）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Plan-Mode-%E8%BF%9B%E8%A1%8C%E5%AE%89%E5%85%A8%E5%88%86%E6%9E%90"><span class="toc-text">使用 Plan Mode 进行安全分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%91%E7%B9%81%E4%BD%BF%E7%94%A8-clear-%E4%BF%9D%E6%8C%81%E4%BC%9A%E8%AF%9D%E6%B8%85%E6%99%B0"><span class="toc-text">频繁使用 &#x2F;clear 保持会话清晰</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E4%BE%9B%E4%B8%B0%E5%AF%8C%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">提供丰富的上下文</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%AE%E7%9A%84%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%A4%BA%E4%BE%8B"><span class="toc-text">差的提示词示例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A5%BD%E7%9A%84%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%A4%BA%E4%BE%8B"><span class="toc-text">好的提示词示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A9-Claude-%E9%AA%8C%E8%AF%81%E8%87%AA%E5%B7%B1%E7%9A%84%E5%B7%A5%E4%BD%9C"><span class="toc-text">让 Claude 验证自己的工作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E6%8A%80%E5%B7%A7%E4%B8%8E%E6%A8%A1%E5%BC%8F"><span class="toc-text">高级技巧与模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Subagents-%E8%BF%9B%E8%A1%8C%E4%BB%BB%E5%8A%A1%E5%A7%94%E6%B4%BE"><span class="toc-text">使用 Subagents 进行任务委派</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Git-Worktrees-%E8%BF%9B%E8%A1%8C%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91"><span class="toc-text">使用 Git Worktrees 进行并行开发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Extended-Thinking-Mode"><span class="toc-text">使用 Extended Thinking Mode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Checkpointing%EF%BC%9A%E6%97%B6%E5%85%89%E6%9C%BA%E5%8A%9F%E8%83%BD"><span class="toc-text">Checkpointing：时光机功能</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Model-Context-Protocol-MCP-%E9%9B%86%E6%88%90"><span class="toc-text">Model Context Protocol (MCP) 集成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-MCP"><span class="toc-text">什么是 MCP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-MCP-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">配置 MCP 服务器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">MCP 实际应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF-1%EF%BC%9A%E4%BB%8E-GitHub-Issue-%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81"><span class="toc-text">场景 1：从 GitHub Issue 生成代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF-2%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%BA%93%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91"><span class="toc-text">场景 2：数据库驱动开发</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF-3%EF%BC%9A%E4%BB%8E%E8%AE%BE%E8%AE%A1%E7%A8%BF%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81"><span class="toc-text">场景 3：从设计稿生成代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8-MCP-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">常用 MCP 服务器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%B8%8E%E6%89%A9%E5%B1%95"><span class="toc-text">自定义与扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hooks%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text">Hooks：自动化工作流</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-Hooks-%E9%85%8D%E7%BD%AE"><span class="toc-text">创建 Hooks 配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Hooks-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">Hooks 应用场景</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Skills%EF%BC%9A%E6%89%A9%E5%B1%95-Claude-%E7%9A%84%E8%83%BD%E5%8A%9B"><span class="toc-text">Skills：扩展 Claude 的能力</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Skills"><span class="toc-text">什么是 Skills</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%AC%AC%E4%B8%80%E4%B8%AA-Skill"><span class="toc-text">创建第一个 Skill</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Skill-%E5%AD%98%E6%94%BE%E4%BD%8D%E7%BD%AE"><span class="toc-text">Skill 存放位置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Skill-%E7%BB%93%E6%9E%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">Skill 结构最佳实践</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E5%8A%9F%E8%83%BD"><span class="toc-text">高级功能</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8-Skill-%E7%A4%BA%E4%BE%8B"><span class="toc-text">实用 Skill 示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%86%E6%9E%90%E6%9F%A5%E8%AF%A2%E8%AE%A1%E5%88%92"><span class="toc-text">2. 分析查询计划</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%A3%80%E6%9F%A5%E5%85%B3%E9%94%AE%E6%8C%87%E6%A0%87"><span class="toc-text">3. 检查关键指标</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="toc-text">常见优化策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E7%B4%A2%E5%BC%95"><span class="toc-text">添加索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E9%87%8D%E5%86%99"><span class="toc-text">查询重写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%BC%93%E5%AD%98"><span class="toc-text">使用缓存</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E4%BC%98%E5%8C%96%E6%95%88%E6%9E%9C"><span class="toc-text">验证优化效果</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AE%A1%E7%90%86%E5%92%8C%E5%88%86%E4%BA%AB-Skills"><span class="toc-text">管理和分享 Skills</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%87%AA%E5%AE%9A%E4%B9%89-Subagent"><span class="toc-text">创建自定义 Subagent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-text">插件系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C%E4%B8%8E%E8%A7%84%E6%A8%A1%E5%8C%96"><span class="toc-text">团队协作与规模化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E5%9B%A2%E9%98%9F%E7%BA%A7-CLAUDE-md"><span class="toc-text">编写团队级 CLAUDE.md</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Troubleshooting"><span class="toc-text">Troubleshooting</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Contact"><span class="toc-text">Contact</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Headless-Mode%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E-CI-CD"><span class="toc-text">Headless Mode：自动化与 CI&#x2F;CD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E7%BA%A7%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86"><span class="toc-text">企业级配置管理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%99%B7%E9%98%B1%E4%B8%8E%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-text">常见陷阱与解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%B7%E9%98%B1-1%EF%BC%9A%E8%BF%87%E5%BA%A6%E4%BE%9D%E8%B5%96%E9%95%BF%E5%AF%B9%E8%AF%9D"><span class="toc-text">陷阱 1：过度依赖长对话</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%B7%E9%98%B1-2%EF%BC%9A%E6%B2%A1%E6%9C%89%E9%AA%8C%E8%AF%81%E5%B0%B1%E4%BF%A1%E4%BB%BB%E8%BE%93%E5%87%BA"><span class="toc-text">陷阱 2：没有验证就信任输出</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%B7%E9%98%B1-3%EF%BC%9ACLAUDE-md-%E8%BF%87%E6%97%B6%E6%88%96%E7%BC%BA%E5%A4%B1"><span class="toc-text">陷阱 3：CLAUDE.md 过时或缺失</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%B7%E9%98%B1-4%EF%BC%9A%E5%BF%BD%E7%95%A5%E6%9D%83%E9%99%90%E5%92%8C%E5%AE%89%E5%85%A8"><span class="toc-text">陷阱 4：忽略权限和安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%B7%E9%98%B1-5%EF%BC%9A%E4%B8%8D%E5%90%88%E7%90%86%E7%9A%84%E4%BB%BB%E5%8A%A1%E5%88%86%E8%A7%A3"><span class="toc-text">陷阱 5：不合理的任务分解</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="toc-text">性能优化建议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%8F%E5%B0%91-Token-%E6%B6%88%E8%80%97"><span class="toc-text">减少 Token 消耗</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E7%BC%93%E5%AD%98"><span class="toc-text">利用缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E8%A1%8C%E5%8C%96%E6%93%8D%E4%BD%9C"><span class="toc-text">并行化操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%A1%88%E4%BE%8B"><span class="toc-text">实战案例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-1%EF%BC%9A%E5%A4%A7%E8%A7%84%E6%A8%A1%E9%87%8D%E6%9E%84"><span class="toc-text">案例 1：大规模重构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-2%EF%BC%9A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="toc-text">案例 2：性能优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-3%EF%BC%9ABug-%E4%BF%AE%E5%A4%8D"><span class="toc-text">案例 3：Bug 修复</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%BA%90%E4%B8%8E%E7%A4%BE%E5%8C%BA"><span class="toc-text">学习资源与社区</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E8%B5%84%E6%BA%90"><span class="toc-text">官方资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BE%E5%8C%BA%E8%B5%84%E6%BA%90"><span class="toc-text">社区资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E9%98%B6%E5%AD%A6%E4%B9%A0%E8%B7%AF%E5%BE%84"><span class="toc-text">进阶学习路径</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E8%A6%81%E7%82%B9"><span class="toc-text">核心要点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E6%AD%A5%E8%A1%8C%E5%8A%A8"><span class="toc-text">下一步行动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toc-text">参考资源</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

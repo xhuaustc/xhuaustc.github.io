@@ -1,0 +1,403 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift强大的oc-set命令详解 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# o">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift强大的oc-set命令详解">
+<meta property="og:url" content="https://xhua.eu.org/posts/a40d5162aa40.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# o">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.637Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift强大的oc-set命令详解",
+  "url": "https://xhua.eu.org/posts/a40d5162aa40.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.637Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/a40d5162aa40.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift强大的oc-set命令详解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift强大的oc-set命令详解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift强大的oc-set命令详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.637Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-c40c813c3fff22d1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/960/format/webp" alt="OpenShift"></p>
+<p>OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。<br>下面是oc set的帮助详情。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# oc set</span><br><span class="line">Configure application resources</span><br><span class="line">Usage:</span><br><span class="line">  oc set COMMAND [flags]</span><br><span class="line"></span><br><span class="line">Replication controllers, deployments, and daemon sets:</span><br><span class="line">  env             Update environment variables on a pod template</span><br><span class="line">  resources       Update resource requests/limits on objects with pod templates</span><br><span class="line">  volumes         Update volumes on a pod template</span><br><span class="line">  probe           Update a probe on a pod template</span><br><span class="line">  deployment-hook Update a deployment hook on a deployment config</span><br><span class="line">  image           Update image of a pod template</span><br><span class="line"></span><br><span class="line">Manage secrets:</span><br><span class="line">  build-secret    Update a build secret on a build config</span><br><span class="line"></span><br><span class="line">Manage application flows:</span><br><span class="line">  image-lookup    Change how images are resolved when deploying applications</span><br><span class="line">  triggers        Update the triggers on one or more objects</span><br><span class="line">  build-hook      Update a build hook on a build config</span><br><span class="line"></span><br><span class="line">Control load balancing:</span><br><span class="line">  route-backends  Update the backends for a route</span><br><span class="line"></span><br><span class="line">Use &quot;oc set &lt;command&gt; --help&quot; for more information about a given command.</span><br><span class="line">Use &quot;oc options&quot; for a list of global command-line options (applies to all commands).</span><br></pre></td></tr></table></figure>
+<h2 id="环境变量-oc-set-env"><a href="#环境变量-oc-set-env" class="headerlink" title="环境变量 oc set env"></a>环境变量 <code>oc set env</code></h2><ol>
+<li>列出sample dc设置的环境变量</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set env dc/sample --list  # 列出sample dc设置的环境变量</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为sample dc设置环境变量NAME&#x3D;value</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set env dc/sample NAME=value # 为sample dc设置环境变量NAME=value</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>从secret mysecret中向sample dc导入环境变量</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set env --from=secret/mysecret dc/sample #从secret mysecret中向sample dc导入环境变量</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>从configmap myconfigmap中筛选出前缀为MYSQL_的变量向sample dc中导入为环境变量</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set env --from=configmap/myconfigmap --prefix=MYSQL_ dc/sample #从configmap myconfigmap中筛选出前缀为MYSQL_的变量向sample dc中导入为环境变量</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除sample dc中的名为NAME的环境变量</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set env dc/sample NAME- #删除sample dc中的名为NAME的环境变量</span><br></pre></td></tr></table></figure>
+<h2 id="资源限制-oc-set-resources"><a href="#资源限制-oc-set-resources" class="headerlink" title="资源限制 oc set resources"></a>资源限制 <code>oc set resources</code></h2><ol>
+<li>为dc&#x2F;sample中的容器设置内存限制</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set resources dc/sample --limits=memory=2Gi --requests=memory=1Gi</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>给sample dc中的所有容器设置资源cpu和memory限制</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set resources dc/sample --limits=cpu=200m,memory=2Gi --requests=cpu=100m,memory=1Gi #给sample dc中的所有容器设置资源cpu和memory限制</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>给sample dc中的nginx容器设置资源cpu和memory限制</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set resources dc/sample -c=nginx --limits=cpu=200m,memory=2Gi --requests=cpu=100m,memory=1Gi #给sample dc中的nginx容器设置资源cpu和memory限制</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>删除sample dc资源限制配置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set resources dc/sample --limits=cpu=0,memory=0 --requests=cpu=0,memory=0 #删除资源限制配置</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>不执行更新，只显示修改的配置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set resources dc/sample --limits=cpu=200m,memory=512Mi -o yaml #不执行更新，只显示修改的配置</span><br></pre></td></tr></table></figure>
+<h2 id="挂载点-oc-set-volumes"><a href="#挂载点-oc-set-volumes" class="headerlink" title="挂载点 oc set volumes"></a>挂载点 <code>oc set volumes</code></h2><ol>
+<li>查看sample dc的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>查看当前项目下的所有dc的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc --all</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>给sample dc创建一个挂载点&#x2F;data，挂载emptyDir</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --add --mount-path=/data</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>使用一个现有的名为pvc1的pvc挂载到名为v1的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --add --name=v1 -t pvc --claim-name=pvc1 --overwrite</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除sample dc中名为v1的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --remove --name=v1</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>新建一个pvc挂载到sample dc中名为v1的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --add --name=v1 -t pvc --claim-size=1G --overwrite</span></span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>更改名为v1的挂载点对应在sample dc中的目录为&#x2F;data2</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --add --name=v1 -m /data2 --overwrite</span></span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>删除sample dc中的nginx容器中名为v1的挂载点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --remove --name=v1 --containers=nginx</span></span><br></pre></td></tr></table></figure>
+<ol start="9">
+<li>将configmap中的nginx.conf配置挂载到&#x2F;data&#x2F;nginx.config文件中</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> volumes dc/sample --add --name=v1 --mount-path=/data/nginx.conf --<span class="built_in">type</span>=configmap --configmap-name=nginx --sub-path=nginx.conf</span></span><br></pre></td></tr></table></figure>
+<p>另外还有一些常用的参数<br>–claim-name：指定pvc的名字<br>–claim-class：指定pvc使用的StorageClass名<br>–claim-mode：指定pvc访问类型，默认为ReadWriteOnce(rwo)，另外还有ReadWriteMany(rwm)和ReadOnlyMany(rom)<br>–default-mode：挂载目录的权限，默认为0644，必须在0000和0777之间取值<br>–configmap-name：挂载到挂载点的configmap名，必须设置挂载类型为configmap<br>–secret-name：挂载到挂载点的secret名，必须设置挂载类型为secret<br>–sub-path：只挂载指定的子目录<br>–path：本地主机路径，必须设置挂载类型为hostPath<br>–type：挂载类型，emptyDir，hostPath，secret，configmap</p>
+<h2 id="健康检查-oc-set-probe"><a href="#健康检查-oc-set-probe" class="headerlink" title="健康检查 oc set probe"></a>健康检查 <code>oc set probe</code></h2><ol>
+<li>给sample dc添加liveness检查<code>shell</code></li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> probe dc/sample --liveness --failure-threshold 3 --initial-delay-seconds 40 -- <span class="built_in">echo</span> ok</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>给sample dc添加readiness检查<code>HTTP</code></li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc set probe dc/sample --readiness --failure-threshold 3 --initial-delay-seconds 20 --get-url=http://:9000/about</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>给sample dc添加readiness检查<code>TCP</code></li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> probe dc/sample --readiness --open-tcp=3306</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>设置readiness的初始检查延时时间30s，超时时间为3s</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> probe dc/sample --readiness --initial-delay-seconds=30 --<span class="built_in">timeout</span>=3</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除rediness和liveness检查</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> probe dc/sample --remove --readiness --liveness</span></span><br></pre></td></tr></table></figure>
+<p>另外还有一些常用的参数<br>–period-seconds：默认为10，两次检查间隔时长，单位为s<br>–success-threshold：默认为1，检查成功次数达到1次，才会触发成功处理操作<br>–failure-threshold：默认为3，检查失败次数达到3次，才会触发失败处理操作</p>
+<h2 id="设置Deploymentconfig钩子-oc-set-deployment-hook"><a href="#设置Deploymentconfig钩子-oc-set-deployment-hook" class="headerlink" title="设置Deploymentconfig钩子 oc set deployment-hook"></a>设置Deploymentconfig钩子 <code>oc set deployment-hook</code></h2><ol>
+<li>为sample dc中的strategy设置pre钩子</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> deployment-hook dc/sample --container=sample --pre -v data -- /var/lib/migrate-db.sh</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为sample dc中的strategy设置mid钩子</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> deployment-hook dc/sample --mid -v data -e VAR1=value1 -e VAR2=value2 -- /var/lib/prepare-deploy.sh</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>删除sample dc的pre、mid及post的钩子</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> deployment-hook dc/sample --remove --pre --mid --post</span></span><br></pre></td></tr></table></figure>
+<h2 id="更新镜像-oc-set-image"><a href="#更新镜像-oc-set-image" class="headerlink" title="更新镜像 oc set image"></a>更新镜像 <code>oc set image</code></h2><ol>
+<li>为sample dc中的容器sample1设置镜像sample1:v2，为容器sampel2设置镜像sample2:v2</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> image dc/sample sample1=sample1:v2 sample2=sample2:v2</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为sample dc中的容器app设置镜像为imagestream tag sample&#x2F;ruby:2.3</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> image dc/sample app=sample/ruby:2.3 --<span class="built_in">source</span>=imagestreamtag</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>为所有dc中的容器sample设置镜像为sample:v2</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> image dc sample=sample:v2 --all</span></span><br></pre></td></tr></table></figure>
+<h2 id="设置BuildConfig的拉取-推送镜像、拉取代码的密钥-oc-set-build-secret"><a href="#设置BuildConfig的拉取-推送镜像、拉取代码的密钥-oc-set-build-secret" class="headerlink" title="设置BuildConfig的拉取&#x2F;推送镜像、拉取代码的密钥 oc set build-secret"></a>设置BuildConfig的拉取&#x2F;推送镜像、拉取代码的密钥 <code>oc set build-secret</code></h2><ol>
+<li>设置samplebuild bc的拉取镜像的密钥dockerhubsecret</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> build-secret --pull bc/samplebuild dockerhubsecret</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>设置samplebuild bc的推送镜像的密钥dockerhubsecret</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> build-secret --push --pull bc/samplebuild dockerhubsecret</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>设置samplebuild bc的拉取代码的密钥githubsecret</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> build-secret --<span class="built_in">source</span>  bc/samplebuild  githubsecret</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>删除sample bc设置的推送镜像密钥</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> build-secret --push --remove bc/sample</span></span><br></pre></td></tr></table></figure>
+<h2 id="设置触发器-oc-set-triggers"><a href="#设置触发器-oc-set-triggers" class="headerlink" title="设置触发器 oc set triggers"></a>设置触发器 <code>oc set triggers</code></h2><ol>
+<li>列出sample dc当前的触发器</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> triggers dc/sample</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>关闭sample dc所有的自动触发器</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> triggers dc/sample --manual</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>开启sample dc所有的自动触发器</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> triggers dc/sample --auto</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>更新sample bc的github触发器的密钥值</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> triggers bc/sample --from-github</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>删除sample bc的所有触发器</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> triggers bc/sample --remove-all</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>删除sample dc的ConfigChange触发器</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> triggers dc/sample --from-config --remove</span></span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>更新sample bc的ImageStreamTag触发器的镜像Tag为test&#x2F;sample:latest</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> triggers bc/sample --from-image=<span class="built_in">test</span>/sample:latest</span></span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>更新sample dc容器sample的ImageStreamTag触发器的镜像Tag为test&#x2F;sample:latest</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> triggers dc/sample --from-image=<span class="built_in">test</span>/sample:latest -c sample</span></span><br></pre></td></tr></table></figure>
+<h2 id="设置BuildConfig的postcommit钩子-oc-set-build-hook"><a href="#设置BuildConfig的postcommit钩子-oc-set-build-hook" class="headerlink" title="设置BuildConfig的postcommit钩子 oc set build-hook"></a>设置BuildConfig的postcommit钩子 <code>oc set build-hook</code></h2><ol>
+<li>设置samplebuild bc的command类型的post-commit</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> build-hook bc/samplebuild --post-commit --<span class="built_in">command</span> -- /bin/bash -c /var/lib/test-image.sh</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>设置samplebuild bc的script类型的post-commit</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> build-hook bc/samplebuild --post-commit --script=<span class="string">&quot;/var/lib/test-image.sh param1 param2 &amp;&amp; /var/lib/done.sh&quot;</span></span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>设置samplebuild bc的args类型的post-commit</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"> oc <span class="built_in">set</span> build-hook bc/samplebuild --post-commit  -- arg1 arg2</span></span><br></pre></td></tr></table></figure>
+<p>command类型、script类型与args类型的区别：</p>
+<ul>
+<li>script：执行时使用&#x2F;bin&#x2F;sh -ic替换掉默认的entrypoint来执行代码</li>
+<li>command：不指定解析器，也不使用entrypoint，而是直接执行代码</li>
+<li>args：使用默认的entrypoint执行代码</li>
+</ul>
+<ol start="4">
+<li>删除samplebuild bc的post-commit</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">  oc <span class="built_in">set</span> build-hook bc/samplebuild --post-commit --remove</span></span><br></pre></td></tr></table></figure>
+<h2 id="设置Route的后端服务oc-set-route-backends"><a href="#设置Route的后端服务oc-set-route-backends" class="headerlink" title="设置Route的后端服务oc set route-backends"></a>设置Route的后端服务<code>oc set route-backends</code></h2><ol>
+<li>列出sample route的后端服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> route-backends sample</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>设置sample route的后端服务为两个并且流量比为1：9，samplev1（10%），samplev2（90%）</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> route-backends sample samplev1=1 samplev2=9</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>为sample route后端服务samplev1添加10%的流量</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> route-backends sample --adjust samplev1=+10%</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>将sample route所有后端服务流量设为0，该route将无法对外提供服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">set</span> route-backends sample --zero</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/a40d5162aa40.html">https://xhua.eu.org/posts/a40d5162aa40.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/c1de1fa83c9a.html" title="OpenShift支持Calico-BGP-路由反射（RR）模式"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift支持Calico-BGP-路由反射（RR）模式</div></div><div class="info-2"><div class="info-item-1"> 一、Calico 是什么calico 是容器网络的一种解决方案，也是当前最流行的方案之一。和其他虚拟网络最大的不同是，它没有采用 overlay 网络做报文的转发，提供了纯 3 层的网络模型。三层通信模型表示每个容器都通过 IP 直接通信，中间通过路由转发找到对方。在这个过程中，容器所在的节点类似于传统的路由器，提供了路由查找的功能。 要想路由工作能够正常，每个虚拟路由器（容器所在的主机节点）必须有某种方法知道整个集群的路由信息，calico 采用的是BGP 路由协议，全称是 Border Gateway Protocol。 除了能用于 docker 这样的容器外，它还能集成到容器集群平台 OpenShift&#x2F;kubernetes、公有云平台 AWS、GCE 等， 而且也能很容易地集成到 openstack 等 Iaas 平台。 二、Calico网络方式2.1 IPIP模式从字面来理解，就是把一个IP数据包又套在一个IP包里，即把 IP 层封装到 IP 层的一个 tunnel，看起来似乎是浪费，实则不然。它的作用其实基本上就相当于一个基于IP层的网桥！一般来说，普通的...</div></div></div></a><a class="pagination-related" href="/posts/b9fba3e32e8f.html" title="OpenShift应用补丁检查与升级"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift应用补丁检查与升级</div></div><div class="info-2"><div class="info-item-1">OpenShift版本补丁查看：https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; -------------------------------------------------    File Name：     get_update_v3.11 ------------------------------------------------- &quot;&quot;&quot;  last_index=&quot;RHSA-2020:2992&quot;  last_flag = False  import requests from pyquery import PyQuery  url=&quot;https://docs.openshift.com/container-platform/3.11/release_note...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/67a6791f98e4.html" title="OpenShift-4-3部署安装（国内需要使用科学上网支持）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-4-3部署安装（国内需要使用科学上网支持）</div></div><div class="info-2"><div class="info-item-1">准备好本机访问科学上网环境 安装pip软件  1$ yum install python2-pip  安装shadowsocks包  1pip install shadowsocks -i https://pypi.douban.com/simple  编辑文件&#x2F;etc&#x2F;shadowsocks.json  123456789101112$ cat &gt; /etc/shadowsocks.json &lt;&lt;EOF&#123;    &quot;server&quot;:&quot;shadowsocks的IP&quot;,    &quot;server_port&quot;:8388,    &quot;local_address&quot;: &quot;0.0.0.0&quot;,    &quot;local_port&quot;:1080,    &quot;password&quot;:&quot;fuuuuuuuuuuuuckgfw&quot;,    &quot;timeout&quot;:300,    &quot;method&q...</div></div></div></a><a class="pagination-related" href="/posts/dbbeaaab9bb5.html" title="OpenShift用户与组的管理功能如何在Kubernetes上实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift用户与组的管理功能如何在Kubernetes上实现</div></div><div class="info-2"><div class="info-item-1"> OpenShift中有用户及组的概念，并且提供了User与Group资源类型，可以非常方便地为OpenShift集群创建用户，创建组，以组给用户进行组管理，并授权。这也大大方便了集群账号的管理与权限的控制。 12345[openshift@master01 ~] oc create user dev-user # 创建用户dev-user[openshift@master01 ~] oc adm groups new my-group # 创建组my-group[openshift@master01 ~] oc adm groups new my-group dev-user # 创建组my-group，并添加dev-user到该组[openshift@master01 ~] oc adm groups add-users my-group dev-user # 为组my-group添加用户dev-user[openshift@master01 ~] oc adm groups remove-users my-group dev-user # 将用户dev-user从my-gr...</div></div></div></a><a class="pagination-related" href="/posts/dae9f91bc2e9.html" title="Openshift集群升级3-6至3-7"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群升级3-6至3-7</div></div><div class="info-2"><div class="info-item-1">更新方法与策略：自动升级方法  更新openshift-ansible的脚本代码   12git pull git checkout -b release-3.7 安装需要的包  1ansible all -m yum -a &#x27;name=pyOpenSSL state=present&#x27;  关闭Service Catalog和Template Service Broker。3.7 以上版本默认会启用 Service Catalog 和 Template Service Broker  123456# /etc/ansible/hosts...openshift_enable_service_catalog=falsetemplate_service_broker_install=falseansible_service_broker_install=false...  关闭etcd目录的selinux检查关闭任务Check selinux label of ‘‘与Make sure the ‘‘ has the proper label  12345678910...</div></div></div></a><a class="pagination-related" href="/posts/82cffe541eda.html" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a><a class="pagination-related" href="/posts/eb02cfa8b57d.html" title="Openshift实现Etcd一键备份与一键恢复脚本"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift实现Etcd一键备份与一键恢复脚本</div></div><div class="info-2"><div class="info-item-1"> 一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!/bin/bashexport ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)oc login -u system:adminexport ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)oc project kube-systemoc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key -...</div></div></div></a><a class="pagination-related" href="/posts/f8319a6131a9.html" title="Kubefwd——Openshift-K8S-本地开发的福音"><img class="cover" src="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubefwd——Openshift-K8S-本地开发的福音</div></div><div class="info-2"><div class="info-item-1">小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不起的吧。我回复道：“openshift 的 port-forward，再加个自动更新本地 hosts 文件”。小志发来了 kubefwd 请求流向图。  服务 api 与服务 auth 提供的都是 80 端口，但是它们能够同时被本地访问，这是 port-forward 无法做到的！我意识到这个工具很不简单，刚才的想法太草率了。我马上回复：“我刚才理解得不对，它可以做到一个 port 对应多个 service！”此刻的心情其实已经非常激动了，因为意识到 kubefwd 这个工具也许解决了困扰我多天的问题。  近一周一直在脑中徘徊的是徐磊老师介绍微软的 TFS 时的演示：开发人员本地修改代码...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F-oc-set-env"><span class="toc-text">环境变量 oc set env</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6-oc-set-resources"><span class="toc-text">资源限制 oc set resources</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%82%E8%BD%BD%E7%82%B9-oc-set-volumes"><span class="toc-text">挂载点 oc set volumes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5-oc-set-probe"><span class="toc-text">健康检查 oc set probe</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEDeploymentconfig%E9%92%A9%E5%AD%90-oc-set-deployment-hook"><span class="toc-text">设置Deploymentconfig钩子 oc set deployment-hook</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E9%95%9C%E5%83%8F-oc-set-image"><span class="toc-text">更新镜像 oc set image</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEBuildConfig%E7%9A%84%E6%8B%89%E5%8F%96-%E6%8E%A8%E9%80%81%E9%95%9C%E5%83%8F%E3%80%81%E6%8B%89%E5%8F%96%E4%BB%A3%E7%A0%81%E7%9A%84%E5%AF%86%E9%92%A5-oc-set-build-secret"><span class="toc-text">设置BuildConfig的拉取&#x2F;推送镜像、拉取代码的密钥 oc set build-secret</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E8%A7%A6%E5%8F%91%E5%99%A8-oc-set-triggers"><span class="toc-text">设置触发器 oc set triggers</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEBuildConfig%E7%9A%84postcommit%E9%92%A9%E5%AD%90-oc-set-build-hook"><span class="toc-text">设置BuildConfig的postcommit钩子 oc set build-hook</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AERoute%E7%9A%84%E5%90%8E%E7%AB%AF%E6%9C%8D%E5%8A%A1oc-set-route-backends"><span class="toc-text">设置Route的后端服务oc set route-backends</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

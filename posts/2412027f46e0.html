@@ -1,0 +1,247 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshfit上用ConfigMap来自定义Nginx配置 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Nginx是最常用的代理软件，也是最常用的WebServer，怎样很方便地在openshift上部署呢？同时又能很方便地对它自定义进行配置？直接使用docker的nginx会有以下问题：   启动时权限问题。默认openshift的应用会使用类似10000100的user_id启用docker，但是官方nginx镜像会使用root启用；还有nginx默认会启用80端口这个也是需要root权限的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshfit上用ConfigMap来自定义Nginx配置">
+<meta property="og:url" content="https://xhua.eu.org/posts/2412027f46e0.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Nginx是最常用的代理软件，也是最常用的WebServer，怎样很方便地在openshift上部署呢？同时又能很方便地对它自定义进行配置？直接使用docker的nginx会有以下问题：   启动时权限问题。默认openshift的应用会使用类似10000100的user_id启用docker，但是官方nginx镜像会使用root启用；还有nginx默认会启用80端口这个也是需要root权限的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.638Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshfit上用ConfigMap来自定义Nginx配置",
+  "url": "https://xhua.eu.org/posts/2412027f46e0.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.638Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/2412027f46e0.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshfit上用ConfigMap来自定义Nginx配置',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshfit上用ConfigMap来自定义Nginx配置</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshfit上用ConfigMap来自定义Nginx配置</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.638Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Nginx是最常用的代理软件，也是最常用的WebServer，怎样很方便地在openshift上部署呢？同时又能很方便地对它自定义进行配置？<br>直接使用docker的nginx会有以下问题：</p>
+<blockquote>
+<ol>
+<li>启动时权限问题。默认openshift的应用会使用类似10000100的user_id启用docker，但是官方nginx镜像会使用root启用；还有nginx默认会启用80端口这个也是需要root权限的。</li>
+<li>无法动态更新nginx配置。nginx配置在镜像中设置，如果需要更新配置的话，需要重新编译镜像。</li>
+<li>应用代码更新。如果用户的代码，如静态代码，版本更新，是否可以不更新镜像，而完成版本的升级？</li>
+</ol>
+</blockquote>
+<p>在Openshift上部署一个nginx应用如何解决以上3个问题。</p>
+<blockquote>
+<ol>
+<li>权限问题</li>
+</ol>
+</blockquote>
+<p> <code>解决办法: 制作专用nginx镜像，1. 更改特殊文件夹的权限为777；2.将默认端口设置为8080</code><br>default.conf</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">server&#123;</span><br><span class="line">    listen  8080;</span><br><span class="line">    server_name _;</span><br><span class="line">    location /&#123;</span><br><span class="line">      root  /usr/share/nginx/html;</span><br><span class="line">      index index.html index.htm;</span><br><span class="line">    &#125;</span><br><span class="line">    error_page 500 502 503 504 /50x.html;</span><br><span class="line">    location = /50x.html &#123;</span><br><span class="line">      root  /usr/share/nginx/html;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Dockerfile文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#Dockerfile</span><br><span class="line">FROM docker.io/nginx:1.14</span><br><span class="line">LABEL io.openshift.expose-services=&quot;8080:http&quot;</span><br><span class="line">COPY default.conf /etc/nginx/conf.d/default.conf</span><br><span class="line">RUN chmod -R 777 /var/log/nginx /var/cache/nginx /var/run \</span><br><span class="line">    &amp;&amp; chgrp -R 0 /etc/nginx \</span><br><span class="line">    &amp;&amp; chmod -R g=u /etc/nginx</span><br><span class="line">EXPOSE 8080</span><br></pre></td></tr></table></figure>
+<p>制作镜像</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker build -t harbor.apps.example.com/public/nginx:1.14 .</span><br><span class="line">docker push harbor.apps.example.com/public/nginx:1.14</span><br></pre></td></tr></table></figure>
+<p>使用新的镜像部署应用(在nginx-project中创建DeploymentConfig nginx-demo)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc new-app harbor.apps.example.com/public/nginx:1.14 --allow-missing-images --name=nginx-demo -n nginx-project</span><br></pre></td></tr></table></figure>
+<p>创建Service对应pod的8080端口</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc expose dc nginx-demo --port=8080</span><br></pre></td></tr></table></figure>
+<p>创建Route对应Service，使得服务能够对外提供服务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc expose svc nginx-demo --hostname=www.web.example.com</span><br></pre></td></tr></table></figure>
+<p>本地绑定hostname<code>www.web.example.com</code>与Openshift集群的Router所在主机的ip，即可通过浏览器访问到服务。</p>
+<blockquote>
+<p>2.自定义nginx配置</p>
+</blockquote>
+<p><code>解决办法：使用ConfigMap创建nginx的配置，并挂载到/etc/nginx/conf.d目录</code></p>
+<p>ConfigMap文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-config</span><br><span class="line">  namespace: nginx-project</span><br><span class="line">data:</span><br><span class="line">  demo.conf: &quot;proxy_set_header Host $host;\r\nproxy_set_header X-Real-IP $remote_addr;\r\nproxy_set_header     X-Forwarded-Server $host;\r\nserver &#123;\r\n        listen       8080;\r\n        server_name  _;\r\n    \tlocation / &#123;\r\n        \tproxy_pass http://test.back.svc:28080/; \r\n    \t&#125;error_page   500 502 503 504  /50x.html;\r\n        location = /50x.html &#123;\r\n            root   html;\r\n        &#125;\r\n    &#125;&quot;</span><br></pre></td></tr></table></figure>
+<p>ConfigMap的内容即为nginx的conf.d目录下的所有conf配置文件。将它们挂载到&#x2F;etc&#x2F;nginx&#x2F;conf.d目录下。<br><code>通过openshift的web console可以非常方便地操作</code>如下图<br><img src="https://img.xhua.eu.org/1c23f77ba850e335023b0376dbe145169dbed6e65fdcf0e86137c23ed962fa3d.jpg" alt="将ConfigMap挂载到DeployConfig应用&#x2F;etc&#x2F;nginx&#x2F;conf.d目录">  </p>
+<p><code>当然我们也可以更改DeployConfig的配置来实现同样的效果</code><br>在nginx-demo的DeployConfig中添加挂载点及ConfigMap挂载<br>我们可以把所有配置一次性挂载到目录下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">spec:</span><br><span class="line">      containers:</span><br><span class="line">        - image: &#x27;harbor.apps.example.com/public/nginx:1.14&#x27;</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          name: nginx-demo</span><br><span class="line">          volumeMounts:</span><br><span class="line">            - mountPath: /etc/nginx/conf.d</span><br><span class="line">              name: nginx-config-hgj4i</span><br><span class="line">              readOnly: true</span><br><span class="line">      volumes:</span><br><span class="line">        - configMap:</span><br><span class="line">            defaultMode: 420</span><br><span class="line">            name: nginx-config</span><br><span class="line">          name: nginx-config-hgj4i</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>同时我们也可以只挂载指定的文件，同时不覆盖同目录下的其他文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">spec:</span><br><span class="line">      containers:</span><br><span class="line">        - image: &#x27;harbor.apps.example.com/public/nginx:1.14&#x27;</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          name: nginx-demo</span><br><span class="line">          volumeMounts:</span><br><span class="line">            - mountPath: /etc/nginx/conf.d/test.conf</span><br><span class="line">              name: nginx-config-hgj4i</span><br><span class="line">              subPath: test.conf</span><br><span class="line">              readOnly: true</span><br><span class="line">      volumes:</span><br><span class="line">        - configMap:</span><br><span class="line">            defaultMode: 420</span><br><span class="line">            name: nginx-config</span><br><span class="line">            items:</span><br><span class="line">              - key: default.conf</span><br><span class="line">                path: test.conf</span><br><span class="line">          name: nginx-config-hgj4i</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>对于不同的应用，我们需要不同的nginx配置时，只需要挂载不同的configmap即可。常见的应用场景为：将nginx作为代理服务器来使用的情况。</p>
+<blockquote>
+<p>3.应用代码更新</p>
+</blockquote>
+<p><code>解决办法：持久化存储</code><br>Openshift是建立在Kubernetes的基础上的，而K8S支持十多种存储方式，如：NFS，GlusterFS，CephFS，RBD，HostPath等。<br>这里使用NFS作为持久化存储方案。CentOS系统自带NFS服务。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">systemctl start nfs #启动nfs，如果已启动，则不用操作</span><br><span class="line">mkdir -p /nfsdata/nginx_app</span><br><span class="line">chown nfsnobody:nfsnobody /nfsdata/nginx_app</span><br><span class="line">chmod 700 /nfsdata/nginx_app</span><br><span class="line"></span><br><span class="line">#开放nfs访问的端口</span><br><span class="line">iptables -A INPUT -p tcp --dport 111 -j ACCEPT</span><br><span class="line">iptables -A INPUT -p udp --dport 111 -j ACCEPT</span><br><span class="line">iptables -A INPUT -p tcp --dport 2049 -j ACCEPT</span><br><span class="line">iptables -A INPUT -p udp --dport 2049 -j ACCEPT</span><br><span class="line"></span><br><span class="line"># 配置NFS</span><br><span class="line">echo &quot;/nfsdata/nginx_app *(rw,async,no_root_squash)&quot; &gt;&gt; /etc/exports</span><br><span class="line">exportfs -a #加载共享目录配置</span><br><span class="line">showmount -e #查看当前可用的共享目录</span><br></pre></td></tr></table></figure>
+<p>创建PV持久化存储</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># nginx-pv.yml</span><br><span class="line">kind: PersistentVolume</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-pv</span><br><span class="line">spec:</span><br><span class="line">  capacity:</span><br><span class="line">    storage: &quot;5Gi&quot;</span><br><span class="line">  accessModes:</span><br><span class="line">    - &quot;ReadWriteMany&quot;</span><br><span class="line">  nfs:</span><br><span class="line">    path: &quot;/nfsdata/nginx_app&quot;</span><br><span class="line">    server: &quot;192.168.0.4&quot;</span><br></pre></td></tr></table></figure>
+<p>创建PV</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc create -f nginx-pv.yml</span><br></pre></td></tr></table></figure>
+<p>创建PVC</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">kind: PersistentVolumeClaim</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx-app-pvc</span><br><span class="line">  namespace: nginx-project</span><br><span class="line">spec:</span><br><span class="line">  accessModes:</span><br><span class="line">    - ReadWriteMany</span><br><span class="line">  resources:</span><br><span class="line">    requests:</span><br><span class="line">      storage: &quot;5Gi&quot;</span><br></pre></td></tr></table></figure>
+<p>将创建的PVC挂载到DeploymentConfig中需要放的应用的目录下，同时注意该目录也应该是与ConfigMap中的server的root目录一致。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  containers:</span><br><span class="line">    - image: &#x27;harbor.apps.example.com/public/nginx:1.14&#x27;</span><br><span class="line">      imagePullPolicy: IfNotPresent</span><br><span class="line">      name: nginx-demo</span><br><span class="line">      volumeMounts:</span><br><span class="line">        - mountPath: /etc/nginx/conf.d</span><br><span class="line">          name: nginx-config-hgj4i</span><br><span class="line">          readOnly: true</span><br><span class="line">        - mountPath: /appdata</span><br><span class="line">          name: appdata-pvc</span><br><span class="line">  volumes:</span><br><span class="line">    - name: nginx-config-hgj4i</span><br><span class="line">      configMap:</span><br><span class="line">        defaultMode: 420</span><br><span class="line">        name: nginx-config</span><br><span class="line">      </span><br><span class="line">    - name: appdata-pvc</span><br><span class="line">      persistentVolumeClaim:</span><br><span class="line">        claimName: nginx-app-pvc</span><br></pre></td></tr></table></figure>
+<p>将对应的NFS挂载到开发或者部署的服务器上，同时将代码拷入共享存储，此时代码自动同步到的应用中。实现了代码同步。</p>
+<p>综上，我们实现了使用同一个Nginx镜像，实现了在Openshift上自定义nginx配置及应用代码的部署。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/2412027f46e0.html">https://xhua.eu.org/posts/2412027f46e0.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/b3188e017b83.html" title="Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift+Jenkins+zalenium+HtmlReporter实现自动化测试</div></div><div class="info-2"><div class="info-item-1">上篇介绍了如果在openshift上部署zalenium及python对应用功能进行测试的方法。该篇介绍如何通过Jenkins的Slave容器配合上篇中的zalenium实现自动化功能测试，并生成测试报告。虽然只是一个小例子，但是麻雀虽小，五脏俱全。同时所有的操作及工具都建立在Openshift上。下图为各工具之间的关系：   ###具体操作：   启动Jenkins需要添加环境变量JENKINS_JAVA_OVERRIDES &#x3D;&gt; -Dhudson.model.DirectoryBrowserSupport.CSP=该环境变量使得HtmlReporter页面展示正常    Jenkins系统管理-&gt;系统设置中创建新的Kubernetes Pod Template基础镜像jenkins-slave-python-centos7:3.10，Dockerfile安装需要的python依赖包   123# DockerfileFROM informaticsmatters/jenkins-slave-python-centos7RUN pip install se...</div></div></div></a><a class="pagination-related" href="/posts/13ee717138f0.html" title="Openshfit-4-1部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshfit-4-1部署手册</div></div><div class="info-2"><div class="info-item-1">设备与网络准备 网络要求 能够访问OpenShift Infrastructure Providers以下载安装程序 能访问quay.io以获取安装群集所需的软件包 能访问Red Hat’s software as a service page以获取相关订阅   准备节点  1 bootstrap节点 RHCOS，引导计算机部署集群，在完成部署后该机器可被删除  3 master节点 RHCOS  2 compte节点 RHCOS or RHEL 7.6  部署前准备 外部负载均衡器 配置主机端口 配置DNS 确保网络连接   以下端口必须能被集群中的所有机器访问     端口 说明    2379-2380 etcd server, peer, and metrics ports   6443 Kubernetes API   9000-9999 Host level services, including the node exporter on ports 9100-9101 and the Cluster Version Operator on port 9099.   ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/558c019ddfc3.html" title="Openshift集群全环境恢复"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境恢复</div></div><div class="info-2"><div class="info-item-1"> 阅读前说明 按照官网提供的文档操作能够恢复etcd数据，但是由于证书的问题，恢复的集群并不能正常使用，需要单独对集群的token进行清理。 官方文档中没有明确恢复etcd集群的部署，经过多次验证，确认了恢复etcd集群需要以下三步：1. 部署1台节点的etcd；2. 在当前1台etcd节点上恢复数据；3. 使用ansible扩容的方式，将etcd节点扩展到3台。 可以更新&#x2F;etc&#x2F;etcd&#x2F;etcd.conf文件更改etcd name，进而解决etcd客户端访问服务器端证书不匹配的问题。 文章最后附上了经过测试认证的根据备份一键恢复etcd集群的脚本。  Openshift集群平台能够使用备份完整恢复集群。Openshift集群全环境备份 在恢复集群之前，请确保对集群做过完成的备份，并重新安装Openshift集群。 恢复Master节点创建Master主机文件的备份后，如果它们被损坏或意外删除，就可以通过这些文件复制回Master主机来恢复文件，然后重新启动受影响的服务。 恢复过程 恢复/etc/origin/master/master-conf...</div></div></div></a><a class="pagination-related" href="/posts/bfe4fac12931.html" title="Openshift-Network-QoS——Pod网络控制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Network-QoS——Pod网络控制</div></div><div class="info-2"><div class="info-item-1"> Pod网络（速）控制的必要性高速公路上，当流量大时，如果汽车仍然不限制速度的话，将会很容易发生车祸，我们都会自觉地减速缓慢通过，只有减速才能安全行驶。在平台的集群中也是一样，一台主机上会有大量容器运行，容器相当于高速速上的汽车，对外的网络通信都使用主机出口这条高速路，如果某（几）个容器突然访问流量大增，而且没有作任何网络限速，会占用了主机的网络，严重影响其它容器的网络，进而影响其它业务。 前提 Openshift打开多租户网络模式修改&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml将networkPluginName设置为redhat/openshift-ovs-multitenant  12345...  hostSubnetLength: 9  networkPluginName: redhat/openshift-ovs-multitenant  serviceNetworkCIDR: 172.30.0.0/16...  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换  为Pod添...</div></div></div></a><a class="pagination-related" href="/posts/a45bfc874439.html" title="Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警</div></div><div class="info-2"><div class="info-item-1">Openshift从3.9版本开始官方支持Prometheus和Grafana 从官方部署脚本 openshift-ansible 中的目录playbooks下的列表 中可以看到相关部署脚本openshift-prometheusopenshift-grafana  既然官方支持，部署安装就十分简单了。 部署安装Prometheus &#x2F;etc&#x2F;ansible&#x2F;hosts添加配置  12[OSEv3:vars]openshift_hosted_prometheus_deploy=true  执行安装  1ansible-playbook  playbooks/openshift-prometheus/config.yml  打开宿主机的9100端口（kubernetes-nodes-exporter）  1ansible all -m shell -a &#x27;iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 9100 -j ACCEPT; servic...</div></div></div></a><a class="pagination-related" href="/posts/02c4b11486c5.html" title="Openshift自定义Router成倍提升集群性能"><img class="cover" src="https://img.xhua.eu.org/487deabc05ec1621abaed75ed3be4a1b652a7b478638ae7cb46e8bcd672063e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift自定义Router成倍提升集群性能</div></div><div class="info-2"><div class="info-item-1">为什么要自定义Router Openshift的Router节点其实就是一个Haproxy容器应用，这个已经不是什么秘密了。我们平常使用时，不需要关心Haproxy的配置，因为它的默认配置完全满足绝大多数情况的需求。 但是它的默认配置并没有把最大的性能发挥出来，这时就需要我们对Haproxy的配置进行自定义了。 如果你需要实现一些新的功能，比如说将Mysql通过Router对外提供服务等  怎样自定义Router Router Pod根据haproxy-config模板创建haproxy.conf配置文件，默认文件为/var/lib/haproxy/conf/haproxy-config.template Router Haproxy镜像启动时会根据环境变量TEMPLATE_FILE来选择最终使用的模板文件 向Router Pod中放入自定义的模板文件，并将它的路径传给环境变量TEMPLATE_FILE 模板文件中的相关函数     函数 说明    processEndpointsForAlias(alias ServiceAliasConfig, svc ServiceUni...</div></div></div></a><a class="pagination-related" href="/posts/f9994802a76a.html" title="OpenShift数据库挂了问题解决"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift数据库挂了问题解决</div></div><div class="info-2"><div class="info-item-1">每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCertificate:true RotateKubeletClientCertificate:true]&#125;Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.902964    4307 mount_linux.go:211] Detected OS with systemdJan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.908967    4307 server.go:383] Version: v1.10....</div></div></div></a><a class="pagination-related" href="/posts/65cec275d806.html" title="Openshift模板之项目创建模板（资源限制）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift模板之项目创建模板（资源限制）</div></div><div class="info-2"><div class="info-item-1">Openshift创建project时，可以按照设定的模板来创建，这就省去了很多初始化的工作。###文件内容(template.yaml) 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112apiVersion: v1kind: Templatemetadata:  creationTimestamp: null  name: project-requestobjects:- apiVersion: v1  kind: Project  metadata:    annotations:      openshift.io/description: $&#123;PROJECT_D...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解">OpenClaw：开源AI代理与技能生态系统详解</a><time datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

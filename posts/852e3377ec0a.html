@@ -1,0 +1,231 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-通过Operator-SDK制作Operator | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo&#x3D;github.com&#x2F;example-inc&#x2F;memcached-operator$ # or$ operator-sdk new memcached-ansible-oper">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-通过Operator-SDK制作Operator">
+<meta property="og:url" content="https://xhua.eu.org/posts/852e3377ec0a.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo&#x3D;github.com&#x2F;example-inc&#x2F;memcached-operator$ # or$ operator-sdk new memcached-ansible-oper">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.636Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-通过Operator-SDK制作Operator",
+  "url": "https://xhua.eu.org/posts/852e3377ec0a.html",
+  "image": "https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.636Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/852e3377ec0a.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-通过Operator-SDK制作Operator',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-通过Operator-SDK制作Operator</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-通过Operator-SDK制作Operator</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.636Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="制作Operator过程"><a href="#制作Operator过程" class="headerlink" title="制作Operator过程"></a>制作Operator过程</h2><ol>
+<li>下载安装operator-sdk</li>
+<li>创建github仓库</li>
+<li>operator-sdk创建应用</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">operator-sdk new memcached-go-operator --repo=github.com/example-inc/memcached-operator</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># or</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">operator-sdk new memcached-ansible-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --<span class="built_in">type</span>=ansible</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># or</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">operator-sdk new memcached-helm-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --<span class="built_in">type</span>=helm</span></span><br></pre></td></tr></table></figure>
+<p>operator-sdk new默认使用的type为go，必须在$GOPATH目录下创建项目。type为go时项目的目录结构如下：<a target="_blank" rel="noopener" href="https://github.com/operator-framework/operator-sdk/blob/master/doc/project_layout.md">项目的目录结构</a></p>
+<p>type的可选值还可以为：ansible与helm，如果是这两个，则还可以带参数–kind来定义CRD<br>示例：<br><a target="_blank" rel="noopener" href="https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md">GO</a><br><a target="_blank" rel="noopener" href="https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md">Ansible</a><br><a target="_blank" rel="noopener" href="https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md">Helm</a><br>更多实例：<a target="_blank" rel="noopener" href="https://github.com/operator-framework/operator-sdk-samples">etcd,memcached,vault,bitcoin-sv</a><br>4. 创建ansible role</p>
+<ul>
+<li>创建应用时使用变量指的是CR中metadata的变量，而指的是CR中spec的变量。</li>
+<li>如果只有一个role的话，在watches.yaml中指定role即可，例如<code>role: /opt/ansible/roles/memcached</code></li>
+<li>如果有多个role的话，可以添加playbook.yaml，并指定它为启动脚本，例如<code>playbook: /opt/ansible/playbook.yaml</code></li>
+</ul>
+<ol start="5">
+<li>构建operator镜像</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">operator-sdk build docker.io/xhuaustc/memcached-operator:v0.0.1</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker push docker.io/xhuaustc/memcached-operator:v0.0.1</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>使用operator创建应用</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 1. 导入crd文件</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 2. 替换deploy/operator.yaml文件中的变量REPLACE_IMAGE，pull_policy</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sed -i <span class="string">&quot;&quot;</span> <span class="string">&#x27;s|&#123;&#123; REPLACE_IMAGE &#125;&#125;|docker.io/xhuaustc/memcached-operator:v0.0.1|g&#x27;</span> deploy/operator.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sed -i <span class="string">&quot;&quot;</span> <span class="string">&#x27;s|&#123;&#123; pull_policy\|default(&#x27;</span>\<span class="string">&#x27;&#x27;</span>Always<span class="string">&#x27;\&#x27;</span><span class="string">&#x27;) &#125;&#125;|Always|g&#x27;</span> deploy/operator.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 3. 创建相关资源</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create -f deploy</span></span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>创建CR资源</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create -f deploy/crds/cache_v1alpha1_memcached_cr.yaml</span></span><br></pre></td></tr></table></figure>
+<h2 id="监控全局Namespace"><a href="#监控全局Namespace" class="headerlink" title="监控全局Namespace"></a>监控全局Namespace</h2><p>默认情况下，Operator只能监听当前project下创建的应用。如果要监听所有的namespace,需将WATCH_NAMESPACE值设置为””，同时将role更换为clusterrole，rolebinding更新为clusterrolebinding。以下为具体实例。</p>
+<ol>
+<li>将deploy&#x2F;operator.yaml中的WATCH_NAMESPACE值设置为””</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="string">...</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="string">...</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="string">...</span></span><br><span class="line">      <span class="attr">serviceAccountName:</span> <span class="string">memcached-operator</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">memcached-operator</span></span><br><span class="line">        <span class="string">...</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">WATCH_NAMESPACE</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>将deploy&#x2F;role.yaml更改为ClusterRole</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">memcached-operator</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>将deploy&#x2F;role_binding.yaml更改为ClusterRoleBinding</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">memcached-operator</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">memcached-operator</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">&lt;operator-namespace&gt;</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">memcached-operator</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>operator会不断监听创建的CRD资源配置的变化，更新资源的状态，保证资源处于需要的状态下。<code>目前Operator只支持openshift 3.11及以上版本</code>。<br>通过使用operator-sdk可以非常方便地创建自己的operator。它不仅可以轻易将通用参数提取出来，同时支持编码的方式，让资源的定义更加灵活，而且可以通过operator的设置资源的调用顺序及依赖。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/852e3377ec0a.html">https://xhua.eu.org/posts/852e3377ec0a.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/2cba55920597.html" title="OpenShift-集群为项目提供专属节点"><img class="cover" src="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-集群为项目提供专属节点</div></div><div class="info-2"><div class="info-item-1">背景介绍在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。该策略主要使用到两种工具：  节点标签实现应用与节点的绑定 污点配置实现其它应用不会被调度到该节点。  设置步骤 为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及设置污点  12$ oc label node node-10 dedicated=sys0$ oc adm taint nodes node-10 dedicated=sys0:NoSchedule  在使用专属节点的应用编排中绑定的Node  123456789101112spec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      nodeSelector:        dedicated: &quot;sys0&quot;     ...</div></div></div></a><a class="pagination-related" href="/posts/67c1601a81ee.html" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/558c019ddfc3.html" title="Openshift集群全环境恢复"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境恢复</div></div><div class="info-2"><div class="info-item-1"> 阅读前说明 按照官网提供的文档操作能够恢复etcd数据，但是由于证书的问题，恢复的集群并不能正常使用，需要单独对集群的token进行清理。 官方文档中没有明确恢复etcd集群的部署，经过多次验证，确认了恢复etcd集群需要以下三步：1. 部署1台节点的etcd；2. 在当前1台etcd节点上恢复数据；3. 使用ansible扩容的方式，将etcd节点扩展到3台。 可以更新&#x2F;etc&#x2F;etcd&#x2F;etcd.conf文件更改etcd name，进而解决etcd客户端访问服务器端证书不匹配的问题。 文章最后附上了经过测试认证的根据备份一键恢复etcd集群的脚本。  Openshift集群平台能够使用备份完整恢复集群。Openshift集群全环境备份 在恢复集群之前，请确保对集群做过完成的备份，并重新安装Openshift集群。 恢复Master节点创建Master主机文件的备份后，如果它们被损坏或意外删除，就可以通过这些文件复制回Master主机来恢复文件，然后重新启动受影响的服务。 恢复过程 恢复/etc/origin/master/master-conf...</div></div></div></a><a class="pagination-related" href="/posts/b7b877349e97.html" title="Openshift排错技巧——From-Redhat大客户交流会"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift排错技巧——From-Redhat大客户交流会</div></div><div class="info-2"><div class="info-item-1"> 今天参加Redhat大客户交流会，有一个主题是Redhat的小伙伴介绍Openshift的排错技巧。这个还是很值得参考的，于是将内容发在了这里，以便更多的小伙伴能够从中受益。当然Redhat小伙伴列出的也只是一部分，同时有些排错细节PPT中也并没有具体写，这篇中我就不扩展了。以下为PPT的内容。 OpenShift排错技巧 环境基本信息收集 日志等级 应用程序 OC客户端排错 镜像仓库 网络 路由 Installer DNS Etcd  日志等级openshift service log:&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master.env #同时作用于API和ControllersDEBUG_LOGLEVEL&#x3D;4 &#x2F;etc&#x2F;sysconfig&#x2F;atomic-openshift-nodeOPTIONS&#x3D;–loglevel&#x3D;4 错误等级  0 - Errors and warning only 2 - Normal information 4 - Debugging-leve...</div></div></div></a><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a><a class="pagination-related" href="/posts/7fa076a49782.html" title="Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务</div></div><div class="info-2"><div class="info-item-1"> Service是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。 Service仅仅只能负载一组Pod吗？No。它还可以对接VM的服务，甚至是物理机的服务。 Service负载Pod    1234567891011121314apiVersion: v1kind: Servicemetadata:  name: nginxspec:  selector:    app: nginx  type: NodePort  ports:    - port: 8080      name: nginx      protocol: TCP      targetPort: 8080      nodePort: 38080  selector：Label选择器，将选择指定Label的Pod作为被负载Pod type：Service的类型，指定Service的访问方式，默认为ClusterIP。 ClusterIP：虚拟的服务IP地址，该IP...</div></div></div></a><a class="pagination-related" href="/posts/e9021798429a.html" title="OpenShift上使用NFS作为共享存储的线上问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift上使用NFS作为共享存储的线上问题</div></div><div class="info-2"><div class="info-item-1"> NFS exports文件配置格式&lt;输出目录&gt; [客户端1 选项（访问权限,用户映射,其他）] [客户端2 选项（访问权限,用户映射,其他）] a. 输出目录：输出目录是指NFS系统中需要共享给客户机使用的目录； b. 客户端：客户端是指网络中可以访问这个NFS输出目录的计算机客户端常用的指定方式 指定ip地址的主机：192.168.0.200指定子网中的所有主机：192.168.0.0&#x2F;24 192.168.0.0&#x2F;255.255.255.0指定域名的主机：david.bsmart.cn指定域中的所有主机：.bsmart.cn所有主机： c. 选项：选项用来设置输出目录的访问权限、用户映射等。 NFS主要有3类选项：  访问权限选项  设置输出目录只读：ro设置输出目录读写：rw  用户映射选项all_squash：将远程访问的所有普通用户及所属组都映射为匿名用户或用户组（nfsnobody）；no_all_squash：与all_squash取反（默认设置）；root_squash：将root用户及所属组都映射为匿名用户或用户组（默认设置）；...</div></div></div></a><a class="pagination-related" href="/posts/37f8f369f5b6.html" title="白化Kubernetes网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">白化Kubernetes网络</div></div><div class="info-2"><div class="info-item-1">引自：http://www.10tiao.com/html/217/201708/2649694873/1.html  容器的网络是在CaaS集群中无法避免的话题，作为当下最主流的一种容器集群解决方案，Kubernetes对网络进行了合理的抽象，并采用了开放的CNI模型。面对各种容器网络实现，他们有什么不同，应该如何选择？本文将带大家回顾Kubernetes各种主流网络方案的发展历程，并透过现象清本质，用形象的例子展示Weave、Flannel、Calico和Romana等网络解决方案背后的原理。  这次讲一讲容器集群中的网络。其实不同的容器集群解决方案，在网络方面的核心原理都是相似的，只不过这次我们将以Kubernetes为线索，来窥斑见豹的一睹容器网络的发展过程。  我是来自ThoughtWorks的林帆，我们从Docker的0.x版本开始就在对容器的应用场景进行探索，积累了一线的容器运用经验。这次分享会用简洁易懂的方式告诉大家我们对容器网络方面的一些知识归纳。  初入容器集群的人往往会发现，和单节点的容器运用相比，容器的网络和存储是两个让人望而却步的领域。在这些领域里，存在...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%B6%E4%BD%9COperator%E8%BF%87%E7%A8%8B"><span class="toc-text">制作Operator过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%91%E6%8E%A7%E5%85%A8%E5%B1%80Namespace"><span class="toc-text">监控全局Namespace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

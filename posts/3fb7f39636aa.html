@@ -1,0 +1,285 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-F5集成（续）——实现灰度发布 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="上篇：Openshift-F5集成（南北流量走F5）中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。 为什么要使用灰度发布 什么是灰度发布灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-F5集成（续）——实现灰度发布">
+<meta property="og:url" content="https://xhua.eu.org/posts/3fb7f39636aa.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="上篇：Openshift-F5集成（南北流量走F5）中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。 为什么要使用灰度发布 什么是灰度发布灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.639Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-F5集成（续）——实现灰度发布",
+  "url": "https://xhua.eu.org/posts/3fb7f39636aa.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.639Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/3fb7f39636aa.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-F5集成（续）——实现灰度发布',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-F5集成（续）——实现灰度发布</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-F5集成（续）——实现灰度发布</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.639Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>上篇：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c2c8df42ee5b">Openshift-F5集成（南北流量走F5）</a>中介绍了如何实现使用F5替换掉Openshift中的Route，但是它的可控性是弱的。本篇则通过手动创建VS及iRule来实现更强的流量控制，实现识别客户端IP来访问相应的服务。<br><img src="https://upload-images.jianshu.io/upload_images/5793257-160812007efc3abe.jpeg?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="灰度发布"></p>
+<h2 id="为什么要使用灰度发布"><a href="#为什么要使用灰度发布" class="headerlink" title="为什么要使用灰度发布"></a>为什么要使用灰度发布</h2><ul>
+<li>什么是灰度发布<br>灰度发布是指在黑与白之间，能够平滑过渡的一种发布方式。ABtest就是一种灰度发布方式，让一部分用户继续用A，一部分用户开始用B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。 </li>
+<li>灰度发布的价值<br>使用灰度发布可以在产品正式上线前针对特定一些目标用户进行开放，获得这些目标用户的反馈，及早发现问题，修复问题，完善产品的不足。如果发现新的版本价值不大，能够及早更换思路，避免产品直接上线后产生不好的影响。</li>
+</ul>
+<h2 id="Openshift-Route自带的灰度发布功能"><a href="#Openshift-Route自带的灰度发布功能" class="headerlink" title="Openshift Route自带的灰度发布功能"></a>Openshift Route自带的灰度发布功能</h2><ul>
+<li>Openshift Route自带的灰度发布，是通过Route下“挂载”两个或两个以上Service，并调整各个Service的权值进行控制流量的分布。</li>
+<li>例如应用有两个服务，分别为service-v1和service-v2，其中service-v2为新版本。通过不断放大service-v2的权值，观察用户的反馈，及时发现service-v2中的问题，并完善修复，最终service-v2承载所有service-v1的流量，实现服务的升级。通过这种方式，可以大大地降低service-v2中的问题对客户产生的影响。</li>
+<li>Openshift Route对Service分流使用非常方便，一些普通的业务完全可以使用这个特性达到测试的目的。但是它的简单也带来了一些不足，就是它只能对请求进行概率地划分流量，并不能定向到用户。</li>
+<li>例如，以下需求Openshift Route目前还无法实现。产品新版本正式发布前，我们希望对产品进行一些测试，只允许指定的一批用户或者一些网段的ip下的用户才能访问新版本。</li>
+</ul>
+<h2 id="F5与Openshift集成实现灰度发布"><a href="#F5与Openshift集成实现灰度发布" class="headerlink" title="F5与Openshift集成实现灰度发布"></a>F5与Openshift集成实现灰度发布</h2><ul>
+<li>流量到达F5时，F5会优先对请求进行iRule下的匹配检查，定向到对应的Pool</li>
+<li>如果iRule下未匹配，则会控制vs下绑定的Polices规则进行匹配</li>
+<li>在<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c2c8df42ee5b">上篇</a>中，我们知道Openshift上的F5控制器会自动在F5上生成Polices规则，来满足Openshift Route的功能。那么只需要将它与自定义的iRule结合就能够实现既满足服务的分流，又能控制用户对服务的定向访问。</li>
+</ul>
+<h2 id="F5与Openshift集成配置与部署（实现灰度发布）"><a href="#F5与Openshift集成配置与部署（实现灰度发布）" class="headerlink" title="F5与Openshift集成配置与部署（实现灰度发布）"></a>F5与Openshift集成配置与部署（实现灰度发布）</h2><blockquote>
+<p>准备工作（详细见<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c2c8df42ee5b">上篇：Openshift-F5集成（南北流量走F5）</a>）</p>
+</blockquote>
+<ul>
+<li>创建新的HostSub <code>Openshift</code></li>
+<li>创建一个VXLAN profile <code>F5</code></li>
+<li>创建一个VXLAN Tunnel <code>F5</code></li>
+<li>在每个F5设备VXLAN中创建Self IP <code>F5</code></li>
+<li>在当前主F5设备的VXLAN下创建Floating IP <code>F5</code></li>
+<li>创建一个新的Partition <code>F5</code></li>
+<li>创建访问F5 BIG-IP的私钥 <code>Openshift</code></li>
+<li>创建RBAC认证 <code>Openshift</code></li>
+</ul>
+<p><code>说明:以上操作具体步骤参考</code><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c2c8df42ee5b">上篇</a></p>
+<blockquote>
+<p>手动创建VS（HTTP、HTTPS） <code>F5</code></p>
+</blockquote>
+<ul>
+<li><code>Local Traffic -&gt; Virtual Servers</code> 选中指定的<code>Partition</code>，新建VS</li>
+<li>HTTP<ul>
+<li><code>Name</code>：VS名字</li>
+<li><code>Destination Address/Mask</code>：VS的IP地址</li>
+<li><code>Service Port</code>：HTTP</li>
+<li><code>HTTP Profile</code>：http</li>
+<li><code>Source Address Translation</code>：Auto Map</li>
+</ul>
+</li>
+<li>HTTPS<ul>
+<li><code>Name</code>：VS名字</li>
+<li><code>Destination Address/Mask</code>：VS的IP地址</li>
+<li><code>Service Port</code>：HTTPS</li>
+<li><code>HTTP Profile</code>：http</li>
+<li><code>SSL Profile (Client)</code>：&#x2F;Common&#x2F;clientssl</li>
+<li><code>Source Address Translation</code>：Auto Map<blockquote>
+<p>设置VS中的cccl-whitelist为1 <code>F5</code></p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<p>目的：修改cccl-whitelist的值为1，是为了防止当openshift创建控制器时，route模式下将VS原本的配置覆盖掉</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tmsh</span><br><span class="line">cd /f5-openShift  (openshift所在的partition)</span><br><span class="line">modify ltm virtual testroute metadata add &#123; cccl-whitelist &#123; value 1 &#125; &#125;</span><br><span class="line">modify ltm virtual testroute_https metadata add &#123; cccl-whitelist &#123; value 1 &#125; &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>创建F5控制器 <code>Openshift</code></p>
+</blockquote>
+<ul>
+<li>对应每台F5设备创建一个Deployment</li>
+<li>Deployment中的 –bigip-url 为设备的IP</li>
+<li>Deployment中的 –bigip-partition为之前F5下创建的Partition,Openshift</li>
+<li>Deployment中的–route-http-vserver为手动创建的HTTP VS</li>
+<li>Deployment中的–route-https-vserver为手动创建的HTTPS VS</li>
+<li>Deployment中的–route-label为给Controller打的标签（对于一组F5不需要配置，多组F5通过它打Label，并在Route中设置label f5type:label来指定使用的F5）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: f5-bigip-ctlr-01</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: k8s-bigip-ctlr</span><br><span class="line">      labels:</span><br><span class="line">        app: k8s-bigip-ctlr</span><br><span class="line">    spec:</span><br><span class="line">      # Name of the Service Account bound to a Cluster Role with the required</span><br><span class="line">      # permissions</span><br><span class="line">      serviceAccountName: bigip-ctlr</span><br><span class="line">      containers:</span><br><span class="line">        - name: k8s-bigip-ctlr</span><br><span class="line">          # replace the version as needed</span><br><span class="line">          image: &quot;f5networks/k8s-bigip-ctlr:1.5.1&quot;</span><br><span class="line">          env:</span><br><span class="line">            - name: BIGIP_USERNAME</span><br><span class="line">              valueFrom:</span><br><span class="line">                secretKeyRef:</span><br><span class="line">                  # Replace with the name of the Secret containing your login</span><br><span class="line">                  # credentials</span><br><span class="line">                  name: bigip-login</span><br><span class="line">                  key: username</span><br><span class="line">            - name: BIGIP_PASSWORD</span><br><span class="line">              valueFrom:</span><br><span class="line">                secretKeyRef:</span><br><span class="line">                  # Replace with the name of the Secret containing your login</span><br><span class="line">                  # credentials</span><br><span class="line">                  name: bigip-login</span><br><span class="line">                  key: password</span><br><span class="line">          command: [&quot;/app/bin/k8s-bigip-ctlr&quot;]</span><br><span class="line">          args: [</span><br><span class="line">            # See the k8s-bigip-ctlr documentation for information about</span><br><span class="line">            # all config options</span><br><span class="line">            # http://clouddocs.f5.com/products/connectors/k8s-bigip-ctlr/latest</span><br><span class="line">            &quot;--bigip-username=$(BIGIP_USERNAME)&quot;,</span><br><span class="line">            &quot;--bigip-password=$(BIGIP_PASSWORD)&quot;,</span><br><span class="line">            &quot;--bigip-url=192.168.200.82&quot;,</span><br><span class="line">            &quot;--bigip-partition=OpenShift&quot;,</span><br><span class="line">            &quot;--pool-member-type=cluster&quot;,</span><br><span class="line">            &quot;--openshift-sdn-name=/Common/openshift_vxlan&quot;,</span><br><span class="line">            &#x27;--manage-routes=true&#x27;</span><br><span class="line">            &#x27;--route-http-vserver=testroute&#x27;</span><br><span class="line">            &#x27;--route-https-vserver=testroute_https&#x27;</span><br><span class="line">            ]</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: f5-bigip-ctlr-02</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: k8s-bigip-ctlr</span><br><span class="line">      labels:</span><br><span class="line">        app: k8s-bigip-ctlr</span><br><span class="line">    spec:</span><br><span class="line">      # Name of the Service Account bound to a Cluster Role with the required</span><br><span class="line">      # permissions</span><br><span class="line">      serviceAccountName: bigip-ctlr</span><br><span class="line">      containers:</span><br><span class="line">        - name: k8s-bigip-ctlr</span><br><span class="line">          # replace the version as needed</span><br><span class="line">          image: &quot;f5networks/k8s-bigip-ctlr:1.5.1&quot;</span><br><span class="line">          env:</span><br><span class="line">            - name: BIGIP_USERNAME</span><br><span class="line">              valueFrom:</span><br><span class="line">                secretKeyRef:</span><br><span class="line">                  # Replace with the name of the Secret containing your login</span><br><span class="line">                  # credentials</span><br><span class="line">                  name: bigip-login</span><br><span class="line">                  key: username</span><br><span class="line">            - name: BIGIP_PASSWORD</span><br><span class="line">              valueFrom:</span><br><span class="line">                secretKeyRef:</span><br><span class="line">                  # Replace with the name of the Secret containing your login</span><br><span class="line">                  # credentials</span><br><span class="line">                  name: bigip-login</span><br><span class="line">                  key: password</span><br><span class="line">          command: [&quot;/app/bin/k8s-bigip-ctlr&quot;]</span><br><span class="line">          args: [</span><br><span class="line">            # See the k8s-bigip-ctlr documentation for information about</span><br><span class="line">            # all config options</span><br><span class="line">            # http://clouddocs.f5.com/products/connectors/k8s-bigip-ctlr/latest</span><br><span class="line">            &quot;--bigip-username=$(BIGIP_USERNAME)&quot;,</span><br><span class="line">            &quot;--bigip-password=$(BIGIP_PASSWORD)&quot;,</span><br><span class="line">            &quot;--bigip-url=192.168.200.83&quot;,</span><br><span class="line">            &quot;--bigip-partition=OpenShift&quot;,</span><br><span class="line">            &quot;--pool-member-type=cluster&quot;,</span><br><span class="line">            &quot;--openshift-sdn-name=/Common/openshift_vxlan&quot;,</span><br><span class="line">            &#x27;--manage-routes=true&#x27;</span><br><span class="line">            &#x27;--route-http-vserver=testroute&#x27;</span><br><span class="line">            &#x27;--route-https-vserver=testroute_https&#x27;</span><br><span class="line">            ]</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>给vs手动绑定Policies <code>F5</code></p>
+</blockquote>
+<ul>
+<li>Openshift F5控制器创建好后，在F5上会自动创建两条Policies, 分别为：openshift_insecure_routes、openshift_secure_routes。</li>
+<li>openshift_insecure_routes为HTTP应用服务</li>
+<li>openshift_secure_routes为HTTPS应用服务。<br><img src="https://upload-images.jianshu.io/upload_images/5793257-5a5f253409e29cb1.PNG?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="绑定Policies与iRule"></li>
+</ul>
+<blockquote>
+<p>创建应用（Project名为testapp，Service名为f5-nginx-v1与f5-nginx-v2）</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">oc new-project testapp</span><br><span class="line">oc new-app harbor.example.com/public/nginx:1.14 --name=f5-nginx-v1 --allow-missing-images</span><br><span class="line">oc expose dc/f5-test-v1 --port=8080</span><br><span class="line">oc expose svc/f5-test-v1 test1.apps.openshift.com</span><br><span class="line"></span><br><span class="line">oc new-app harbor.example.com/public/nginx:1.14 --name=f5-nginx-v2 --allow-missing-images</span><br><span class="line">oc expose dc/f5-test-v2 --port=8080</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>创建iRule,并绑定到VS <code>F5</code></p>
+</blockquote>
+<p>说明：请求域名<code>test1.apps.openshift.com</code>时，如果客户端IP为192.168.100.23，则访问testapp项目下的f5-nginx-v2服务，否则访问testapp项目下的f5-nginx-v1服务<br>注意：iRule规则需要在Common的Partition下创建</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">when HTTP_REQUEST &#123;</span><br><span class="line"> if &#123; [HTTP::host] equals &quot;test1.apps.openshift.com&quot; &#125;&#123;</span><br><span class="line">  log local0.info [HTTP::host]</span><br><span class="line">   if &#123;[IP::addr [IP::client_addr] equals 192.168.100.23/32 ]&#125; &#123;</span><br><span class="line">  log local0.info &quot;enter 2 pool before&quot;</span><br><span class="line">  log local0.info [HTTP::host]</span><br><span class="line">  pool /f5-openShift/openshift_testapp_f5-nginx-v2</span><br><span class="line">  log local0.info &quot;enter 2 pool later&quot;</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">  log local0.info &quot;enter 3&quot;</span><br><span class="line">   pool /f5-openShift/openshift_testapp_f5-nginx-v1</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>测试访问服务</p>
+</blockquote>
+<p>本地(192.168.100.23)与另一台非192.168.100.23的机器上绑定hosts</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">VS的IP地址 test1.apps.openshift.com</span><br></pre></td></tr></table></figure>
+<p>再访问test1.apps.openshift.com，查看页面显示，访问不同的Service。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/3fb7f39636aa.html">https://xhua.eu.org/posts/3fb7f39636aa.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/099cf7b5c58f.html" title="Openshift-F5集成（南北流量走F5）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-F5集成（南北流量走F5）</div></div><div class="info-2"><div class="info-item-1">使用F5与Openshift集成目的外部流量访问应用时，通过F5 BIG-IP硬件设备直接代理到集群中的Pod。这样做的好处，很明显。  使用硬件负载均衡器替换掉软件负载均衡器，提高性能。 F5有更灵活的配置，可以实现更复杂的流量控制  Openshift操作Openshift通过BIG-IP Controller来控制BIG-IP设备。由于Openshift是基于Kubernetes的，所以它们使用同一个Controller（k8s-bigip-ctlr）。BIG-IP Controller为集群中的应用配置BIG-IP对象，提供南北流量的服务。 BIG-IP Controller有两种方式来使用F5 BIG-IP设备  为Openshift中的Service提供代理流量 为Openshift中的Route提供代理流量  为Openshift中的Service提供代理流量_(不介绍具体部署操作)_这种方式，我们测试下来发现，需要为对外提供服务的Service绑定到F5的不同端口，同时外部访问应用时需要指定端口号。如：app1.openshift.example.com:8000...</div></div></div></a><a class="pagination-related" href="/posts/ed13f1158553.html" title="Openshift-F5集成（总结）——与Router方案对比"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-F5集成（总结）——与Router方案对比</div></div><div class="info-2"><div class="info-item-1">这篇文章来自9月份自己在F5年度会议上分享的PPT，感谢过程中帮忙一起联调的小伙伴。PPT也分享出来，地址如下：openshift与F5的联合解决方案Openshift-F5集成（南北流量走F5）Openshift-F5集成（续）——实现灰度发布 Openshift的基础概念Openshift简介红帽® OpenShift 是一款性能强大的开源企业级PaaS产品。不仅是企业级的Kubernetes，可以构建、部署与管理容器应用，还提供从开发到投入生产的整个应用生命周期内使用的完整解决方案，帮助客户享受快速创新带来的收益，同时保持企业级平台的稳定性、可靠性和安全性。Openshift支持多种环境下部署，无论是在企业内部，公共云，或是托管环境中。 Openshift Pod Pod是Openshift调度的最小单元 一个Pod包含一个或多个容器 Pod内的容器共享网络，IP不固定  实例： 12345678910111213apiVersion: v1kind: Podmetadata:  name: MyApp       labels:    app: MyApp    spec...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/17a022f7f345.html" title="Openshit-新的存储类型LocalVolume该如何使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshit-新的存储类型LocalVolume该如何使用</div></div><div class="info-2"><div class="info-item-1">  使用本地盘的方式的有三种：emptyDir、HostPath与Local Volume Openshift针对Local Volume提供了一个local volume provisioner方便PV的自动创建，但目前它需要创建的PV对应的目录必须是挂载点。否则无法创建PV。 除了自动创建PV的过程外，部分与正常使用Local Volume一样。  手动挂载目录使用Local Volume我们先来看下通过手动的方式创建PV使用Local Volume是如何操作的。 1. 创建StorageClass123456apiVersion: storage.k8s.io/v1kind: StorageClassmetadata:  name: local-hddprovisioner: kubernetes.io/no-provisionervolumeBindingMode: WaitForFirstConsumer 2. 创建PV1234567891011121314151617181920apiVersion: v1 kind: PersistentVolume metadat...</div></div></div></a><a class="pagination-related" href="/posts/d483810a9169.html" title="Openshift中的Prometheus-Operator如何添加新的应用监控"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift中的Prometheus-Operator如何添加新的应用监控</div></div><div class="info-2"><div class="info-item-1">  prometheus使用的配置文件在openshift-monitoring/secret/prometheus-k8s中。有添加ServiceMonitor时会动态更新该文件 为system:serviceaccount:openshift-monitoring:prometheus-k8s添加应用所在project的view权限  1$ oc policy add-role-to-user view system:serviceaccount:openshift-monitoring:prometheus-k8s -n myproject  查看prometheus的配置，查看对于servicemonitor的过滤器  123456$ oc get prometheus k8s -o yaml...  serviceMonitorSelector:    matchExpressions:    - key: k8s-app      operator: Exists  serviceMonitorSelector表示，只有设置了k8s-app的Label的service...</div></div></div></a><a class="pagination-related" href="/posts/b9fba3e32e8f.html" title="OpenShift应用补丁检查与升级"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift应用补丁检查与升级</div></div><div class="info-2"><div class="info-item-1">OpenShift版本补丁查看：https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; -------------------------------------------------    File Name：     get_update_v3.11 ------------------------------------------------- &quot;&quot;&quot;  last_index=&quot;RHSA-2020:2992&quot;  last_flag = False  import requests from pyquery import PyQuery  url=&quot;https://docs.openshift.com/container-platform/3.11/release_note...</div></div></div></a><a class="pagination-related" href="/posts/f6b6028b1b52.html" title="OpenShift生产集群物理机部署与虚拟机部署各自优缺点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift生产集群物理机部署与虚拟机部署各自优缺点</div></div><div class="info-2"><div class="info-item-1"> OpenShift是物理机部署，还是虚拟机部署？这是企业在做容器平台架构选型时必须考虑的问题。尤其是大企业，有机器，有业务。今天我们就来列一列物理机与虚拟机部署各自的优缺点。 物理机部署 优点   性能好，无虚拟化层性能开销 小业务集群，节点少 配置高能够支持更大规模的容器数量 License成本更低 架构复杂度低（PaaS） 需要额外准备LB与存储 缺点   运维复杂度高 集群扩容周期长 如果出现故障，恢复周期长，需要及时去机房诊断修复 一台主机出现故障，影响业务范围更广 合规限制，需要更高要求的安全与隐私控制  虚拟机部署 优点   灵活部署、配置、维护简单 快速扩容 能与IaaS资源混合使用（LB、存储等） 一台虚拟机出现故障，影响业务范围小 虚拟机技术成熟，有热迁移技术，恢复快 IaaS高可用+PaaS高可用，两层保障 虚拟机支持虚拟快照，方便做主机回滚，集群可靠怀提升 IaaS目前已经有成熟的合规方案，在其上构建PaaS可以更方便地满足合规要求 缺点   性能较差（网络、计算等） 架构复杂度提升（IaaS + Paas） 配置较低，承载的容器容量更小（节点更多） 需要...</div></div></div></a><a class="pagination-related" href="/posts/ddc119be7456.html" title="OpenShift-Master1彻底挂了，如何恢复？"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Master1彻底挂了，如何恢复？</div></div><div class="info-2"><div class="info-item-1"> 小强维护着一套生成的OpenShift集群，突然有一天集群的master1节点出现异常，自动关机了。他尝试了多次，都无法开机，怎么办？他需要赶快恢复master1节点，来满足集群的高可用性。 原来的masters在ansible&#x2F;hosts中的顺序如下 1234567891011121314[masters]master1  ## 重要主节点，安装完后单独保存/etc/etcd/ca中的证书master2master3[etcd]master1master2master3[nodes]master1master2master3  恢复过程如下：  新建一台 master1节点，hostname 与 IP 都和原 master1 节点一致 在master2上恢复master主节点的证书、ca.serial.txt及openshift软件。 通过新增 master 的方式将这个节点重新加回集群 通过新增 etcd 的方法，恢复了这台 master 节点 etcd 的状况  以下是恢复的具体步骤。 一、初始化Master节点 与部署机互信 开启selinux 关闭firew...</div></div></div></a><a class="pagination-related" href="/posts/bfe4fac12931.html" title="Openshift-Network-QoS——Pod网络控制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Network-QoS——Pod网络控制</div></div><div class="info-2"><div class="info-item-1"> Pod网络（速）控制的必要性高速公路上，当流量大时，如果汽车仍然不限制速度的话，将会很容易发生车祸，我们都会自觉地减速缓慢通过，只有减速才能安全行驶。在平台的集群中也是一样，一台主机上会有大量容器运行，容器相当于高速速上的汽车，对外的网络通信都使用主机出口这条高速路，如果某（几）个容器突然访问流量大增，而且没有作任何网络限速，会占用了主机的网络，严重影响其它容器的网络，进而影响其它业务。 前提 Openshift打开多租户网络模式修改&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml将networkPluginName设置为redhat/openshift-ovs-multitenant  12345...  hostSubnetLength: 9  networkPluginName: redhat/openshift-ovs-multitenant  serviceNetworkCIDR: 172.30.0.0/16...  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换  为Pod添...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83"><span class="toc-text">为什么要使用灰度发布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openshift-Route%E8%87%AA%E5%B8%A6%E7%9A%84%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E5%8A%9F%E8%83%BD"><span class="toc-text">Openshift Route自带的灰度发布功能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#F5%E4%B8%8EOpenshift%E9%9B%86%E6%88%90%E5%AE%9E%E7%8E%B0%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83"><span class="toc-text">F5与Openshift集成实现灰度发布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#F5%E4%B8%8EOpenshift%E9%9B%86%E6%88%90%E9%85%8D%E7%BD%AE%E4%B8%8E%E9%83%A8%E7%BD%B2%EF%BC%88%E5%AE%9E%E7%8E%B0%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%EF%BC%89"><span class="toc-text">F5与Openshift集成配置与部署（实现灰度发布）</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

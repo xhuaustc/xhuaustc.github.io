@@ -1,0 +1,205 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift数据库挂了问题解决 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift数据库挂了问题解决">
+<meta property="og:url" content="https://xhua.eu.org/posts/f9994802a76a.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="每个计算节点都无法启动，报错信息为： 1234567891011Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCe">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.637Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift数据库挂了问题解决",
+  "url": "https://xhua.eu.org/posts/f9994802a76a.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.637Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/f9994802a76a.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift数据库挂了问题解决',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift数据库挂了问题解决</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift数据库挂了问题解决</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.637Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>每个计算节点都无法启动，报错信息为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.895622    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletServerCertificate:true RotateKubeletClientCertificate:true]&#125;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.902964    4307 mount_linux.go:211] Detected OS with systemd</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.908967    4307 server.go:383] Version: v1.10.0+b81c8f8</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909036    4307 feature_gate.go:226] feature gates: &amp;&#123;&#123;&#125; map[RotateKubeletClientCertificate:true RotateKubeletServerCertificate:true]&#125;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909150    4307 plugins.go:89] No cloud provider specified.</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.909162    4307 server.go:499] No cloud provider specified: &quot;&quot; from the config file: &quot;&quot;</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: E0105 00:05:10.931121    4307 bootstrap.go:198] Part of the existing bootstrap client certificate is expired: 2020-01-04 07:20:00 +0000 UTC</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.931145    4307 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig file</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.932606    4307 certificate_store.go:131] Loading cert/key pair from &quot;/etc/origin/node/certificates/kubelet-client-current.pem&quot;.</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.959131    4307 csr.go:105] csr for this node already exists, reusing</span><br><span class="line">Jan 05 00:05:10 node1.example.com origin-node[4307]: I0105 00:05:10.967338    4307 csr.go:113] csr for this node is still valid</span><br></pre></td></tr></table></figure>
+<p>一、更新证书后，&#x2F;etc&#x2F;origin&#x2F;node&#x2F;cerxx**&#x2F;client-current.(server).</p>
+<p>如果有csr的话，就需要将csr（CertificateSigningRequest）批准通过</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get csr -o name | xargs oc adm certificate approve</span><br></pre></td></tr></table></figure>
+<p>需要去查的是：</p>
+<ol>
+<li>为什么1月4日会自动去更新kubelet证书<br>因为生产上kubelet证书的默认有效期为1年，到期会自动更新证书。计算节点上相关的配置项为<code>kubeletArguments.rotate-certificates: [&#39;true&#39;]</code></li>
+<li>为什么csr为Pending，而没有被批准<br>这是openshift 3.11的Master节点恰好刚过期，但是此时的bootstrap的token没有过期，Node节点会向Master申请证书csr。而在OpenShift中csr的审批需要手动通过。所以这块需要做好监控与告警，确保生产上的证书不要过期。</li>
+</ol>
+<p>相关文章：<br><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/3716861">https://access.redhat.com/solutions/3716861</a><br><a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/4565991">https://access.redhat.com/solutions/4565991</a></p>
+<p>二、数据库问题<br>数据库使用的镜像是：<code>centos/mysql-57-centos7</code><br>由于是操作数据库mysql改变root的密码，而common.sh中会校验数据库的状态，但是该镜像中的common.sh默认root密码是空的，需要更改该脚本的代码，(添加ROOT密码)：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 第54行</span><br><span class="line">mysql_flags=&quot;-u root -p$MYSQL_ROOT_PASSWORD --socket=/tmp/mysql.sock</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/f9994802a76a.html">https://xhua.eu.org/posts/f9994802a76a.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/470695cf24c2.html" title="OpenShift日志审计功能与策略配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift日志审计功能与策略配置</div></div><div class="info-2"><div class="info-item-1"> OpenShift支持审计功能，它可以记录下所有API服务的请求。如果将所有请求记录下来，它的量非常庞大，同时也是没有太大意义的。所以OpenShift审计记录当然出会支持请求的过滤，通过方便地策略配置，可以有选择地记录下请求的内容。通常我们会记录对集群资源作更改的请求。 打开审计功能在部署OpenShift时可以打开审计功能 12openshift_master_audit_config=&#123;&quot;enabled&quot;: true, &quot;auditFilePath&quot;: &quot;/var/lib/origin/audit-ocp.log&quot;, &quot;maximumFileRetentionDays&quot;: 14, &quot;maximumFileSizeMegabytes&quot;: 500, &quot;maximumRetainedFiles&quot;: 5, &quot;policyFile&quot;: &quot;/etc/origin/master/adv-audit.yaml&quot;, &qu...</div></div></div></a><a class="pagination-related" href="/posts/c1de1fa83c9a.html" title="OpenShift支持Calico-BGP-路由反射（RR）模式"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift支持Calico-BGP-路由反射（RR）模式</div></div><div class="info-2"><div class="info-item-1"> 一、Calico 是什么calico 是容器网络的一种解决方案，也是当前最流行的方案之一。和其他虚拟网络最大的不同是，它没有采用 overlay 网络做报文的转发，提供了纯 3 层的网络模型。三层通信模型表示每个容器都通过 IP 直接通信，中间通过路由转发找到对方。在这个过程中，容器所在的节点类似于传统的路由器，提供了路由查找的功能。 要想路由工作能够正常，每个虚拟路由器（容器所在的主机节点）必须有某种方法知道整个集群的路由信息，calico 采用的是BGP 路由协议，全称是 Border Gateway Protocol。 除了能用于 docker 这样的容器外，它还能集成到容器集群平台 OpenShift&#x2F;kubernetes、公有云平台 AWS、GCE 等， 而且也能很容易地集成到 openstack 等 Iaas 平台。 二、Calico网络方式2.1 IPIP模式从字面来理解，就是把一个IP数据包又套在一个IP包里，即把 IP 层封装到 IP 层的一个 tunnel，看起来似乎是浪费，实则不然。它的作用其实基本上就相当于一个基于IP层的网桥！一般来说，普通的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/8b9a311fc207.html" title="OpenShift自带的日志搜索引擎ES服务的扩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift自带的日志搜索引擎ES服务的扩容</div></div><div class="info-2"><div class="info-item-1"> 有以下两种扩容方式：  存储扩容 节点扩容  存储扩容 查看集群的状态  1$ oc exec $es-pod-name -c elasticsearch -- health  停止ES节点分片平衡  1$ oc exec $es-pod-name -c elasticsearch -- curl --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca -XPUT https://localhost:9200/_cluster/settings -d &#x27;&#123;&quot;transient&quot;: &#123;&quot;cluster.routing.allocation.enable&quot;:&quot;none&quot;&#125;&#125;&#x27;  为每个ES节点的DC执行以下操作3.1 获取需要暂停的ES pod所在的Node节点 ...</div></div></div></a><a class="pagination-related" href="/posts/724adf367d17.html" title="Calico-BGP集群外部与集群网络打通"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Calico-BGP集群外部与集群网络打通</div></div><div class="info-2"><div class="info-item-1">把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.255.255.192 gw 10.21.21.75 Win10客户端机器 12345678route add -p 10.233.97.128 mask  255.255.255.192 192.168.1.225route add -p 10.233.75.0  mask  255.255.255.192 192.168.1.226route add -p 10.233.100.128 mask 255.255.255.192 192.168.1.227route add -p 10.233.90.0 mask 255.255.255.192 192.168.1.228route ad...</div></div></div></a><a class="pagination-related" href="/posts/4dad4d371af1.html" title="Openshift-Jenkins共享并支持pipeline"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Jenkins共享并支持pipeline</div></div><div class="info-2"><div class="info-item-1"> 诉求 使用Openshift的pipeline构建流水线，在Openshift上统一管理 使用一个公共的Jenkins，而不需要每个Project下都创建一个新的jenkins。以节约资源 在创建新的项目时，尽量少地改动完成以上的需求  问题openshift默认的BuildConfig如果设置为jenkinsPipelineStrategy策略，将会在当前project下查找jenkins服务，如果没有的话，将会使用master-config中设置的默认jenkins模板所在位置在当前project下创建一个新的jenkins应用，便使用该应用执行相关的pipeline。每个项目都会创建一个新的jenkins。 解决思路 禁用Openshfit默认的JenkinsPipeline机制，不在当前项目下面自动创建Jenkins 在创建一个新的project时，创建名为jenkins的service，同时将它指向公共的Jenkins服务。 同时为了在当前Project界面下能够跳转到jenkins的界面，再创建一个jenkins Route，支持跳转到jenkins进行查看运行日志...</div></div></div></a><a class="pagination-related" href="/posts/b35eec06e235.html" title="Openshift上使用shell-operator创建自己的operator"><img class="cover" src="https://img.xhua.eu.org/a08b9223942a941d4bf8792764e492c3047397faa5d02278a00d96c1abb6dcbb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上使用shell-operator创建自己的operator</div></div><div class="info-2"><div class="info-item-1">shell operator是由Falnt公司开发并开源的。Flant公司是一家致力于提供解决所有基础设施问题的解决方案的公司。他们自称是提供DevOps-as-a-Service的服务。 需求 一个简单的任务：监听项目创建与删除事件，并发出告警。 一种简单的解决方法：定时脚本cron，每隔一段时间（如1min)获取对Openshift集群的所有项目，并将它与上次获取的结果值进行比较，得到新创建的项目及删除的项目该方法的缺点： 不及时 性能差，很多时候并没有操作项目，但仍然需要不断执行脚本 如果1min内即创建了新项目，又把这个项目删除了，则无法监测到   另一种解决方法：事件驱动，即订阅来自Kubernetes对象的事件，如果有对Project操作就触发告警。很明显这种方法解决了定时任务的所有问题。 该很么做呢？会不会非常复杂。不会。使用shell-operator项目就可以非常简单地实现。shell-operator项目地址：https://github.com/flant/shell-operator     实现部骤 创建shell-operator项目  1$ oc n...</div></div></div></a><a class="pagination-related" href="/posts/c641acf49761.html" title="网络相关工具简单汇总"><img class="cover" src="https://img.xhua.eu.org/4fd807ce8f1b1ee40a0878c42f81a791d0ab68115d9747b84b0402cc88b8bb4a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">网络相关工具简单汇总</div></div><div class="info-2"><div class="info-item-1">lscpi查看Mac地址和网卡带宽12[root@localhost] $ yum install pciutils -y[root@localhost] $ lspci -vvv 里面的mac地址格式：46-8d-80-6d-06-07 ip a查看Mac地址与IP12[root@localhost] $ yum install iproute[root@localhost] $ ip a 里面的mac地址格式：46:8d:80:6d:06:07 iperf 对集群进行网络流量测试启动服务端 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -s 客户端进行测试 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -c 10.2.2.2 -P 5 以上默认为作TCP测试，如果要UDP测试，服务端启动与客户端测试都需要加上-u 1234## 服务端iperf3 -s -u## 客户端iperf3 -c 10.2....</div></div></div></a><a class="pagination-related" href="/posts/1f94b61afe3b.html" title="Openshift3-9部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9部署手册</div></div><div class="info-2"><div class="info-item-1">说明：本文主要介绍通过Ansible来部署Openshift 3.9 一、准备系统准备   节点类型 说明    Masters 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 最少4vCPU最少16GB内存&#x2F;var&#x2F;最少40GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   额外的etcd节点 最少20GB用来存储etcd数据 &nbsp;   注：在安装时可以通过ansible_inventory的配置忽略以上系统要求扩展：对于生产部署时，Master的配置要求计算规则如下：每1000个pods需要额外的1核...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解">OpenClaw：开源AI代理与技能生态系统详解</a><time datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

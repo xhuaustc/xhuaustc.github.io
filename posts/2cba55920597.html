@@ -1,0 +1,214 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-集群为项目提供专属节点 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="背景介绍在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。该策略主要使用到两种工具：  节点标签实现应用与节点的绑定 污点配置实现其它应用不会被调度到该节点。  设置步骤 为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-集群为项目提供专属节点">
+<meta property="og:url" content="https://xhua.eu.org/posts/2cba55920597.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="背景介绍在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。该策略主要使用到两种工具：  节点标签实现应用与节点的绑定 污点配置实现其它应用不会被调度到该节点。  设置步骤 为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.636Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-集群为项目提供专属节点",
+  "url": "https://xhua.eu.org/posts/2cba55920597.html",
+  "image": "https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.636Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/2cba55920597.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-集群为项目提供专属节点',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-集群为项目提供专属节点</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-集群为项目提供专属节点</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.636Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h2><p>在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。<br>该策略主要使用到两种工具：</p>
+<ol>
+<li>节点标签实现应用与节点的绑定</li>
+<li>污点配置实现其它应用不会被调度到该节点。</li>
+</ol>
+<h2 id="设置步骤"><a href="#设置步骤" class="headerlink" title="设置步骤"></a>设置步骤</h2><ol>
+<li>为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及设置污点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc label node node-10 dedicated=sys0</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc adm taint nodes node-10 dedicated=sys0:NoSchedule</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在使用专属节点的应用编排中绑定的Node</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: nginx</span><br><span class="line">      labels:</span><br><span class="line">        app: nginx</span><br><span class="line">    spec:</span><br><span class="line">      nodeSelector:</span><br><span class="line">        dedicated: &quot;sys0&quot;</span><br><span class="line">      containers:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>或</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  affinity:</span><br><span class="line">    nodeAffinity:</span><br><span class="line">      requiredDuringSchedulingIgnoredDuringExecution:</span><br><span class="line">        nodeSelectorTerms:</span><br><span class="line">          - matchExpressions:</span><br><span class="line">              - key: dedicated</span><br><span class="line">                operator: In</span><br><span class="line">                values:</span><br><span class="line">                  - sys0</span><br><span class="line">  containers:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>使用专属节点的应用编排中指定的标签及容忍污点</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">spec:</span><br><span class="line">  tolerations:</span><br><span class="line">  - key: &quot;dedicated&quot;</span><br><span class="line">    operator: &quot;Equal&quot;</span><br><span class="line">    value: &quot;sys0&quot;</span><br><span class="line">    effect: &quot;NoExecute&quot;</span><br></pre></td></tr></table></figure>
+<p>注意，本例中使用的operator是”Equal”，会比较污点的键与值。如果operator使用”Exists”，则应用可以容忍所有带有dedicated污点。</p>
+<h2 id="去除专属节点操作"><a href="#去除专属节点操作" class="headerlink" title="去除专属节点操作"></a>去除专属节点操作</h2><p>要是需要去除专属节点的限制，让它恢复成一个正常应用的节点。只需要将它的污点移除即可。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc adm taint nodes dedicated-</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/2cba55920597.html">https://xhua.eu.org/posts/2cba55920597.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/e9021798429a.html" title="OpenShift上使用NFS作为共享存储的线上问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift上使用NFS作为共享存储的线上问题</div></div><div class="info-2"><div class="info-item-1"> NFS exports文件配置格式&lt;输出目录&gt; [客户端1 选项（访问权限,用户映射,其他）] [客户端2 选项（访问权限,用户映射,其他）] a. 输出目录：输出目录是指NFS系统中需要共享给客户机使用的目录； b. 客户端：客户端是指网络中可以访问这个NFS输出目录的计算机客户端常用的指定方式 指定ip地址的主机：192.168.0.200指定子网中的所有主机：192.168.0.0&#x2F;24 192.168.0.0&#x2F;255.255.255.0指定域名的主机：david.bsmart.cn指定域中的所有主机：.bsmart.cn所有主机： c. 选项：选项用来设置输出目录的访问权限、用户映射等。 NFS主要有3类选项：  访问权限选项  设置输出目录只读：ro设置输出目录读写：rw  用户映射选项all_squash：将远程访问的所有普通用户及所属组都映射为匿名用户或用户组（nfsnobody）；no_all_squash：与all_squash取反（默认设置）；root_squash：将root用户及所属组都映射为匿名用户或用户组（默认设置）；...</div></div></div></a><a class="pagination-related" href="/posts/852e3377ec0a.html" title="OpenShift-通过Operator-SDK制作Operator"><img class="cover" src="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-通过Operator-SDK制作Operator</div></div><div class="info-2"><div class="info-item-1">制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo=github.com/example-inc/memcached-operator$ # or$ operator-sdk new memcached-ansible-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=ansible$ # or$ operator-sdk new memcached-helm-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=helm operator-sdk new默认使用的type为go，必须在$GOPATH目录下创建项目。type为go时项目的目录结构如下：项目的目录结构 type的可选值还可以为：ansible与helm，如果是这两个，则还可以带参数...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/6f6257a9edfd.html" title="OpenShift集群健康检查"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift集群健康检查</div></div><div class="info-2"><div class="info-item-1">参考文章https://docs.openshift.com/container-platform/3.11/day_two_guide&#x2F;environment_health_checks.html#day-two-guide-router-and-registry-health </div></div></div></a><a class="pagination-related" href="/posts/88502991e28c.html" title="OpenShift制作NginxLB-Operator实战"><img class="cover" src="https://img.xhua.eu.org/05192a9b59e1bb159a631b2825ff084c2a7f3b2cef53c59ea30b60ca5f770d9d.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift制作NginxLB-Operator实战</div></div><div class="info-2"><div class="info-item-1">背景近期需要在OpenShift集群中部署Nginx服务做为负载均衡器，负载集群外部服务，如NTP、DNS、项目App等。因为不同的服务的配置都是不一样的，不仅后台服务的IP不一样，而且使用的协议也不一样，HTTP&#x2F;TCP&#x2F;UDP都有可能，如果按照传统的方式来实施的话，每一个应用单独定义Nginx配置，分别部署，每增加一个新的应用被负载都需要做一次复杂的过程，那么有没有办法能够让这过程变得简单呢，甚至能够自动化处理，我们只需要提供最简单的信息？下面我们来分析下常用的几种方法。 打包方案选择1. Template对于OpenShift熟悉的朋友，会马上想到使用Template模板来实现。Template模板是OpenShift特有的应用打包方式，它描述了一组对象，同时对这些对象的配置可以进行参数化处理，生成OpenShift 容器平台创建的对象列表。在模板中可以设置所有在项目中有权限创建的任何资源。 不足之处：  OpenShift特有，如果是使用OpenShift容器平台的话，这个不足可忽略。 无法保证线上资源状态始终与参数设定的结果一致，如手动增加rc的副本...</div></div></div></a><a class="pagination-related" href="/posts/3bc605c0336e.html" title="OpenShift运维点汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift运维点汇总</div></div><div class="info-2"><div class="info-item-1">应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控    物理层 创建资源  负载均衡器NAS存储应用私有网络   监控  vpc负载均衡器主机状态监控（CPU与内存）    集群层 备份  etcd全量备份应用配置备份(Ark)应用备份（oc export)   集群版本管理  集群升级（每个大版本升级）   日志归档与清理  EFK日志清理hawkular-cassandra日志清理journal日志归档  1journalctl --vacuum-time=3days或者journalctl --vacuum-size=200M或者在/etc/systemd/journald.conf中设置日志大小  message日志归档   ...</div></div></div></a><a class="pagination-related" href="/posts/eb02cfa8b57d.html" title="Openshift实现Etcd一键备份与一键恢复脚本"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift实现Etcd一键备份与一键恢复脚本</div></div><div class="info-2"><div class="info-item-1"> 一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!/bin/bashexport ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)oc login -u system:adminexport ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)oc project kube-systemoc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key -...</div></div></div></a><a class="pagination-related" href="/posts/ac610158c667.html" title="OpenShift-Route支持TCP负载均衡改造与使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route支持TCP负载均衡改造与使用</div></div><div class="info-2"><div class="info-item-1"> Route作为TCP负载均衡器的部署 获取当前Route的haproxy-template配置  12345# oc project default# oc get podNAME              READY     STATUS    RESTARTS   AGErouter-16-5rv4q    2/2         Running   2            18h# oc rsh router-16-5rv4q cat haproxy-config.template &gt; haproxy-config.template  编辑导出的haproxy-config.template文件在内容&#123;&#123;- end &#125;&#125;&#123;&#123;/*end tls==passthrough*/&#125;&#125;下一行，添加以下内容：  1234567891011&#123;&#123;/*TCP support*/&#125;&#125;&#123;&#123;- if eq &quot;tcp&quot; (index...</div></div></div></a><a class="pagination-related" href="/posts/866b0c24d8f1.html" title="Openshift之服务网格Istio"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之服务网格Istio</div></div><div class="info-2"><div class="info-item-1"> 什么是服务网格？服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。 Istio是什么？Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部署的服务建立网络，该网络具有负载均衡、服务间认证、监控等功能，而不需要对服务的代码做任何改动。想要让服务支持 Istio，只需要在您的环境中部署一个特殊的 sidecar，使用 Istio 控制平面功能配置和管理代理，拦截微服务之间的所有网络通信。 Istio能做什么？Istio 提供了一个完整的解决方案，通过为整个服务网格提供行为洞察和操作控制来满足微服务应用程序的多样化需求。它在服务网络中统一提供了许多关键功能：  流量管理。控制服务之间的流量和API调用的流向，使得调用更可靠，并使网络在恶劣情况下更加健壮。 服务身份和安全。为网格中的服务提供可验证身份，并提供保护服务流量的能力，使...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="toc-text">背景介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%AD%A5%E9%AA%A4"><span class="toc-text">设置步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%BB%E9%99%A4%E4%B8%93%E5%B1%9E%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C"><span class="toc-text">去除专属节点操作</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>排障记录：删除Namespace olm一直Terminating的处理过程 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引言在集群日常维护中，删除一个 Namespace 看起来是“删掉一堆资源”的简单动作，但如果控制面无法完成资源发现（discovery），或某些资源的 finalizers 无法被对应控制器清理，Namespace 就会长期卡在 Terminating。 本文记录一次删除 olm Namespace 失败的排障过程：先是 NamespaceDeletionDiscoveryFailure，解决后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排障记录：删除Namespace olm一直Terminating的处理过程">
+<meta property="og:url" content="https://xhua.eu.org/posts/577b82f4a03d.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引言在集群日常维护中，删除一个 Namespace 看起来是“删掉一堆资源”的简单动作，但如果控制面无法完成资源发现（discovery），或某些资源的 finalizers 无法被对应控制器清理，Namespace 就会长期卡在 Terminating。 本文记录一次删除 olm Namespace 失败的排障过程：先是 NamespaceDeletionDiscoveryFailure，解决后">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg">
+<meta property="article:published_time" content="2025-12-18T03:40:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.644Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="APIService">
+<meta property="article:tag" content="Finalizer">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="Namespace">
+<meta property="article:tag" content="OLM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "排障记录：删除Namespace olm一直Terminating的处理过程",
+  "url": "https://xhua.eu.org/posts/577b82f4a03d.html",
+  "image": "https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg",
+  "datePublished": "2025-12-18T03:40:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.644Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/577b82f4a03d.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '排障记录：删除Namespace olm一直Terminating的处理过程',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">排障记录：删除Namespace olm一直Terminating的处理过程</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">排障记录：删除Namespace olm一直Terminating的处理过程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-12-18T03:40:00.000Z" title="发表于 2025-12-18 11:40:00">2025-12-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.644Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/openshift/">openshift</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在集群日常维护中，删除一个 Namespace 看起来是“删掉一堆资源”的简单动作，但如果控制面无法完成资源发现（discovery），或某些资源的 <code>finalizers</code> 无法被对应控制器清理，Namespace 就会长期卡在 <code>Terminating</code>。</p>
+<p>本文记录一次删除 <code>olm</code> Namespace 失败的排障过程：先是 <code>NamespaceDeletionDiscoveryFailure</code>，解决后又卡在 <code>ClusterServiceVersion</code>（CSV）清理阶段，最终通过移除 CSV 的 finalizer 完成删除。文末附一套可复用的排查清单与风险提示。</p>
+<blockquote>
+<p><strong>警告</strong>：<code>olm</code> 相关资源通常属于 Operator Lifecycle Manager（OLM）核心组件。生产集群中不建议随意删除；本文的“强制移除 finalizer &#x2F; 删除 APIService”属于应急手段，务必理解影响范围后再执行。</p>
+</blockquote>
+<h2 id="现象：Namespace-olm-一直-Terminating"><a href="#现象：Namespace-olm-一直-Terminating" class="headerlink" title="现象：Namespace olm 一直 Terminating"></a>现象：Namespace olm 一直 Terminating</h2><p>删除 <code>olm</code> 后一直停留在 <code>Terminating</code>，查看 Namespace 状态发现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Discovery failed for some groups, 1 failing: unable to retrieve the</span><br><span class="line">complete list of server APIs: packages.operators.coreos.com/v1: stale GroupVersion</span><br><span class="line">discovery: packages.operators.coreos.com/v1&#x27;</span><br><span class="line">reason: DiscoveryFailed</span><br><span class="line">status: &quot;True&quot;</span><br><span class="line">type: NamespaceDeletionDiscoveryFailure</span><br></pre></td></tr></table></figure>
+
+<p>这条信息的关键点是：<strong>控制面在做“列出该 Namespace 下所有资源类型并逐一清理”之前，需要先完成 API discovery</strong>；而 discovery 过程中，<code>packages.operators.coreos.com/v1</code> 这个聚合 API（aggregated API）无法正常返回，导致删除流程被阻塞。</p>
+<h2 id="第一步：从-Namespace-Conditions-定位阻塞点"><a href="#第一步：从-Namespace-Conditions-定位阻塞点" class="headerlink" title="第一步：从 Namespace Conditions 定位阻塞点"></a>第一步：从 Namespace Conditions 定位阻塞点</h2><p>建议第一时间看 Namespace 的 conditions（比“盲删 finalizers”更快定位根因）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe namespace olm</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>NamespaceDeletionDiscoveryFailure=True</code> 通常意味着：<strong>有 API group&#x2F;version 在 discovery 阶段不可用</strong>，Namespace lifecycle controller 无法确认“有哪些资源类型需要被列出并清理”。</p>
+<h2 id="根因一：v1-packages-operators-coreos-com-APIService-不可用（ServiceNotFound）"><a href="#根因一：v1-packages-operators-coreos-com-APIService-不可用（ServiceNotFound）" class="headerlink" title="根因一：v1.packages.operators.coreos.com APIService 不可用（ServiceNotFound）"></a>根因一：v1.packages.operators.coreos.com APIService 不可用（ServiceNotFound）</h2><p>根据报错指向的 group&#x2F;version，去查对应的 <code>APIService</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get apiservice v1.packages.operators.coreos.com</span><br></pre></td></tr></table></figure>
+
+<p>输出类似：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NAME                                SERVICE                     AVAILABLE   AGE</span><br><span class="line">v1.packages.operators.coreos.com     olm/packageserver-service   False       163d</span><br></pre></td></tr></table></figure>
+
+<p>这里的信号非常明确：该聚合 API 通过 <code>APIService</code> 挂到 kube-apiserver 的 aggregation layer 上，后端需要一个真实存在且健康的 Service（这里是 <code>olm/packageserver-service</code>）。当它变成 <code>False (ServiceNotFound)</code> 时，<strong>kube-apiserver 仍会把这个 API 组暴露在 discovery 路径里，但向后端代理请求会失败</strong>，从而触发 Namespace 删除流程的 discovery failure。</p>
+<p>你可以进一步核实 Service 是否存在：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n olm get svc packageserver-service</span><br></pre></td></tr></table></figure>
+
+<h2 id="处理一：优先恢复-packageserver（推荐），否则删除-APIService（应急）"><a href="#处理一：优先恢复-packageserver（推荐），否则删除-APIService（应急）" class="headerlink" title="处理一：优先恢复 packageserver（推荐），否则删除 APIService（应急）"></a>处理一：优先恢复 packageserver（推荐），否则删除 APIService（应急）</h2><h3 id="方案A：恢复后端服务（推荐）"><a href="#方案A：恢复后端服务（推荐）" class="headerlink" title="方案A：恢复后端服务（推荐）"></a>方案A：恢复后端服务（推荐）</h3><p>如果这是生产集群或你仍需要 OLM 能力，优先做“把 packageserver-service 对应的 Deployment&#x2F;Pod 修复回来”，让 <code>APIService</code> 变为可用（<code>AVAILABLE=True</code>）。这样 deletion discovery 能自然恢复，后续清理也更可控。</p>
+<h3 id="方案B：删除不可用的-APIService（应急）"><a href="#方案B：删除不可用的-APIService（应急）" class="headerlink" title="方案B：删除不可用的 APIService（应急）"></a>方案B：删除不可用的 APIService（应急）</h3><p>如果你明确不再需要该聚合 API（例如正在拆除 OLM &#x2F; 清理残留），可以删除这个 <code>APIService</code>，让 kube-apiserver 的 discovery 不再包含该 group&#x2F;version，从而解除 Namespace 删除的 discovery 阻塞：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete apiservice v1.packages.operators.coreos.com</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：删除后会影响依赖该 API 的能力（例如 OLM 的 <code>packagemanifest</code> 查询等），请在维护窗口评估影响后再做。</p>
+</blockquote>
+<p>执行后你会观察到：很多此前卡在 <code>Terminating</code> 的 Namespace 会被快速清理。但这次事故里，<code>olm</code> 仍然没有被删掉，说明还有第二个阻塞点。</p>
+<h2 id="第二步：Discovery-恢复后，继续看“剩余资源-剩余-finalizers”"><a href="#第二步：Discovery-恢复后，继续看“剩余资源-剩余-finalizers”" class="headerlink" title="第二步：Discovery 恢复后，继续看“剩余资源 + 剩余 finalizers”"></a>第二步：Discovery 恢复后，继续看“剩余资源 + 剩余 finalizers”</h2><p>此时再次 <code>describe</code> Namespace，会看到 discovery 相关条件已恢复，但出现另外两条：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NamespaceContentRemaining True  SomeResourcesRemain  ... clusterserviceversions.operators.coreos.com has 1 resource instances</span><br><span class="line">NamespaceFinalizersRemaining True SomeFinalizersRemain ... operators.coreos.com/csv-cleanup in 1 resource instances</span><br></pre></td></tr></table></figure>
+
+<p>这两条意味着：</p>
+<ul>
+<li>Namespace 里<strong>仍有资源实例没删干净</strong>（这里是 <code>ClusterServiceVersion</code>）</li>
+<li>且该资源实例上<strong>仍挂着 finalizer</strong>（这里是 <code>operators.coreos.com/csv-cleanup</code>），控制器没有完成清理并移除 finalizer</li>
+</ul>
+<h2 id="根因二：CSV-packageserver-残留，csv-cleanup-finalizer-无法被清理"><a href="#根因二：CSV-packageserver-残留，csv-cleanup-finalizer-无法被清理" class="headerlink" title="根因二：CSV packageserver 残留，csv-cleanup finalizer 无法被清理"></a>根因二：CSV packageserver 残留，csv-cleanup finalizer 无法被清理</h2><p>列出 <code>olm</code> 下的 CSV：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get csv -n olm</span><br></pre></td></tr></table></figure>
+
+<p>输出示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NAMESPACE   NAME          DISPLAY          VERSION   REPLACES   PHASE</span><br><span class="line">olm         packageserver Package Server   0.32.0              Pending</span><br></pre></td></tr></table></figure>
+
+<p>此时典型情况是：OLM 相关控制器（负责执行 <code>operators.coreos.com/csv-cleanup</code>）已经不可用或不再工作，导致 finalizer 永远不会被自动移除，进而阻塞 CSV 删除，也阻塞 Namespace 最终删除。</p>
+<h2 id="处理二：手动清理-CSV（最后手段：移除-finalizers）"><a href="#处理二：手动清理-CSV（最后手段：移除-finalizers）" class="headerlink" title="处理二：手动清理 CSV（最后手段：移除 finalizers）"></a>处理二：手动清理 CSV（最后手段：移除 finalizers）</h2><h3 id="优先尝试正常删除"><a href="#优先尝试正常删除" class="headerlink" title="优先尝试正常删除"></a>优先尝试正常删除</h3><p>如果控制器仍然健康，直接删除 CSV 即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete csv packageserver -n olm</span><br></pre></td></tr></table></figure>
+
+<h3 id="控制器失效时：移除-CSV-finalizers"><a href="#控制器失效时：移除-CSV-finalizers" class="headerlink" title="控制器失效时：移除 CSV finalizers"></a>控制器失效时：移除 CSV finalizers</h3><p>当 CSV 一直删不掉（或你已确认需要强制清理），可通过 patch 移除 finalizers：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl patch csv packageserver -n olm \</span><br><span class="line">  -p <span class="string">&#x27;&#123;&quot;metadata&quot;:&#123;&quot;finalizers&quot;:null&#125;&#125;&#x27;</span> --<span class="built_in">type</span>=merge</span><br></pre></td></tr></table></figure>
+
+<p>执行后，CSV 会被立即释放，随后 <code>olm</code> Namespace 也会自动完成终止并消失。</p>
+<h2 id="为什么“删-namespace-的-spec-finalizers”不一定有用？"><a href="#为什么“删-namespace-的-spec-finalizers”不一定有用？" class="headerlink" title="为什么“删 namespace 的 spec.finalizers”不一定有用？"></a>为什么“删 namespace 的 spec.finalizers”不一定有用？</h2><p>很多人第一反应是把 Namespace 的 <code>spec.finalizers</code> 清空，但这在本案里无效，原因有两类：</p>
+<ol>
+<li><strong>Discovery 阶段就失败</strong>：控制器连“这个 Namespace 里有哪些资源类型要清理”都无法完整发现，删除流程会直接卡住。</li>
+<li><strong>资源级 finalizer 才是硬阻塞</strong>：即使 Namespace 自身 finalizer 被清空，只要 Namespace 内仍有带 finalizer 的资源（例如 CSV），最终删除仍会被阻塞。</li>
+</ol>
+<p>换句话说：<strong>Namespace 是“结果”，资源与控制器的健康才是“原因”</strong>。</p>
+<h2 id="一套可复用的排查清单（推荐按顺序执行）"><a href="#一套可复用的排查清单（推荐按顺序执行）" class="headerlink" title="一套可复用的排查清单（推荐按顺序执行）"></a>一套可复用的排查清单（推荐按顺序执行）</h2><h3 id="1-看清楚卡在哪一类-condition"><a href="#1-看清楚卡在哪一类-condition" class="headerlink" title="1. 看清楚卡在哪一类 condition"></a>1. 看清楚卡在哪一类 condition</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe namespace &lt;ns&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>NamespaceDeletionDiscoveryFailure=True</code>：优先查 <code>APIService</code>&#x2F;聚合 API&#x2F;网络&#x2F;后端服务</li>
+<li><code>NamespaceContentRemaining=True</code>：说明仍有资源残留</li>
+<li><code>NamespaceFinalizersRemaining=True</code>：说明仍有资源 finalizer 没被清理</li>
+</ul>
+<h3 id="2-找出所有不可用的-APIService"><a href="#2-找出所有不可用的-APIService" class="headerlink" title="2. 找出所有不可用的 APIService"></a>2. 找出所有不可用的 APIService</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl get apiservice | grep False</span><br><span class="line">kubectl describe apiservice &lt;apiservice-name&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-枚举-Namespace-内仍然存在的资源（通用方法）"><a href="#3-枚举-Namespace-内仍然存在的资源（通用方法）" class="headerlink" title="3. 枚举 Namespace 内仍然存在的资源（通用方法）"></a>3. 枚举 Namespace 内仍然存在的资源（通用方法）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl api-resources --verbs=list --namespaced -o name | \</span><br><span class="line">  xargs -n 1 kubectl get -n &lt;ns&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-针对“有-finalizer-的残留资源”做精准清理"><a href="#4-针对“有-finalizer-的残留资源”做精准清理" class="headerlink" title="4. 针对“有 finalizer 的残留资源”做精准清理"></a>4. 针对“有 finalizer 的残留资源”做精准清理</h3><p>以本案为例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl get csv -n &lt;ns&gt;</span><br><span class="line">kubectl get csv &lt;name&gt; -n &lt;ns&gt; -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>确认 finalizers 后，再决定是否移除（强制手段）。</p>
+<h3 id="5-最后手段：强制完成-Namespace-finalize（谨慎）"><a href="#5-最后手段：强制完成-Namespace-finalize（谨慎）" class="headerlink" title="5. 最后手段：强制完成 Namespace finalize（谨慎）"></a>5. 最后手段：强制完成 Namespace finalize（谨慎）</h3><p>如果你已经：</p>
+<ul>
+<li>修复&#x2F;移除了不可用的 <code>APIService</code>（不再触发 discovery failure）</li>
+<li>手工清理了 Namespace 内的残留资源（或你已接受残留风险）</li>
+</ul>
+<p>仍然无法删除 Namespace，可以考虑通过 <code>finalize</code> 端点强制移除 <code>spec.finalizers</code>（参考 GKE 文档的流程）。这是<strong>高风险操作</strong>，可能导致集群中遗留“看不见但还存在”的资源。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl get ns &lt;ns&gt; -o yaml &gt; ns-terminating.yml</span><br><span class="line">kubectl proxy</span><br><span class="line">curl -H <span class="string">&quot;Content-Type: application/yaml&quot;</span> -X PUT \</span><br><span class="line">  --data-binary @ns-terminating.yml \</span><br><span class="line">  http://127.0.0.1:8001/api/v1/namespaces/&lt;ns&gt;/finalize</span><br></pre></td></tr></table></figure>
+
+<h2 id="风险提示与建议"><a href="#风险提示与建议" class="headerlink" title="风险提示与建议"></a>风险提示与建议</h2><ul>
+<li><strong>能修复控制器就别强拆 finalizer</strong>：finalizer 本意是保证清理动作被执行；直接移除意味着你承诺“后果自负”，后续可能留下孤儿资源或脏数据。</li>
+<li><strong>删除 APIService 是在“切断聚合 API 的入口”</strong>：它能让 discovery 变干净，但也会让对应 API 彻底不可用。更推荐先恢复后端服务。</li>
+<li><strong>系统组件 Namespace 要谨慎</strong>：如果是 OpenShift 集群内置的 OLM（例如 <code>openshift-operator-lifecycle-manager</code> 等），不要照搬本文对系统命名空间的删除操作。</li>
+</ul>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li>Kubernetes Finalizers：<code>https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/</code></li>
+<li>Kubernetes API Aggregation Layer：<code>https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation/</code></li>
+<li>Configure the Aggregation Layer：<code>https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/</code></li>
+<li>GKE：Troubleshoot namespace stuck in the Terminating state：<code>https://cloud.google.com/kubernetes-engine/docs/troubleshooting/terminating-namespaces</code></li>
+<li>OLM：ClusterServiceVersion（概念）<code>https://olm.operatorframework.io/docs/concepts/crds/clusterserviceversion/</code></li>
+<li>OLM：PackageManifest API（列出可安装 Operator）<code>https://olm.operatorframework.io/docs/tasks/list-operators-available-to-install/</code></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/577b82f4a03d.html">https://xhua.eu.org/posts/577b82f4a03d.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/kubernetes/">Kubernetes</a><a class="post-meta__tags" href="/tags/olm/">OLM</a><a class="post-meta__tags" href="/tags/namespace/">Namespace</a><a class="post-meta__tags" href="/tags/apiservice/">APIService</a><a class="post-meta__tags" href="/tags/finalizer/">Finalizer</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/f3be144d72f7.html" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略"><img class="cover" src="https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</div></div><div class="info-2"><div class="info-item-1">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略1. 引言：为什么选择 RAGFlow？在 RAG（检索增强生成）领域，业界公认的挑战在于：“Garbage in, garbage out”。如果输入的上下文质量低下、版式混乱，LLM 再强也无法给出准确答案。 RAGFlow 的核心优势在于它对高质量数据接入的执着。它不只是简单的“向量化工具”，而是强调两点：  细粒度文档解析（DeepDoc）：针对图片、表格等复杂版式，通过 OCR 和版面分析，确保文档被“吃透”。 可追溯引用：每一个答案都能精准追溯到原始文档片段，有效降低大模型幻觉。  如果你需要处理大量复杂的 PDF、扫描件、金融财报或技术手册，RAGFlow 提供的“数据质量优先”路径将是你的不二之选。  2. 核心功能深度解析2.1 知识库（Datasets）与 DeepDoc 解析知识库是 RAGFlow 的底座。它将非结构化文件转化为可检索的证据库。  深度解析（DeepDoc）：这是 RAGFlow 的杀手锏。它在解析阶段执行 OCR、表格结构识别等重度预处理。 切分策略（Chunking）： 通用文档...</div></div></div></a><a class="pagination-related" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解"><img class="cover" src="https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Fabric：开源AI工作流与Prompt辅助框架详解</div></div><div class="info-2"><div class="info-item-1">在 AI 技术爆发的今天，我们拥有了无数强大的大模型和工具，但如何高效地将这些能力集成到日常工作流中，仍然是一个巨大的挑战。通常我们面临的问题不是”AI 能做什么”，而是”如何让 AI 帮我做这件事”。 Fabric 正是为了解决这个问题而诞生的。它是一个旨在通过 AI 增强人类能力的开源框架，核心理念是将 AI 的原子能力封装成标准化的”模式”（Patterns），让我们能够像使用命令行工具一样方便地调用 AI 能力。 什么是 Fabric？Fabric 由安全专家 Daniel Miessler 创建，它不仅仅是一个工具，更是一种使用 AI 的方法论。 核心痛点 Prompt 管理混乱：每个人都在写 Prompt，但很难复用、版本控制和分享。 集成困难：在这个应用里用 ChatGPT，在那个应用里用 Claude，缺乏统一的入口。 上下文切换：为了使用 AI，需要在不同窗口间频繁切换，打断心流。  核心特性 Patterns（模式）：Fabric 将高质量的 Prompt 封装为 Pattern，每个 Pattern 解决一个具体问题（如”提取视频摘要”、”分析代码安全”、”...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3634f808528d.html" title="Argo Rollouts使用指南：Kubernetes高级部署策略详解"><img class="cover" src="https://img.xhua.eu.org/65d68aee408035584ccb994bd2f56a4200fb6ab76c8ac149bc7ebfd1f904a7e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-19</div><div class="info-item-2">Argo Rollouts使用指南：Kubernetes高级部署策略详解</div></div><div class="info-2"><div class="info-item-1">引言在现代云原生应用部署中，传统的Kubernetes Deployment虽然简单易用，但在生产环境中往往需要更精细的部署控制和更安全的发布策略。Argo Rollouts作为Kubernetes的高级部署控制器，提供了蓝绿部署、金丝雀部署、渐进式发布等多种高级部署策略，让应用发布变得更加安全、可控和自动化。 本文将为初次接触Argo Rollouts的读者提供全面的使用指南，包括核心概念、功能特性、实际案例和最佳实践，帮助您快速掌握这一强大的部署工具。 Argo Rollouts简介什么是Argo RolloutsArgo Rollouts是Argo项目的一部分，它是一个Kubernetes控制器，用于提供更高级的部署策略。与标准的Kubernetes Deployment不同，Argo Rollouts支持：  蓝绿部署（Blue-Green Deployment）：零停机时间部署 金丝雀部署（Canary Deployment）：渐进式流量切换 渐进式发布（Progressive Delivery）：基于指标的自动发布 回滚策略：快速回滚到之前的版本 暂停和恢复：手动控制...</div></div></div></a><a class="pagination-related" href="/posts/ae11adc18d45.html" title="Kubernetes云原生存储解决方案 - Longhorn安装指南"><img class="cover" src="https://img.xhua.eu.org/b6501dd3a07fed0a9d65fe94235e7bb53de6cfce67108d4c6ca7b0be96c76ba6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-04-25</div><div class="info-item-2">Kubernetes云原生存储解决方案 - Longhorn安装指南</div></div><div class="info-2"><div class="info-item-1">简介Longhorn 是一个轻量级、可靠且功能强大的分布式块存储系统，专为 Kubernetes 而设计。它实现了可靠的持久化存储，支持快照、备份和跨集群灾难恢复等企业级功能。 主要特性 企业级分布式块存储 跨节点数据复制和自动重建 无中心化架构 非侵入式架构 图形化管理界面 快照和备份支持 跨集群灾备能力  环境要求在安装 Longhorn 之前，请确保您的环境满足以下要求： 环境检查在部署 Longhorn 之前，强烈建议运行环境检查脚本来验证您的环境是否满足所有必要条件： 12# 下载环境检查脚本curl -sSfL https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/scripts/environment_check.sh | bash  这个脚本会检查：  操作系统依赖 内核模块 挂载点 系统工具 网络配置 SELinux 状态 iscsi 服务状态  硬件要求 CPU: 最低 1 核 内存: 最低 1GB 磁盘: 每个节点至少 20GB 可用空间  软件要求 Kubernetes v1.21+ 所有节点...</div></div></div></a><a class="pagination-related" href="/posts/0ba149dc4d1d.html" title="用 vCluster 在 Kubernetes 集群中构建虚拟集群"><img class="cover" src="https://img.xhua.eu.org/83c30a6a5652c0ff015eb25de8be05cb6e3d92b95d64dac6bf9a4a3bc0f9f431.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-19</div><div class="info-item-2">用 vCluster 在 Kubernetes 集群中构建虚拟集群</div></div><div class="info-2"><div class="info-item-1">引言在企业集群规模增长后，平台团队常常需要同时满足多团队隔离、快速环境交付和成本控制。vCluster 提供了一种折中方案：在同一个宿主 Kubernetes 集群中创建多个虚拟集群，每个虚拟集群有独立的 API Server 和控制平面，但共享底层节点资源。这样比“每个团队一个完整集群”更省成本，也比“只用 Namespace”更强隔离。GitHub 仓库 与 官网 给出了完整定位和文档入口。 本文以通用 Kubernetes 集群为背景，介绍 vCluster 的核心概念、部署要点与实际使用场景。 vCluster 是什么vCluster 是运行在宿主集群命名空间内的虚拟 Kubernetes 集群。核心特征如下：  控制平面独立：每个 vCluster 有自己的 API Server 与控制组件，更接近“真实集群”的使用体验。GitHub 仓库 共享底层资源：节点与资源来自宿主集群，成本更低，创建更快。GitHub 仓库 适合多租户：相比单纯 Namespace，隔离性更好，适合平台工程和团队自治场景。官网  Kubernetes 环境的部署要点在通用 Kubernetes...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%B0%E8%B1%A1%EF%BC%9ANamespace-olm-%E4%B8%80%E7%9B%B4-Terminating"><span class="toc-text">现象：Namespace olm 一直 Terminating</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E4%BB%8E-Namespace-Conditions-%E5%AE%9A%E4%BD%8D%E9%98%BB%E5%A1%9E%E7%82%B9"><span class="toc-text">第一步：从 Namespace Conditions 定位阻塞点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%E4%B8%80%EF%BC%9Av1-packages-operators-coreos-com-APIService-%E4%B8%8D%E5%8F%AF%E7%94%A8%EF%BC%88ServiceNotFound%EF%BC%89"><span class="toc-text">根因一：v1.packages.operators.coreos.com APIService 不可用（ServiceNotFound）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E4%B8%80%EF%BC%9A%E4%BC%98%E5%85%88%E6%81%A2%E5%A4%8D-packageserver%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89%EF%BC%8C%E5%90%A6%E5%88%99%E5%88%A0%E9%99%A4-APIService%EF%BC%88%E5%BA%94%E6%80%A5%EF%BC%89"><span class="toc-text">处理一：优先恢复 packageserver（推荐），否则删除 APIService（应急）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88A%EF%BC%9A%E6%81%A2%E5%A4%8D%E5%90%8E%E7%AB%AF%E6%9C%8D%E5%8A%A1%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">方案A：恢复后端服务（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88B%EF%BC%9A%E5%88%A0%E9%99%A4%E4%B8%8D%E5%8F%AF%E7%94%A8%E7%9A%84-APIService%EF%BC%88%E5%BA%94%E6%80%A5%EF%BC%89"><span class="toc-text">方案B：删除不可用的 APIService（应急）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9ADiscovery-%E6%81%A2%E5%A4%8D%E5%90%8E%EF%BC%8C%E7%BB%A7%E7%BB%AD%E7%9C%8B%E2%80%9C%E5%89%A9%E4%BD%99%E8%B5%84%E6%BA%90-%E5%89%A9%E4%BD%99-finalizers%E2%80%9D"><span class="toc-text">第二步：Discovery 恢复后，继续看“剩余资源 + 剩余 finalizers”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%E4%BA%8C%EF%BC%9ACSV-packageserver-%E6%AE%8B%E7%95%99%EF%BC%8Ccsv-cleanup-finalizer-%E6%97%A0%E6%B3%95%E8%A2%AB%E6%B8%85%E7%90%86"><span class="toc-text">根因二：CSV packageserver 残留，csv-cleanup finalizer 无法被清理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E4%BA%8C%EF%BC%9A%E6%89%8B%E5%8A%A8%E6%B8%85%E7%90%86-CSV%EF%BC%88%E6%9C%80%E5%90%8E%E6%89%8B%E6%AE%B5%EF%BC%9A%E7%A7%BB%E9%99%A4-finalizers%EF%BC%89"><span class="toc-text">处理二：手动清理 CSV（最后手段：移除 finalizers）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%85%88%E5%B0%9D%E8%AF%95%E6%AD%A3%E5%B8%B8%E5%88%A0%E9%99%A4"><span class="toc-text">优先尝试正常删除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E5%99%A8%E5%A4%B1%E6%95%88%E6%97%B6%EF%BC%9A%E7%A7%BB%E9%99%A4-CSV-finalizers"><span class="toc-text">控制器失效时：移除 CSV finalizers</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E5%88%A0-namespace-%E7%9A%84-spec-finalizers%E2%80%9D%E4%B8%8D%E4%B8%80%E5%AE%9A%E6%9C%89%E7%94%A8%EF%BC%9F"><span class="toc-text">为什么“删 namespace 的 spec.finalizers”不一定有用？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E5%A4%8D%E7%94%A8%E7%9A%84%E6%8E%92%E6%9F%A5%E6%B8%85%E5%8D%95%EF%BC%88%E6%8E%A8%E8%8D%90%E6%8C%89%E9%A1%BA%E5%BA%8F%E6%89%A7%E8%A1%8C%EF%BC%89"><span class="toc-text">一套可复用的排查清单（推荐按顺序执行）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%9C%8B%E6%B8%85%E6%A5%9A%E5%8D%A1%E5%9C%A8%E5%93%AA%E4%B8%80%E7%B1%BB-condition"><span class="toc-text">1. 看清楚卡在哪一类 condition</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%89%BE%E5%87%BA%E6%89%80%E6%9C%89%E4%B8%8D%E5%8F%AF%E7%94%A8%E7%9A%84-APIService"><span class="toc-text">2. 找出所有不可用的 APIService</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%9E%9A%E4%B8%BE-Namespace-%E5%86%85%E4%BB%8D%E7%84%B6%E5%AD%98%E5%9C%A8%E7%9A%84%E8%B5%84%E6%BA%90%EF%BC%88%E9%80%9A%E7%94%A8%E6%96%B9%E6%B3%95%EF%BC%89"><span class="toc-text">3. 枚举 Namespace 内仍然存在的资源（通用方法）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%92%88%E5%AF%B9%E2%80%9C%E6%9C%89-finalizer-%E7%9A%84%E6%AE%8B%E7%95%99%E8%B5%84%E6%BA%90%E2%80%9D%E5%81%9A%E7%B2%BE%E5%87%86%E6%B8%85%E7%90%86"><span class="toc-text">4. 针对“有 finalizer 的残留资源”做精准清理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%9C%80%E5%90%8E%E6%89%8B%E6%AE%B5%EF%BC%9A%E5%BC%BA%E5%88%B6%E5%AE%8C%E6%88%90-Namespace-finalize%EF%BC%88%E8%B0%A8%E6%85%8E%EF%BC%89"><span class="toc-text">5. 最后手段：强制完成 Namespace finalize（谨慎）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A3%8E%E9%99%A9%E6%8F%90%E7%A4%BA%E4%B8%8E%E5%BB%BA%E8%AE%AE"><span class="toc-text">风险提示与建议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-text">参考链接</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

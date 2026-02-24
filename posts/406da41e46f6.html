@@ -1,0 +1,484 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行">
+<meta property="og:url" content="https://xhua.eu.org/posts/406da41e46f6.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.644Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行",
+  "url": "https://xhua.eu.org/posts/406da41e46f6.html",
+  "image": "https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.644Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/406da41e46f6.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.644Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>来自2020年全国职业容器云大赛冠军队二二一队作品。</p>
+<p><img src="https://img.xhua.eu.org/26d848956caf03067dda8911f7608f6e382447a84c9d6ea219f4141b2fc36dda.jpg" alt="picture 0">  </p>
+<p>兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明</p>
+<h1 id="1-建设背景"><a href="#1-建设背景" class="headerlink" title="1 建设背景"></a>1 <strong>建设背景</strong></h1><p>随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。</p>
+<p>基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。</p>
+<h1 id="2-需求分析"><a href="#2-需求分析" class="headerlink" title="2 需求分析"></a>2 <strong>需求分析</strong></h1><h2 id="2-1-业务需求"><a href="#2-1-业务需求" class="headerlink" title="2.1 业务需求"></a>2.1 <strong>业务需求</strong></h2><h3 id="2-1-1-应用架构-改造需求"><a href="#2-1-1-应用架构-改造需求" class="headerlink" title="2.1.1 应用架构****改造需求"></a>2.1.1 <strong>应用架构****改造需求</strong></h3><p>某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭代，影响了用户体验：第一，竖井式系统架构，各模块各自开发和管理基础功能，存在大量重复开发工作；第二，非分布式架构，横向扩展效率低。</p>
+<p>为了缩短系统的迭代周期，增强横向扩展能力，该渠道需要运用DDD思想，重构一套使用微服务架构的新系统。本文设计了一套基于容器的一站式业务支撑平台解决方案，用于部署该渠道系统的微服务版本。</p>
+<h3 id="2-1-2-应用架构-概要设计"><a href="#2-1-2-应用架构-概要设计" class="headerlink" title="2.1.2 应用架构****概要设计"></a>2.1.2 <strong>应用架构****概要设计</strong></h3><p>基于微服务架构的新系统，将服务端在逻辑上分为业务域和通用服务域，业务域是面向客户的交互界面，主要功能是整合微服务向前端提供统一的交互视图；通用服务域是从各业务领域提炼出来的通用服务的集合，与业务域解耦，只提供单一的服务输出即原子服务，业务域可整合不同的通用域服务单元完成相应的业务逻辑处理，同时通用域还包含与业务无关的后台处理模块。</p>
+<p><img src="https://img.xhua.eu.org/f3586a0eefdaddaef85bf3ffcc34e995a05763be06ee6791d69836536fb1c7f2.jpg" alt="图 1 业务设计示意图">  </p>
+<h2 id="2-2-建设企业级容器平台"><a href="#2-2-建设企业级容器平台" class="headerlink" title="2.2 建设企业级容器平台"></a>2.2 <strong>建设企业级容器平台</strong></h2><p>容器平台作为企业的新一代IT基础设施，不仅需要为基于微服务架构的新业务提供容器化运行和管控平台之外，还必须非常重视安全需求。因此建设容器平台的需求时，需要考虑包括的方面有：</p>
+<p>l 管理大规模容器集群能力，包括：提供容器所需的高可用集群、资源池管理、网络通信方案、存储方案、编排调度引擎、微服务运行框架、镜像管理、事件告警、集群监控和日志收集等。</p>
+<p>l 为满足安全要求，平台需要考虑应用的高可用性和业务连续性、多租户安全隔离、不同等级业务隔离、防火墙策略、安全漏洞扫描、镜像安全、后台运维的4A纳管、审计日志；如果容器平台还对公网提供访问，那么还需要考虑访问链路加密、安全证书等。</p>
+<p>另外，一个重要方面是，容器平台通常是企业IT整个复杂系统中的一部分，因此容器平台还要遵从企业已有IT技术规范和运维要求，例如可能还需要考虑：</p>
+<p>l 支持企业自身的应用发布体系、持续集成系统、应用建模规范、高可用管理策略。</p>
+<p>l 对接云计算底层资源池（例如IaaS），遵从云计算资源的统一管理和分配。</p>
+<p>l 对接或改造容器平台的网络，以满足容器平台中应用与传统虚拟机、物理机中旧业务系统的相互通信，避免或尽可能减少对企业现有网络管理模式的冲击。</p>
+<p>l 对接统一身份验证、和整个金融云其它系统采用统一的租户定义、角色定义、资源配额定义等。</p>
+<p>l 对接漏洞扫描、集中监控系统、日志分析系统等已有周边系统。</p>
+<h2 id="2-3-基于容器平台构建DevOps体系"><a href="#2-3-基于容器平台构建DevOps体系" class="headerlink" title="2.3 基于容器平台构建DevOps体系"></a>2.3 <strong>基于容器平台构建DevOps体系</strong></h2><p>业务市场竞争加剧，业务部门要求业务快速交付，业务系统就要充分复用其它业务应用系统服务：</p>
+<p>l 作为业务部门，综合着眼关注业务进度，不关注需求之外的其它交付内容。</p>
+<p>l 作为开发部门，期待资源得倒满足，需求明确，交付内容清晰，项目计划到位，资源充足，时间充裕；如何以更有效的方法进行需求调研，更好的架构进行开发，更有效率的测试策略及项目管理方式。</p>
+<p>l 云资源交付部门，期待资源容量评估、架构评估、交付内容完整、时间宽裕、安全合规。</p>
+<p>l 安全部门，所有各个阶段严格按照网络规范实施交付，并配以持续监测和更新到最新安全机制。</p>
+<p>l 运维部门，期待支撑所有交付均考虑运维体系完备性，基于主机和服务两个维度、不同对象目标的运维体系完备；所有运维数据均可以共享互访并使用。</p>
+<p>关注在业务场景下，对于容器平台及DevOps要求的需求上，还包括弹性要求、高可用要求、快速交付、需求变化要求等。在 Kubernetes 和容器普及之前，我们通过虚拟机也可以实现DevOps，只是速度相对较慢，因此普及性不高（想象一下通过 x86 虚拟化来实现中间件集群弹性伸缩的效率）。而正是容器的出现，为 DevOps 工具层面的落地提供非常好的承载平台：</p>
+<p>l 容器云平台，需要DevOps以标准化和提升IT研发和交付能力。DevOps可以部署在容器云平台上。</p>
+<p>l 基于容器化PaaS平台的DevOps，可以使用容器云的资源，譬如DevOps平台的相关技术组件，可以以容器方式部署在容器云上，以支持多pipeline流水线并发编译所需要的弹性资源。</p>
+<p>Openshfit 以容器技术和 Kubernetes 为基础，在此之上扩展提供了软件定义网络、软件定义存储、权限管理、企业级镜像仓库、统一入口路由、持续集成流程（ S2I&#x2F;Jenkins ）、统一管理控制台、监控日志等功能，形成覆盖整个软件生命周期的解决方案，实现DevOps落地效率比较高。</p>
+<h1 id="3-设计架构"><a href="#3-设计架构" class="headerlink" title="3 设计架构"></a>3 <strong>设计架构</strong></h1><h2 id="3-1-整体设计"><a href="#3-1-整体设计" class="headerlink" title="3.1 整体设计"></a>3.1 <strong>整体设计</strong></h2><p>一站式开发交付运行平台提供持续集成、自动部署、弹性伸缩、高可用、监控告警、微服务治理等特性，解决互联网业务爆发性强，难预测，响应要求高，需求变化快的的特点，为应用提供全生命周期的支撑管理能力，从业务需求管理、应用开发、持续构建、持续部署到应用运维保障。</p>
+<p><img src="https://img.xhua.eu.org/c0ddee9a1a09995c25f9d164a46f779ecbeb3f171336495258f2fd5ddc5fb664.jpg" alt="图 2 一站式开发交付容器平台整体架构">  </p>
+<h3 id="3-1-1-容器平台"><a href="#3-1-1-容器平台" class="headerlink" title="3.1.1 容器平台"></a>3.1.1 <strong>容器平台</strong></h3><p>l 基础设施</p>
+<p>IT基础设施为平台提供计算、网络、存储、安全等资源，支持物理机、虚拟化、私有云和公有云等多种环境。</p>
+<p>l 容器引擎Docker</p>
+<p>平台使用Docker作为容器引擎层。容器技术是一种进程隔离技术，它通过namespace&#x2F;cgroup等技术从内核空间、资源和安全等方面对进程做隔离。因为容器是进程级别的，所以它非常轻量，能够实现秒级启动。另外容器镜像将运行环境与应用一起打包，实现了一处构建，处处部署，为应用的交付与运维管理提供了一种标准的方式。Docker是目前使用最为广泛的容器引擎，已被大规模生产环境验证。</p>
+<p>l 容器编排层Openshfit</p>
+<p>平台使用Openshfit作为容器编排层，Openshfit基于业界容器编排标准Kubernetes技术，并在安全性上进行了增强，同时为了方便开发者使用容器技术，对应用的构建与部署等集成方面也做了功能的增加，有助于快速构建一个功能全面的容器平台。</p>
+<p>作为容器编排引擎，Openshfit具备全面的编排相关的功能：应用编排、应用部署、应用配置、应用升级、负载均衡、弹性伸缩、健康检查、权限管理、容器网络、网络存储等；除此之外，Openshfit还提供了更全面的管理功能，如应用构建、日志中心、资源监控，应用商店等。但是Openshfit自带的运维管理功能有它的局限性，平台将会对其日志中心、资源监控等功能进行全面扩展与增强。</p>
+<p>l PaaS服务</p>
+<p>平台基于Openshfit之上，采用Operator技术实现的可扩展PaaS服务（包括数据库、消息队列、缓存、反向代理等中间件服务）。Operator为PaaS服务提供构建、扩展、监控、备份等能力。研发与运维人员只需要在平台门户进行提交表单，就能方便快速地构建高成熟度中间件服务。</p>
+<p>l 容器平台门户</p>
+<p>平台基于Openshfit和Docker容器技术，并与DevOps支撑平台进行集成，提供面向应用全生命周期管理的企业级PaaS云解决方案。提供对平台与应用服配置、部署、运维及管理能力；支持多数据中心、多集群、多租户、多项目等多个维度管理；与DevOps平台集成，实现一体化的持续构建与部署的能力。</p>
+<h3 id="3-1-2-DevOps支撑"><a href="#3-1-2-DevOps支撑" class="headerlink" title="3.1.2 DevOps支撑"></a>3.1.2 <strong>DevOps支撑</strong></h3><p>DevOps平台提供了需求管理、CICD流水线、代码配置管理、制品管理、质量管控等功能，提供了从计划到测试的问题持续集成过程，提供了从计划到测试完成的过程持续发布过程，解决了从计划到上线的持续部署过程，覆盖了用户提出价值到用户使用并且监控维护的端到端过程。</p>
+<p>通过DevOps平台，实现了在制品的持续流动、持续反馈，进行持续优化，让质量持续提高。</p>
+<p>通过DevOps平台，实现了研发数据的度量管理，通过对团队的研发数据进行定量分析，及时发现研发过程中的不足，有助于提高研发团队的效率和质量。</p>
+<p>通过AIOPS的接入，通过对日志等数据的持续监控，实现常见问题的自动化运维，保证应用的持续可用。</p>
+<h3 id="3-1-3-运维保障"><a href="#3-1-3-运维保障" class="headerlink" title="3.1.3 运维保障"></a>3.1.3 <strong>运维保障</strong></h3><p>l 资源管理</p>
+<p>通过开发Openshfit管理门户，实时管理集群资源使用现状，通过记录资源台账（记录计算、存储、网络ip端口资源）的方式，记录并预分配准备上线的系统，保障集群配额充足，及时提出扩容需求。</p>
+<p>租户资源：通过ResourceQuotas对租户资源进行限制，以保障租户间不相互影响。</p>
+<p>pod资源：通过LimitRange对pod和container资源进行限制。</p>
+<p>l 日志管理</p>
+<p>集群日志统一由EFK组件收集、管理和展示，通过统一管理，大大提升了日志查找、故障排查的效率，同时Openshfit管理门户也开发了日志的展示和查询功能，实现了在挂历门户对集群故障的初步定位能力。</p>
+<p>l 监控告警</p>
+<p>除了集群内部的Prometheus，还将集群资源使用情况、集群组件状态、项目pod状态等信息以标准格式输出给集群外部的监控工具，进行统一管理、告警和展示，具备短信邮件等告警提醒等功能。</p>
+<p>l 事件管理</p>
+<p>容器平台上运行着成千上万个资源，每个资源在生命周期过程中状态不断变化，每一个状态变化过程中都会涉及到多条事件信息，及时获取到这些信息中有问题的部分能够帮助项目最早时间发现问题，这就是事件管理的重要意义。本方案中，将采用EventRouter收集平台所有事件，对于异常事件会在第一时间通过告警平台发出。</p>
+<p>l 网络管理</p>
+<p>网络管理包括两个部分：传统网络管理、集群内部网络管理。</p>
+<p>传统网络管理，主要集群内外网络访问以及不同网络区域之间底层网络控制策略的管理，主要通过网络防火墙策略的维护。</p>
+<p>集群内部网络管理，主要通过NetworkPolicy策略进行控制。平台支持图形化配置该策略，为管理员提供良好的操作体验。</p>
+<p>l 数据备份</p>
+<p>数据备份包括以下两个方面：集群数据备份、应用数据备份，其中集群数据备份包括有资源对象备份、证书与集群配置备份、集群Etcd数据库全量备份。</p>
+<p>集群数据备份通过oc、Etcdctl命令客户端及shell命令实现资源对象、证书、配置及Etcd数据库全量数据的备份与恢复。</p>
+<p>引入NBU（NetBackup）备份策略，为应用持久化存储做备份。Veritas NetBackup拥有Docker认证，它能为应用存储提供高效、简便、灵活的应用备份解决方案。</p>
+<p>l 巡检机制</p>
+<p>通过编写健康检查脚本，对集群核心组件的健康状态、核心组件运行过程中的异常日志以及平台的负载状态等按日进行巡检，将高危风险以邮件形式发送给平台运维和研发人员，并及时分析处理，以确保平台稳定运行。</p>
+<p>l 集群升级</p>
+<p>平台在日常运维中将定期关注集群的最新补丁与漏洞报告，并及时对集群进行升级，保证平台的安全稳定。</p>
+<h2 id="3-2-非功能性设计"><a href="#3-2-非功能性设计" class="headerlink" title="3.2 非功能性设计"></a>3.2 <strong>非功能性设计</strong></h2><p><img src="https://img.xhua.eu.org/a06d33259d836f19de2271f0179cdca82ed049c42061973685be69c22ccf7d14.jpg" alt="图 3 非功能性展示图">  </p>
+<h3 id="3-2-1-高可用性"><a href="#3-2-1-高可用性" class="headerlink" title="3.2.1 高可用性"></a>3.2.1 <strong>高可用性</strong></h3><p>平台高可用性涉及到五个方面：集群高可用、应用高可用、存储高可用、网络高可用以及制品库高可用。</p>
+<p>l 集群高可用</p>
+<p>集群的高可用主要有两部分：<strong>单集群的高可用</strong>和<strong>多集群提供双活服务</strong>两个部分。</p>
+<p>单集群的高可用：控制节点是集群最核心的部分，其上面的组件均采用高可用部署：Etcd集群化部署、Master组件服务均为多副本部署。同时Master组件部署在支持自动迁移策略的虚拟机平台，即当底层物理机发生宕机后，其上运行的虚所机会自动漂移到备用节点，并且多个控制节点分散部署，进一步提升集群的可靠性。</p>
+<p>双活机制提升集群服务可靠性：在同一机房部署多套集群，集群业务互为备份，同时提供服务。</p>
+<p>l 应用高可用</p>
+<p>应用高可用主要有两部分：应用设计和应用部署。</p>
+<p>应用设计：应用提供对应的健康检查接口，与容器平台的检查机制配合实现应用自动恢复；容器平台支持应用生命周期控制，例如通过HTTP接口健康探测机制可实现故障的容器实例的自动重启。</p>
+<p>应用部署：应用采用多集群多副本部署，容器具有轻量、启动快速等特性能够支持快速扩容；平台为应用提供亲和与反亲和等调度策略，应用部署可选择合适的策略以提升应用的可用性；容器平台支持应用滚动升级保证应用升级过程中服务不中断。</p>
+<p>l 存储高可用</p>
+<p>平台为不同场景提供多种存储方案。分布式存储、本地存储、共享存储等都考虑多副本机制提高存储的高可用性，并且对于重要数据基于NBU提供定时备份。</p>
+<p>l 网络高可用</p>
+<p>网络高可用主要有两部分：集群底层网络和集群内部网络。</p>
+<p>集群底层网络：交换机、路由器等网络设备采用双活部署，主机双网口绑定bond提供可靠的本地网络；集群将数据网、业务网、管理网分离，减小不同网络数据之的干扰。</p>
+<p>集群内部网络：集群提供多副本且支持流量分片的Ingress&#x2F;Router节点，并通过高可用负载均衡器承载外部包括TCP、HTTP协议的请求流量。平台提供全面的监控体系，对网络服务的异常进行自动监测与诊断，在满足一定的条件下，实现网络服务自动恢复。</p>
+<p>l 制品库高可用</p>
+<p>制品库采用单地备份、多地同步的机制。单个制品库的服务端采用多活的方案同时提供服务，底层数据则采用冷备方案对应用镜像进行定期备份。同时平台在各地分别部署制品库，各地制品库通过之前的同步机制实现多地镜像的同步，实现互为备份。</p>
+<h3 id="3-2-2-易用性"><a href="#3-2-2-易用性" class="headerlink" title="3.2.2 易用性"></a>3.2.2 <strong>易用性</strong></h3><p>l 可视化管理</p>
+<p>平台提供了可视化管理界面，通过界面可以直观地查看集群的状态。同时对于应用开发的整个生命周期都支持可视化，包括需求管理，开发流水线，应用的测试报告，流水线度量指标以及运行状态等。</p>
+<p>l 自动化管理</p>
+<p>容器平台部分提供自动化运维工具，实现集群自动化部署、自动化升级、自动化备份、定期自动巡检、服务及资源监控告警。DevOps平台部分，自动化流水线实现应用的持续构建，持续部署与持续监控。</p>
+<p>l 交互式操作</p>
+<p>平台提供表单交互式，实现快速创建PaaS应用以及应用部署。</p>
+<p>l 多集群管理</p>
+<p>研发人员通过一个入口就可以管理多中心多集群，实现多集群统一管理，同时权限与用户集中化管理，方便容器平台的使用。</p>
+<p>l 多系统集成</p>
+<p>与监控告警平台、日志平台、DevOps平台等系统集成，实现一站式应用全生命周期的支撑。</p>
+<p>l 多租户管理</p>
+<p>平台具有丰富的用户与权限管理，支持细粒度的权限控制以满足更多的安全控制的要求。</p>
+<h3 id="3-2-3-安全性"><a href="#3-2-3-安全性" class="headerlink" title="3.2.3 安全性"></a>3.2.3 <strong>安全性</strong></h3><p>平台从主机、容器、平台自身、镜像、网络、应用及数据等方面构建全面的容器安全体系，保障平台及应用的安全。</p>
+<p>l 主机</p>
+<p>主机操作系统安全加固；系统安全补丁管理机制；针对不同安全要求主机划进行分组管理，不同组的应用间物理隔离。</p>
+<p>l 容器</p>
+<p>容器引擎漏洞管理；容器最小权限原则，禁用root等用户；容器资源限制；容器日志分析与审计；CIS容器配置基准保证。</p>
+<p>l 平台</p>
+<p>基于RBAC的权限管理；平台升级机制，修复平台漏洞；平台运行日志分析与审计；CIS平台配置基准保证。</p>
+<p>l 镜像</p>
+<p>制定安全标准镜像作为应用基础镜像；通过镜像扫描机制防范安全漏洞；镜像签名保证平台运行镜像均已被可靠认证。</p>
+<p>l 网络</p>
+<p>通过底层网络策略，防火墙和ACL，按照安全等级设计不同安全要求的网络区域；集群采用细粒度网络控制机制NetworkPolicy；通过路由分片实现对不同网络安全要求应用进行隔离；通过EgressIP机制实现集群间网络访问控制。</p>
+<p>l 应用</p>
+<p>DevOps流水线对应用代码与服务进行持续漏洞扫描，进行安全合规审查，保证应用的安全。</p>
+<p>l 数据</p>
+<p>对于底层存储数据采用硬件加密；对于应用的敏感配置数据采用vault管理的secret资源保存。</p>
+<h2 id="3-3-关键模块设计"><a href="#3-3-关键模块设计" class="headerlink" title="3.3 关键模块设计"></a>3.3 <strong>关键模块设计</strong></h2><h3 id="3-3-1-容器平台"><a href="#3-3-1-容器平台" class="headerlink" title="3.3.1 容器平台"></a>3.3.1 <strong>容器平台</strong></h3><p><img src="https://img.xhua.eu.org/f6239d8cb5ceb93be47678652f17338a9204d56913b41ed1bfddbcb109c30ebc.jpg" alt="图 4 容器平台部署设计">  </p>
+<h4 id="3-3-1-1-服务编排与管理"><a href="#3-3-1-1-服务编排与管理" class="headerlink" title="3.3.1.1 服务编排与管理"></a>3.3.1.1 <strong>服务编排与管理</strong></h4><p>服务编排中，需要考虑资源的统一管理、应用部署及应用弹性伸缩。</p>
+<p>资源管理：平台通过对项目配额的管理实现对集群资源的统一分配，能够快速响应开发部门的资源需求；针对不同类型应用提供不同的底层计算节点，如计算型、内存型等，以便进一步提高资源的利用率。</p>
+<p>应用部署：应用支持多地多集群部署，通过容器平台可以同时指定应用部署的集群及各自的副本数，容器编排引擎将会自动完成应用的部署。</p>
+<p>弹性伸缩：应用通过HPA、VPA资源配置，对应用的负载进行监控实现应用资源限制与副本数配置的扩展与收缩，以支持流量激增的互联网场景。</p>
+<h4 id="3-3-1-2-网络"><a href="#3-3-1-2-网络" class="headerlink" title="3.3.1.2 网络"></a>3.3.1.2 <strong>网络</strong></h4><p>网络场景主要考虑以下四种场景：集群内部网络、集群间网络、集群访问外部网络以及外部访问集群间网络。对于金融行业，网络安全非常重要，该方案中充分考虑在任意种场景下的网络安全问题。</p>
+<p>集群内部网络：采用OVS-Networkpolicy网络策略实现集群内部服务网络精细化管理，不同项目间的应用默认网络隔离。</p>
+<p>集群间网络：平台支持多网络区域下集群的统一管理，不同的网络区域底层通过硬件实现隔离。例如，DMZ区与生产区分别部署Openshfit集群，之间通过硬件防火墙进行隔离。</p>
+<p>集群访问外部网络：采用EgressIP机制，为每个Project指定出口IP，该Project下的所有应用都以该IP对外部发送请求，通过集群与外部系统间的防火墙控制网络的访问权限。</p>
+<p>外部访问集群：集群服务通过Openshfit Router服务对外提供HTTP&#x2F;TCP服务。并且根据业务类型对Router进行分片，更大程度提升Router服务的性能与扩展性。</p>
+<h4 id="3-3-1-3-存储"><a href="#3-3-1-3-存储" class="headerlink" title="3.3.1.3 存储"></a>3.3.1.3 <strong>存储</strong></h4><p>单一的存储方式无法满足复杂的业务场景，方案根据不同的场景内容提供对应的存储介质。</p>
+<p><img src="https://img.xhua.eu.org/f8e6243521cc52f972040a19fdc6ecfdbb1c86722c5b4e0e92bb802f997b07cb.jpg" alt="图 5 存储场景展示图">  </p>
+<p>场景一：应用内部多容器共享缓存，使用容器自身临时存储。</p>
+<p>场景二：应用不同副本间共享存储使用NFS网络存储。</p>
+<p>场景三：对于存储IO要求较高，并且支持单节点挂载，使用Ceph RBD分布式存储作为应用持久化存储。</p>
+<p>场景四：对于存储IO要求很高，采用本地盘存储方案，将应用与主机通过Node Label进行绑定。</p>
+<p>场景五：采用MinIO部署独立的对象存储服务，为容器应用提供相关数据持久化</p>
+<h4 id="3-3-1-4-镜像仓库"><a href="#3-3-1-4-镜像仓库" class="headerlink" title="3.3.1.4 镜像仓库"></a>3.3.1.4 <strong>镜像仓库</strong></h4><p>镜像仓库是一个集中存储容器镜像的空间，在企业中建立企业级的镜像仓库有利于集中管理容器镜像，并且利于实现多个环境之间的镜像资源共享。Openshfit组件中提供了镜像仓库，且它与资源对象DeploymentConfig、BuildConfig等能够联动，以快速实现自动构建与自动部署，但是它与项目强关联并且在镜像安全扫描方面有所欠缺，很难将它作为一个企业级通用的镜像仓库。基于上面的考虑，本方案中将引入Harbor作为平台的统一镜像仓库，并通过镜像仓库命名规范与制品库管理规范集中管理所有环境中的镜像。</p>
+<p><img src="https://img.xhua.eu.org/4f18ac1453cf9b92b18953e484e24240cf27fb6820d7145f4af7c9a3be75f967.jpg" alt="图 6 镜像仓库Harbor多中心多部署示意图">  </p>
+<p>开发测试环境与生产环境网络是隔离的，分别部署独立的Harbor服务。其中项目在开发测试环境的镜像会被分别存放在不同的仓库中分别是DEV&#x2F;SIT&#x2F;UAT&#x2F;PROD，镜像只有经过严格测试达到上线标准后才能推送到PROD仓库中，PROD仓库与其它地区的开发测试环境中的PROD仓库同步，同时这与同地的生产环境中的PROD仓库同步，实现应用镜像的多地分发。</p>
+<p>为了提高镜像的下载速度，以加快应用的部署，镜像服务还开启P2P预热，生产中将应用镜像提前分发到P2P网络。</p>
+<h4 id="3-3-1-5-监控告警"><a href="#3-3-1-5-监控告警" class="headerlink" title="3.3.1.5 监控告警"></a>3.3.1.5 <strong>监控告警</strong></h4><p>监控告警系统是平台系统运营维护的有利保障，目前云原生生态中较为成熟也是被使用最广的方案是Prometheus套装。通过不同的exporter服务获取相关的指标数据，由Prometheus统一收集，并通过Grafana展示出图表，相关监控项状态与趋势一目了然，下图为Prometheus方案组件架构图。</p>
+<p><img src="https://img.xhua.eu.org/c88f2e9b851d5fed953ac0d8b76c1a3692861e4a46f9e9aa994d1c499f2df0e2.jpg" alt="图 7 Prometheus方案组件架构图">  </p>
+<p>Exporters：面向全方面资源的监控指标，具体有底层节点的相关指标、平台组件状态与性能指标、集群应用容器资源状态指标、自定义应用性能指标。</p>
+<p>Prometheus server：通过pull方式从Exporters收集底层设备、平台组件、容器资源、应用自定义所有监控指标。</p>
+<p>Grafana：提供对Prometheus采集的监控数据进行可视化展示。</p>
+<p>Alertmanager：接入多种告警渠道（邮件、短信、微信等），统一管理多个来源的告警信息，如Prometheus rules策略触发的告警、日志监控触发的告警、自定检查脚本触发的告警，如下图所示为Alertmanager作为统一告警系统架构。</p>
+<p><img src="https://img.xhua.eu.org/6bb9896189d8ca847425a5e25868c40bca6d0dc829f895075b93fae068d36488.jpg" alt="图 8 Alertmanager 统一告警系统架构">  </p>
+<p>为了便于对多个集群集中监控，采用Prometheus Federation架构实现多级监控，将不同集群监控指标统一收集，并将历史监控数据持久化在MinIO S3存储中。</p>
+<p><img src="https://img.xhua.eu.org/2d238d3623778c4ff7c32b935e76b536a84d14baa1f732d09573e43441ee9bda.jpg" alt="图 9 监控服务部署示意图">  </p>
+<h4 id="3-3-1-6-日志"><a href="#3-3-1-6-日志" class="headerlink" title="3.3.1.6 日志"></a>3.3.1.6 <strong>日志</strong></h4><p>虽然Openshfit组件中提供了基于EFK的日志方案，但这种方案并不能适应所有的业务场景。它有以下不足之处：应用日志只有标准化输出才能被收集；只能有一个日志输出文件，而真实业务场景中会有多个日志文件；Fluentd的性能并不算太好；Fluented直接发送到ES，当日志量大时，很容易发生堵塞，导致日志延时大甚至丢失日志。基于以上这些考虑，本方案中将对日志方案进行性能与功能的增强。</p>
+<p><img src="https://img.xhua.eu.org/ae86af92ed0b957bc2b6c65358f6699d72a9aab159d054683e7c12563280923f.jpg" alt="图 10 日志方案架构图">  </p>
+<p>采用更轻量及性能更好的Filebeat替换掉Fluentd来收集集群组件日志及应用标准输出的日志，仍然以DaemonSet资源的形式部署。</p>
+<p>对于没有标准输出的应用，以sidecar的形式共享日志文件并通过filebeat收集日志文件，将其发送到Kafka中，由logstash转发到ElasticSearch服务，最后由Kibana服务展示。</p>
+<p>引入Kafka作为日志缓冲层，提高集群应用日志的吞量。应用的标准输出日志，通过DaemonSet FileBeat服务统一收集并转发到Kafka中，由后端logstash转发到Elasticsearch服务中。</p>
+<p>该日志方案不仅满足生产业务中的各种场景，而且能够支持高并发日志量。同时使用的组件均可通过横向扩展来扩大整个系统的吞吐量。</p>
+<h4 id="3-3-1-7-容器平台门户"><a href="#3-3-1-7-容器平台门户" class="headerlink" title="3.3.1.7 容器平台门户"></a>3.3.1.7 <strong>容器平台门户</strong></h4><p>为了让架构具有更好的扩展性，云平台设计了四层架构：展示层、业务层、驱动层、数据层，如下图所示。另外为云平台设计了平台控制器，通过它实现容器集群资源对象数据实时缓存到Redis中。</p>
+<p><img src="https://img.xhua.eu.org/71e67a954c6eaa5d241afe431be69a41e7e0c117ea3e47763ed62a8a8c8f8550.jpg" alt="图 11 容器平台门户架构图">  </p>
+<p>l 展示层</p>
+<p>负责平台的页面展示，它为用户提供一套可视化，交互式的界面。研发人员通过查看或者填写表单等操作，调用业务层Restful API接口，获取详细的资源与业务数据，并在页面渲染。</p>
+<p>l 业务层</p>
+<p>负责平台的业务逻辑，为展示层提供Restful API接口。它会对请求的权限做验证，通过调用驱动层获取请求的资源基础信息，并通过Redis获取底层资源的详细信息，最后以JSON格式数据返回给展示层。</p>
+<p>l 驱动层</p>
+<p>负责与底层集群的交互，它通过指定的证书可直接访问底层集群的Master API Server，进而实现对容器集群资源的管理。同时它通过Restful API为业务层提供所需的服务。</p>
+<p>l 数据层</p>
+<p>负责保存容器平台的业务数据，包括有项目信息、用户信息、审计信息、权限配置、集群配置信息等。</p>
+<p>l 平台控制器</p>
+<p>每个集群都会部署单独的平台控制器，并为它绑定获取该集群的所有资源信息的权限，使用watch API监听底层资源的变化，一旦对应集群有新增的资源，或有资源信息发生更改，或资源被删除，平台控制器都会将信息同步在Redis缓存中，从而收集所有集群的资源对象信息，并确保信息一直处于最新状态。</p>
+<p>容器平台门户支持多集群管理，集群信息通过平台管理功能保存在数据库中。业务层请求驱动层时会带上被访问的集群名，驱动层通过查询数据库获取集群的访问信息，定位到正确的集群。</p>
+<h3 id="3-3-2-DevOps支撑"><a href="#3-3-2-DevOps支撑" class="headerlink" title="3.3.2 DevOps支撑"></a>3.3.2 <strong>DevOps支撑</strong></h3><p>DevOps平台采用禅道做为需求管理工具，同时采用Jenkins作为流水线引擎，其它工具链通过Jenkins进行驱动，实现应用自动高效构建与自动部署。同时Jenkins引入k8s插件，所有节点，包括Master节点与slave节点均部署在容器云平台之上，充分利用容器平台的快速部署能力，实现流水线的高效执行。以下是DevOps支撑能力的整体示意图。</p>
+<p><img src="https://img.xhua.eu.org/9a2819b56ae9915ffe4b40b33669503bf007a6e1764961ef95dbbcf5f130bafe.jpg" alt="图 12 DevOps支撑能力的整体示意图">  </p>
+<h4 id="3-3-2-1-需求管理"><a href="#3-3-2-1-需求管理" class="headerlink" title="3.3.2.1 需求管理"></a>3.3.2.1 <strong>需求管理</strong></h4><p>引入禅道开源产品进行产品需求管理，并通过禅道中的电子看板实现需求全生命周期的可视化跟踪，完成需求计划管理。<br>通过电子看板中的模块管理实现对需求所属功能模块的划分，让产品人员能够从整体上看到需求的功能划分。<br>通过计划管理实现对需求的统一规划，我们可以定义每个时间节点的目标，根据优先级、工作量等条件把需求规划到每个计划中。</p>
+<p>团队成员根据自身情况分析每个需求的工作量大小，并将需求分配到个人，计划开启后，每个人根据需求的实际完成情况修改需求的状态。同时通过与代码库、测试平台的对接，展现需求的代码提交情况、测试情况。</p>
+<p>    使用统计报表，图形化展现需求的完成速率、历史情况，帮助项目组进行工作回顾。</p>
+<h4 id="3-3-2-2-开发"><a href="#3-3-2-2-开发" class="headerlink" title="3.3.2.2 开发"></a>3.3.2.2 <strong>开发</strong></h4><p>l 代码配置管理</p>
+<p>提供组织级的gitlab平台用于研发人员对代码进行配置管理。通过制定配置管理规划能够对提交的代码进行有效管控；通过对代码提交信息的格式约束能够将代码与需求进行关联；通过对代码库的webhook进行配置，代码提交即可触发流水线，对代码进行构建、扫描、测试，能够有效管控代码质量。除此之外，对于关键代码，还进行code review、代码走查等，保证提交的代码质量。</p>
+<p>l 代码扫描</p>
+<p>提供组织级的静态代码扫描平台SonarQube和Fortify，基于PMD、CheckStyle、FindBugs制订了组织级的代码检查规则。研发人员代码一旦提交到代码库就会触发代码扫描流水线，能够及时发现代码中的Issues和Bugs，可视化技术债务，明确技术债务分布情况、债务点以及改进建议等，从而能够及时得到解决，提高产品质量。</p>
+<p>l 制品管理</p>
+<p>基于Nexus构建组织级的制品仓库，对制品进行成熟度管理，只有制品满足各项度量指标后，制品才能部署到下一阶段，最终部署生产环境。同时在制品元数据中记录制品的质量数据，确保了部署到生产环境的制品是经过严格测试的、满足质量要求的。</p>
+<p>l 单元测试</p>
+<p>要求代码的单元测试覆盖率满足一定要求，同时关键代码必须要有单元测试。在实际开发过程中，使用TestNG、Junit等工具进行单元测试案例的编写，并引入Jacoco进行单元测试覆盖率的收集。只有单元测试覆盖率满足一定要求后，代码才能进行打包构建并上传到制品仓库中，进而后期才能进行部署及自动化测试等。</p>
+<h4 id="3-3-2-3-测试"><a href="#3-3-2-3-测试" class="headerlink" title="3.3.2.3 测试"></a>3.3.2.3 <strong>测试</strong></h4><p>禅道平台也作为测试管理平台，对测试案例、缺陷进行统一管理，并且与需求进行关联。同时会将测试的结果数据记录在制品的元数据中，确保部署到生产环境的制品必须要符合质量要求。</p>
+<p>l 功能测试</p>
+<p>采用selenium工具对于需要上线的系统进行功能测试并且生成测试报告，待评审通过以后才能进行上线。通过对系统进行白盒、黑盒、灰盒、边界值等多维度的测试，确保系统能够满足功能需求。</p>
+<p>l 自动化测试</p>
+<p>采用selenium工具开发实现自动化测试脚本，并作为Jenkins构建任务的一部分。自动化测试主要包含两个方面，一个是UI测试，一个是接口测试。通过CICD流水线将制品成功部署到测试环境以后，自动会触发自动化测试流水线，通过编写好的自动化测试脚本对系统进行测试。</p>
+<h4 id="3-3-2-4-部署"><a href="#3-3-2-4-部署" class="headerlink" title="3.3.2.4 部署"></a>3.3.2.4 <strong>部署</strong></h4><p>通过打包构建生成制品以后，制品会根据事先定义好的Dockerfile构建成镜像并上传到镜像仓库中。然后使用容器平台将镜像依次部署到SIT、UAT等环境进行测试。测试通过以后将镜像提交到待发布库中。生成下发流程通过以后，触发容器平台进行生产部署。</p>
+<h4 id="3-3-2-5-运营维护"><a href="#3-3-2-5-运营维护" class="headerlink" title="3.3.2.5 运营维护"></a>3.3.2.5 <strong>运营维护</strong></h4><p>通过容器平台，可以很便利的对其中的应用进行日志、性能等多维度的监控，同时提供了预警机制，当机器或应用性能触发阈值以后，会向应用负责人发送短信和邮件提醒。从而应用负责人能够实时掌握应用状态，对出现的一些状况能及时处理。</p>
+<h4 id="3-3-2-6-平台度量"><a href="#3-3-2-6-平台度量" class="headerlink" title="3.3.2.6 平台度量"></a>3.3.2.6 <strong>平台度量</strong></h4><p>对各个能力子域的指标进行量化，在流水线的实际执行过程中收集这些指标，同时对收集指标进行分析、打分，得出此次执行的一个量化数据。通过收集每次流水线执行的指标数据，就可以获取到该应用的整个质量的趋势，从而能够更好的指导应用开发。</p>
+<h1 id="4-规范指引"><a href="#4-规范指引" class="headerlink" title="4 规范指引"></a>4 <strong>规范指引</strong></h1><p><img src="https://img.xhua.eu.org/1548e5adc027fd0a0f391c5b0ca8286aa5185931f389d98d014043478f8b8404.jpg" alt="图 13 规范指引展示图">  </p>
+<h2 id="4-1-业务规范"><a href="#4-1-业务规范" class="headerlink" title="4.1 业务规范"></a>4.1 <strong>业务规范</strong></h2><h3 id="4-1-1-业务需求规范"><a href="#4-1-1-业务需求规范" class="headerlink" title="4.1.1 业务需求规范"></a>4.1.1 <strong>业务需求规范</strong></h3><p>l 统一语言</p>
+<p>业务需求应当使用统一的语言，所谓统一语言，是指项目研发过程中，产品、研发、测试、运维、管理、运营等角色在交流中，对一些专有名词理解达成统一，以保证大家在沟通中没有信息不一致或信息歧异，提高沟通效率和准确度。</p>
+<p>l 业务需求格式</p>
+<p>业务需求描述中应明确，清晰，不应使用可能、一般等模棱两可的描述，应当体现出业务功能的角色、活动、价值（效果）。此处不应使用技术语言来描述，要使用用户可以理解的业务语言来描述。通常格式为作为一个&lt;角色&gt;, 我想要&lt;活动&gt;,以便于&lt;商业价值。</p>
+<p>举例：作为一个“网站管理员”，我想要“统计每天有多少人访问了我的网站”，以便于“我的赞助商了解我的网站会给他们带来什么收益。”</p>
+<h2 id="4-2-应用上云设计规范"><a href="#4-2-应用上云设计规范" class="headerlink" title="4.2 应用上云设计规范"></a>4.2 <strong>应用上云设计规范</strong></h2><h3 id="4-2-1-应用容器化设计规范"><a href="#4-2-1-应用容器化设计规范" class="headerlink" title="4.2.1 应用容器化设计规范"></a>4.2.1 <strong>应用容器化设计规范</strong></h3><p>l 应用中不指定Pod的IP</p>
+<p>应用容器化部署后，Pod的替换伴随着IP的变化。若应用指定Pod的IP访问目标应用，一旦目标应用的Pod发生变动，目标应用的IP也会随着变化，目标应用将无法被正常访问。为了保证应用访问服务的稳定性，应用中不直接通过Pod的IP来访问目标应用。可以通过注册中心，获得动态IP的方式来实现服务间的调用，也可以直接使用serviceIP来实现不同应用间的调用。</p>
+<p>l 同一Pod内的不同容器间使用127.0.0.1相互访问</p>
+<p>同一个Pod可以有多个容器，这些容器共享同一个网络命名空间，它们之间推荐直接使用127.0.0.1来实现互相访问。</p>
+<p>l 为应用实例提供健康检查接口</p>
+<p>应用需提供健康检测接口，用来配置容器的健康检查策略，从而保证滚动升级过程中的服务可用性。</p>
+<p>l 应用容器需要考虑优雅退出</p>
+<p>为了保证应用服务的稳定，应用容器需要考虑优雅退出，确保容器退出时关闭所有连接。如果应用程序未处理SIGTERM信号,可以在编排文件中设置preStop Hook,即在关闭容器前等待一段时间，让应用程序完成所有请求。</p>
+<p>l 使用CronJob代替crontab服务设置定时任务</p>
+<p>不建议在容器中使用crontab服务设置定时任务，推荐通过CronJob资源对象来实现定时任务的功能。</p>
+<h3 id="4-2-2-应用部署规范"><a href="#4-2-2-应用部署规范" class="headerlink" title="4.2.2 应用部署规范"></a>4.2.2 <strong>应用部署规范</strong></h3><p>l 应用容器通过使用PV&#x2F;PVC进行持久化数据</p>
+<p>容器本身并不带有持久化存储，被销毁时容器中存储的数据也会被清理。容器中如果需要保存数据，需要通过PV（持久化卷）与PVC（持久化卷请求）资源，使用NAS存储，实现数据持久化。</p>
+<p>l ConfigMap挂载到容器内部的文件夹必须为空</p>
+<p>配置文件可以保存在ConfigMap中，ConfigMap挂载到容器内部的目录会把目录下的原有文件覆盖，所以需要注意挂载的目录尽量为空目录。</p>
+<p>l 每个系统申请一个EgressIP，作为访问外部服务的出口IP</p>
+<p>为了对系统网络做更精细化的控制，容器云平台每个系统必须申请并绑定一个EgressIP。该系统下的应用Pod都以该IP为出口IP访问外部服务，通过防火墙设置，可以对系统下的应用访问外部服务的网络进行控制。</p>
+<p>l 为应用实例设置健康检查</p>
+<p>为了更好地监控应用服务的状态，充分发挥容器云平台为应用带来的自愈能力，提高应用的可靠性，应用必须设置readinessProbe与livenessProbe。其中readinessProbe将检测应用容器是否已准备好接受流量，livenessProbe将检测应用容器是否存活。</p>
+<p>l 为应用实例设置资源限制（cpu与memory）</p>
+<p>为了对资源进行精细化管理与控制，减少底层资源的竞争，也可避免程序因Bug占用过多底层资源，以提高应用的稳定性，容器基础平台的应用部署时必须为每个容器设置资源限制，包括：limits.cpu、limits.memory、requests.cpu、requests.memory。其中limits.cpu、limits.memory为应用运行过程中占用CPU、Memory资源的上限值；requests.cpu、requests.memory为应用运行过程中请求的CPU、Memory资源值。</p>
+<h2 id="4-3-应用开发规范"><a href="#4-3-应用开发规范" class="headerlink" title="4.3 应用开发规范"></a>4.3 <strong>应用开发规范</strong></h2><h3 id="4-3-1-数据交互规范"><a href="#4-3-1-数据交互规范" class="headerlink" title="4.3.1 数据交互规范"></a>4.3.1 <strong>数据交互规范</strong></h3><p>l 接口格式</p>
+<p>通常每个URI网址代表一种资源接口，网址中不应有动词，尽量使用名词（特殊情况可以使用动词）；网址名称不应大写，若需要分割时使用中杠-不用下杠 _ ；若URI中的名词表示资源集合，使用复数形式。</p>
+<p>应当使用url来表达层级，用于按实体关联关系进行对象导航。层级不应过深，复杂场景尽量使用查询参数代替路径中的实体导航。应当将API的版本号放入到URI中。</p>
+<p>l HTTP方法</p>
+<p>应使用标准的HTTP方法实现对资源的CRUD，包括：</p>
+<p>GET：查询（从服务器取出资源一项或多项）；</p>
+<p>POST：创建单个新资源。 POST向“资源集合”型uri发起；</p>
+<p>PUT：更新单个资源（全量），客户端提供完整的更新后的资源；</p>
+<p>DELETE：删除。</p>
+<p>其中GET、PUT、DELETE方法应具备幂等性，也就是执行1次和执行N次，对资源状态改变的效果应是等价的。</p>
+<p>l HTTP状态码和提示信息</p>
+<p>正确设置http状态码，不要自定义http状态码。服务器返回的提示信息应尽量简洁，避免嵌套，采用信息代码（用于日志&#x2F;问题追查）+错误的描述文本（展示给用户）的形式。</p>
+<p>l 接口文档</p>
+<p>数据交互应形成良好的接口文档，包括但不限于以下内容：</p>
+<p>1) HTTP方法类型：也就是我们常写的GET，POST，PUT，DELETE等。</p>
+<p>2) url调用方法：从前端调后端的方法地址。</p>
+<p>3) 请求参数：包括字段、说明、类型、备注、是否必填。</p>
+<p>4) 返回参数：尽量使用JSON，避免使用XML。</p>
+<p>l 异常处理</p>
+<p>异常应包括业务异常和非业务异常。业务异常由自己的业务代码抛出，表示一个用例的前置条件不满足、业务规则冲突等，比如参数校验不通过、权限校验失败。非业务类异常 表示不在预期内的问题，通常由类库、框架抛出，或由于自己的代码逻辑错误导致，比如数据库连接失败、空指针异常、除0错误等等。</p>
+<p>业务异常应返回200的HTTP响应状态码，并返回指定的错误文本提示信息。非业务异常应返回500的HTTP响应状态码，异常信息应进行统一封装，如“服务器端错误，请稍后再试”，非必要情况不应将错误类型展示给用户。</p>
+<p>l 安全</p>
+<p>对于API的使用应当有身份认证，同时具备一定的安全手段用于预防常见的安全攻击。</p>
+<h3 id="4-3-2-应用镜像构建规范"><a href="#4-3-2-应用镜像构建规范" class="headerlink" title="4.3.2 应用镜像构建规范"></a>4.3.2 <strong>应用镜像构建规范</strong></h3><p>l 使用统一的基础镜像</p>
+<p>基础镜像涉及应用运行所需要的安全可靠的Linux操作系统。基础镜像由基础架构部门负责维护，定期打安全漏洞的补丁，并基于应用要求构建基础环境镜像，维护到公共镜像仓库。</p>
+<p>l 公共依赖层</p>
+<p>主要是包括运行时（如JDK）、中间件（如Web容器）、其它公共组件等。公共依赖层镜像由基础架构部门负责维护，定期打安全漏洞的补丁，并基于应用要求构建依赖层镜像，维护到公共镜像仓库。</p>
+<p>l 应用层</p>
+<p>主要包括程序包（jar包、war包）、程序依赖包（jar lib）等。程序包基于代码基线编译打包，应用层镜像由开发部门负责构建。</p>
+<p>l 镜像一次构建，多环境部署</p>
+<p>为了保证应用的运行环境保持一致，应用容器镜像应在研发环境下构建，在其它环境下部署进行测试与上线均使用同一个镜像。</p>
+<p>l 使用非root用户启动应用容器</p>
+<p>为保障容器云平台的安全性，禁止应用容器中使用root用户运行应用。</p>
+<h3 id="4-3-3-DevOps指引"><a href="#4-3-3-DevOps指引" class="headerlink" title="4.3.3 DevOps指引"></a>4.3.3 <strong>DevOps指引</strong></h3><h4 id="4-3-3-1-开发流程自动集成"><a href="#4-3-3-1-开发流程自动集成" class="headerlink" title="4.3.3.1 开发流程自动集成"></a>4.3.3.1 <strong>开发流程自动集成</strong></h4><p>1) 项目配置好CI&#x2F;CD流水线后，开发人员提交代码；</p>
+<p>2) 自动触发CI&#x2F;CD流水线运行，对项目代码进行代码扫描、单元测试；</p>
+<p>3) 获取私服Maven仓库资源（非必须）进行构建；</p>
+<p>4) 构建完成后，生成最新的镜像保存到镜像仓库。</p>
+<p>下图为开发集成部署流程图。</p>
+<p><img src="https://img.xhua.eu.org/2b84ca5663c4d5601dc3db56b54859a67eb4404fdf4745843a7d08884a2e9cf5.jpg" alt="图 14 开发集成流程图">  </p>
+<h4 id="4-3-3-2-开发提测流程"><a href="#4-3-3-2-开发提测流程" class="headerlink" title="4.3.3.2 开发提测流程"></a>4.3.3.2 <strong>开发提测流程</strong></h4><p>1) 开发人员用gitlab给代码打上提测Tag；</p>
+<p>2) 开发人员手动在Jenkins上提测，执行提测任务；</p>
+<p>3) 自动触发工程指定版本代码的构建，并生成指定版本的镜像；</p>
+<p>4) 测试人员在测试环境部署指定版本镜像，进行测试。</p>
+<p>下图为开发提测流程图：</p>
+<p><img src="https://img.xhua.eu.org/d16d50ba871d16e0ad190107788a9dc7f40bdf5930f5aa41017208b6b66e2c92.jpg" alt="图 15 开发提测流程图">  </p>
+<h4 id="4-3-3-3-集成测试流程"><a href="#4-3-3-3-集成测试流程" class="headerlink" title="4.3.3.3 集成测试流程"></a>4.3.3.3 <strong>集成测试流程</strong></h4><p>测试人员在测试环境部署指定版本镜像，进行测试。</p>
+<p>下图为集成测试流程图：</p>
+<p><img src="https://img.xhua.eu.org/22188e613091ea4ca079ef9b364098986cf5ffeacfcdb75104653a569b661486.jpg" alt="图 16 集成测试流程图">  </p>
+<p>说明：以上流程均可在开发测试PaaS集群操作，如果要上生产部署，需搭为生产环境单独部署另外一套PaaS集群，同时两个集群网络与资源隔离。</p>
+<h4 id="4-3-3-4-生产部署流程"><a href="#4-3-3-4-生产部署流程" class="headerlink" title="4.3.3.4 生产部署流程"></a>4.3.3.4 <strong>生产部署流程</strong></h4><p>1) 运维人员从测试环境同步指定版本的镜像；</p>
+<p>2) 运维人员在生产环境部署指定版本镜像。</p>
+<p>下图为生产部署流程图：</p>
+<p><img src="https://img.xhua.eu.org/d4360df42bee3ee8f002a968f34e4217b040581e31ff361edf114c3299e8650f.jpg" alt="图 17 生产部署流程图">  </p>
+<h2 id="4-4-运维规范"><a href="#4-4-运维规范" class="headerlink" title="4.4 运维规范"></a>4.4 <strong>运维规范</strong></h2><h3 id="4-4-1-容器平台运维规范"><a href="#4-4-1-容器平台运维规范" class="headerlink" title="4.4.1 容器平台运维规范"></a>4.4.1 <strong>容器平台运维规范</strong></h3><h4 id="4-4-1-1-定期巡检"><a href="#4-4-1-1-定期巡检" class="headerlink" title="4.4.1.1 定期巡检"></a>4.4.1.1 <strong>定期巡检</strong></h4><p>将Openshfit集群重要组件的健康状态检查封装在shell脚本中，设定定时任务，实现自动化巡检，按时生成巡检报告，以邮件形式发送至平台运维、研发单位。定期巡检包括：master-api、master-controller、Etcd、router、es、prometheus等组件的状态。</p>
+<h4 id="4-4-1-2-扩容评估"><a href="#4-4-1-2-扩容评估" class="headerlink" title="4.4.1.2 扩容评估"></a>4.4.1.2 <strong>扩容评估</strong></h4><p>设计Openshfit集群资源预申请台账，结合集群管理门户查询到的集群资源实际使用情况，记录Openshfit集群当前的资源总量和计划上线的系统所需资源，根据台账的资源申请比例，安排计算、存储资源扩容。</p>
+<h4 id="4-4-1-3-应急预案"><a href="#4-4-1-3-应急预案" class="headerlink" title="4.4.1.3 应急预案"></a>4.4.1.3 <strong>应急预案</strong></h4><p>根据Openshfit集群特点，制定应急预案：一是记录硬件资源、软件资源、集群逻辑架构、数据备份方案、关联系统、应急联系人等信息；二是记录系统节点及部署模式，便于故障发生时快速查阅节点信息；三是针对平台层11个故障场景（硬件、网络、平台组件）、应用层6个故障（管理门户、sftp等）场景的处置方案，以及故障恢复后的验证方案。</p>
+<p>其中平台层故障处置方案主要有以下三个层面：</p>
+<p>基础设施故障：物理主机故障、基础网络故障、存储设备故障。</p>
+<p>平台服务故障：管理节点集群组件服务异常（Master API、Master Controller、Etcd)，工作节点服务异常（atomic-Openshfit-node、Docker服务），集群间网络异常（sdn、ovs服务）。</p>
+<p>运维相关应用故障：监控服务异常（Prometheus服务），日志服务异常（Fluentd、ES服务）。</p>
+<h3 id="4-4-2-应用运维规范"><a href="#4-4-2-应用运维规范" class="headerlink" title="4.4.2 应用运维规范"></a>4.4.2 <strong>应用运维规范</strong></h3><h4 id="4-4-2-1-应用发布"><a href="#4-4-2-1-应用发布" class="headerlink" title="4.4.2.1 应用发布"></a>4.4.2.1 <strong>应用发布</strong></h4><p>Openshfit集群将部署文件和镜像文件从制品库拉取至本地，再通过oc命令进行发布。该部署过程按场景编排成多个自动化流程，通过在管理端填写发布相关的参数执行。</p>
+<h4 id="4-4-2-2-应用回退"><a href="#4-4-2-2-应用回退" class="headerlink" title="4.4.2.2 应用回退"></a>4.4.2.2 <strong>应用回退</strong></h4><p>Openshfit集群将旧版本的部署文件和镜像文件从制品库拉取至本地，再通过或oc命令进行发布。该回退过程按场景编排成自动化流程，通过在管理端填写版本tag相关的参数执行。</p>
+<h4 id="4-4-2-3-应用监控"><a href="#4-4-2-3-应用监控" class="headerlink" title="4.4.2.3 应用监控"></a>4.4.2.3 <strong>应用监控</strong></h4><p>设计每分钟一次的定时任务，将影响应用可用性的关键指标，结合集群各宿主机节点的系统指标数据统一发送至监控平台进行集中管理、展示、和告警。</p>
+<h4 id="4-4-2-4-应用伸缩管理"><a href="#4-4-2-4-应用伸缩管理" class="headerlink" title="4.4.2.4 应用伸缩管理"></a>4.4.2.4 <strong>应用伸缩管理</strong></h4><p>根据特定的大流量业务场景需要，平台允许在特定时间区间、在平台可以容纳的容量范围内，对应用进行扩缩容处理，扩缩容命令封装后，编排成自动化运维平台的流程，通过填入扩缩容副本数量等参数执行。</p>
+<h4 id="4-4-2-5-日志管理"><a href="#4-4-2-5-日志管理" class="headerlink" title="4.4.2.5 日志管理"></a>4.4.2.5 <strong>日志管理</strong></h4><p>容器应用日志须落盘持久化卷存放，不同容器分不同文件进行存储。日志必须进行合理分级，按时间或大小自动分割，并依据合理的压缩和清理周期管理。</p>
+<p>容器应用日志命名合理规范，日志内容要素齐全：时间、日志级别（INFO、WARN、ERROR）、线程名称、交易标识、用户id、日志消息体、异常堆栈等。</p>
+<p>容器日志访问须提供两种方式：一是由平台自带的EFK组件统一管理和展示，二是通过应用系统相关虚拟机或物理机节点直接访问。</p>
+<h3 id="4-4-3-制品管理规范"><a href="#4-4-3-制品管理规范" class="headerlink" title="4.4.3 制品管理规范"></a>4.4.3 <strong>制品管理规范</strong></h3><h4 id="4-4-3-1-镜像准入管理"><a href="#4-4-3-1-镜像准入管理" class="headerlink" title="4.4.3.1 镜像准入管理"></a>4.4.3.1 <strong>镜像准入管理</strong></h4><p>基础镜像使用RedHat操作系统。</p>
+<p>公共镜像原则上仅包括一种中间件软件。若同一公共镜像需要包括大于一种中间件软件，必须采用多次构建方式。</p>
+<p>应用镜像必须使用镜像仓库统一提供的基础镜像或公共镜像构建。应用镜像必须符合精简原则，应包括且仅包括针对公共镜像的配置修改、可执行的应用包、依赖包介质和启动命令，不得包括其它与应用无关的文件。应用参数配置文件不应包含在应用镜像内部。</p>
+<h4 id="4-4-3-2-镜像命名管理"><a href="#4-4-3-2-镜像命名管理" class="headerlink" title="4.4.3.2 镜像命名管理"></a>4.4.3.2 <strong>镜像命名管理</strong></h4><p>镜像命名使用小写字母，避免下划线，最长64个字符，每段命名间使用“-”连接。</p>
+<p>格式如下： <team>-&lt; scope &gt;-<tech>-<maturity >-<locator></p>
+<p>其中：</p>
+<p>1) <team>指项目组或系统，可自行定义，避免使用下划线。</p>
+<p>2) <scope>指镜像库的依赖范围，可填选项为一方库、二方库、三方库。</p>
+<p>3) <tech>指采用的技术或包类型。每个仓库中应保持同一种类型的二进制文件。</p>
+<p>4) <maturity >指镜像库的开发成熟度，例如开发、测试和发布阶段。</p>
+<p>5) <locator>指镜像库所处的物理地点，例如上海、福州、成都或远程、虚拟等。虚拟仓库不需要指定。</p>
+<h1 id="5-分阶段实施规划"><a href="#5-分阶段实施规划" class="headerlink" title="5 分阶段实施规划"></a>5 <strong>分阶段实施规划</strong></h1><h2 id="5-1-方案验证阶段"><a href="#5-1-方案验证阶段" class="headerlink" title="5.1 方案验证阶段"></a><strong>5.1 方案验证阶段</strong></h2><h3 id="5-1-1-功能测试"><a href="#5-1-1-功能测试" class="headerlink" title="5.1.1 功能测试"></a><strong>5.1.1 功能测试</strong></h3><p>设计功能测试验证样例，在测试环境按生产1:1搭建容器云平台，详细测试容器云平台各功能点，并将DevOps体系各模块串连起来，完成持续构建与持续部署链路的验证。并设计集成测试验证样例，模拟生产环境发起业务验证，最终形成《集成测试报告》，所有业务场景验证通过。</p>
+<h3 id="5-1-2-压力测试"><a href="#5-1-2-压力测试" class="headerlink" title="5.1.2 压力测试"></a><strong>5.1.2 压力测试</strong></h3><p>为保障基于Openshfit构建的容器平台在实际生产运行中符合非功能性要求，在准生产环境部署Openshfit集群，通过测试工具发起压力测试，测试结果满足业务运行要求。以及测试DevOps系统支持并发构建与部署的最大容量。</p>
+<h2 id="5-2-技术推广阶段"><a href="#5-2-技术推广阶段" class="headerlink" title="5.2 技术推广阶段"></a><strong>5.2 技术推广阶段</strong></h2><p>经过功能测试和压力测试，集群满足上线部署要求，DevOps体系能够完成应用全生命周期的调度后，提交运维单位在生产环境部署集群，部署Openshfit管理门户、配置项目计算资源，对接制品库，从制品库拉取镜像部署应用。通过shell脚本实现监控信息转化，传送至统一监控告警系统，实现分钟级监控集群日常运行状态。</p>
+<p>在此阶段中，应不断提升与优化容器平台及DevOps平台，以适应本企业各项目组的实际要求，最终形成最佳实践与标准规范。</p>
+<h2 id="5-3-规模化推广阶段"><a href="#5-3-规模化推广阶段" class="headerlink" title="5.3 规模化推广阶段"></a><strong>5.3 规模化推广阶段</strong></h2><p>经过技术推广，验证了Openshfit集群在生产环境承载业务的能力，在本地生产环境部署了双活集群，前端业务流量通过F5负载均衡至两个集群，实现集群层面的高可用性。后续，本集群可以针对灾备要求高的信息系统，部署异地灾备集群。诸如企业级短信发送平台这类高可用要求高，但对数据查询实时性要求不高的系统，可以部署在异地双活的Openshfit集群，数据库分别部署在两地，每日日结后再将当日数据合并至历史库。根据部署类型，本方案中设计的容器云平台，可以支持本地双活、异地灾备、异地双活的多种集群部署场景。</p>
+<p>同时根据企业在上一阶段形成的最佳实践及标准规范，全面推广DevOps体系，项目优先使用DevOps平台全面支撑应用的开发、测试及部署，并建设DevOps体系成熟度评估模型，标准化推广DevOps建设。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/406da41e46f6.html">https://xhua.eu.org/posts/406da41e46f6.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/29c771c693e3.html" title="使用Ansible-Tower与Jenkins集成实现CI-CD"><img class="cover" src="https://img.xhua.eu.org/417cb66870058dd036ecb4dd3a5f72dc88b36b52abfdda5217a1e56abbc6d983.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">使用Ansible-Tower与Jenkins集成实现CI-CD</div></div><div class="info-2"><div class="info-item-1">Ansible Tower是什么？Ansible Tower是一个基于Web的用户界面，提供了IT自动化的企业解决方案。它有一个友好用户的仪表板来管理部署和监控资源。Ansible Tower为Ansible增加自动化，可视化管理和监控能力。 为什么要使用Ansible Tower替换Ansible与Jenkins集成？使用Ansible Tower与Jenkins集成，打开了一个充满可能性的世界。与一篇中介绍的《Ansible与Jenkins集成实现CI&#x2F;CD》进行比较，它可以从Jenkins中删除很多配置，比如部署应用的服务器的访问配置，管理playbook执行，最重要的是，避免在Jenkins端配置SSH密钥，同时Jenkins不需要知道应用程序的部署服务器地址：它可能位于公有云中，物理机中，甚至是笔记本电脑上的虚拟客户端。 把这些配置与过程都放到Ansible Tower中进行集中管理。 Ansible Tower的组件    Credentials: Ansible Tower在运行作业时，访问Tower外部服务或者连接主机时需要进行身份验证。Credenti...</div></div></div></a><a class="pagination-related" href="/posts/d5ac2eba3924.html" title="《大数据时代—生活、工作与思维的大变革》读书笔记"><img class="cover" src="https://img.xhua.eu.org/435d53ac8878c09d82bed3067b66998a61618303c2886097fa91c53c91c6d2d8.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">《大数据时代—生活、工作与思维的大变革》读书笔记</div></div><div class="info-2"><div class="info-item-1">   信息时代的到来，大数据时代为我们探索事物提供了一个非常不同的思路，并且很明显它将会帮助我们发现更多无法想象的问题及解决方法。这不仅仅是将数据量化，更是思维的一次升级。 引言随着信息时代的发展，数据无处不在，并高速爆炸，同时大数据时代正改变我们的思维方式。大数据告诉我们“是什么”而不是“为什么”。人类一直以来探索这个世界都是建立在因果的基础上，看到事务的发生会去思考内在的原因，并从中发现规律，总结经验。也是在这种不断探索，穷追不舍的坚持下，人类发现了现在的很多理论，可以说人类的现文明是建立在不断追问“为什么”的基础上建立起来的。但是大数据时代改变了这一切。我们不必关心A事物与B事物的关系，但是无法数据显示A发生了某变化，B也会跟着发生变化，那我们就可以得到A变B变的结果，而无需去探索为什么，当我们需要B作某些改变时，我们只要改变A就好了。当发现某中水果对治疗癌症有效果的时候，我们又怎么会为了不清楚之间的关联，而拒绝食用该水果呢？我们不再关心为什么，我们关心的是它是什么。相反思考，恰是大数据发现是“是什么”，而让我们有了更准确的思考方向，去探究“为什么”。 第一部分：大数据时代...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a><a class="pagination-related" href="/posts/5c248e2fc353.html" title="使用ArgoCD实现多集群自动部署"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用ArgoCD实现多集群自动部署</div></div><div class="info-2"><div class="info-item-1">什么是Argo CD？Argo CD是用于Kubernetes的声明性GitOps连续交付工具，其优势为：  通过声明式定义应用、配置及环境信息，并且可以通过代码仓库实现版本控制 可通过自动或手动的方式同步应用到配置的期望状态 支持应用在多个环境、多个Kubernetes集群进行统一部署和管理 有UI及CLI多种方式，UI提供应用状态的可观测性，CLI方便与其它持续集成系统对接 支持多种SSO（OIDC，OAuth2，LDAP，SAML 2.0，GitHub，GitLab，Microsoft，LinkedIn） 支持Prometheus监控指标  参考文章https://www.openshift.com/blog/openshift-authentication-integration-with-argocdhttps://www.openshift.com/blog/introduction-to-gitops-with-openshifthttps://argoproj.github.io/argo-cd/ </div></div></div></a><a class="pagination-related" href="/posts/de0ae4c0444d.html" title="快速使用SonarQube对应用进行静态代码扫描"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">快速使用SonarQube对应用进行静态代码扫描</div></div><div class="info-2"><div class="info-item-1">1、启动SonarQube服务 12$ mkdir -p /sonar/&#123;conf,data,extensions&#125;$ docker run -v /sonar/conf:/opt/sonarqube/conf -v /sonar/data:/opt/sonarqube/data -v /sonar/extensions:/opt/sonarqube/extensions -p 9000:9000 xhuaustc/sonarqube:7.9.1 本地目录为~/Downloads/sonar/2、登录SonarQube服务端：http://127.0.0.1:9000/projects，登录用户名：admin，密码：admin3、创建新的项目,获得projectKey与token值4、下载对应版本的sonar scanner工具：SonarScanner下载地址5、请在代码目录中执行扫描工具 123456/xx/bin/sonar-scanner \  -Dsonar.projectKey=test \  -Dsonar.sources=. \  -Dsona...</div></div></div></a><a class="pagination-related" href="/posts/6e5f72fcd352.html" title="Service-iptables实现原理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Service-iptables实现原理</div></div><div class="info-2"><div class="info-item-1"> </div></div></div></a><a class="pagination-related" href="/posts/e9021798429a.html" title="OpenShift上使用NFS作为共享存储的线上问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift上使用NFS作为共享存储的线上问题</div></div><div class="info-2"><div class="info-item-1"> NFS exports文件配置格式&lt;输出目录&gt; [客户端1 选项（访问权限,用户映射,其他）] [客户端2 选项（访问权限,用户映射,其他）] a. 输出目录：输出目录是指NFS系统中需要共享给客户机使用的目录； b. 客户端：客户端是指网络中可以访问这个NFS输出目录的计算机客户端常用的指定方式 指定ip地址的主机：192.168.0.200指定子网中的所有主机：192.168.0.0&#x2F;24 192.168.0.0&#x2F;255.255.255.0指定域名的主机：david.bsmart.cn指定域中的所有主机：.bsmart.cn所有主机： c. 选项：选项用来设置输出目录的访问权限、用户映射等。 NFS主要有3类选项：  访问权限选项  设置输出目录只读：ro设置输出目录读写：rw  用户映射选项all_squash：将远程访问的所有普通用户及所属组都映射为匿名用户或用户组（nfsnobody）；no_all_squash：与all_squash取反（默认设置）；root_squash：将root用户及所属组都映射为匿名用户或用户组（默认设置）；...</div></div></div></a><a class="pagination-related" href="/posts/b6a18d18133d.html" title="Openshif对集群的扩容与缩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshif对集群的扩容与缩容</div></div><div class="info-2"><div class="info-item-1"> Openshift是一个云平台，它是以集群的方式提供服务。前面已经介绍了，业务都跑在Openshift的Node节点上。随着业务的不断变化，扩展或者消亡，我们的Node提供的服务需求也会不断变化。这时就需要对Node节点进行增删管理。 本篇只介绍CentOS7下管理Node节点。 Openshift使用Ansible playbook来实现扩容与缩容  1. oc命令查看当前Node节点的状态1oc get node --show-labels 2. 添加Node节点到已存在的集群 准备好需要添加的主机     节点类型 说明    Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;    设置主机的hostname  1hostnamectl --static set-hostname infra1...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E5%BB%BA%E8%AE%BE%E8%83%8C%E6%99%AF"><span class="toc-text">1 建设背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90"><span class="toc-text">2 需求分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E4%B8%9A%E5%8A%A1%E9%9C%80%E6%B1%82"><span class="toc-text">2.1 业务需求</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-1-%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84-%E6%94%B9%E9%80%A0%E9%9C%80%E6%B1%82"><span class="toc-text">2.1.1 应用架构****改造需求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-2-%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84-%E6%A6%82%E8%A6%81%E8%AE%BE%E8%AE%A1"><span class="toc-text">2.1.2 应用架构****概要设计</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-%E5%BB%BA%E8%AE%BE%E4%BC%81%E4%B8%9A%E7%BA%A7%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0"><span class="toc-text">2.2 建设企业级容器平台</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E5%9F%BA%E4%BA%8E%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E6%9E%84%E5%BB%BADevOps%E4%BD%93%E7%B3%BB"><span class="toc-text">2.3 基于容器平台构建DevOps体系</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84"><span class="toc-text">3 设计架构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E6%95%B4%E4%BD%93%E8%AE%BE%E8%AE%A1"><span class="toc-text">3.1 整体设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1-%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0"><span class="toc-text">3.1.1 容器平台</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-2-DevOps%E6%94%AF%E6%92%91"><span class="toc-text">3.1.2 DevOps支撑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-3-%E8%BF%90%E7%BB%B4%E4%BF%9D%E9%9A%9C"><span class="toc-text">3.1.3 运维保障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E9%9D%9E%E5%8A%9F%E8%83%BD%E6%80%A7%E8%AE%BE%E8%AE%A1"><span class="toc-text">3.2 非功能性设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-1-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7"><span class="toc-text">3.2.1 高可用性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-2-%E6%98%93%E7%94%A8%E6%80%A7"><span class="toc-text">3.2.2 易用性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-3-%E5%AE%89%E5%85%A8%E6%80%A7"><span class="toc-text">3.2.3 安全性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-%E5%85%B3%E9%94%AE%E6%A8%A1%E5%9D%97%E8%AE%BE%E8%AE%A1"><span class="toc-text">3.3 关键模块设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-1-%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0"><span class="toc-text">3.3.1 容器平台</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-1-%E6%9C%8D%E5%8A%A1%E7%BC%96%E6%8E%92%E4%B8%8E%E7%AE%A1%E7%90%86"><span class="toc-text">3.3.1.1 服务编排与管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-2-%E7%BD%91%E7%BB%9C"><span class="toc-text">3.3.1.2 网络</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-3-%E5%AD%98%E5%82%A8"><span class="toc-text">3.3.1.3 存储</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-4-%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93"><span class="toc-text">3.3.1.4 镜像仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-5-%E7%9B%91%E6%8E%A7%E5%91%8A%E8%AD%A6"><span class="toc-text">3.3.1.5 监控告警</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-6-%E6%97%A5%E5%BF%97"><span class="toc-text">3.3.1.6 日志</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-7-%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E9%97%A8%E6%88%B7"><span class="toc-text">3.3.1.7 容器平台门户</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-2-DevOps%E6%94%AF%E6%92%91"><span class="toc-text">3.3.2 DevOps支撑</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-1-%E9%9C%80%E6%B1%82%E7%AE%A1%E7%90%86"><span class="toc-text">3.3.2.1 需求管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-2-%E5%BC%80%E5%8F%91"><span class="toc-text">3.3.2.2 开发</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-3-%E6%B5%8B%E8%AF%95"><span class="toc-text">3.3.2.3 测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-4-%E9%83%A8%E7%BD%B2"><span class="toc-text">3.3.2.4 部署</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-5-%E8%BF%90%E8%90%A5%E7%BB%B4%E6%8A%A4"><span class="toc-text">3.3.2.5 运营维护</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-6-%E5%B9%B3%E5%8F%B0%E5%BA%A6%E9%87%8F"><span class="toc-text">3.3.2.6 平台度量</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-%E8%A7%84%E8%8C%83%E6%8C%87%E5%BC%95"><span class="toc-text">4 规范指引</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-%E4%B8%9A%E5%8A%A1%E8%A7%84%E8%8C%83"><span class="toc-text">4.1 业务规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-1-%E4%B8%9A%E5%8A%A1%E9%9C%80%E6%B1%82%E8%A7%84%E8%8C%83"><span class="toc-text">4.1.1 业务需求规范</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-%E5%BA%94%E7%94%A8%E4%B8%8A%E4%BA%91%E8%AE%BE%E8%AE%A1%E8%A7%84%E8%8C%83"><span class="toc-text">4.2 应用上云设计规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-1-%E5%BA%94%E7%94%A8%E5%AE%B9%E5%99%A8%E5%8C%96%E8%AE%BE%E8%AE%A1%E8%A7%84%E8%8C%83"><span class="toc-text">4.2.1 应用容器化设计规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-2-%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2%E8%A7%84%E8%8C%83"><span class="toc-text">4.2.2 应用部署规范</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-3-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83"><span class="toc-text">4.3 应用开发规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-1-%E6%95%B0%E6%8D%AE%E4%BA%A4%E4%BA%92%E8%A7%84%E8%8C%83"><span class="toc-text">4.3.1 数据交互规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-2-%E5%BA%94%E7%94%A8%E9%95%9C%E5%83%8F%E6%9E%84%E5%BB%BA%E8%A7%84%E8%8C%83"><span class="toc-text">4.3.2 应用镜像构建规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-3-DevOps%E6%8C%87%E5%BC%95"><span class="toc-text">4.3.3 DevOps指引</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-3-1-%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E9%9B%86%E6%88%90"><span class="toc-text">4.3.3.1 开发流程自动集成</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-3-2-%E5%BC%80%E5%8F%91%E6%8F%90%E6%B5%8B%E6%B5%81%E7%A8%8B"><span class="toc-text">4.3.3.2 开发提测流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-3-3-%E9%9B%86%E6%88%90%E6%B5%8B%E8%AF%95%E6%B5%81%E7%A8%8B"><span class="toc-text">4.3.3.3 集成测试流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-3-4-%E7%94%9F%E4%BA%A7%E9%83%A8%E7%BD%B2%E6%B5%81%E7%A8%8B"><span class="toc-text">4.3.3.4 生产部署流程</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-4-%E8%BF%90%E7%BB%B4%E8%A7%84%E8%8C%83"><span class="toc-text">4.4 运维规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-1-%E5%AE%B9%E5%99%A8%E5%B9%B3%E5%8F%B0%E8%BF%90%E7%BB%B4%E8%A7%84%E8%8C%83"><span class="toc-text">4.4.1 容器平台运维规范</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-1-1-%E5%AE%9A%E6%9C%9F%E5%B7%A1%E6%A3%80"><span class="toc-text">4.4.1.1 定期巡检</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-1-2-%E6%89%A9%E5%AE%B9%E8%AF%84%E4%BC%B0"><span class="toc-text">4.4.1.2 扩容评估</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-1-3-%E5%BA%94%E6%80%A5%E9%A2%84%E6%A1%88"><span class="toc-text">4.4.1.3 应急预案</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-2-%E5%BA%94%E7%94%A8%E8%BF%90%E7%BB%B4%E8%A7%84%E8%8C%83"><span class="toc-text">4.4.2 应用运维规范</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-2-1-%E5%BA%94%E7%94%A8%E5%8F%91%E5%B8%83"><span class="toc-text">4.4.2.1 应用发布</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-2-2-%E5%BA%94%E7%94%A8%E5%9B%9E%E9%80%80"><span class="toc-text">4.4.2.2 应用回退</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-2-3-%E5%BA%94%E7%94%A8%E7%9B%91%E6%8E%A7"><span class="toc-text">4.4.2.3 应用监控</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-2-4-%E5%BA%94%E7%94%A8%E4%BC%B8%E7%BC%A9%E7%AE%A1%E7%90%86"><span class="toc-text">4.4.2.4 应用伸缩管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-2-5-%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86"><span class="toc-text">4.4.2.5 日志管理</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-3-%E5%88%B6%E5%93%81%E7%AE%A1%E7%90%86%E8%A7%84%E8%8C%83"><span class="toc-text">4.4.3 制品管理规范</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-3-1-%E9%95%9C%E5%83%8F%E5%87%86%E5%85%A5%E7%AE%A1%E7%90%86"><span class="toc-text">4.4.3.1 镜像准入管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-3-2-%E9%95%9C%E5%83%8F%E5%91%BD%E5%90%8D%E7%AE%A1%E7%90%86"><span class="toc-text">4.4.3.2 镜像命名管理</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-%E5%88%86%E9%98%B6%E6%AE%B5%E5%AE%9E%E6%96%BD%E8%A7%84%E5%88%92"><span class="toc-text">5 分阶段实施规划</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#5-1-%E6%96%B9%E6%A1%88%E9%AA%8C%E8%AF%81%E9%98%B6%E6%AE%B5"><span class="toc-text">5.1 方案验证阶段</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-1-%E5%8A%9F%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="toc-text">5.1.1 功能测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-2-%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="toc-text">5.1.2 压力测试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-2-%E6%8A%80%E6%9C%AF%E6%8E%A8%E5%B9%BF%E9%98%B6%E6%AE%B5"><span class="toc-text">5.2 技术推广阶段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-3-%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8E%A8%E5%B9%BF%E9%98%B6%E6%AE%B5"><span class="toc-text">5.3 规模化推广阶段</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

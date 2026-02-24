@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-云原生容器应用设计原则 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引自：容器化应用的设计原则来源自RedHat云原生容器应用设计原则白皮书 本文来自于Red Hat咨询顾问Bilgin Ibryam所编写的一篇白皮书，名为《PRINCIPLES OF CONTAINER-BASED APPLICATION DESIGN》。这篇文章在作者的Blog上发表后，作者的twitter被Kubernetes官方twitter转发。白皮书在Red Hat官网的下载地址：h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-云原生容器应用设计原则">
+<meta property="og:url" content="https://xhua.eu.org/posts/83a1dcc308fe.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引自：容器化应用的设计原则来源自RedHat云原生容器应用设计原则白皮书 本文来自于Red Hat咨询顾问Bilgin Ibryam所编写的一篇白皮书，名为《PRINCIPLES OF CONTAINER-BASED APPLICATION DESIGN》。这篇文章在作者的Blog上发表后，作者的twitter被Kubernetes官方twitter转发。白皮书在Red Hat官网的下载地址：h">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.636Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-云原生容器应用设计原则",
+  "url": "https://xhua.eu.org/posts/83a1dcc308fe.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.636Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/83a1dcc308fe.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-云原生容器应用设计原则',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-云原生容器应用设计原则</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-云原生容器应用设计原则</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.636Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-ff50eb6f9192a11c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="设计原则"></p>
+<p>引自：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/35131464">容器化应用的设计原则</a><br>来源自<a target="_blank" rel="noopener" href="https://www.redhat.com/en/resources/cloud-native-container-design-whitepaper">RedHat云原生容器应用设计原则白皮书</a></p>
+<p>本文来自于Red Hat咨询顾问Bilgin Ibryam所编写的一篇白皮书，名为《PRINCIPLES OF CONTAINER-BASED APPLICATION DESIGN》。这篇文章在作者的Blog上发表后，作者的twitter被Kubernetes官方twitter转发。白皮书在Red Hat官网的下载地址：<a target="_blank" rel="noopener" href="https://www.redhat.com/en/resources/cloud-native-container-design-whitepaper">https://www.redhat.com/en/resources/cloud-native-container-design-whitepaper</a> 文本是对这篇文章的学习和整理。</p>
+<ol>
+<li>先回顾经典的软件设计原则：</li>
+</ol>
+<ul>
+<li>保持简单，愚蠢（KISS）</li>
+<li>不要重复自己（DRY）</li>
+<li>你不会需要它 （YAGNI）</li>
+<li>关注点分离（SoC）</li>
+<li>Single responsibility, Open&#x2F;closed, Liskov substitution, Interface segregation, Dependency inversion （SOLID）</li>
+</ul>
+<ol start="2">
+<li>然后是Red Hat的云原生容器设计原则：</li>
+</ol>
+<ul>
+<li>唯一关注性原则（SCP）</li>
+<li>高度可观测性原则（HOP）</li>
+<li>生命周期一致性原则（LCP）</li>
+<li>镜像不可变性原则（IIP）</li>
+<li>进程可处置性原则（PDP）</li>
+<li>自包含性原则（S-CP）</li>
+<li>运行时约束性原则（RCP）</li>
+</ul>
+<p>很多组织都理解云原生的重要性和必要性，但是并不知道从哪里开始。那么请确保：云原生平台和容器化应用能无缝的运行在一起，并且具备抵御故障的能力，甚至在底层的基础架构出现宕机的时候，也能通过过弹性扩展的方式表现出可靠性。本文描述了容器化应用时需要遵循的基本准则，实施这些原则有助于使之与云原生平台Kubernetes更加适配。</p>
+<h2 id="唯一关注性原则-SINGLE-CONCERN-PRINCIPLE（SCP）"><a href="#唯一关注性原则-SINGLE-CONCERN-PRINCIPLE（SCP）" class="headerlink" title="唯一关注性原则 SINGLE CONCERN PRINCIPLE（SCP）"></a>唯一关注性原则 SINGLE CONCERN PRINCIPLE（SCP）</h2><p>在许多方面，唯一关注性原则与来自SOLID的SRP是类似的，它建议一个类应该只有一个责任。SRP背后的动机是每个责任是变更的一个轴心，一个类应该有，且也只有一个需要改变的理由。SCP原则中的“关注”一词强调关注是一种更高层次的抽象的责任，而且它更好地将范围描述为一个容器而不是一个类。虽然SRP的主要动机是变化原因的唯一性，而SCP的主要动机是容器镜像重用和可替换性。如果你创建一个解决单个问题的容器，并且以功能完整的方式来实现，不同应用程序中的容器镜像重用的可能性就会更高。</p>
+<p>因此，SCP原则规定每个集容器都应该解决一个问题，并做得很好。 实现这一点，通常比在面向对象的世界中实现SRP更容易，容器通常管理的一个单一的进程，大多数情况下一个进程解决一个问题。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-2f49098815a15a25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="image.png"></p>
+<p>如果你的容器化微服务需要解决多个问题，它可以使用这样的模式，将多个容器用sidecar和init-containers的模式合并成一个部署单元（pod），这样每个容器仍然是处理单个问题。同样，您可以替换处理同样问题的容器。 例如，将Web服务器容器或队列实现容器，更新为更具可扩展性的容器。</p>
+<h2 id="高度可观测性原则-HIGH-OBSERVABILITY-PRINCIPLE（HOP）"><a href="#高度可观测性原则-HIGH-OBSERVABILITY-PRINCIPLE（HOP）" class="headerlink" title="高度可观测性原则 HIGH OBSERVABILITY PRINCIPLE（HOP）"></a>高度可观测性原则 HIGH OBSERVABILITY PRINCIPLE（HOP）</h2><p>容器提供了一种统一的方式来打包和运行应用程序，将它们视为一个黑盒子对象。 但任何旨在成为云原生公民的容器都必须提供API支持，要为运行时环境编写接口（API），以观察容器的健康状况和行为。 这是自动化容器更新和生命周期回收的基本先决条件和统一的方式，从而提高系统的弹性和用户体验。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-15c6782b9b825ece.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>实际上，您的容器化应用程序必须至少为其提供不同类型的健康检查的API–活动和就绪等状态。更好的应用程序的行为则必须提供其他手段来观察容器化应用程序的状态。应用程序应该将重要事件记录到标准错误（STDERR）和标准输出（STDOUT）中，从而通过统一的日志聚合工具（诸如Fluentd和Logstash之类的工具）进行分析，并与跟踪和指标收集库相结合，例如OpenTracing，Prometheus等。</p>
+<p>将您的应用程序视为黑盒子，但实施所有必要的API以帮助平台对其进行观测，并以最佳方式管理您的应用程序。</p>
+<h2 id="生命周期一致性原则-LIFE-CYCLE-CONFORMANCE-PRINCIPLE（LCP）"><a href="#生命周期一致性原则-LIFE-CYCLE-CONFORMANCE-PRINCIPLE（LCP）" class="headerlink" title="生命周期一致性原则 LIFE-CYCLE CONFORMANCE PRINCIPLE（LCP）"></a>生命周期一致性原则 LIFE-CYCLE CONFORMANCE PRINCIPLE（LCP）</h2><p>HOP规定了你的容器提供供平台观测的API。 LCP则规定：您的应用程序有办法读取来自平台的事件。 此外，除了获得事件以外，容器还应该对这些事件相应地作出反应。这就是此原则名字由来。这几乎就像在应用程序通过一个“写入API”与平台进行交互。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-48a0ca7b4069080e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>来自管理平台的各种事件都是为了帮助您管理您的容器的生命周期的。决定处理哪些事件取决于您的应用程序 以及是否对这些事件做出反应。</p>
+<p>但有些事件比其他事件更重要。例如，任何需要一个干净的关闭进程，这就需要捕获信号：终止（SIGTERM）消息，并尽可能迅速关闭。 这是为了避免通过强制关闭信号：kill（SIGKILL），之后跟随一个SIGTERM。</p>
+<p>还有其他事件，例如PostStart和PreStop，可能对您的应用程序生命周期管理也非常重要。 例如，某些应用程序需要在服务之前进行预热请求和一些需要在关闭干净之前释放资源。</p>
+<h2 id="镜像不可变性原则-IMAGE-IMMUTABILITY-PRINCIPLE（IIP）"><a href="#镜像不可变性原则-IMAGE-IMMUTABILITY-PRINCIPLE（IIP）" class="headerlink" title="镜像不可变性原则 IMAGE IMMUTABILITY PRINCIPLE（IIP）"></a>镜像不可变性原则 IMAGE IMMUTABILITY PRINCIPLE（IIP）</h2><p>IMAGE IMMUTABILITY PRINCIPLE（IIP）容器化的应用程序是不可变更的，镜像一旦完成了构建，预计在不同的环境中运行都不会改变。这意味着在因外部环境的不同，在需要的时候需要使用外部手法处理所依赖的外部配置数据，而不是每个环境修改或者构建不同的容器。而容器应用程序中的任何变更，都应该因此触发构建新的容器映像，并在所有环境中重用它。相同于这个原理的，不可变服务器和不可变基础架构的概念也很受欢迎，并且对于服务器&#x2F;主机管理也是如此。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-a1cd6ab5f0b01dca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>在遵循IIP原则的情况下，应该防止为不同的环境创建相似的容器镜像，要始终坚持为所有环境只配置一个容器映像。 这个原则允许在应用程序更新期间，采用自动回滚和前滚等做法，这是云原生自动化的重要方面。</p>
+<h2 id="进程可处置性原则-PROCESS-DISPOSABILITY-PRINCIPLE（PDP）"><a href="#进程可处置性原则-PROCESS-DISPOSABILITY-PRINCIPLE（PDP）" class="headerlink" title="进程可处置性原则 PROCESS DISPOSABILITY PRINCIPLE（PDP）"></a>进程可处置性原则 PROCESS DISPOSABILITY PRINCIPLE（PDP）</h2><p>迁移到容器应用程序的主要动机之一是：容器需要尽可能做到临时性，并做好在任何时候被另一个容器实例替换的准备。需要更换容器的原因有很多，比如：健康检查失败、缩容、应用程序将容器迁移到不同的主机，平台资源匮乏或其它的问题。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-f1fc3cff843fe04f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>这意味着容器化的应用程序必须保持其状态为向外扩展的或分布式和冗余的。这也意味着应用程序应该快速启动和关闭，甚至为彻底的硬件故障做好准备。 实施这一原则的另一个有用的做法是创建小容器。 容器在云原生环境可以自动调度并在不同的主机上启动。较小的容器可以实现更快启动时间，因为在重新启动之前容器镜像需要被物理地复制到主机系统。</p>
+<h2 id="自包含性原则-SELF-CONTAINMENT-PRINCIPLE（S-CP）"><a href="#自包含性原则-SELF-CONTAINMENT-PRINCIPLE（S-CP）" class="headerlink" title="自包含性原则 SELF-CONTAINMENT PRINCIPLE（S-CP）"></a>自包含性原则 SELF-CONTAINMENT PRINCIPLE（S-CP）</h2><p>这个原则规定一个容器应该在构建时包含所有需要的东西。容器的存在应该仅仅依赖于Linux®内核，在并添加相关额外的库，在容器构建时加入它们。除了库之外，它还应该包含语言运行时，应用程序平台（如果需要），以及运行所需的其他依赖关系，等运行容器化应用所需要的诸如此类的东西。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-880ca01107f44f9e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>唯一的例外是：由于不同环境之间差异，并且只能在运行时提供的配置; 例如，通过Kubernetes提供的ConfigMap。</p>
+<p>某些应用程序由多个容器组件组成。 例如，容器化的Web应用程序也可能需要数据库容器。 根据这个原则，并不建议合并两个容器。相反，它建议的是数据库容器只包含运行数据库所需的所有内容，Web应用程序容器只包含运行Web应用程序所需的所有内容，如Web服务器。 在运行时，Web应用程序容器将根据需要依赖于并访问数据库容器。</p>
+<h2 id="运行时约束性原则-RUNTIME-CONFINEMENT-PRINCIPLE（RCP）"><a href="#运行时约束性原则-RUNTIME-CONFINEMENT-PRINCIPLE（RCP）" class="headerlink" title="运行时约束性原则 RUNTIME CONFINEMENT PRINCIPLE（RCP）"></a>运行时约束性原则 RUNTIME CONFINEMENT PRINCIPLE（RCP）</h2><p>S-CP从构建时的角度查看容器，并关注于生成的二进制文件及其内容。但是容器不仅仅是磁盘上一个只有尺寸大小的单一维度的黑盒子。 容器运行时有多个维度，例如内存使用维度，CPU使用维度等资源消耗维度。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-2174cfbc8d165b83.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>这个RCP原则建议每个容器申报资源需求，并发送信息到平台。它应该分享容器的资源配置文件，从CPU，内存，网络，磁盘的角度声明。这影响到平台如何执行调度，自动扩展，容量 管理以及容器常规的服务级别协议（SLA）等。</p>
+<p>除了向平台声明容器的资源需求之外，还有一点也很重要， 应用被约束在使用所声明的资源需求内。如果应用程序对资源的使用保持在约束的范围内，则当资源匮乏发生时，平台不太可能将其终止和迁移。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>云原生不仅仅是一种最终状态 - 它也是一种工作方式。 本份白皮书描述了一系列容器应用的基本原则，必须遵守才能成为优秀的云原生公民。</p>
+<p>除了这些原则之外，创建良好的容器应用程序还需要熟悉其他容器相关的最佳实践和技术。 尽管上述原则非常根本，适用于大多数用例，下面列出的最佳实践在应用和不应用的时候，则需要判断力。以下是一些与容器相关的更常见的最佳实践：</p>
+<ul>
+<li>镜像要尽可能的小。 通过清理临时文件，并避免安装不必要的软件包来构建小尺寸镜像。 这减少了容器的尺寸，构建时间和复制容器镜像的网络传输时间。</li>
+<li>支持任意用户ID。 避免使用sudo命令或要求特定用户名运行你的容器。</li>
+<li>标记重要的端口。 虽然可以在运行时指定端口号，然而使用EXPOSE命令在运行的时候指定，则可以让镜像的使用者更轻松。</li>
+<li>为持久数据使用卷。 在容器摧毁之后还需要保存的容器数据的，必须将数据写入一个数据卷。</li>
+<li>设置镜像元数据。 以标签和注释形式存在的镜像元数据可以使您的容器镜像更加实用，从而为使用您的容器的开发人员提供了更好的体验。<br>使主机和镜像同步。 一些容器应用需要容器在某些属性（如时间和机器ID）上与主机同步。</li>
+</ul>
+<p>这里是指向各种模式和最佳实践的资源的链接，以帮助您能有效地实现上述目标：</p>
+<p>• <a target="_blank" rel="noopener" href="https://www.slideshare.net/luebken/container-patterns">https://www.slideshare.net/luebken/container-patterns</a><br>• <a target="_blank" rel="noopener" href="https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices">https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices</a><br>• <a target="_blank" rel="noopener" href="http://docs.projectatomic.io/container-best-practices">http://docs.projectatomic.io/container-best-practices</a><br>• <a target="_blank" rel="noopener" href="https://docs.openshift.com/enterprise/3.0/creating_images/guidelines.html">https://docs.openshift.com/enterprise/3.0/creating_images/guidelines.html</a><br>• <a target="_blank" rel="noopener" href="https://www.usenix.org/system/files/conference/hotcloud16/hotcloud16_burns.pdf">https://www.usenix.org/system/files/conference/hotcloud16/hotcloud16_burns.pdf</a><br>• <a target="_blank" rel="noopener" href="https://leanpub.com/k8spatterns/">https://leanpub.com/k8spatterns/</a><br>• <a target="_blank" rel="noopener" href="https://12factor.net/">https://12factor.net</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/83a1dcc308fe.html">https://xhua.eu.org/posts/83a1dcc308fe.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/67c1601a81ee.html" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a><a class="pagination-related" href="/posts/fef1f9cfd255.html" title="OpenShift-Service的域名"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-Service的域名</div></div><div class="info-2"><div class="info-item-1"> 正常情况下Service的域名格式为：service-name.project-name.svc.cluster.local对应的IP是Service Cluster IP 设置Service的clusterIP&#x3D;NoneService的域名格式为：service-name.project-name.svc.cluster.local对应的IP是后台对应的Pod的容器的IP同时后台对应的Pod都有DNS记录，格式为Pod-name.service-name.project-name.svc.cluster.local  </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/5c248e2fc353.html" title="使用ArgoCD实现多集群自动部署"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">使用ArgoCD实现多集群自动部署</div></div><div class="info-2"><div class="info-item-1">什么是Argo CD？Argo CD是用于Kubernetes的声明性GitOps连续交付工具，其优势为：  通过声明式定义应用、配置及环境信息，并且可以通过代码仓库实现版本控制 可通过自动或手动的方式同步应用到配置的期望状态 支持应用在多个环境、多个Kubernetes集群进行统一部署和管理 有UI及CLI多种方式，UI提供应用状态的可观测性，CLI方便与其它持续集成系统对接 支持多种SSO（OIDC，OAuth2，LDAP，SAML 2.0，GitHub，GitLab，Microsoft，LinkedIn） 支持Prometheus监控指标  参考文章https://www.openshift.com/blog/openshift-authentication-integration-with-argocdhttps://www.openshift.com/blog/introduction-to-gitops-with-openshifthttps://argoproj.github.io/argo-cd/ </div></div></div></a><a class="pagination-related" href="/posts/d5eceb7414d3.html" title="Openshift-GitLab安装及使用Nodeport支持ssh访问"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-GitLab安装及使用Nodeport支持ssh访问</div></div><div class="info-2"><div class="info-item-1"> 部署Gitlab 创建gitlab项目  1oc new-project gitlab  创建cicd serviceaccount  1$ oc create serviceaccount cicd -n gitlab  导入Gitlab模板  12wget https://gitee.com/xhua/OpenshiftOneClick/raw/3.11/openshift-templates/gitlab-template.yamloc create -f openshift-template.json -n openshift  创建持久化存储（如果没有pv的情况下）  123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384$ cat gitlab-pv.yamlapiVersion: v1items:- ap...</div></div></div></a><a class="pagination-related" href="/posts/e6f145ab3bbb.html" title="Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储"><img class="cover" src="https://img.xhua.eu.org/4328c75cf6fc869f4b312ec595d7c5ea52567c3ba061d57733a7ddb5f01cbf25.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储</div></div><div class="info-2"><div class="info-item-1">Ceph分布式块存储部署机器列表   名称 核数 内存 ip hostname 外挂磁盘大小（G）    管理节点admin 2 4 192.168.1.2 admin.ceph.com    监控节点monitor 2 4 192.168.1.3 monitor.ceph.com    存储节点node1 2 4 192.168.1.4 node1.ceph.com 100G   存储节点node2 2 4 192.168.1.5 node2.ceph.com 100G   部署Ceph RBD 1、给每台机器设置hostname  12345# 设置hostname  hostnamectl --static set-hostname admin.ceph.com   #192.168.1.2 hostnamectl --static set-hostname monitor.ceph.com #192.168.1.3 hostnamectl --static set-hostname node1.ceph.com   #192.168.1.4 hostnamectl --s...</div></div></div></a><a class="pagination-related" href="/posts/b6a18d18133d.html" title="Openshif对集群的扩容与缩容"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshif对集群的扩容与缩容</div></div><div class="info-2"><div class="info-item-1"> Openshift是一个云平台，它是以集群的方式提供服务。前面已经介绍了，业务都跑在Openshift的Node节点上。随着业务的不断变化，扩展或者消亡，我们的Node提供的服务需求也会不断变化。这时就需要对Node节点进行增删管理。 本篇只介绍CentOS7下管理Node节点。 Openshift使用Ansible playbook来实现扩容与缩容  1. oc命令查看当前Node节点的状态1oc get node --show-labels 2. 添加Node节点到已存在的集群 准备好需要添加的主机     节点类型 说明    Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;    设置主机的hostname  1hostnamectl --static set-hostname infra1...</div></div></div></a><a class="pagination-related" href="/posts/4f92c76453ff.html" title="通过curl访问OpenShift上部署的Prometheus获取监控数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">通过curl访问OpenShift上部署的Prometheus获取监控数据</div></div><div class="info-2"><div class="info-item-1"> Prometheus作为最常用的集群的监控组件，它收集了集群最全的状态信息。那么当我们需要将它与现有的监控告警平台打通，或者根据它开发一个自己的监控展示平台时，就不得不需要获得Prometheus的监控数据了。这时就不得不访问Prometheus的API接口。根据场景的不同有两种方式能够获取到Prometheus的数据  集群外部，通过访问Prometheus UI的链接来获取指标数据 集群内部，进入Prometheus容器中，获取指标数据  1. 集群外部，curl访问Prometheus UI地址由于OpenShift上部署的Prometheus应用对接了OpenShift的用户认证oauth-proxy，所以必须先获取用户的Token后再通过curl访问prometheus服务获取数据，具体操作如下。 123456789101112# #登录[root@master ~]# oc login -u adminAuthentication required for https://master.example.com:8443 (openshift)Username: ad...</div></div></div></a><a class="pagination-related" href="/posts/dbbeaaab9bb5.html" title="OpenShift用户与组的管理功能如何在Kubernetes上实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift用户与组的管理功能如何在Kubernetes上实现</div></div><div class="info-2"><div class="info-item-1"> OpenShift中有用户及组的概念，并且提供了User与Group资源类型，可以非常方便地为OpenShift集群创建用户，创建组，以组给用户进行组管理，并授权。这也大大方便了集群账号的管理与权限的控制。 12345[openshift@master01 ~] oc create user dev-user # 创建用户dev-user[openshift@master01 ~] oc adm groups new my-group # 创建组my-group[openshift@master01 ~] oc adm groups new my-group dev-user # 创建组my-group，并添加dev-user到该组[openshift@master01 ~] oc adm groups add-users my-group dev-user # 为组my-group添加用户dev-user[openshift@master01 ~] oc adm groups remove-users my-group dev-user # 将用户dev-user从my-gr...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%94%AF%E4%B8%80%E5%85%B3%E6%B3%A8%E6%80%A7%E5%8E%9F%E5%88%99-SINGLE-CONCERN-PRINCIPLE%EF%BC%88SCP%EF%BC%89"><span class="toc-text">唯一关注性原则 SINGLE CONCERN PRINCIPLE（SCP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E5%BA%A6%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E5%8E%9F%E5%88%99-HIGH-OBSERVABILITY-PRINCIPLE%EF%BC%88HOP%EF%BC%89"><span class="toc-text">高度可观测性原则 HIGH OBSERVABILITY PRINCIPLE（HOP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8E%9F%E5%88%99-LIFE-CYCLE-CONFORMANCE-PRINCIPLE%EF%BC%88LCP%EF%BC%89"><span class="toc-text">生命周期一致性原则 LIFE-CYCLE CONFORMANCE PRINCIPLE（LCP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%95%9C%E5%83%8F%E4%B8%8D%E5%8F%AF%E5%8F%98%E6%80%A7%E5%8E%9F%E5%88%99-IMAGE-IMMUTABILITY-PRINCIPLE%EF%BC%88IIP%EF%BC%89"><span class="toc-text">镜像不可变性原则 IMAGE IMMUTABILITY PRINCIPLE（IIP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E5%8F%AF%E5%A4%84%E7%BD%AE%E6%80%A7%E5%8E%9F%E5%88%99-PROCESS-DISPOSABILITY-PRINCIPLE%EF%BC%88PDP%EF%BC%89"><span class="toc-text">进程可处置性原则 PROCESS DISPOSABILITY PRINCIPLE（PDP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8C%85%E5%90%AB%E6%80%A7%E5%8E%9F%E5%88%99-SELF-CONTAINMENT-PRINCIPLE%EF%BC%88S-CP%EF%BC%89"><span class="toc-text">自包含性原则 SELF-CONTAINMENT PRINCIPLE（S-CP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E7%BA%A6%E6%9D%9F%E6%80%A7%E5%8E%9F%E5%88%99-RUNTIME-CONFINEMENT-PRINCIPLE%EF%BC%88RCP%EF%BC%89"><span class="toc-text">运行时约束性原则 RUNTIME CONFINEMENT PRINCIPLE（RCP）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA"><span class="toc-text">结论</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

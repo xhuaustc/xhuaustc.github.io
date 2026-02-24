@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>对文件目录设置acl权限 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。 为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。 以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限 setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名 如果想要一次设置可以添加 -R 参数 递归设置整个目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对文件目录设置acl权限">
+<meta property="og:url" content="https://xhua.eu.org/posts/da2b64a21883.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。 为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。 以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限 setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名 如果想要一次设置可以添加 -R 参数 递归设置整个目">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.644Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "对文件目录设置acl权限",
+  "url": "https://xhua.eu.org/posts/da2b64a21883.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.644Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/da2b64a21883.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '对文件目录设置acl权限',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">对文件目录设置acl权限</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">对文件目录设置acl权限</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.644Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。</p>
+<p>为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。</p>
+<p>以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限</p>
+<p>setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名</p>
+<p>如果想要一次设置可以添加 -R 参数 递归设置整个目录，以及整个目录下的所有文件</p>
+<p>setfacl -R -m u:user:r– &#x2F;目录名&#x2F;</p>
+<p>这样就可以保证某个特殊普通用户对这个目录有可读权限</p>
+<p>如果这个目录需要 user 用户可以 cd 进入的话，设置时可以增加大写 X 参数，设置 acl 的时候，大写 X 表示遇到目录给执行权限，遇到文件对象不给执行权限</p>
+<p>setfacl -m u:user:r-X &#x2F;目录名&#x2F;<br>setfacl -m u:user:r-X &#x2F;目录名&#x2F;文件名</p>
+<p>这样设置，可以让 user 用户能 cd 进入特殊目录</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/da2b64a21883.html">https://xhua.eu.org/posts/da2b64a21883.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/10615d84af1c.html" title="应用日志方案"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">应用日志方案</div></div><div class="info-2"><div class="info-item-1">    原生方式 DaemonSet方式 Sidecar方式    集日志类型 标准输出 标准输出 文件   部署运维 低，原生支持 一般，需维护DaemonSet 较高，需要为每个容器采集日志的   日志分类存储 无法实现 可通过容器、路径映射实现 每个Pod可单独配置，灵活性高   支持集群规模 本地存储无限制，若使用syslog&#x2F;fluentd会有单点限制 取决于配置数 无限制   资源占用 低，docker引擎提供 较低，每个节点运行一个容器 较高，每个Pod运行一个容器   查询便捷性 低，grep原始日志 较高，自定义查询、统计 高，根据业务特点定制   适用场景 测试、POC等非生产环境 日志分类明确的集群 大型、混合型集群   </div></div></div></a><a class="pagination-related" href="/posts/deeb75ddf0c6.html" title="容器平台武林盟主争夺大战"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">容器平台武林盟主争夺大战</div></div><div class="info-2"><div class="info-item-1"> 容器技术是继虚拟化技术后又一革命性的后台技术，厂商为了争夺容器PaaS的话语权，必将发起一场声势浩大的战争。谁也没想到挑起这场革命性战争的竟然是一家仅3年的创业公司——dotCloud。 2013年前：大战前夕——一片祥和 虚拟化技术已经深入人心，以aws与openstack为主的云平台已经非常成熟。 PaaS理念也得到了普及，cloud foundry成为当时PaaS的标准 cloud foundry吸引了包括百度、京东、华为、IBM 等一大批国内外技术厂商，开启了以开源 PaaS 为核心构建平台层服务能力的变革。“PaaS 的时代就要来了！”   PaaS公司有：Cloud foundry、Heroku、Pivotal、Red Hat PaaS 项目被大家接纳的一个主要原因，就是它提供了一种名叫“应用托管”的能力。  2013年容器武林大战——一鸣惊人  2013年3月：一家创业公司dotCloud开源了它的产品Docker，解决应用构建、分发与发布的问题，它的最大改进是引入了镜像构建。  Cloud Foundry 的首席产品经理 James Bayer 做了一次详细对比...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/f8319a6131a9.html" title="Kubefwd——Openshift-K8S-本地开发的福音"><img class="cover" src="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubefwd——Openshift-K8S-本地开发的福音</div></div><div class="info-2"><div class="info-item-1">小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不起的吧。我回复道：“openshift 的 port-forward，再加个自动更新本地 hosts 文件”。小志发来了 kubefwd 请求流向图。  服务 api 与服务 auth 提供的都是 80 端口，但是它们能够同时被本地访问，这是 port-forward 无法做到的！我意识到这个工具很不简单，刚才的想法太草率了。我马上回复：“我刚才理解得不对，它可以做到一个 port 对应多个 service！”此刻的心情其实已经非常激动了，因为意识到 kubefwd 这个工具也许解决了困扰我多天的问题。  近一周一直在脑中徘徊的是徐磊老师介绍微软的 TFS 时的演示：开发人员本地修改代码...</div></div></div></a><a class="pagination-related" href="/posts/dbbeaaab9bb5.html" title="OpenShift用户与组的管理功能如何在Kubernetes上实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift用户与组的管理功能如何在Kubernetes上实现</div></div><div class="info-2"><div class="info-item-1"> OpenShift中有用户及组的概念，并且提供了User与Group资源类型，可以非常方便地为OpenShift集群创建用户，创建组，以组给用户进行组管理，并授权。这也大大方便了集群账号的管理与权限的控制。 12345[openshift@master01 ~] oc create user dev-user # 创建用户dev-user[openshift@master01 ~] oc adm groups new my-group # 创建组my-group[openshift@master01 ~] oc adm groups new my-group dev-user # 创建组my-group，并添加dev-user到该组[openshift@master01 ~] oc adm groups add-users my-group dev-user # 为组my-group添加用户dev-user[openshift@master01 ~] oc adm groups remove-users my-group dev-user # 将用户dev-user从my-gr...</div></div></div></a><a class="pagination-related" href="/posts/35c6bb7f80fa.html" title="Docker安装镜像仓库的三种方法"><img class="cover" src="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker安装镜像仓库的三种方法</div></div><div class="info-2"><div class="info-item-1">一、docker-distribution 安装docker-distribution软件  1yum install docker-distribution  配置registry&#x2F;config.yml文件  123456789101112# /etc/docker-distribution/registry/config.ymlversion: 0.1log:fields:service: registrystorage:cache:layerinfo: inmemoryfilesystem:rootdirectory: /var/lib/registryhttp:addr: :5000  启动docker-distribution服务  12systemctl start docker-distributionsystemctl enable docker-distribution 运维 二、运行容器registry直接运行docker run 12docker run -d -p 5000:5000 -v /data/registry:/var/lib/regi...</div></div></div></a><a class="pagination-related" href="/posts/f7e207fa4001.html" title="OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程"><img class="cover" src="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</div></div><div class="info-2"><div class="info-item-1">问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从etcd集群剥离；二、将恢复的新的etcd节点添加到etcd集群。具体步骤如下：  查看etcd状态  1234$ etcdctl2 cluster-health$ ## 获取问题节点的member ID$ etcdctl2 member remove  &lt;member ID&gt;$ ## 将问题etcd服务从etcd集群中删除  停止问题节点上的etcd服务  12$ mkdir -p /etc/origin/node/pods-stopped$ mv /etc/origin/node/pods/* /etc/origin/node/pods-stopped/  删除问题节点上的...</div></div></div></a><a class="pagination-related" href="/posts/16a234e5e16a.html" title="OpenShift之应用环境变量篇"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift之应用环境变量篇</div></div><div class="info-2"><div class="info-item-1">通过环境变量向容器暴露 Pod 信息 </div></div></div></a><a class="pagination-related" href="/posts/863aac1da72a.html" title="OpenShift-Route会话保持与负载均衡策略"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route会话保持与负载均衡策略</div></div><div class="info-2"><div class="info-item-1">Route会话保持OpenShift Router是基于Haproxy反向代理实现的，客户端请求与后端应用POD通过cookie来实现会话保持。  默认是开启会话保持的，基于cookie的会话保持。 如果设置haproxy.router.openshift.io/disable_cookies为True，将会禁用基于cookie的会话保持，而使用balance的负载策略。  此过程分为两个阶段：第一次请求阶段、再次发起请求阶段 第一次请求阶段客户端发起第一次请求时，Router会给返回的数据中添加一条指定的cookie。  客户端请求到达Router节点。 Router节点通过默认的负载均衡策略选择后端应用POD。 后端应用POD返回数据到Router节点。 Router根据后端应用POD,给返回的数据包set-cookie: cookiename[HASH值]&#x3D;cookievalue(HASH值），有效期为SESSION(浏览器客户端关闭前有效)。  再次发起请求阶段客户端再次发起请求时，会带上第一次Router设置的cookie,Router根据该cookie值选择...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解">OpenClaw：开源AI代理与技能生态系统详解</a><time datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

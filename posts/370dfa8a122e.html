@@ -1,0 +1,262 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift使用MetalLB，打开了Service通向外界的大门 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="#背景在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。  Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。 NodePort：在私有集群中也常用来暴露服务，但是它必须使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift使用MetalLB，打开了Service通向外界的大门">
+<meta property="og:url" content="https://xhua.eu.org/posts/370dfa8a122e.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="#背景在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。  Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。 NodePort：在私有集群中也常用来暴露服务，但是它必须使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.637Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift使用MetalLB，打开了Service通向外界的大门",
+  "url": "https://xhua.eu.org/posts/370dfa8a122e.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.637Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/370dfa8a122e.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift使用MetalLB，打开了Service通向外界的大门',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift使用MetalLB，打开了Service通向外界的大门</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift使用MetalLB，打开了Service通向外界的大门</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.637Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-a8753cd21ceaccfd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1024" alt="MetalLB + OpenShift"></p>
+<p>#背景<br>在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。</p>
+<ul>
+<li>Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。</li>
+<li>NodePort：在私有集群中也常用来暴露服务，但是它必须使用30000以上的端口，数量有限，不便于管理，而且对于一些特殊的服务，如DNS，必须使用小端口号，那么使用NodePort则无法满足。</li>
+<li>HostNetwork：对于集群中的一些特殊服务使用该方式，它将容器与宿主机的网络绑定，如OpenShift中的Router服务就是使用HostNetwork与Router节点绑定。它的缺点是pod必须与主机绑定，同时每个Node上只能运行一个Pod实例，因为端口无法被复用。</li>
+<li>HostPort：与HostNetwork类似，将Pod指定的端口与Node对应的端口绑定。</li>
+<li>LoadBalancer：一般只在公有云平台使用，可以使Service获得与主机同一平面的IP，方便对服务进行控制与对外输出。缺点是依赖于公有云平台。</li>
+</ul>
+<p>从上可看出对于HTTP服务使用Route可以很方便地对外提供服务，而对于TCP&#x2F;UDP服务比较好的方式是使用LoadBalancer（当然HTTP服务也方便使用该方式），但是它依赖于云平台，有没有一种方式能够帮助集群在非IaaS平台上使用LoadBalancer方式呢？答案是有的，那就是Google的项目MetalLB。</p>
+<h1 id="什么是MetalLB"><a href="#什么是MetalLB" class="headerlink" title="什么是MetalLB"></a>什么是MetalLB</h1><p>MetalLB的官方地址：<a target="_blank" rel="noopener" href="https://metallb.universe.tf/">https://metallb.universe.tf/</a><br>MetalLB是使用标准路由协议的裸机Kubernetes&#x2F;OpenShift集群的软负载均衡器，可以在物理机环境下实现对Service服务分配IP。</p>
+<h3 id="MetalLB支持两种申明模式："><a href="#MetalLB支持两种申明模式：" class="headerlink" title="MetalLB支持两种申明模式："></a>MetalLB支持两种申明模式：</h3><blockquote>
+<ol>
+<li>Layer 2模式：ARP&#x2F;NDP</li>
+</ol>
+</blockquote>
+<p>Layer 2模式下，每个service会有集群中的一个node来负责。当服务客户端发起ARP解析的时候，对应的node会响应该ARP请求，之后，该service的流量都会指向该node（看上去该node上有多个地址）。</p>
+<p>Layer 2模式并不是真正的负载均衡，因为流量都会先经过1个node后，再通过kube-proxy转给多个end points。如果该node故障，MetalLB会迁移 IP到另一个node，并重新发送免费ARP告知客户端迁移。现代操作系统基本都能正确处理免费ARP，因此failover不会产生太大问题。</p>
+<p>Layer 2模式更为通用，不需要用户有额外的设备；但由于Layer 2模式使用ARP&#x2F;ND，地址池分配需要跟客户端在同一子网，地址分配略为繁琐。同时Layer 2模式所有流量会进入到一个Node，该Node的带宽可能会成为一个网络瓶颈。</p>
+<blockquote>
+<ol start="2">
+<li>BGP模式。</li>
+</ol>
+</blockquote>
+<p>BGP模式下，集群中所有node都会跟上联路由器建立BGP连接，并且会告知路由器应该如何转发service的流量。</p>
+<p>BGP模式是真正的LoadBalancer。</p>
+<h3 id="MetalLB由两个组件组成："><a href="#MetalLB由两个组件组成：" class="headerlink" title="MetalLB由两个组件组成："></a>MetalLB由两个组件组成：</h3><ol>
+<li>controller，负责IP地址的分配，以及service和endpoint的监听。</li>
+<li>speaker，负责保证service地址可达，例如Layer 2模式下，speaker会负责ARP请求应答。</li>
+</ol>
+<h1 id="部署MetalLB"><a href="#部署MetalLB" class="headerlink" title="部署MetalLB"></a>部署MetalLB</h1><h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><ol>
+<li>安装metalLB相关的应用</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.1/manifests/metallb.yaml</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>创建configmap配置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># cat &lt;&lt; EOF | kubectl apply -f -</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  namespace: metallb-system</span><br><span class="line">  name: config</span><br><span class="line">data:</span><br><span class="line">  config: |</span><br><span class="line">    address-pools:</span><br><span class="line">    - name: default</span><br><span class="line">      protocol: layer2</span><br><span class="line">      addresses:</span><br><span class="line">      - 192.168.1.240-192.168.1.250</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<h2 id="OpenShift"><a href="#OpenShift" class="headerlink" title="OpenShift"></a>OpenShift</h2><ol>
+<li>关闭OpenShift自带的LoadBalancer功能，这一步很重要，否则会跟<br><strong><code>删除</code></strong>&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml中的<code>externalIPNetworkCIDRs</code>设置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">networkConfig:</span><br><span class="line">  externalIPNetworkCIDRs:</span><br><span class="line">  - 0.0.0.0/0</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>下载MetalLB安装文件</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># wget https://raw.githubusercontent.com/google/metallb/v0.8.1/manifests/metallb.yaml</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>删除将文件中DaemonSet资源中的配置<code>spec.template.spec.securityContext.runAsUser</code></li>
+<li>添加权限</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc adm policy add-scc-to-user privileged -n metallb-system -z speaker</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>运行安装</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">oc apply -f metallb.yaml</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>创建configmap配置</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># cat &lt;&lt; EOF | kubectl apply -f -</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  namespace: metallb-system</span><br><span class="line">  name: config</span><br><span class="line">data:</span><br><span class="line">  config: |</span><br><span class="line">    address-pools:</span><br><span class="line">    - name: default</span><br><span class="line">      protocol: layer2</span><br><span class="line">      addresses:</span><br><span class="line">      - 192.168.1.240-192.168.1.250</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<h1 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h1><ol>
+<li>对已有的一个应用创建新LoadBalancer类型的svc</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@master1 ~]# oc expose dc/flask-app --name=metallb-app --type=LoadBalancer --port=5000</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>查看当前svc的状态</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@master1 ~]# oc get svc</span><br><span class="line">NAME        TYPE           CLUSTER-IP      EXTERNAL-IP                         PORT(S)          AGE</span><br><span class="line">flask-app   ClusterIP      172.30.193.89   &lt;none&gt;                              5000/TCP         35d</span><br><span class="line">metallb-app    LoadBalancer   172.30.7.121    192.168.1.240,172.29.114.1          5000:32276/TCP   6m</span><br></pre></td></tr></table></figure>
+<p>其中service flask-app为之前创建的ClusterIP类型；service metallb-app为新建的LoadBalancer类型的服务，它带有一个由MetalLB控制器分配的一个IP <code>192.168.1.240</code>（另外还有一个OpenShift分配的一个额外IP 172.29.114.1，该IP可忽略）。<br>3. 使用openshift集群外部的机器访问该应用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@i-avler8qs ~]# curl http://192.168.1.240:5000</span><br><span class="line">Hello world v2</span><br></pre></td></tr></table></figure>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>在没有使用了LoadBalancer（如MetalLB）前，OpenShift上的Service像是待在这里的宠物，外部访问它非常受限；使用了LoadBalancer后，Service主动向外面世界敞开了怀抱，每个Service都绑定有一个独立的IP，方便外部应用访问，同时也方便使用传统的防火墙方式进行控制访问。<br>LoadBalancer扩大了对OpenShift&#x2F;Kubernetes集群使用的想象空间，而MetalLB无疑是性价比最高的方式。<br>#参考文章<br><a target="_blank" rel="noopener" href="https://blog.fleeto.us/post/intro-metallb/">MetalLB - 贫苦 K8S 用户的负载均衡支持</a><br><a target="_blank" rel="noopener" href="https://blog.gmem.cc/external-lb-for-on-premise-k8s-cluster">为裸金属K8S集群提供外部负载均衡器</a><br><a target="_blank" rel="noopener" href="https://metallb.universe.tf/installation/clouds/#metallb-on-openshift-ocp">OpenShift上安装MetalLB</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/370dfa8a122e.html">https://xhua.eu.org/posts/370dfa8a122e.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/88502991e28c.html" title="OpenShift制作NginxLB-Operator实战"><img class="cover" src="https://img.xhua.eu.org/05192a9b59e1bb159a631b2825ff084c2a7f3b2cef53c59ea30b60ca5f770d9d.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift制作NginxLB-Operator实战</div></div><div class="info-2"><div class="info-item-1">背景近期需要在OpenShift集群中部署Nginx服务做为负载均衡器，负载集群外部服务，如NTP、DNS、项目App等。因为不同的服务的配置都是不一样的，不仅后台服务的IP不一样，而且使用的协议也不一样，HTTP&#x2F;TCP&#x2F;UDP都有可能，如果按照传统的方式来实施的话，每一个应用单独定义Nginx配置，分别部署，每增加一个新的应用被负载都需要做一次复杂的过程，那么有没有办法能够让这过程变得简单呢，甚至能够自动化处理，我们只需要提供最简单的信息？下面我们来分析下常用的几种方法。 打包方案选择1. Template对于OpenShift熟悉的朋友，会马上想到使用Template模板来实现。Template模板是OpenShift特有的应用打包方式，它描述了一组对象，同时对这些对象的配置可以进行参数化处理，生成OpenShift 容器平台创建的对象列表。在模板中可以设置所有在项目中有权限创建的任何资源。 不足之处：  OpenShift特有，如果是使用OpenShift容器平台的话，这个不足可忽略。 无法保证线上资源状态始终与参数设定的结果一致，如手动增加rc的副本...</div></div></div></a><a class="pagination-related" href="/posts/8fb7edf5d1e4.html" title="OpenShift使用KeepAlived+LVS实现外部负载均衡器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift使用KeepAlived+LVS实现外部负载均衡器</div></div><div class="info-2"><div class="info-item-1">OpenShift集群资源列表    主机名 类型 IP    相关节点IP     master0 master 192.168.0.2   master1 master 192.168.0.3   master2 master 192.168.0.4   infra0 infra 192.168.0.5   infra1 infra 192.168.0.6   vip地址分配     master-vip vip 192.168.0.250   infra-vip vip 192.168.0.251   部署Master API负载均衡器作为集群内外访问的入口 在三个Master节点安装KeepAlived与LVS  12$ ansible masters -m package -a &#x27;name=keepalived state=present&#x27;$ ansible masters -m package -a &#x27;name=ipvsadm state=present&#x27;  选择master0作为VIP的Master节点  1234567891...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a><a class="pagination-related" href="/posts/4362c292014b.html" title="Openshift上部署OpenLDAP实战：为账号一统"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上部署OpenLDAP实战：为账号一统</div></div><div class="info-2"><div class="info-item-1">   Openshift上部署OpenLDAP也并不仅仅只是为了部署，更重要的是要用它来为各种应用统一账号管理。比如GitLab，Gogs, Nexus, Sonarqube等等，同时结合之前的Openshift使用OpenLDAP做账号管理。理想的世界是，一套Openshift，各种应用，它们的用户认证都在一套OpenLDAP上，同时这套OpenLDAP也是非常方便地部署在Openshift上。 为账号一统的第一步，就是我们需要部署OpenLDAP，这也是该篇主题。以下是之前分享的几篇与OpenLDAP有关的文章。 CentOS上搭建双主高可用OpenLDAP ServerOpenshift使用OpenLDAP作为统一用户认证CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 之前分享的与Openldap相关的几篇文章中，它的部署都是在虚拟机中进行的。那么在Openshift上能否完成部署呢，如果可以的话，那么那些复杂的部署我们都可以将它封装到镜像中去，岂不是更方便？那就一起来操作吧。 应用要求点 方便自定义域及管理员用户名与密码 通过环境变量...</div></div></div></a><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a><a class="pagination-related" href="/posts/78dd6e98294c.html" title="CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置"><img class="cover" src="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置</div></div><div class="info-2"><div class="info-item-1">翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装openldap包  1yum install -y openldap openldap-clients openldap-servers LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d 123456789101112[root@rhel7 ~]# cd /etc/openldap/slapd.d/[root@rhel7 slapd.d]# ls -ldrwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=co...</div></div></div></a><a class="pagination-related" href="/posts/c1cb5e8c61ba.html" title="OpenShift灾备的方案及步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift灾备的方案及步骤</div></div><div class="info-2"><div class="info-item-1">https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restoring-cluster.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-master-host.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restore-etcd-quorum.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-etcd-member.html </div></div></div></a><a class="pagination-related" href="/posts/e66a2c56ece7.html" title="Openshift集群3-9升级到3-10"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群3-9升级到3-10</div></div><div class="info-2"><div class="info-item-1"> 更新方法与策略：自动升级方法 下载openshift-ansible的脚本代码   12git clone https://github.com/openshift/openshift-ansible.git git checkout  release-3.10 将master上的&#x2F;etc&#x2F;origin&#x2F;master&#x2F;htpasswd备份到&#x2F;root&#x2F;htpasswd  1scp master1:/etc/origin/master/htpasswd /root/htpasswd  openshift_master_identity_providers中的filename去掉  123# /etc/ansible/hostsopenshift_master_identity_providers=[&#123;&#x27;name&#x27;: &#x27;htpasswd_auth&#x27;, &#x27;login&#x27;:&#x27;true&#x27;,&#x27;challenge&#x27;: &#x2...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFMetalLB"><span class="toc-text">什么是MetalLB</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MetalLB%E6%94%AF%E6%8C%81%E4%B8%A4%E7%A7%8D%E7%94%B3%E6%98%8E%E6%A8%A1%E5%BC%8F%EF%BC%9A"><span class="toc-text">MetalLB支持两种申明模式：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MetalLB%E7%94%B1%E4%B8%A4%E4%B8%AA%E7%BB%84%E4%BB%B6%E7%BB%84%E6%88%90%EF%BC%9A"><span class="toc-text">MetalLB由两个组件组成：</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2MetalLB"><span class="toc-text">部署MetalLB</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Kubernetes"><span class="toc-text">Kubernetes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenShift"><span class="toc-text">OpenShift</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

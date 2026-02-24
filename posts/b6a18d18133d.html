@@ -1,0 +1,278 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshif对集群的扩容与缩容 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Openshift是一个云平台，它是以集群的方式提供服务。前面已经介绍了，业务都跑在Openshift的Node节点上。随着业务的不断变化，扩展或者消亡，我们的Node提供的服务需求也会不断变化。这时就需要对Node节点进行增删管理。 本篇只介绍CentOS7下管理Node节点。 Openshift使用Ansible playbook来实现扩容与缩容  1. oc命令查看当前Node节点的状态1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshif对集群的扩容与缩容">
+<meta property="og:url" content="https://xhua.eu.org/posts/b6a18d18133d.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Openshift是一个云平台，它是以集群的方式提供服务。前面已经介绍了，业务都跑在Openshift的Node节点上。随着业务的不断变化，扩展或者消亡，我们的Node提供的服务需求也会不断变化。这时就需要对Node节点进行增删管理。 本篇只介绍CentOS7下管理Node节点。 Openshift使用Ansible playbook来实现扩容与缩容  1. oc命令查看当前Node节点的状态1">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.642Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshif对集群的扩容与缩容",
+  "url": "https://xhua.eu.org/posts/b6a18d18133d.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.642Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/b6a18d18133d.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshif对集群的扩容与缩容',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshif对集群的扩容与缩容</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshif对集群的扩容与缩容</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.642Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ul>
+<li>Openshift是一个云平台，它是以集群的方式提供服务。前面已经介绍了，业务都跑在Openshift的Node节点上。随着业务的不断变化，扩展或者消亡，我们的Node提供的服务需求也会不断变化。这时就需要对Node节点进行增删管理。</li>
+<li>本篇只介绍CentOS7下管理Node节点。</li>
+<li>Openshift使用Ansible playbook来实现扩容与缩容</li>
+</ul>
+<h3 id="1-oc命令查看当前Node节点的状态"><a href="#1-oc命令查看当前Node节点的状态" class="headerlink" title="1. oc命令查看当前Node节点的状态"></a>1. oc命令查看当前Node节点的状态</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get node --show-labels</span><br></pre></td></tr></table></figure>
+<h3 id="2-添加Node节点到已存在的集群"><a href="#2-添加Node节点到已存在的集群" class="headerlink" title="2. 添加Node节点到已存在的集群"></a>2. 添加Node节点到已存在的集群</h3><blockquote>
+<p>准备好需要添加的主机</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>节点类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nodes</td>
+<td><br>物理主机或者虚拟机<br> 系统：Fedora 21, CentOS 7.3, 7.4或者7.5<br> NetworkManager版本1.0以上<br>最少1vCPU<br>最少8GB内存<br>&#x2F;var&#x2F;最少15GB空间 <br>&#x2F;usr&#x2F;local&#x2F;bin最少1GB空间<br>容器临时目录最少1GB空间<br> &nbsp;</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>设置主机的hostname</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hostnamectl --static set-hostname infra1.example.com</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>集群中的DNS中添加新加主机的域名与ip的解析</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#/etc/dnsmasq.d/more.conf</span><br><span class="line">address=/infra1.example.com/192.168.0.8</span><br><span class="line"></span><br><span class="line">systemctl restart dnsmasq</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>设置新增加主机的默认DNS</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># /etc/resolv.conf</span><br><span class="line">nameserver 192.168.0.2</span><br></pre></td></tr></table></figure>
+<p><code>补充</code>，如果是使用&#x2F;etc&#x2F;hosts的方式来设置域名与IP的，需要为每台主机添加hosts条目，同时重启dnsmasq。</p>
+<blockquote>
+<p>配置ansible Hosts文件，添加新增的主机</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#/etc/ansible/hosts</span><br><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">nodes</span><br><span class="line">new_nodes</span><br><span class="line">...</span><br><span class="line">[new_nodes]</span><br><span class="line">infra1.example.com openshift_node_labels=&quot;&#123;&#x27;region&#x27;: &#x27;primary&#x27;, &#x27;zone&#x27;: &#x27;default&#x27;, &#x27;node-role.kubernetes.io/infra&#x27;: &#x27;true&#x27;&#125;&quot;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>执行扩容脚本</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook playbooks/openshift-node/scaleup.yml</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>将new_nodes中的主机移到nodes组中移除</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#/etc/ansible/hosts</span><br><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">nodes</span><br><span class="line">new_nodes</span><br><span class="line">...</span><br><span class="line">[nodes]</span><br><span class="line">infra1.example.com openshift_node_labels=&quot;&#123;&#x27;region&#x27;: &#x27;primary&#x27;, &#x27;zone&#x27;: &#x27;default&#x27;, &#x27;node-role.kubernetes.io/infra&#x27;: &#x27;true&#x27;&#125;&quot;</span><br><span class="line">[new_nodes]</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>给新增的节点配置&#x2F;etc&#x2F;origin&#x2F;node&#x2F;node-config.yaml</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">kubeletArguments:</span><br><span class="line">  system-reserved:</span><br><span class="line">  - cpu=200m</span><br><span class="line">  - memory=1G</span><br><span class="line">  kube-reserved:</span><br><span class="line">  - cpu=200m</span><br><span class="line">  - memory=1G</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>重启origin-node服务</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl restart origin-node</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>查看集群中的主机情况进行确认</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get node --show-labels</span><br></pre></td></tr></table></figure>
+<h3 id="3-从集群中移除Node节点"><a href="#3-从集群中移除Node节点" class="headerlink" title="3.从集群中移除Node节点"></a>3.从集群中移除Node节点</h3><blockquote>
+<p>设置需要移除的Node为不可调度</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oadm manage-node &lt;node1&gt; --schedulable=false</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>迁移node上已有的容器</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oadm manage-node &lt;node1&gt; --evacuate</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>在集群中删除指定的node节点</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc delete node infra1.example.com</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>删除在Ansible hosts文件中的主机配置</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">[nodes]</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>查看集群中的主机情况进行确认</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get node --show-labels</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>**[<em>可选</em>]**新建一个hosts文件，作为ansible-playbook的inventory，只需要写需要删除的node节点</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:children]</span><br><span class="line">nodes</span><br><span class="line"> </span><br><span class="line">[OSEv3:vars]</span><br><span class="line">ansible_ssh_user=root</span><br><span class="line">openshift_deployment_type=origin</span><br><span class="line"> </span><br><span class="line">[nodes]</span><br><span class="line">infra1.example.com</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>**[<em>可选</em>]**执行清理脚本uninstall.yml</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i hosts openshift-ansible/playbooks/adhoc/uninstall.yml</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/b6a18d18133d.html">https://xhua.eu.org/posts/b6a18d18133d.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/17a022f7f345.html" title="Openshit-新的存储类型LocalVolume该如何使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshit-新的存储类型LocalVolume该如何使用</div></div><div class="info-2"><div class="info-item-1">  使用本地盘的方式的有三种：emptyDir、HostPath与Local Volume Openshift针对Local Volume提供了一个local volume provisioner方便PV的自动创建，但目前它需要创建的PV对应的目录必须是挂载点。否则无法创建PV。 除了自动创建PV的过程外，部分与正常使用Local Volume一样。  手动挂载目录使用Local Volume我们先来看下通过手动的方式创建PV使用Local Volume是如何操作的。 1. 创建StorageClass123456apiVersion: storage.k8s.io/v1kind: StorageClassmetadata:  name: local-hddprovisioner: kubernetes.io/no-provisionervolumeBindingMode: WaitForFirstConsumer 2. 创建PV1234567891011121314151617181920apiVersion: v1 kind: PersistentVolume metadat...</div></div></div></a><a class="pagination-related" href="/posts/dae9f91bc2e9.html" title="Openshift集群升级3-6至3-7"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift集群升级3-6至3-7</div></div><div class="info-2"><div class="info-item-1">更新方法与策略：自动升级方法  更新openshift-ansible的脚本代码   12git pull git checkout -b release-3.7 安装需要的包  1ansible all -m yum -a &#x27;name=pyOpenSSL state=present&#x27;  关闭Service Catalog和Template Service Broker。3.7 以上版本默认会启用 Service Catalog 和 Template Service Broker  123456# /etc/ansible/hosts...openshift_enable_service_catalog=falsetemplate_service_broker_install=falseansible_service_broker_install=false...  关闭etcd目录的selinux检查关闭任务Check selinux label of ‘‘与Make sure the ‘‘ has the proper label  12345678910...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/852e3377ec0a.html" title="OpenShift-通过Operator-SDK制作Operator"><img class="cover" src="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-通过Operator-SDK制作Operator</div></div><div class="info-2"><div class="info-item-1">制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo=github.com/example-inc/memcached-operator$ # or$ operator-sdk new memcached-ansible-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=ansible$ # or$ operator-sdk new memcached-helm-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=helm operator-sdk new默认使用的type为go，必须在$GOPATH目录下创建项目。type为go时项目的目录结构如下：项目的目录结构 type的可选值还可以为：ansible与helm，如果是这两个，则还可以带参数...</div></div></div></a><a class="pagination-related" href="/posts/ac610158c667.html" title="OpenShift-Route支持TCP负载均衡改造与使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route支持TCP负载均衡改造与使用</div></div><div class="info-2"><div class="info-item-1"> Route作为TCP负载均衡器的部署 获取当前Route的haproxy-template配置  12345# oc project default# oc get podNAME              READY     STATUS    RESTARTS   AGErouter-16-5rv4q    2/2         Running   2            18h# oc rsh router-16-5rv4q cat haproxy-config.template &gt; haproxy-config.template  编辑导出的haproxy-config.template文件在内容&#123;&#123;- end &#125;&#125;&#123;&#123;/*end tls==passthrough*/&#125;&#125;下一行，添加以下内容：  1234567891011&#123;&#123;/*TCP support*/&#125;&#125;&#123;&#123;- if eq &quot;tcp&quot; (index...</div></div></div></a><a class="pagination-related" href="/posts/34e946b3354d.html" title="Openshift中集群ElasticSearch的运维"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift中集群ElasticSearch的运维</div></div><div class="info-2"><div class="info-item-1">大家都知道，Openshift集成了EFK(Elasticsearch + Fluentd + Kibana)作为集群的日志管理平台。我们该怎样去维护ElasticSearch.   找到ES所在的pod   1oc get pod -l component=es -o name -n logging | cut -d/ -f2   查看所有ES索引   1oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca https://localhost:9200/_cat/indices?v   清理所有3月份的ES索引   1oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearc...</div></div></div></a><a class="pagination-related" href="/posts/2cba55920597.html" title="OpenShift-集群为项目提供专属节点"><img class="cover" src="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-集群为项目提供专属节点</div></div><div class="info-2"><div class="info-item-1">背景介绍在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。该策略主要使用到两种工具：  节点标签实现应用与节点的绑定 污点配置实现其它应用不会被调度到该节点。  设置步骤 为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及设置污点  12$ oc label node node-10 dedicated=sys0$ oc adm taint nodes node-10 dedicated=sys0:NoSchedule  在使用专属节点的应用编排中绑定的Node  123456789101112spec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      nodeSelector:        dedicated: &quot;sys0&quot;     ...</div></div></div></a><a class="pagination-related" href="/posts/5b04eaf3f6ae.html" title="Openshift-Web-Console自定义界面"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Web-Console自定义界面</div></div><div class="info-2"><div class="info-item-1"> 什么是Openshift WebConsole Openshift WebConsole是Openshift提供的一个web界面端，类似到Kubernetes的Dashboard。很多操作都可以在WebConsole端去处理与显示。 部署完成Openshift后，会有一个openshift-web-console的project，在这个project中有一个openshift-web-console应用，该应用便是Openshift WebConsole。  自定义Openshift WebConsole原理Openshift WebConsole前端使用的是Google的AngularJS技术，并且它在设置的时候提供了扩展的入口。WebConsole在应用启动时会去读取configmap(webconsole-config)中的配置，而webconsole-config的配置中可以设置导入的自定义css与js文件。 12345678......extensions:  properties: &#123;&#125;  scriptURLs:  - https://www.e...</div></div></div></a><a class="pagination-related" href="/posts/4f92c76453ff.html" title="通过curl访问OpenShift上部署的Prometheus获取监控数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">通过curl访问OpenShift上部署的Prometheus获取监控数据</div></div><div class="info-2"><div class="info-item-1"> Prometheus作为最常用的集群的监控组件，它收集了集群最全的状态信息。那么当我们需要将它与现有的监控告警平台打通，或者根据它开发一个自己的监控展示平台时，就不得不需要获得Prometheus的监控数据了。这时就不得不访问Prometheus的API接口。根据场景的不同有两种方式能够获取到Prometheus的数据  集群外部，通过访问Prometheus UI的链接来获取指标数据 集群内部，进入Prometheus容器中，获取指标数据  1. 集群外部，curl访问Prometheus UI地址由于OpenShift上部署的Prometheus应用对接了OpenShift的用户认证oauth-proxy，所以必须先获取用户的Token后再通过curl访问prometheus服务获取数据，具体操作如下。 123456789101112# #登录[root@master ~]# oc login -u adminAuthentication required for https://master.example.com:8443 (openshift)Username: ad...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-oc%E5%91%BD%E4%BB%A4%E6%9F%A5%E7%9C%8B%E5%BD%93%E5%89%8DNode%E8%8A%82%E7%82%B9%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toc-text">1. oc命令查看当前Node节点的状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%B7%BB%E5%8A%A0Node%E8%8A%82%E7%82%B9%E5%88%B0%E5%B7%B2%E5%AD%98%E5%9C%A8%E7%9A%84%E9%9B%86%E7%BE%A4"><span class="toc-text">2. 添加Node节点到已存在的集群</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E4%BB%8E%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%A7%BB%E9%99%A4Node%E8%8A%82%E7%82%B9"><span class="toc-text">3.从集群中移除Node节点</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

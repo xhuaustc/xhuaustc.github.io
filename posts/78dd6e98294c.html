@@ -1,0 +1,307 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CentOS上OpenLDAP-Server使用cn=config方式配置 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装ope">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CentOS上OpenLDAP-Server使用cn&#x3D;config方式配置">
+<meta property="og:url" content="https://xhua.eu.org/posts/78dd6e98294c.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装ope">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.634Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "CentOS上OpenLDAP-Server使用cn=config方式配置",
+  "url": "https://xhua.eu.org/posts/78dd6e98294c.html",
+  "image": "https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.634Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/78dd6e98294c.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CentOS上OpenLDAP-Server使用cn=config方式配置',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">CentOS上OpenLDAP-Server使用cn=config方式配置</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CentOS上OpenLDAP-Server使用cn=config方式配置</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.634Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>翻译自<a target="_blank" rel="noopener" href="https://access.redhat.com/solutions/2484371">How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ? </a></p>
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><ul>
+<li>CentOS 7</li>
+<li>openldap-2.4</li>
+</ul>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><ul>
+<li>使用slapd工具在CentOS上安装与配置OpenLDAP Server</li>
+<li>使用olc方式如何配置OpenLDAP Server</li>
+</ul>
+<h2 id="操作"><a href="#操作" class="headerlink" title="操作"></a>操作</h2><ol>
+<li>安装openldap包</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y openldap openldap-clients openldap-servers</span><br></pre></td></tr></table></figure>
+<p>LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 ~]# cd /etc/openldap/slapd.d/</span><br><span class="line">[root@rhel7 slapd.d]# ls -l</span><br><span class="line">drwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config</span><br><span class="line">-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=config.ldif</span><br><span class="line">[root@rhel7 slapd.d]# cd cn\=config</span><br><span class="line">[root@rhel7 cn=config]# ls -l</span><br><span class="line">drwxr-x---. 2 ldap ldap 4096 Aug  3 22:11 cn=schema</span><br><span class="line">-rw-------. 1 ldap ldap  378 Aug  2 22:21 cn=schema.ldif</span><br><span class="line">-rw-------. 1 ldap ldap  552 Aug  3 20:42 olcDatabase=&#123;0&#125;config.ldif</span><br><span class="line">-rw-------. 1 ldap ldap  443 Aug  2 22:21 olcDatabase=&#123;-1&#125;frontend.ldif</span><br><span class="line">-rw-------. 1 ldap ldap  562 Aug  2 22:21 olcDatabase=&#123;1&#125;monitor.ldif</span><br><span class="line">drwxr-x---. 2 ldap ldap   65 Aug  3 22:53 olcDatabase=&#123;2&#125;hdb.ldif</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>设置olcSuffix,设置domain。只需要更新下文件olcDatabase&#x3D;{2}hdb.ldif中的olcSuffix</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# vi /etc/openldap/slapd.d/cn\=config/olcDatabase\=\&#123;2\&#125;hdb.ldif</span><br><span class="line">olcSuffix: dc=example,dc=com</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>推荐先创建一个专用的具有所有权限的账号，用它来更新LDAP的数据库。需要更新文件olcDatabase&#x3D;{2}hdb.ldif中的olcRootDN和olcRootPW</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# vi /etc/openldap/slapd.d/cn\=config/olcDatabase\=\&#123;2\&#125;hdb.ldif</span><br><span class="line">olcRootDN: cn=Manager,dc=example,dc=com</span><br><span class="line">olcRootPW: redhat</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>同时设置config数据库的管理员账号<br><code>这里设置的密码很简单，请在生产环境下将密码设置复杂些</code></li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# vi olcDatabase\=\&#123;0\&#125;config.ldif</span><br><span class="line">olcRootDN: cn=config</span><br><span class="line">olcRootPW: secret</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>使用slaptest命令去验证配置</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# slaptest -u</span><br><span class="line">config file testing succeeded</span><br></pre></td></tr></table></figure>
+<p>如果报<code>ldif_read_file: checksum error</code>这样的错误，是因为计算文件的CRC32码来自动校验（文件中前两行中带有校验码），需要更新校验码</p>
+<ul>
+<li>删除掉报错的文件的前两行 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.</span><br><span class="line"># CRC32 3e515b74</span><br></pre></td></tr></table></figure></li>
+<li>安装crc32工具（perl-Archive-Zip）<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# yum install perl-Archive-Zip -y</span><br></pre></td></tr></table></figure></li>
+<li>计算新文件的CRC32码  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@rhel7 cn=config]# crc32 &lt;(cat olcDatabase\=\&#123;2\&#125;hdb.ldif)</span><br><span class="line">509f92c7</span><br></pre></td></tr></table></figure></li>
+<li>将计算的CRC32码更新到文件中，添加到文件的前两行  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.</span><br><span class="line"># CRC32 509f92c7</span><br></pre></td></tr></table></figure></li>
+</ul>
+<ol start="6">
+<li>如果配置验证成功，启动openldap server</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl start slapd</span></span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>创建ldap server的基础结构</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> base.ldif</span></span><br><span class="line">dn: dc=example,dc=com</span><br><span class="line">objectClass: dcObject</span><br><span class="line">objectClass: organization</span><br><span class="line">o: example.com</span><br><span class="line"></span><br><span class="line">dn: ou=users,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">objectClass: top</span><br><span class="line">ou: users</span><br><span class="line"></span><br><span class="line">dn: ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">objectClass: top</span><br><span class="line">ou: groups       </span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>使用ldapadd命令向LDAP目录导入基础结构</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -x -D <span class="string">&quot;cn=Manager,dc=example,dc=com&quot;</span> -w redhat -f base.ldif</span></span><br><span class="line">adding new entry &quot;dc=example,dc=com&quot;</span><br><span class="line">adding new entry &quot;ou=users,dc=example,dc=com&quot;</span><br><span class="line">adding new entry &quot;ou=groups,dc=example,dc=com&quot;</span><br></pre></td></tr></table></figure>
+<ol start="9">
+<li>使用ldapsearch命令验证基础结构是否成功导入</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -b dc=example,dc=com -w redhat</span></span><br></pre></td></tr></table></figure>
+<ol start="10">
+<li>在向ldap结构中添加users和groups之前，先使用ldapadd导入schema，以免出现“object class not defined”的报错</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -Y EXTERNAL -H ldapi:// -f /etc/openldap/schema/cosine.ldif</span> </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -Y EXTERNAL -H ldapi:// -f /etc/openldap/schema/nis.ldif</span> </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -Y EXTERNAL -H ldapi:// -f /etc/openldap/schema/inetorgperson.ldif</span></span><br></pre></td></tr></table></figure>
+<ol start="11">
+<li>向ldap结构中添加users和groups</li>
+</ol>
+<ul>
+<li>Users<ul>
+<li>使用slappasswd命令获取需要的密码<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">slappasswd -s <span class="built_in">test</span></span></span><br><span class="line">&#123;SSHA&#125;5rMM/3f8Ki13IyarGTtwzieoTu7KMgwc</span><br></pre></td></tr></table></figure></li>
+<li>使用ldif文件和上面的hashed密码创建users.ldif<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> users.ldif</span></span><br><span class="line">dn: uid=testuser,ou=users,dc=example,dc=com</span><br><span class="line">uid: testuser</span><br><span class="line">cn: testuser</span><br><span class="line">objectClass: shadowAccount</span><br><span class="line">objectClass: top</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: posixAccount</span><br><span class="line">userPassword: &#123;SSHA&#125;5rMM/3f8Ki13IyarGTtwzieoTu7KMgwc</span><br><span class="line">shadowLastChange: 17016</span><br><span class="line">shadowMin: 0</span><br><span class="line">shadowMax: 99999</span><br><span class="line">shadowWarning: 7</span><br><span class="line">loginShell: /bin/bash</span><br><span class="line">uidNumber: 1000</span><br><span class="line">gidNumber: 1000</span><br><span class="line">homeDirectory: /home/testuser</span><br><span class="line">sn: testuser</span><br><span class="line">mail: testuser@example.com</span><br><span class="line"></span><br><span class="line">dn: uid=testuser1,ou=users,dc=example,dc=com</span><br><span class="line">uid: testuser1</span><br><span class="line">cn: testuser1</span><br><span class="line">objectClass: shadowAccount</span><br><span class="line">objectClass: top</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: posixAccount</span><br><span class="line">userPassword: &#123;SSHA&#125;5rMM/3f8Ki13IyarGTtwzieoTu7KMgwc</span><br><span class="line">shadowLastChange: 17016</span><br><span class="line">shadowMin: 0</span><br><span class="line">shadowMax: 99999</span><br><span class="line">shadowWarning: 7</span><br><span class="line">loginShell: /bin/bash</span><br><span class="line">uidNumber: 1001</span><br><span class="line">gidNumber: 1001</span><br><span class="line">homeDirectory: /home/testuser1</span><br><span class="line">sn: testuser1</span><br><span class="line">mail: testuser1@example.com</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li>Groups<br>  创建groups.ldif<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> groups.ldif</span></span><br><span class="line">dn: cn=testuser,ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: posixGroup</span><br><span class="line">objectClass: top</span><br><span class="line">cn: testuser</span><br><span class="line">userPassword: &#123;crypt&#125;x</span><br><span class="line">gidNumber: 1000</span><br><span class="line"></span><br><span class="line">dn: cn=testuser1,ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: posixGroup</span><br><span class="line">objectClass: top</span><br><span class="line">cn: testuser1</span><br><span class="line">userPassword: &#123;crypt&#125;x</span><br><span class="line">gidNumber: 1001</span><br></pre></td></tr></table></figure></li>
+</ul>
+<ol start="12">
+<li>使用ldapadd命令添加users和groups</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -x -D cn=Manager,dc=example,dc=com -f users.ldif -w redhat</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -x -D cn=Manager,dc=example,dc=com -f groups.ldif -w redhat</span></span><br></pre></td></tr></table></figure>
+<ol start="13">
+<li>使用ldapsearch命令来验证users和groups创建是否成功</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ldapsearch -x -D cn=Manager,dc=example,dc=com -b dc=example,dc=com -w redhat</span><br></pre></td></tr></table></figure>
+<h2 id="OpenLDAP的操作"><a href="#OpenLDAP的操作" class="headerlink" title="OpenLDAP的操作"></a>OpenLDAP的操作</h2><ol>
+<li>添加数据</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> $ </span><span class="language-bash"><span class="built_in">cat</span> user3.ldif</span></span><br><span class="line">dn: uid=testuser3,ou=users,dc=example,dc=com</span><br><span class="line">uid: testuser3</span><br><span class="line">cn: testuser3</span><br><span class="line">objectClass: shadowAccount</span><br><span class="line">objectClass: top</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: posixAccount</span><br><span class="line">userPassword: &#123;SSHA&#125;5rMM/3f8Ki13IyarGTtwzieoTu7KMgwc</span><br><span class="line">shadowLastChange: 17016</span><br><span class="line">shadowMin: 0</span><br><span class="line">shadowMax: 99999</span><br><span class="line">shadowWarning: 7</span><br><span class="line">loginShell: /bin/bash</span><br><span class="line">uidNumber: 1000</span><br><span class="line">gidNumber: 1000</span><br><span class="line">homeDirectory: /home/testuser</span><br><span class="line">sn: testuser3</span><br><span class="line">mail: testuser@example.com</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -w redhat -f user3.ldif</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>查询数据</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -x -b <span class="string">&#x27;dc=example,dc=com&#x27;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -x -b <span class="string">&#x27;dc=example,dc=com&#x27;</span> <span class="string">&#x27;sn=testuser3&#x27;</span></span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>修改数据</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方法一：交互式</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapmodify -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -w redhat</span></span><br><span class="line">dn: uid=testuser3,ou=users,dc=example,dc=com</span><br><span class="line">changetype: modify</span><br><span class="line">replace: sn</span><br><span class="line">sn: Test User 3</span><br><span class="line">-</span><br><span class="line">add: description</span><br><span class="line">description: add attribute</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方法二：配置文件式</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> modify.ldif</span></span><br><span class="line">dn: uid=testuser3,ou=users,dc=example,dc=com</span><br><span class="line">changetype: modify</span><br><span class="line">replace: sn</span><br><span class="line">sn: Test User 3</span><br><span class="line">-</span><br><span class="line">delete: description</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapmodify -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -w redhat -f modify.ldif</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>删除数据</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapdelete -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -w redhat uid=testuser3,ou=<span class="built_in">users</span>,dc=example,dc=com</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>数据导出</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方法一：用查询导出</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -x -b <span class="string">&#x27;dc=example,dc=com&#x27;</span> &gt; export.ldif</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方法二：导出命令</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">slapcat -l export.ldif</span></span><br></pre></td></tr></table></figure>
+<h2 id="打开OpenLDAP日志"><a href="#打开OpenLDAP日志" class="headerlink" title="打开OpenLDAP日志"></a>打开OpenLDAP日志</h2><ol>
+<li>更新日志级别</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> loglevel.ldif</span> </span><br><span class="line">dn: cn=config</span><br><span class="line">changetype: modify</span><br><span class="line">replace: olcLogLevel</span><br><span class="line">olcLogLevel: stats</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapmodify -Y EXTERNAL -H ldapi:/// -f loglevel.ldif</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl restart slapd</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>修改rsyslog配置文件</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">touch</span> /var/log/slapd.log</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> local4.* /var/log/slapd.log &gt;&gt; /etc/rsyslog.conf</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl restart rsyslog</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>查看openldap日志</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">tail</span> -f /var/log/slapd.log</span></span><br></pre></td></tr></table></figure>
+<h2 id="容器化部署"><a href="#容器化部署" class="headerlink" title="容器化部署"></a>容器化部署</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --name ldap_core -p 389:389 -p 636:636 --<span class="built_in">env</span> LDAP_ORGANISATION=<span class="string">&quot;example.com&quot;</span> --<span class="built_in">env</span> LDAP_DOMAIN=<span class="string">&quot;example.com&quot;</span> --<span class="built_in">env</span> LDAP_ADMIN_PASSWORD=<span class="string">&quot;redhat&quot;</span> --detach osixia/openldap</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --name ldap_web -p 80:80 -p 443:443 --<span class="built_in">link</span> ldap_core:ldap_core --<span class="built_in">env</span> PHPLDAPADMIN_LDAP_HOSTS=ldap_core --detach osixia/phpldapadmin</span></span><br></pre></td></tr></table></figure>
+<p>同时还有Openshift的openldap容器<a target="_blank" rel="noopener" href="https://hub.docker.com/r/openshift/openldap-2441-centos7">openshift&#x2F;openldap-2441-centos7</a></p>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><ol>
+<li>浏览ldap目录列表的工具<a target="_blank" rel="noopener" href="http://www.ldapbrowserwindows.com/">ldapbrowser</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/Laputa_SKY/article/details/80363398">LDAPSearch命令参数详情</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/78dd6e98294c.html">https://xhua.eu.org/posts/78dd6e98294c.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/60ecf55a7e34.html" title="CentOS上搭建双主高可用OpenLDAP-Server"><img class="cover" src="https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CentOS上搭建双主高可用OpenLDAP-Server</div></div><div class="info-2"><div class="info-item-1">OpenLDAP单机搭建手册参考：CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 配置双主高可用OpenLDAP 准备两台centos 7服务器，作为两台OpenLDAP Server的运行主机     Server ID 系统版本 IP    1 centos 7 192.168.1.2   2 centos 7 192.168.1.3    按照CentOS上OpenLDAP Server使用cn&#x3D;config方式配置的方式在两台主机上部署好OpenLDAP Server。做到第6步即可，即启动openldap server 在两台主机上启动syncprov模块  1234567891011$ cat syncprov_mod.ldifdn: cn=module,cn=configobjectClass: olcModuleListcn: moduleolcModulePath: /usr/lib64/openldapolcModuleLoad: syncprov.la$ ldapadd -Y EXTERNAL -H ldapi...</div></div></div></a><a class="pagination-related" href="/posts/724adf367d17.html" title="Calico-BGP集群外部与集群网络打通"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Calico-BGP集群外部与集群网络打通</div></div><div class="info-2"><div class="info-item-1">把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.255.255.192 gw 10.21.21.75 Win10客户端机器 12345678route add -p 10.233.97.128 mask  255.255.255.192 192.168.1.225route add -p 10.233.75.0  mask  255.255.255.192 192.168.1.226route add -p 10.233.100.128 mask 255.255.255.192 192.168.1.227route add -p 10.233.90.0 mask 255.255.255.192 192.168.1.228route ad...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b3c5c4960a4e.html" title="如何为运行OpenShift容器的数字用户设置用户名"><img class="cover" src="https://img.xhua.eu.org/4910c0b084df21c4fe01001fbeb0088884c8d6d79e531efe90b035ef27bbd59b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何为运行OpenShift容器的数字用户设置用户名</div></div><div class="info-2"><div class="info-item-1">OpenShift容器平台会使用一个不带用户名，数字类型的用户ID（如：10003000）来运行容器，但是有些情况下启动应用的用户必须有用户名，比如访问sftp服务。 **解决思路：**在容器中的&#x2F;etc&#x2F;passwd文件中添加对执行用户的相关配置：:x:::&lt;说明&gt;::&#x2F;sbin&#x2F;nologin。 执行步骤  基础镜像中为&#x2F;etc&#x2F;passwd设置root组用户可写的权限  1RUN chmod g=u /etc/passwd  应用启动时为用户设置用户名，要在ENTRYPOINT&#x2F;CMD的脚本中添加如下代码  123456789USER_NAME=$&#123;USER_NAME:-uidname&#125;USER_ID=$(id -u)if ! whoami &amp;&gt; /dev/nullthen    if [ -w /etc/passwd ]    then      echo &quot;$&#123;USER_NAME&#125;:x:$&#123;USER_ID&#125;...</div></div></div></a><a class="pagination-related" href="/posts/67c1601a81ee.html" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a><a class="pagination-related" href="/posts/5b04eaf3f6ae.html" title="Openshift-Web-Console自定义界面"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Web-Console自定义界面</div></div><div class="info-2"><div class="info-item-1"> 什么是Openshift WebConsole Openshift WebConsole是Openshift提供的一个web界面端，类似到Kubernetes的Dashboard。很多操作都可以在WebConsole端去处理与显示。 部署完成Openshift后，会有一个openshift-web-console的project，在这个project中有一个openshift-web-console应用，该应用便是Openshift WebConsole。  自定义Openshift WebConsole原理Openshift WebConsole前端使用的是Google的AngularJS技术，并且它在设置的时候提供了扩展的入口。WebConsole在应用启动时会去读取configmap(webconsole-config)中的配置，而webconsole-config的配置中可以设置导入的自定义css与js文件。 12345678......extensions:  properties: &#123;&#125;  scriptURLs:  - https://www.e...</div></div></div></a><a class="pagination-related" href="/posts/da2b64a21883.html" title="对文件目录设置acl权限"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">对文件目录设置acl权限</div></div><div class="info-2"><div class="info-item-1">尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。 为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。 以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限 setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名 如果想要一次设置可以添加 -R 参数 递归设置整个目录，以及整个目录下的所有文件 setfacl -R -m u:user:r– &#x2F;目录名&#x2F; 这样就可以保证某个特殊普通用户对这个目录有可读权限 如果这个目录需要 user 用户可以 cd 进入的话，设置时可以增加大写 X 参数，设置 acl 的时候，大写 X 表示遇到目录给执行权限，遇到文件对象不给执行权限 setfacl -m u:user:r-X &#x2F;目录名&#x2F;setfacl -m u:user:r-X &#x2F;目录名&#x2F;文件名 这样设置，可以让 user 用户能 cd 进入特殊目录 </div></div></div></a><a class="pagination-related" href="/posts/2192f822e66c.html" title="技术中台"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">技术中台</div></div><div class="info-2"><div class="info-item-1">金融机构中台战略之路 在传统金融机构体系中，系统往往由各个项目组独立建设，每个机构中有成百上千套复杂的系统，它们相互调用，形成复杂的网状结构，很难进行管理。随着银行数字化转型的深入，大量业务以互联网的形式向用户开放，对系统高并发、大数据量、强一致性等需求越来越高。与此同时，为了满足用户多样化的需求，银行必须从以业务为中心向以人为中心转变，并做出快速响应。中台建设正是目前解决这些问题的新兴平台型企业架构。 企业中台为业务而生，快速敏捷地响应业务变化，以服务的形式为业务提供支撑，服务接入层以统一的路由适配转发。在整个技术构架上需要考虑可拓展性、敏捷性、轻量化，并注重与前台的交互，灵活地通过服务编排实现应用功能，满足前台需求。因此中台融合分布式、微服务、容器云、DevOps、大数据处理及高可用高性能高并发架构，遵循“高内聚、松耦合”设计原则。业务中台需要微服务、云原生、分布式事务体系支撑，并设计业务模型和微服务边界，最终形成业务单元；数据中台汇聚企业内外割裂的数据，并通过统一治理、建模加工，消除数据孤岛，实现数据资产化，为企业提供客户画像、商品智能推荐、业务实时监控，达到数据驱动业务能...</div></div></div></a><a class="pagination-related" href="/posts/406da41e46f6.html" title="基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行"><img class="cover" src="https://img.xhua.eu.org/0d715a5ec7fa37c4f92259f110a31d3730084629791a22ef4ac2911811d90828.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">基于容器技术构建一站式业务支撑平台——实现业务需求快速交付，应用稳定可靠运行</div></div><div class="info-2"><div class="info-item-1">来自2020年全国职业容器云大赛冠军队二二一队作品。    兴业数金 二二一团队成员：潘晓华、方胜、全彬元、徐林、孙佳明 1 建设背景随着互联网的兴起，互联网企业依托互联网，特别是移动互联网为公众提供越来越多方便快捷、稳定高效的服务，对传统业务带来了很大冲击。作为应对，传统行业也在业务上不断创新，带来对IT基础设施和应用架构方面进行转型升级的要求。例如为了支撑电商促销活动对带来的高峰期海量支付请求，某银行很早就对支付渠道相关业务应用进行微服务架构改造，由此带来了容器技术的研究和运用。经多年实践证明，采用容器技术平台很好地支撑了新的业务模式和业务容量。 基于业务发展的需要，和快速进步的金融科技技术，越来越多的传统企业开始思考自身的互联网战略、上云规划等。其中重要内容之一，是希望从技术层面更有效地支持业务创新，如微服务架构、更好的灵活性、扩展性、高可用性、更高效的业务上线效率等，因此跟上云计算技术发展的趋势，建设并推广适合自身的基于容器技术的云平台是关键任务。 2 需求分析2.1 业务需求2.1.1 应用架构****改造需求某银行的客户交互渠道系统存在以下两点架构问题，制约了其快速迭...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C"><span class="toc-text">操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenLDAP%E7%9A%84%E6%93%8D%E4%BD%9C"><span class="toc-text">OpenLDAP的操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%93%E5%BC%80OpenLDAP%E6%97%A5%E5%BF%97"><span class="toc-text">打开OpenLDAP日志</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%8C%96%E9%83%A8%E7%BD%B2"><span class="toc-text">容器化部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7"><span class="toc-text">工具</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

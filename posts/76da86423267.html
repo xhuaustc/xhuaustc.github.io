@@ -1,0 +1,733 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent Skill：从使用到原理，一次讲清 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Ski">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent Skill：从使用到原理，一次讲清">
+<meta property="og:url" content="https://xhua.eu.org/posts/76da86423267.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Ski">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg">
+<meta property="article:published_time" content="2026-01-25T02:47:57.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.625Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Agent Skills">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Codex">
+<meta property="article:tag" content="GitHub Copilot">
+<meta property="article:tag" content="MCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent Skill：从使用到原理，一次讲清",
+  "url": "https://xhua.eu.org/posts/76da86423267.html",
+  "image": "https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg",
+  "datePublished": "2026-01-25T02:47:57.000Z",
+  "dateModified": "2026-02-24T07:27:54.625Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/76da86423267.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent Skill：从使用到原理，一次讲清',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent Skill：从使用到原理，一次讲清</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent Skill：从使用到原理，一次讲清</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.625Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。</p>
+<p>这期视频把 <strong>Agent Skill</strong> 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 <strong>渐进式披露（progressive disclosure）</strong> 做到“只在需要时加载”。视频还强调了一个关键对比：<strong>Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用</strong>。<a target="_blank" rel="noopener" href="https://youtu.be/yDc0_8emz7M?si=zYlgf3KrqWB8Vm3h"><code>Agent Skill 从使用到原理，一次讲清</code></a></p>
+<p>本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。</p>
+<h2 id="Agent-Skill-是什么"><a href="#Agent-Skill-是什么" class="headerlink" title="Agent Skill 是什么"></a>Agent Skill 是什么</h2><p>用一句话概括：<strong>Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们</strong>。<a target="_blank" rel="noopener" href="https://agentskills.io/home">Agent Skills 概览</a> <a target="_blank" rel="noopener" href="https://claude.com/blog/skills-explained">Skills explained</a></p>
+<p>从规范角度看，一个最小 Skill 的目录结构如下：<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">skill-name/</span><br><span class="line">  SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p>而更实用的结构通常会把“长知识&#x2F;长规则”放到 <code>references/</code>，把“可执行自动化”放到 <code>scripts/</code>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">meeting-minutes/</span><br><span class="line">  SKILL.md</span><br><span class="line">  references/</span><br><span class="line">    FINANCE.md</span><br><span class="line">  scripts/</span><br><span class="line">    upload.py</span><br></pre></td></tr></table></figure>
+
+<h2 id="核心机制：渐进式披露（Progressive-Disclosure）"><a href="#核心机制：渐进式披露（Progressive-Disclosure）" class="headerlink" title="核心机制：渐进式披露（Progressive Disclosure）"></a>核心机制：渐进式披露（Progressive Disclosure）</h2><p>Agent Skills 的关键不是“把提示词收纳起来”，而是 <strong>加载策略</strong>。规范把它分成三层：<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></p>
+<ol>
+<li><strong>Metadata（约 ~100 tokens）</strong>：启动时只加载 <code>name</code>、<code>description</code>，让 agent 知道“有哪些技能”和“什么时候用”。</li>
+<li><strong>Instructions（建议 &lt; 5000 tokens）</strong>：当 agent 认为某个 Skill 相关时，才加载 <code>SKILL.md</code> 正文指令。</li>
+<li><strong>Resources（按需）</strong>：只有当指令引用到 <code>references/</code>、<code>scripts/</code>、<code>assets/</code> 等文件时，才会进一步读取&#x2F;执行。</li>
+</ol>
+<p>VS Code 文档也用类似的“三层加载”描述了这一点：<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/copilot/customization/agent-skills">Use Agent Skills in VS Code</a></p>
+<blockquote>
+<p><strong>注意</strong>：这套设计直接解决了“可复用规则很长”与“上下文很贵”之间的矛盾：你可以装很多 Skill，但每次只为当前任务付出必要的上下文成本。</p>
+</blockquote>
+<h2 id="基础用法：写一个会议纪要-Skill（可复用、可迁移）"><a href="#基础用法：写一个会议纪要-Skill（可复用、可迁移）" class="headerlink" title="基础用法：写一个会议纪要 Skill（可复用、可迁移）"></a>基础用法：写一个会议纪要 Skill（可复用、可迁移）</h2><h3 id="1-先写对目录名和-Frontmatter"><a href="#1-先写对目录名和-Frontmatter" class="headerlink" title="1) 先写对目录名和 Frontmatter"></a>1) 先写对目录名和 Frontmatter</h3><p>Agent Skills 规范对 <code>name</code> 有硬性约束：<strong>小写字母&#x2F;数字&#x2F;连字符（hyphen），最长 64，且必须与父目录名一致</strong>。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></p>
+<p>例如目录叫 <code>meeting-minutes/</code>，则 <code>SKILL.md</code> 的 frontmatter 应该是：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: meeting-minutes</span><br><span class="line">description: Summarize meeting transcripts into attendees, agenda items, and decisions. Use when the user asks for meeting minutes, meeting summary, or action items.</span><br><span class="line"><span class="section">compatibility: Works with Agent Skills compatible tools. Requires ability to read local files.</span></span><br><span class="line"><span class="section">---</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-再写正文指令（Instruction）"><a href="#2-再写正文指令（Instruction）" class="headerlink" title="2) 再写正文指令（Instruction）"></a>2) 再写正文指令（Instruction）</h3><p>建议把正文写成“可执行的 SOP”，包括输出格式、步骤、边界条件、示例输入输出：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: meeting-minutes</span><br><span class="line"><span class="section">description: Summarize meeting transcripts into attendees, agenda items, and decisions. Use when the user asks for meeting minutes, meeting summary, or action items.</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Goal</span></span><br><span class="line">Produce clear meeting minutes from a raw transcript.</span><br><span class="line"></span><br><span class="line"><span class="section">## Output format (required)</span></span><br><span class="line"><span class="section">### Attendees</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">name</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Agenda</span></span><br><span class="line"><span class="bullet">1.</span> <span class="language-xml"><span class="tag">&lt;<span class="name">topic</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Decisions</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">decision</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Action Items</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">owner</span>&gt;</span></span>: <span class="language-xml"><span class="tag">&lt;<span class="name">task</span>&gt;</span></span> (due: <span class="language-xml"><span class="tag">&lt;<span class="name">date</span> <span class="attr">or</span> <span class="attr">TBD</span>&gt;</span></span>)</span><br><span class="line"></span><br><span class="line"><span class="section">## Procedure</span></span><br><span class="line"><span class="bullet">1.</span> Read the transcript carefully and infer attendee names if stated.</span><br><span class="line"><span class="bullet">2.</span> Group discussion into agenda topics.</span><br><span class="line"><span class="bullet">3.</span> Extract explicit decisions; do not invent decisions.</span><br><span class="line"><span class="bullet">4.</span> If budgets, procurement, expenses, or payments are mentioned, follow the Finance Check section and read references/FINANCE.md.</span><br><span class="line"><span class="bullet">5.</span> If the user asks to upload/sync/send to a server, run scripts/upload.py with the minutes content.</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：正文越长，触发 Skill 后的上下文成本越高。规范建议把 <code>SKILL.md</code> 控制在 500 行以内，把长材料下沉到 <code>references/</code>。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></p>
+</blockquote>
+<h2 id="高级用法一：Reference（按需读取长资料）"><a href="#高级用法一：Reference（按需读取长资料）" class="headerlink" title="高级用法一：Reference（按需读取长资料）"></a>高级用法一：Reference（按需读取长资料）</h2><p>视频里用“集团财务手册”演示了 Reference 的价值：只有当会议内容提到费用&#x2F;预算等关键词时，才加载财务规则；否则不占用上下文 token。<a target="_blank" rel="noopener" href="https://youtu.be/yDc0_8emz7M?si=zYlgf3KrqWB8Vm3h"><code>Agent Skill 从使用到原理，一次讲清</code></a></p>
+<p>你可以在 <code>references/FINANCE.md</code> 放合规规则（越聚焦越好）：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Finance policy (excerpt)</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Hotel</span></span><br><span class="line"><span class="bullet">-</span> Max hotel reimbursement: 500 CNY per night</span><br><span class="line"></span><br><span class="line"><span class="section">## Meals</span></span><br><span class="line"><span class="bullet">-</span> Max meal reimbursement: 300 CNY per person per day</span><br></pre></td></tr></table></figure>
+
+<p>然后在 <code>SKILL.md</code> 里写清楚“何时读取”与“读完要做什么”，并用相对路径引用：<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## Finance Check</span></span><br><span class="line">Only when budget, procurement, expenses, reimbursement, or payments are mentioned:</span><br><span class="line"><span class="bullet">-</span> Read [<span class="string">references/FINANCE.md</span>](<span class="link">references/FINANCE.md</span>)</span><br><span class="line"><span class="bullet">-</span> Flag any amount that exceeds the policy and specify the required approver</span><br></pre></td></tr></table></figure>
+
+<h2 id="高级用法二：Script（执行自动化，而不是堆更多上下文）"><a href="#高级用法二：Script（执行自动化，而不是堆更多上下文）" class="headerlink" title="高级用法二：Script（执行自动化，而不是堆更多上下文）"></a>高级用法二：Script（执行自动化，而不是堆更多上下文）</h2><p>视频强调了 Script 的一个关键点：<strong>脚本是被执行的，通常不会被当作长文本读进上下文</strong>；因此你可以把复杂逻辑放到脚本里，避免把上下文“塞爆”。<a target="_blank" rel="noopener" href="https://youtu.be/yDc0_8emz7M?si=zYlgf3KrqWB8Vm3h"><code>Agent Skill 从使用到原理，一次讲清</code></a></p>
+<p>例如 <code>scripts/upload.py</code>（示例为安全起见使用环境变量，不要硬编码密钥）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> urllib.request</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>() -&gt; <span class="built_in">int</span>:</span><br><span class="line">    upload_url = os.environ.get(<span class="string">&quot;UPLOAD_URL&quot;</span>, <span class="string">&quot;https://example.com/upload&quot;</span>)</span><br><span class="line">    token = os.environ.get(<span class="string">&quot;UPLOAD_TOKEN&quot;</span>, <span class="string">&quot;&quot;</span>)</span><br><span class="line"></span><br><span class="line">    content = sys.stdin.read()</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> content.strip():</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;No content to upload.&quot;</span>, file=sys.stderr)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    payload = json.dumps(&#123;<span class="string">&quot;content&quot;</span>: content&#125;).encode(<span class="string">&quot;utf-8&quot;</span>)</span><br><span class="line">    req = urllib.request.Request(upload_url, data=payload, method=<span class="string">&quot;POST&quot;</span>)</span><br><span class="line">    req.add_header(<span class="string">&quot;Content-Type&quot;</span>, <span class="string">&quot;application/json&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> token:</span><br><span class="line">        req.add_header(<span class="string">&quot;Authorization&quot;</span>, <span class="string">f&quot;Bearer <span class="subst">&#123;token&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">with</span> urllib.request.urlopen(req, timeout=<span class="number">30</span>) <span class="keyword">as</span> resp:</span><br><span class="line">        body = resp.read().decode(<span class="string">&quot;utf-8&quot;</span>, errors=<span class="string">&quot;replace&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(body)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    <span class="keyword">raise</span> SystemExit(main())</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>警告</strong>：任何“会产生副作用”的脚本（发请求、改线上、发消息）都要做权限与确认机制。不同平台对脚本执行、自动批准（auto-approve）有不同的安全控制，务必先读文档、再在受控环境中试运行。<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/copilot/customization/agent-skills">Use Agent Skills in VS Code</a></p>
+</blockquote>
+<h2 id="Skills-的制作（含最佳实践）"><a href="#Skills-的制作（含最佳实践）" class="headerlink" title="Skills 的制作（含最佳实践）"></a>Skills 的制作（含最佳实践）</h2><p>目前 Skills 的制作方式大致可以分成两类：</p>
+<ul>
+<li><strong>本地制作（以 Claude Code 为代表）</strong>：借助 <code>skill-creator</code> 等技能，在本地文件系统里生成&#x2F;迭代 Skill（更可控，但对工具与环境有一定门槛）。</li>
+<li><strong>云端制作（以扣子为代表）</strong>：全程自然语言对话，在云端沙盒中生成&#x2F;调试&#x2F;部署 Skill（上手更轻量，适合大多数“先做出来再优化”的场景）。</li>
+</ul>
+<h3 id="在-Claude-Code-中制作-Skills（以-skill-creator-为核心）"><a href="#在-Claude-Code-中制作-Skills（以-skill-creator-为核心）" class="headerlink" title="在 Claude Code 中制作 Skills（以 skill-creator 为核心）"></a>在 Claude Code 中制作 Skills（以 <code>skill-creator</code> 为核心）</h3><p>这里默认你已经安装并能正常使用 Claude Code。若是初次接触，可以先参考官方文档的安装与能力说明，再回到本文继续（重点在“如何把流程固化成 Skill”）。</p>
+<h4 id="案例一：做一个「英文博客翻译」Skill（把固定流程固化为可复用-SOP）"><a href="#案例一：做一个「英文博客翻译」Skill（把固定流程固化为可复用-SOP）" class="headerlink" title="案例一：做一个「英文博客翻译」Skill（把固定流程固化为可复用 SOP）"></a>案例一：做一个「英文博客翻译」Skill（把固定流程固化为可复用 SOP）</h4><p>这是一个典型的“高频处理 + 可复用流程”任务：你经常读英文博客，遇到好文章想保存为中英双语两份文档，步骤通常比较固定：</p>
+<ul>
+<li>获取博客内容并保存为英文版 Markdown</li>
+<li>基于英文 Markdown 翻译为中文</li>
+<li>审阅译文并润色，输出中文最终版</li>
+</ul>
+<p><strong>Step 1：安装 <code>skill-creator</code></strong></p>
+<ul>
+<li>仓库：<a target="_blank" rel="noopener" href="https://github.com/anthropics/skills/tree/main/skills/skill-creator">https://github.com/anthropics/skills/tree/main/skills/skill-creator</a></li>
+</ul>
+<p><strong>Step 2：梳理需求并写成“可执行提示词”</strong></p>
+<p>为了让模型更稳定地产出你想要的 Skill，建议把提示词拆成 4 类信息（越明确越不跑偏）：</p>
+<ul>
+<li><strong>用途</strong>：这个 Skill 用来解决什么问题（做什么）。</li>
+<li><strong>触发方式</strong>：什么场景&#x2F;用户表达会触发（什么时候用）。</li>
+<li><strong>输出要求</strong>：输出格式、命名规则、保存位置、边界条件（怎么输出）。</li>
+<li><strong>所需资源（可选）</strong>：脚本、术语表、润色规则、参考资料（用什么支撑它做对）。</li>
+</ul>
+<p>下面是一份“英文博客翻译”Skill 的真实提示词示例（可直接复制给 <code>skill-creator</code> 使用，后续再逐步补齐脚本&#x2F;术语表&#x2F;润色规则）：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">我要创建一个「英文博客翻译」Skill，这个Skill可以获取任意英文博客URL并将它转换为Markdown文件保存在本地，同时支持将英文Markdown文件翻译为中文保存在同一目录下。</span><br><span class="line"></span><br><span class="line">1、核心流程：</span><br><span class="line">步骤一：获取英文博客内容并保存为英文版Markdown（用python脚本固定）</span><br><span class="line">步骤二：根据英文版Markdown翻译为中文（将翻译prompt固定）</span><br><span class="line">步骤三：审阅译文并润色输出为中文最终版（将润色prompt和术语表固定，稍后提供）</span><br><span class="line"></span><br><span class="line">2、输出文件：一份英文版Markdown，一份中文版Markdown</span><br><span class="line"></span><br><span class="line">3、输出文件要求：保存的Markdown文件按域名组织，例如：</span><br><span class="line"></span><br><span class="line">&lt;项目根目录&gt;/</span><br><span class="line">└── &lt;domain&gt;/</span><br><span class="line">    └── &lt;blog&gt;.md</span><br><span class="line">    └── &lt;中译-blog&gt;.md</span><br><span class="line"></span><br><span class="line">- &lt;domain&gt;：即站点名，如github.com、mp.weixin.qq.com</span><br><span class="line">- 英文版Markdown文件命名：&lt;blog&gt;，从页面标题（首选）或 URL 路径中提取信息，转换为 kebab-case 格式，2-6 个单词</span><br><span class="line">- 中文版Markdown命名：&lt;中译-blog&gt;，即在英文版Markdown文件命名前加上  中译- 进行连接</span><br><span class="line"></span><br><span class="line">4、触发时机：当用户想要保存并翻译博客文章时使用。</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>小建议</strong>：提示词里“输出文件要求”一定要写得非常具体（保存位置、命名规则、目录结构），否则模型很容易在这一步自由发挥，导致后续脚本&#x2F;测试都不好收敛。</p>
+</blockquote>
+<p><strong>Step 3：用 <code>skill-creator</code> 生成 Skill</strong></p>
+<p>把 Step 2 的提示词交给 Claude Code。若你发现它触发了“别的 Skill”（比如触发到 <code>superpowers</code>），通常意味着：</p>
+<ul>
+<li>你的 <code>description</code>&#x2F;触发条件不够精准，关键词与意图描述太泛；</li>
+<li>或你同时安装了多个相近技能，导致匹配冲突。</li>
+</ul>
+<p>解决思路很简单：<strong>收敛 description、加上更具体的触发语句与关键词</strong>，必要时把某些技能设为 <code>disable-model-invocation: true</code> 只允许手动调用。</p>
+<p><strong>Step 4：测试并迭代</strong></p>
+<p>建议重点验证两个稳定性：</p>
+<ul>
+<li><strong>稳定触发</strong>：在预期场景下是否能触发（多换几种用户表达方式）。</li>
+<li><strong>稳定执行</strong>：流程是否会跳步&#x2F;漏步、输出是否符合命名与目录要求（多换几个不同站点&#x2F;不同结构的博客 URL）。</li>
+</ul>
+<p><strong>Step 5：分享（可选）：制作 Plugin&#x2F;Marketplace</strong></p>
+<p>如果你希望把自定义 Skill 分享给更多人，除了直接分享本地文件，也可以按官方插件文档把它打包成可安装&#x2F;可更新的形式：</p>
+<ul>
+<li>文档：<a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/plugins">https://code.claude.com/docs/en/plugins</a></li>
+</ul>
+<h4 id="案例二：做一个「Chrome-插件图标」Skill（先验证脚本，再打包进-Skill）"><a href="#案例二：做一个「Chrome-插件图标」Skill（先验证脚本，再打包进-Skill）" class="headerlink" title="案例二：做一个「Chrome 插件图标」Skill（先验证脚本，再打包进 Skill）"></a>案例二：做一个「Chrome 插件图标」Skill（先验证脚本，再打包进 Skill）</h4><p>这个案例的目标很工程化：解决“AI 写 Chrome 插件但总忘了配置图标&#x2F;图标格式不对”的问题，并支持两种输入路径：</p>
+<ul>
+<li><strong>有现成 SVG</strong>：直接把 SVG 转成 Chrome 插件所需的 4 种 PNG 尺寸（16×16、32×32、48×48、128×128）。</li>
+<li><strong>没有现成 SVG</strong>：先在图标库搜索并下载 SVG，再做格式转换。</li>
+</ul>
+<p>经验教训是：这类技能更适合先把脚本跑通，再让 <code>skill-creator</code> 把脚本与说明一起“封装进 Skill”。你可以把流程拆成更可复用的“原子能力”：</p>
+<ul>
+<li><strong>搜索&#x2F;下载图标</strong>：一个脚本负责（输入关键词，输出 SVG）</li>
+<li><strong>格式转换</strong>：另一个脚本负责（输入 SVG，输出多尺寸 PNG）</li>
+</ul>
+<p>这样就能同时兼容“只想转格式”和“需要从零找图标”两种场景，而不是被一个大而全脚本绑死。</p>
+<p>参考（文字版）：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/7VUIzD0tnkImN8atADEGRg">https://mp.weixin.qq.com/s/7VUIzD0tnkImN8atADEGRg</a></p>
+<h3 id="在扣子中制作-Skills（自然语言对话-云端沙盒）"><a href="#在扣子中制作-Skills（自然语言对话-云端沙盒）" class="headerlink" title="在扣子中制作 Skills（自然语言对话 + 云端沙盒）"></a>在扣子中制作 Skills（自然语言对话 + 云端沙盒）</h3><p>扣子这类平台的优势是门槛更低：你可以先用自然语言把“需求 → 技能 → 调试 → 部署”跑通，再逐步把规则写得更严谨、更可复用。</p>
+<h4 id="案例一：一次性提示词生成「中英文混合排版优化」Skill"><a href="#案例一：一次性提示词生成「中英文混合排版优化」Skill" class="headerlink" title="案例一：一次性提示词生成「中英文混合排版优化」Skill"></a>案例一：一次性提示词生成「中英文混合排版优化」Skill</h4><p>典型痛点：中文与【英文&#x2F;数字】之间需要保留 1 个半角空格，手动改很重复。它特别适合做成 Skill，因为规则明确、可批量复用。</p>
+<p>制作要点同样是 4 件事：用途、触发方式、输出要求、所需资源。然后在右侧调试区用多份真实文本测试：</p>
+<ul>
+<li><strong>稳定触发</strong>：在用户说“帮我优化中英文内容排版”等表达时是否能加载技能</li>
+<li><strong>稳定执行</strong>：是否能一致地补空格、且不引入额外格式破坏</li>
+</ul>
+<p>完成后部署上线，即可在对话中直接调用。</p>
+<h4 id="案例二：多轮对话得到满意产物，再“固化为-Skill”"><a href="#案例二：多轮对话得到满意产物，再“固化为-Skill”" class="headerlink" title="案例二：多轮对话得到满意产物，再“固化为 Skill”"></a>案例二：多轮对话得到满意产物，再“固化为 Skill”</h4><p>当你一开始说不清楚规范时，可以先用多轮对话把产物打磨到满意（例如：初翻 → 译后审校 → 最终润色），然后再让平台把“对话流程”总结并打包成 Skill。</p>
+<p>需要注意的是：<strong>对话固化时可能会丢失细节</strong>（平台会做摘要&#x2F;归纳），因此最终一定要用新样例做回归测试，必要时把关键规则（术语表、语体要求、输出结构）显式写进 Skill 里。</p>
+<p>一个比较稳的做法是把“审校维度”和“术语表”明确下来，让 Skill 有可复用的约束条件。例如审校维度可以固定为：准确性、流畅性、风格适配、术语统一；术语表可以作为可选输入参数传入（或固化在 <code>references/</code> 中）。示例术语映射（节选）：</p>
+<ul>
+<li>AGI → 通用人工智能</li>
+<li>LLM&#x2F;Large Language Model → 大语言模型</li>
+<li>Generative AI → 生成式 AI</li>
+<li>AI Agent → AI 智能体</li>
+<li>few-shot → 少样本学习</li>
+<li>fine-tuning → 微调</li>
+<li>Agent Skills → Agent Skills</li>
+<li>Skills → Skills</li>
+</ul>
+<p>同时把输出结构写死也很重要，例如固定输出为：<strong>原始译文 + 审校报告 + 润色后的最终译文</strong>。这样测试时更容易判断“有没有漏步骤&#x2F;跑偏”。</p>
+<p>另外，云端平台通常会提供版本记录与回滚能力：当你某次迭代不满意时，可以直接回到上一版本，减少试错成本。</p>
+<h3 id="Skills-制作最佳实践（整理自官方建议）"><a href="#Skills-制作最佳实践（整理自官方建议）" class="headerlink" title="Skills 制作最佳实践（整理自官方建议）"></a>Skills 制作最佳实践（整理自官方建议）</h3><p>这里的要点主要来自官方的“Skill authoring best practices”与渐进式披露思想，适合当作“写 Skill 的默认规范”。<a target="_blank" rel="noopener" href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices">Skill authoring best practices</a></p>
+<h4 id="核心原则"><a href="#核心原则" class="headerlink" title="核心原则"></a>核心原则</h4><ul>
+<li><strong>简洁是关键</strong>：只添加 AI 原本不知道、但对任务质量至关重要的上下文。</li>
+<li><strong>设定适当的自由度</strong>：任务越脆弱&#x2F;越容易出错，越应该减少自由度（更多脚本&#x2F;更明确格式）；任务越开放，越可以保留弹性（更多原则&#x2F;示例&#x2F;边界条件）。</li>
+</ul>
+<h4 id="结构建议（SKILL-md-与资源层）"><a href="#结构建议（SKILL-md-与资源层）" class="headerlink" title="结构建议（SKILL.md 与资源层）"></a>结构建议（SKILL.md 与资源层）</h4><ul>
+<li><strong><code>name</code> 命名清晰</strong>：尽量用动名词&#x2F;可执行动作表达（如 <code>processing-pdfs</code>、<code>writing-documentation</code>），避免 <code>helper</code>、<code>documents</code> 这类含糊名称。</li>
+<li><strong><code>description</code> 写清“做什么 + 什么时候用”</strong>：让 agent 能稳定匹配触发条件。</li>
+<li><strong>渐进式披露</strong>：<code>SKILL.md</code> 正文建议控制在 500 行以内；接近上限时，把长内容拆到 <code>references/</code>。</li>
+<li><strong>资源层一层深度</strong>：资源文件建议放在与 <code>SKILL.md</code> 同级的一级目录（如 <code>references/</code>、<code>scripts/</code>），并且在 <code>SKILL.md</code> 中显式链接&#x2F;引用，确保 agent “需要时能读到”。</li>
+<li><strong>资源文件超过 100 行加目录</strong>：在文件顶部加 TOC，方便预览截断时仍能定位到信息。</li>
+</ul>
+<h4 id="工作流与反馈回路"><a href="#工作流与反馈回路" class="headerlink" title="工作流与反馈回路"></a>工作流与反馈回路</h4><ul>
+<li><strong>把复杂任务拆成清晰步骤</strong>：必要时提供可复制的检查清单，让 agent 执行时逐项勾选。</li>
+<li><strong>引入反馈回路</strong>：用“运行验证器 → 修复错误 → 重复”的循环，显著提升稳定性与一致性。</li>
+<li><strong>双 Agent 开发</strong>：用 Agent A 负责创建&#x2F;修改 Skill，用 Agent B 负责黑盒测试与挑错，把问题再反馈给 Agent A 迭代。</li>
+</ul>
+<h4 id="发布前自检清单（可直接复用）"><a href="#发布前自检清单（可直接复用）" class="headerlink" title="发布前自检清单（可直接复用）"></a>发布前自检清单（可直接复用）</h4><p><strong>核心质量</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> <code>description</code> 具体，包含关键术语</li>
+<li><input disabled="" type="checkbox"> <code>description</code> 同时包含“功能”与“使用时机”</li>
+<li><input disabled="" type="checkbox"> <code>SKILL.md</code> 正文在 500 行以内</li>
+<li><input disabled="" type="checkbox"> 长细节拆分到独立文件（如有需要）</li>
+<li><input disabled="" type="checkbox"> 全 Skill 术语一致</li>
+<li><input disabled="" type="checkbox"> 示例具体，不抽象</li>
+<li><input disabled="" type="checkbox"> 文件引用保持一层深度</li>
+<li><input disabled="" type="checkbox"> 渐进式披露使用得当</li>
+<li><input disabled="" type="checkbox"> 工作流步骤清晰</li>
+</ul>
+<p><strong>代码与脚本</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> 脚本是为了解决问题，而不是把问题“推回给 Claude”</li>
+<li><input disabled="" type="checkbox"> 错误处理清晰、可定位、提示有帮助</li>
+<li><input disabled="" type="checkbox"> 没有“神秘常量”（所有关键值都有合理解释&#x2F;来源）</li>
+<li><input disabled="" type="checkbox"> 列出并验证所需依赖&#x2F;软件包</li>
+<li><input disabled="" type="checkbox"> 脚本文档清晰（如何运行、输入输出、失败模式）</li>
+<li><input disabled="" type="checkbox"> 避免 Windows 风格路径（统一使用正斜杠 <code>/</code>，提升跨平台复用性）</li>
+<li><input disabled="" type="checkbox"> 关键操作有验证步骤（例如生成文件后检查是否存在&#x2F;尺寸是否正确）</li>
+</ul>
+<p><strong>测试</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> 至少用 3 个真实样例做评估</li>
+<li><input disabled="" type="checkbox"> 在不同模型&#x2F;配置上做过测试（如适用）</li>
+<li><input disabled="" type="checkbox"> 覆盖真实使用场景与边界情况</li>
+<li><input disabled="" type="checkbox"> 团队&#x2F;同伴反馈已纳入（如适用）</li>
+</ul>
+<h3 id="什么任务值得做成-Skills？"><a href="#什么任务值得做成-Skills？" class="headerlink" title="什么任务值得做成 Skills？"></a>什么任务值得做成 Skills？</h3><p>一个更“工程化”的判断标准是：当你需要 Claude <strong>持续、高效、稳定</strong>地执行某个特定任务时，就值得用 Skill 来固化流程。<a target="_blank" rel="noopener" href="https://claude.com/blog/skills-explained">Skills explained</a></p>
+<p>典型适用方向包括：</p>
+<ul>
+<li><strong>组织工作流程</strong>：品牌指南、合规流程、文档模板</li>
+<li><strong>专业领域</strong>：Excel 公式、PDF 处理、数据分析</li>
+<li><strong>个人偏好</strong>：笔记系统、编码模式、研究方法</li>
+</ul>
+<p>结合社区安装热度（如 <code>skills.sh</code> 的榜单）常见任务类型大致呈现如下分布（示例统计）：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th align="right">数量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>增长&#x2F;营销（SEO&#x2F;CRO&#x2F;投放&#x2F;定价&#x2F;增长策略）</td>
+<td align="right">23</td>
+</tr>
+<tr>
+<td>软件工程：前端&#x2F;全栈 UI 与最佳实践</td>
+<td align="right">19</td>
+</tr>
+<tr>
+<td>内容生产（图文&#x2F;幻灯片&#x2F;图片&#x2F;媒体处理&#x2F;社媒分发）</td>
+<td align="right">17</td>
+</tr>
+<tr>
+<td>工程方法论（计划&#x2F;执行&#x2F;协作&#x2F;评审&#x2F;调试等流程）</td>
+<td align="right">13</td>
+</tr>
+<tr>
+<td>文档与办公（PDF&#x2F;DOCX&#x2F;PPTX&#x2F;XLSX&#x2F;文档协作）</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Agent 工程（MCP&#x2F;工具链&#x2F;浏览器自动化等元技能）</td>
+<td align="right">5</td>
+</tr>
+<tr>
+<td>软件工程：移动开发（Expo&#x2F;RN&#x2F;iOS&#x2F;Android）</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>软件工程：DevOps&#x2F;发布&#x2F;CI&#x2F;CD&#x2F;依赖维护</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>软件工程：后端&#x2F;API&#x2F;数据与数据库</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>沟通与管理（会议&#x2F;汇报&#x2F;内部沟通）</td>
+<td align="right">2</td>
+</tr>
+<tr>
+<td>软件工程：测试&#x2F;质量保障&#x2F;验证（偏测试方法）</td>
+<td align="right">1</td>
+</tr>
+</tbody></table>
+<p>从任务特征上看，值得做成 Skill 的任务通常落在三类（可重叠）：</p>
+<ul>
+<li><strong>高频处理 + 可复用流程</strong>：步骤固定、目标明确（如 code review、CI&#x2F;CD、SEO 审计）。</li>
+<li><strong>强模板化产出</strong>：产物格式&#x2F;风格强约束（如报告、周报、PPT、品牌设计）。</li>
+<li><strong>多模块&#x2F;多流程组合</strong>：需要串并联多个子流程（如社媒发布：选题 → 写作 → 配图 → 分发）。</li>
+</ul>
+<p>最简单的二分法也很好用：<strong>一次性任务不值得做 Skill；需要反复做的任务，优先固化成 Skill</strong>。实践中建议遵循这个顺序：</p>
+<ol>
+<li><strong>手动跑通，沉淀标准</strong>：先手动执行几次，厘清固定步骤与高质量标准。</li>
+<li><strong>示范教学，封装 Skill</strong>：在支持 Skills 的工具里完整演示一遍，让 agent 把流程封装为 Skill。</li>
+<li><strong>循环使用，持续迭代</strong>：后续直接调用 Skill；每次输出后做校验，按反馈不断修正。</li>
+</ol>
+<h2 id="Skill-放哪儿？不同工具的常见落地点"><a href="#Skill-放哪儿？不同工具的常见落地点" class="headerlink" title="Skill 放哪儿？不同工具的常见落地点"></a>Skill 放哪儿？不同工具的常见落地点</h2><p>同一个 Skill 的目录结构与 <code>SKILL.md</code> 格式是通用的（Agent Skills 标准），但<strong>各工具的“扫描路径”和“优先级”不同</strong>。</p>
+<h3 id="Claude-Code"><a href="#Claude-Code" class="headerlink" title="Claude Code"></a>Claude Code</h3><p>Claude Code 文档给出了清晰的层级与路径：个人级 <code>~/.claude/skills/&lt;skill-name&gt;/SKILL.md</code>，项目级 <code>.claude/skills/&lt;skill-name&gt;/SKILL.md</code>，并支持用 <code>/skill-name</code> 显式调用。<a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/skills">Extend Claude with skills</a></p>
+<h3 id="OpenAI-Codex"><a href="#OpenAI-Codex" class="headerlink" title="OpenAI Codex"></a>OpenAI Codex</h3><p>Codex 支持从 <code>.codex/skills</code>（以及用户&#x2F;管理员等多个层级）加载 skills，并支持显式&#x2F;隐式调用两种模式。<a target="_blank" rel="noopener" href="https://developers.openai.com/codex/skills/">Agent Skills (Codex)</a></p>
+<h3 id="VS-Code-GitHub-Copilot"><a href="#VS-Code-GitHub-Copilot" class="headerlink" title="VS Code GitHub Copilot"></a>VS Code GitHub Copilot</h3><p>VS Code 推荐把项目 skills 放在 <code>.github/skills/</code>（同时兼容 <code>.claude/skills/</code> 作为 legacy），并且目前处于预览阶段，需要开启 <code>chat.useAgentSkills</code>。<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/copilot/customization/agent-skills">Use Agent Skills in VS Code</a></p>
+<h3 id="Cursor"><a href="#Cursor" class="headerlink" title="Cursor"></a>Cursor</h3><p>Cursor 也提供了 Agent Skills 的落地文档，并且把“目录结构、触发方式、如何查看&#x2F;安装&#x2F;迁移”写得很具体。<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<h4 id="1-技能目录（项目级-vs-全局）"><a href="#1-技能目录（项目级-vs-全局）" class="headerlink" title="1) 技能目录（项目级 vs 全局）"></a>1) 技能目录（项目级 vs 全局）</h4><p>根据 Cursor 文档，Cursor 会自动从以下位置发现并加载技能（优先用 <code>.cursor/skills/</code> 做项目级管理，兼容 <code>.claude/skills/</code> 和 <code>.codex/skills/</code> 便于跨工具复用）：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<ul>
+<li><strong>项目级</strong>：<code>.cursor/skills/</code></li>
+<li><strong>项目级（兼容 Claude）</strong>：<code>.claude/skills/</code></li>
+<li><strong>项目级（兼容 Codex）</strong>：<code>.codex/skills/</code></li>
+<li><strong>用户级（全局）</strong>：<code>~/.cursor/skills/</code></li>
+<li><strong>用户级（全局，兼容 Claude）</strong>：<code>~/.claude/skills/</code></li>
+<li><strong>用户级（全局，兼容 Codex）</strong>：<code>~/.codex/skills/</code></li>
+</ul>
+<h4 id="2-创建一个项目级-Skill（推荐）"><a href="#2-创建一个项目级-Skill（推荐）" class="headerlink" title="2) 创建一个项目级 Skill（推荐）"></a>2) 创建一个项目级 Skill（推荐）</h4><p>Cursor 推荐的最小目录结构如下（每个 Skill 是一个文件夹，包含 <code>SKILL.md</code>）：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.cursor/</span><br><span class="line">  skills/</span><br><span class="line">    meeting-minutes/</span><br><span class="line">      SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p><code>SKILL.md</code> 的写法与 Agent Skills 标准一致（YAML frontmatter + Markdown 正文）。示例（内容建议用英文写清楚关键词，提升匹配命中率）：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: meeting-minutes</span><br><span class="line"><span class="section">description: Summarize meeting transcripts into attendees, agenda items, decisions, and action items. Use when the user asks for meeting minutes or a meeting summary.</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Output format</span></span><br><span class="line"><span class="section">### Attendees</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">name</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Agenda</span></span><br><span class="line"><span class="bullet">1.</span> <span class="language-xml"><span class="tag">&lt;<span class="name">topic</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Decisions</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">decision</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Action Items</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">owner</span>&gt;</span></span>: <span class="language-xml"><span class="tag">&lt;<span class="name">task</span>&gt;</span></span> (due: <span class="language-xml"><span class="tag">&lt;<span class="name">date</span> <span class="attr">or</span> <span class="attr">TBD</span>&gt;</span></span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-在-Cursor-里如何触发-Skills"><a href="#3-在-Cursor-里如何触发-Skills" class="headerlink" title="3) 在 Cursor 里如何触发 Skills"></a>3) 在 Cursor 里如何触发 Skills</h4><p>Cursor 文档明确了两种方式：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<ul>
+<li><strong>自动触发</strong>：Cursor 启动时会发现并加载技能，Agent 会“看到”所有技能，并根据当前上下文决定何时调用。</li>
+<li><strong>手动触发</strong>：在 Agent 对话中输入 <code>/</code>，搜索技能名称并显式调用。</li>
+</ul>
+<p>如果你希望把某个 Skill 变成“只允许手动调用”的斜杠命令效果，可以在 frontmatter 里加 <code>disable-model-invocation: true</code>，这样它只有在 <code>/skill-name</code> 显式调用时才会被包含进上下文。<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<h4 id="4-如何在-Cursor-UI-里查看已发现的-Skills"><a href="#4-如何在-Cursor-UI-里查看已发现的-Skills" class="headerlink" title="4) 如何在 Cursor UI 里查看已发现的 Skills"></a>4) 如何在 Cursor UI 里查看已发现的 Skills</h4><p>Cursor 提供了一个查看入口，便于排查“为什么我写了 Skill 但 Agent 没用”：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<ol>
+<li>打开 <strong>Cursor Settings</strong>（Windows&#x2F;Linux：<code>Ctrl+Shift+J</code>）</li>
+<li>进入 <strong>Rules</strong></li>
+<li>技能会显示在 <strong>Agent Decides</strong> 部分</li>
+</ol>
+<h4 id="5-从-GitHub-安装-导入-Skills（团队共享）"><a href="#5-从-GitHub-安装-导入-Skills（团队共享）" class="headerlink" title="5) 从 GitHub 安装&#x2F;导入 Skills（团队共享）"></a>5) 从 GitHub 安装&#x2F;导入 Skills（团队共享）</h4><p>如果你想把 skills 放在一个 GitHub 仓库里共享给团队，Cursor 文档给出的操作路径是：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<ol>
+<li><strong>Cursor Settings → Rules</strong></li>
+<li>在 <strong>Project Rules</strong> 部分点击 <strong>Add Rule</strong></li>
+<li>选择 <strong>Remote Rule (Github)</strong></li>
+<li>输入 GitHub 仓库 URL</li>
+</ol>
+<h4 id="6-从-Rules-Slash-Commands-迁移到-Skills（Cursor-2-4-）"><a href="#6-从-Rules-Slash-Commands-迁移到-Skills（Cursor-2-4-）" class="headerlink" title="6) 从 Rules&#x2F;Slash Commands 迁移到 Skills（Cursor 2.4+）"></a>6) 从 Rules&#x2F;Slash Commands 迁移到 Skills（Cursor 2.4+）</h4><p>如果你之前已经积累了不少“动态规则（Apply Intelligently）”或斜杠命令，Cursor 2.4 内置了 <code>/migrate-to-skills</code>，可以辅助迁移到 <code>.cursor/skills/</code>。<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<p>文档也给了迁移的边界条件（建议迁移前先读一遍，避免误解）：例如 <code>alwaysApply: true</code> 或带特定 <code>globs</code> 的规则不会被迁移；用户规则也不会被迁移（因为不存储在文件系统中）。<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<h2 id="共享-可复用的-Agent-Skills-项目（GitHub）"><a href="#共享-可复用的-Agent-Skills-项目（GitHub）" class="headerlink" title="共享&#x2F;可复用的 Agent Skills 项目（GitHub）"></a>共享&#x2F;可复用的 Agent Skills 项目（GitHub）</h2><p>如果你不想从零写 Skill，最实用的方式就是“先复用、再改成自己的版本”。这里把你列出的 GitHub 项目按定位做了分组，并给出我建议的阅读顺序（<strong>先官方&#x2F;准官方 → 再精选合集 → 最后按领域挑专用 skills</strong>）。</p>
+<blockquote>
+<p><strong>注意</strong>：无论从哪里拉取 skills，都建议先人工 Review 一遍 <code>SKILL.md</code> 与 <code>scripts/</code>，特别是会产生副作用的脚本（发请求、改配置、部署、删数据等）。必要时把这类技能设为 <code>disable-model-invocation: true</code>，只允许手动触发。</p>
+</blockquote>
+<h3 id="0-Skills-目录站（可检索-发现）"><a href="#0-Skills-目录站（可检索-发现）" class="headerlink" title="0) Skills 目录站（可检索&#x2F;发现）"></a>0) Skills 目录站（可检索&#x2F;发现）</h3><ul>
+<li><strong>Skillsmp</strong>：Skills 目录&#x2F;发现站（可检索&#x2F;浏览）  <ul>
+<li>网站：<a target="_blank" rel="noopener" href="https://skillsmp.com/">https://skillsmp.com/</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="1-官方-准官方-Skills-Catalog（优先看）"><a href="#1-官方-准官方-Skills-Catalog（优先看）" class="headerlink" title="1) 官方&#x2F;准官方 Skills Catalog（优先看）"></a>1) 官方&#x2F;准官方 Skills Catalog（优先看）</h3><ul>
+<li><strong>Anthropic Agent Skills</strong>：<code>anthropics/skills</code>（公共 Agent Skills 仓库&#x2F;示例&#x2F;规范相关目录）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/anthropics/skills">https://github.com/anthropics/skills</a></li>
+</ul>
+</li>
+<li><strong>OpenAI Codex Skills Catalog</strong>：<code>openai/skills</code>（Codex Skills Catalog）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/openai/skills">https://github.com/openai/skills</a></li>
+</ul>
+</li>
+<li><strong>Hugging Face Skills</strong>：<code>huggingface/skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/huggingface/skills">https://github.com/huggingface/skills</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="2-社区“技能包-技能合集”（适合快速找灵感-模板）"><a href="#2-社区“技能包-技能合集”（适合快速找灵感-模板）" class="headerlink" title="2) 社区“技能包&#x2F;技能合集”（适合快速找灵感&#x2F;模板）"></a>2) 社区“技能包&#x2F;技能合集”（适合快速找灵感&#x2F;模板）</h3><ul>
+<li><strong>Awesome Claude Skills（聚合列表）</strong>：<code>ComposioHQ/awesome-claude-skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/ComposioHQ/awesome-claude-skills">https://github.com/ComposioHQ/awesome-claude-skills</a></li>
+</ul>
+</li>
+<li><strong>200+ Skills 合集</strong>：<code>sickn33/antigravity-awesome-skills</code>（覆盖 Claude Code&#x2F;Antigravity&#x2F;Cursor 等生态）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/sickn33/antigravity-awesome-skills">https://github.com/sickn33/antigravity-awesome-skills</a></li>
+</ul>
+</li>
+<li><strong>安全审计&#x2F;漏洞方向 Skills</strong>：<code>trailofbits/skills</code>（安全研究&#x2F;漏洞检测&#x2F;审计工作流）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/trailofbits/skills">https://github.com/trailofbits/skills</a></li>
+</ul>
+</li>
+<li><strong>Claude Code 配置+skills&#x2F;hooks&#x2F;MCP 汇总</strong>：<code>affaan-m/everything-claude-code</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/affaan-m/everything-claude-code">https://github.com/affaan-m/everything-claude-code</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="3-面向特定产品-工程场景的-Skills（更“即插即用”）"><a href="#3-面向特定产品-工程场景的-Skills（更“即插即用”）" class="headerlink" title="3) 面向特定产品&#x2F;工程场景的 Skills（更“即插即用”）"></a>3) 面向特定产品&#x2F;工程场景的 Skills（更“即插即用”）</h3><ul>
+<li><strong>Obsidian Skills</strong>：<code>kepano/obsidian-skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/kepano/obsidian-skills">https://github.com/kepano/obsidian-skills</a></li>
+</ul>
+</li>
+<li><strong>Expo 项目技能</strong>：<code>expo/skills</code>（Expo 项目与 EAS 相关）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/expo/skills">https://github.com/expo/skills</a></li>
+</ul>
+</li>
+<li><strong>Remotion Agent Skills</strong>：<code>remotion-dev/skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/remotion-dev/skills">https://github.com/remotion-dev/skills</a></li>
+</ul>
+</li>
+<li><strong>n8n 工作流技能</strong>：<code>czlonkowski/n8n-skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/czlonkowski/n8n-skills">https://github.com/czlonkowski/n8n-skills</a></li>
+</ul>
+</li>
+<li><strong>UI&#x2F;UX Pro Max Skill</strong>：<code>nextlevelbuilder/ui-ux-pro-max-skill</code>（面向 UI&#x2F;UX 设计的风格、配色、字体与组件建议能力集）  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill">https://github.com/nextlevelbuilder/ui-ux-pro-max-skill</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="4-AutoGen-Studio（可直接复制粘贴的-skills）"><a href="#4-AutoGen-Studio（可直接复制粘贴的-skills）" class="headerlink" title="4) AutoGen Studio（可直接复制粘贴的 skills）"></a>4) AutoGen Studio（可直接复制粘贴的 skills）</h3><ul>
+<li><code>madtank/autogenstudio-skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/madtank/autogenstudio-skills">https://github.com/madtank/autogenstudio-skills</a></li>
+</ul>
+</li>
+<li><code>aj47/autogen-studio-skills</code>  <ul>
+<li>GitHub：<a target="_blank" rel="noopener" href="https://github.com/aj47/autogen-studio-skills">https://github.com/aj47/autogen-studio-skills</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="5-在-Cursor-里复用这些仓库的推荐姿势"><a href="#5-在-Cursor-里复用这些仓库的推荐姿势" class="headerlink" title="5) 在 Cursor 里复用这些仓库的推荐姿势"></a>5) 在 Cursor 里复用这些仓库的推荐姿势</h3><p>结合 Cursor 的 skills 目录约定（项目级 <code>.cursor/skills/</code> + 全局 <code>~/.cursor/skills/</code>）以及其 GitHub 导入入口，你通常有两种落地方式：<a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Agent Skills | Cursor Docs</a></p>
+<ol>
+<li><strong>直接复制某个 skill 文件夹到你的项目里</strong>（最稳、最可控）：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Copy a skill folder into your project-level skills directory</span></span><br><span class="line"><span class="built_in">mkdir</span> -p .cursor/skills</span><br><span class="line"><span class="built_in">cp</span> -R /path/to/repo/skills/&lt;skill-name&gt; .cursor/skills/</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>用 Cursor 的 GitHub 导入入口做团队共享</strong>：<code>Cursor Settings → Rules → Project Rules → Add Rule → Remote Rule (Github)</code>，把 skills 仓库当作“可版本控制的共享来源”。</li>
+</ol>
+<h3 id="6-实用-Skills-推荐（案例向）"><a href="#6-实用-Skills-推荐（案例向）" class="headerlink" title="6) 实用 Skills 推荐（案例向）"></a>6) 实用 Skills 推荐（案例向）</h3><p>下面这些是我认为“上手就能用、并且很适合拿来学习工作流拆解”的技能。它们覆盖了 UI 设计、头脑风暴&#x2F;方案设计、上下文工程、自动循环执行、个人知识库写作、笔记体系、React 工程规范、浏览器自动化，以及“用 Skill 来创建 Skill”等方向。</p>
+<blockquote>
+<p><strong>提醒</strong>：一些技能仓库会带 <code>scripts/</code> 或插件机制（hooks&#x2F;stop hook）。首次使用前建议先扫一遍代码，明确它会不会产生副作用（发请求、写文件、改 git、执行命令等）。</p>
+</blockquote>
+<h4 id="1-frontend-design（UI-设计风格纠偏）"><a href="#1-frontend-design（UI-设计风格纠偏）" class="headerlink" title="1) frontend-design（UI 设计风格纠偏）"></a>1) <code>frontend-design</code>（UI 设计风格纠偏）</h4><p>适合用来“纠正 AI 总爱出紫色渐变 UI”的问题，尤其在你想要更现代、更克制、更像真实产品的前端设计时很有效。</p>
+<ul>
+<li><strong>Frontend-design skill</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design/skills/frontend-design">https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design/skills/frontend-design</a></li>
+<li><strong>相似能力技能</strong>：<code>ui-ux-pro-max-skill</code>：<a target="_blank" rel="noopener" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill">https://github.com/nextlevelbuilder/ui-ux-pro-max-skill</a></li>
+</ul>
+<h4 id="2-superpowers（把头脑风暴与工程化流程做成“固定工作流”）"><a href="#2-superpowers（把头脑风暴与工程化流程做成“固定工作流”）" class="headerlink" title="2) superpowers（把头脑风暴与工程化流程做成“固定工作流”）"></a>2) <code>superpowers</code>（把头脑风暴与工程化流程做成“固定工作流”）</h4><p>它解决的不是“会不会写代码”，而是“方案设计阶段问得够不够细、够不够准”，并且把从设计到开发、测试、评审的流程做成了可复用的工作流模板，非常值得当作“团队标准流程”的参考。</p>
+<ul>
+<li><strong>Superpower skills</strong>：<a target="_blank" rel="noopener" href="https://github.com/obra/superpowers">https://github.com/obra/superpowers</a></li>
+<li><strong>工作流亮点（值得抄作业）</strong>：<ul>
+<li><strong>brainstorming</strong>：结构化对话把粗想法变成可落地设计，探索多方案、权衡、增量验证</li>
+<li><strong>using-git-worktrees</strong>：用 git worktrees 隔离不同功能分支，避免互相干扰</li>
+<li><strong>writing-plans</strong>：把工作拆到具体文件路径、完整代码与验证步骤</li>
+<li><strong>执行开发</strong>：可选子代理驱动开发（任务间审查）或批量执行计划（人工分批审批）</li>
+<li><strong>test-driven-development</strong>：强制 RED-GREEN-REFACTOR，防止过度设计并确保每步可验证</li>
+<li><strong>requesting-code-review</strong>：按严重等级输出审查问题（Critical&#x2F;Important&#x2F;Minor）</li>
+<li><strong>finishing-a-development-branch</strong>：收尾合并&#x2F;PR&#x2F;保留&#x2F;丢弃，并清理 worktrees</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-planning-with-files（用文件系统做“外部工作记忆”）"><a href="#3-planning-with-files（用文件系统做“外部工作记忆”）" class="headerlink" title="3) planning-with-files（用文件系统做“外部工作记忆”）"></a>3) <code>planning-with-files</code>（用文件系统做“外部工作记忆”）</h4><p>这是典型的“上下文工程”思路：把阶段计划、研究记录、最终交付拆成独立文件，让 agent 在长任务里不容易漂移，也更容易断点续跑。</p>
+<ul>
+<li><strong>planning-with-files</strong>：<a target="_blank" rel="noopener" href="https://github.com/OthmanAdi/planning-with-files">https://github.com/OthmanAdi/planning-with-files</a></li>
+</ul>
+<h4 id="4-ralph-loop-ralph-wiggum（循环执行：一次启动，自动迭代到目标）"><a href="#4-ralph-loop-ralph-wiggum（循环执行：一次启动，自动迭代到目标）" class="headerlink" title="4) ralph-loop &#x2F; ralph-wiggum（循环执行：一次启动，自动迭代到目标）"></a>4) <code>ralph-loop</code> &#x2F; <code>ralph-wiggum</code>（循环执行：一次启动，自动迭代到目标）</h4><p><code>ralph-loop</code> 是 Anthropic 官方插件仓库里的循环执行器，核心思路是用 Stop Hook 拦截退出，并把相同提示词再次喂回去，让 Claude Code 反复迭代（读代码、看 git、修测试）直到达成目标或达到预设次数。</p>
+<ul>
+<li><strong>ralph-loop</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/ralph-loop">https://github.com/anthropics/claude-plugins-official/tree/main/plugins/ralph-loop</a></li>
+<li><strong>ralph-wiggum</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum">https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum</a></li>
+<li><strong>推荐组合用法</strong>：先用 <code>planning-with-files</code> 产出稳定计划&#x2F;里程碑文件，再用 <code>/ralph-loop</code> 做自动迭代，能显著降低“跑偏”的概率。</li>
+</ul>
+<h4 id="5-notebooklm-skill（把-NotebookLM-的“知识库能力”带到支持-Skills-的工具）"><a href="#5-notebooklm-skill（把-NotebookLM-的“知识库能力”带到支持-Skills-的工具）" class="headerlink" title="5) notebooklm-skill（把 NotebookLM 的“知识库能力”带到支持 Skills 的工具）"></a>5) <code>notebooklm-skill</code>（把 NotebookLM 的“知识库能力”带到支持 Skills 的工具）</h4><p>适合 AI 写作、以及任何需要高质量 RAG&#x2F;知识库的场景：你可以把资料组织在 NotebookLM&#x2F;类似体系里，再用 Skill 把能力带到 Claude Code 等支持 Skills 的工具中。</p>
+<ul>
+<li><strong>NotebookLM Skill</strong>：<a target="_blank" rel="noopener" href="https://github.com/PleasePrompto/notebooklm-skill">https://github.com/PleasePrompto/notebooklm-skill</a></li>
+</ul>
+<h4 id="6-obsidian-skills（把-Obsidian-工作流技能化）"><a href="#6-obsidian-skills（把-Obsidian-工作流技能化）" class="headerlink" title="6) obsidian-skills（把 Obsidian 工作流技能化）"></a>6) <code>obsidian-skills</code>（把 Obsidian 工作流技能化）</h4><p>Obsidian 团队&#x2F;社区围绕“如何让 AI 更好地融入 Obsidian”做了很实用的技能集合，尤其适合做知识管理、知识可视化与结构化笔记。</p>
+<ul>
+<li><strong>Obsidian Skills</strong>：<a target="_blank" rel="noopener" href="https://github.com/kepano/obsidian-skills">https://github.com/kepano/obsidian-skills</a></li>
+<li><strong>包含的代表性技能</strong>：<ul>
+<li><strong>Obsidian Markdown Skill</strong>：输出 Obsidian 风格 Markdown（wikilinks、embeds、callouts、properties 等）</li>
+<li><strong>Obsidian Bases Skill</strong>：把笔记变成数据库（表格&#x2F;卡片&#x2F;列表&#x2F;地图等视图）</li>
+<li><strong>JSON Canvas Skill</strong>：用 Canvas 做思维导图&#x2F;流程图，更适合知识可视化</li>
+</ul>
+</li>
+</ul>
+<h4 id="7-react-best-practices（Vercel-的-React-工程“经验浓缩包”）"><a href="#7-react-best-practices（Vercel-的-React-工程“经验浓缩包”）" class="headerlink" title="7) react-best-practices（Vercel 的 React 工程“经验浓缩包”）"></a>7) <code>react-best-practices</code>（Vercel 的 React 工程“经验浓缩包”）</h4><p>如果你在做 React 项目（尤其是 Next.js 生态），这类“最佳实践 Skill”比泛化建议更稳定，适合当作 code review 的“默认标准”。</p>
+<ul>
+<li><strong>介绍</strong>：<a target="_blank" rel="noopener" href="https://vercel.com/blog/introducing-react-best-practices">https://vercel.com/blog/introducing-react-best-practices</a></li>
+<li><strong>React Best Practices skill</strong>：<a target="_blank" rel="noopener" href="https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices">https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices</a></li>
+</ul>
+<h4 id="8-agent-browser（轻量交互式浏览器壳层）"><a href="#8-agent-browser（轻量交互式浏览器壳层）" class="headerlink" title="8) agent-browser（轻量交互式浏览器壳层）"></a>8) <code>agent-browser</code>（轻量交互式浏览器壳层）</h4><p>适合一次性任务或简单自动化：相对“重量级的浏览器自动化方案”，它更轻、交互成本更低，很多情况下也更省 token。</p>
+<ul>
+<li><strong>Agent Browser</strong>：<a target="_blank" rel="noopener" href="https://github.com/vercel-labs/agent-browser">https://github.com/vercel-labs/agent-browser</a></li>
+</ul>
+<h4 id="9-skill-creator（用-Skill-来创建-Skill）"><a href="#9-skill-creator（用-Skill-来创建-Skill）" class="headerlink" title="9) skill-creator（用 Skill 来创建 Skill）"></a>9) <code>skill-creator</code>（用 Skill 来创建 Skill）</h4><p>这是 Anthropic 官方提供的“创建 Skill 的 Skill”。你后面如果要批量沉淀团队工作流，强烈建议先用它做一次标准化的目录结构与写法练习，再逐步形成自己的模板。</p>
+<ul>
+<li><strong>skill-creator</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/skills/tree/main/skills/skill-creator">https://github.com/anthropics/skills/tree/main/skills/skill-creator</a></li>
+</ul>
+<h3 id="7-高质量-Skills-资源库（用来“找技能-学写法-抄工作流”）"><a href="#7-高质量-Skills-资源库（用来“找技能-学写法-抄工作流”）" class="headerlink" title="7) 高质量 Skills 资源库（用来“找技能&#x2F;学写法&#x2F;抄工作流”）"></a>7) 高质量 Skills 资源库（用来“找技能&#x2F;学写法&#x2F;抄工作流”）</h3><p>除了本文前面列出的官方&#x2F;社区仓库，这里补充一批我认为质量更稳定、覆盖更广、也更适合检索的资源库与目录站：</p>
+<h4 id="Claude-Anthropic-官方与准官方"><a href="#Claude-Anthropic-官方与准官方" class="headerlink" title="Claude &#x2F; Anthropic 官方与准官方"></a>Claude &#x2F; Anthropic 官方与准官方</h4><ul>
+<li><strong>Anthropic Skills（早期官方仓库）</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/skills">https://github.com/anthropics/skills</a></li>
+<li><strong>Anthropic 插件&#x2F;skills 集合（更新更活跃）</strong>：<a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-plugins-official">https://github.com/anthropics/claude-plugins-official</a></li>
+</ul>
+<h4 id="awesome-claude-skills（合集类索引）"><a href="#awesome-claude-skills（合集类索引）" class="headerlink" title="awesome-claude-skills（合集类索引）"></a>awesome-claude-skills（合集类索引）</h4><p>GitHub 的 awesome 系列通常是“找灵感&#x2F;找同类方案”的最快入口，这里是多个 stars 较高的合集：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/ComposioHQ/awesome-claude-skills">https://github.com/ComposioHQ/awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/travisvn/awesome-claude-skills">https://github.com/travisvn/awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/BehiSecc/awesome-claude-skills">https://github.com/BehiSecc/awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-claude-skills">https://github.com/VoltAgent/awesome-claude-skills</a></li>
+</ul>
+<h4 id="skillsmp（超大规模收录-语义搜索）"><a href="#skillsmp（超大规模收录-语义搜索）" class="headerlink" title="skillsmp（超大规模收录 + 语义搜索）"></a>skillsmp（超大规模收录 + 语义搜索）</h4><p>目前收录量非常大，并支持语义搜索与筛选&#x2F;排序，适合“我知道我想要什么能力，但不知道技能叫啥”的场景。</p>
+<ul>
+<li><strong>skillsmp</strong>：<a target="_blank" rel="noopener" href="https://skillsmp.com/">https://skillsmp.com</a></li>
+</ul>
+<h4 id="skills-sh（安装排行榜-快速安装生态）"><a href="#skills-sh（安装排行榜-快速安装生态）" class="headerlink" title="skills.sh（安装排行榜 + 快速安装生态）"></a>skills.sh（安装排行榜 + 快速安装生态）</h4><p>把多个技能项目整合成网站，并提供安装排行榜（总榜&#x2F;24h 榜），适合快速捕捉近期热门技能。</p>
+<ul>
+<li><strong>skills.sh</strong>：<a target="_blank" rel="noopener" href="https://skills.sh/">https://skills.sh/</a></li>
+</ul>
+<h4 id="科研方向资源库（垂直领域）"><a href="#科研方向资源库（垂直领域）" class="headerlink" title="科研方向资源库（垂直领域）"></a>科研方向资源库（垂直领域）</h4><p>如果你是科研&#x2F;工程研究方向，这个集合覆盖了很多学科的技能模板与流程。</p>
+<ul>
+<li><strong>claude-scientific-skills</strong>：<a target="_blank" rel="noopener" href="https://github.com/K-Dense-AI/claude-scientific-skills">https://github.com/K-Dense-AI/claude-scientific-skills</a></li>
+</ul>
+<h4 id="个人高质量工作流仓库（适合学拆解）"><a href="#个人高质量工作流仓库（适合学拆解）" class="headerlink" title="个人高质量工作流仓库（适合学拆解）"></a>个人高质量工作流仓库（适合学拆解）</h4><p>个人开发者的技能仓库往往更“工作流导向”，特别适合学习如何把真实生产流程拆成可复用的 Skill。</p>
+<ul>
+<li><strong>@宝玉 Skills</strong>：<a target="_blank" rel="noopener" href="https://github.com/JimLiu/baoyu-skills/tree/main/skills">https://github.com/JimLiu/baoyu-skills/tree/main/skills</a></li>
+</ul>
+<h4 id="moltbot（clawbot）生态技能索引"><a href="#moltbot（clawbot）生态技能索引" class="headerlink" title="moltbot（clawbot）生态技能索引"></a>moltbot（clawbot）生态技能索引</h4><p>如果你在用 moltbot（原 clawbot）相关生态，这个索引比较集中：</p>
+<ul>
+<li><strong>GitHub</strong>：<a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-moltbot-skills">https://github.com/VoltAgent/awesome-moltbot-skills</a></li>
+<li><strong>在线版</strong>：<a target="_blank" rel="noopener" href="https://clawdhub.com/skills">https://clawdhub.com/skills</a></li>
+</ul>
+<h2 id="Skill-vs-MCP：到底该选哪个？"><a href="#Skill-vs-MCP：到底该选哪个？" class="headerlink" title="Skill vs MCP：到底该选哪个？"></a>Skill vs MCP：到底该选哪个？</h2><p>视频引用了 Anthropic 的一句话，非常精准：<a target="_blank" rel="noopener" href="https://claude.com/blog/skills-explained">Skills explained</a></p>
+<blockquote>
+<p>MCP connects Claude to data; Skills teach Claude what to do with that data.</p>
+</blockquote>
+<p>把它翻译成工程视角就是：</p>
+<ul>
+<li><strong>MCP</strong>：解决“连得上”——把 agent 接到数据源&#x2F;业务系统&#x2F;工具上，让它能读写、能查、能操作。</li>
+<li><strong>Skills</strong>：解决“会做事”——把流程、规范、模板、判断规则固化下来，让 agent 用一致的方法处理数据并产出结果。</li>
+</ul>
+<h3 id="选型建议（实践向）"><a href="#选型建议（实践向）" class="headerlink" title="选型建议（实践向）"></a>选型建议（实践向）</h3><ol>
+<li>如果你现在的问题是“模型总是忘了规则&#x2F;输出不稳定&#x2F;每次都要贴提示词”——优先写 Skill。</li>
+<li>如果你现在的问题是“模型拿不到数据&#x2F;无法执行操作&#x2F;需要对接系统”——优先上 MCP。</li>
+<li>如果你要做的是“既要拿数据，又要按公司流程处理并输出”——<strong>Skill + MCP 组合通常最强</strong>：MCP 负责连接与能力暴露，Skill 负责步骤、格式、合规、边界条件。</li>
+</ol>
+<h2 id="常见坑与最佳实践清单"><a href="#常见坑与最佳实践清单" class="headerlink" title="常见坑与最佳实践清单"></a>常见坑与最佳实践清单</h2><ul>
+<li><strong>name&#x2F;目录名不一致</strong>：规范要求 <code>name</code> 必须匹配父目录名，且必须小写+连字符。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></li>
+<li><strong>description 太泛</strong>：description 应该同时描述“做什么”和“什么时候用”，并包含关键词以便检索与匹配。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></li>
+<li><strong>多个 Skill 意图相近导致误触发</strong>：当你安装了多个“功能看起来差不多”的技能时，如果触发条件写得不够具体，就可能调用错 Skill。解决方式是收敛 <code>description</code>、补充更明确的触发语句与关键词，必要时对某些技能启用 <code>disable-model-invocation: true</code> 只允许手动调用。</li>
+<li><strong>SKILL.md 太长</strong>：把长材料拆到 <code>references/</code>，保持主文件精炼，避免触发后上下文暴涨。<a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></li>
+<li><strong>带副作用的 Skill 让模型自动触发</strong>：在 Claude Code 里可以用 frontmatter 控制自动触发（例如 <code>disable-model-invocation: true</code>），把“部署&#x2F;提交&#x2F;发布”等动作收回到人工显式调用。<a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/skills">Extend Claude with skills</a></li>
+<li><strong>“对话固化为 Skill”信息丢失</strong>：云端平台把多轮对话总结为 Skill 时，可能会丢掉关键细节（术语表、输出结构、边界条件）。建议把关键规则写成显式约束（或下沉到 <code>references/</code>），并用新样例做回归测试。</li>
+<li><strong>脚本依赖不清</strong>：脚本必须写清运行方式、依赖与错误提示，否则 agent 可能会退回去“读代码找怎么跑”，反而浪费上下文并引入风险（视频也提到了这一点）。<a target="_blank" rel="noopener" href="https://youtu.be/yDc0_8emz7M?si=zYlgf3KrqWB8Vm3h"><code>Agent Skill 从使用到原理，一次讲清</code></a></li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li><strong>Agent Skill &#x3D; 可移植的能力包</strong>：指令（SKILL.md）+ 参考资料（references&#x2F;）+ 自动化脚本（scripts&#x2F;）。</li>
+<li><strong>渐进式披露是精髓</strong>：先元数据、再指令、最后按需资源，既复用又省上下文。</li>
+<li><strong>Skill vs MCP 不纠结</strong>：MCP 负责连接数据与工具，Skill 负责流程与规则；多数工程场景是组合拳。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://youtu.be/yDc0_8emz7M?si=zYlgf3KrqWB8Vm3h">视频：Agent Skill 从使用到原理，一次讲清</a></li>
+<li><a target="_blank" rel="noopener" href="https://agentskills.io/home">Agent Skills 概览</a></li>
+<li><a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></li>
+<li><a target="_blank" rel="noopener" href="https://claude.com/blog/skills-explained">Anthropic：Skills explained（含 Skill vs MCP）</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/skills">Claude Code：Extend Claude with skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://developers.openai.com/codex/skills/">OpenAI Codex：Agent Skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/copilot/customization/agent-skills">VS Code：Use Agent Skills in VS Code</a></li>
+<li><a target="_blank" rel="noopener" href="https://cursor.com/cn/docs/context/skills">Cursor Docs：Agent Skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://my.feishu.cn/wiki/HMkcwJwyFi9Rtwk5VzScApWEn2c">飞书文档：Agent Skill 参考文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://my.feishu.cn/wiki/KCEfwUxHFihEXIk76k0cFimNnng">飞书文档：实用 Skills &amp; Skills 资源（持续更新）</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/anthropics/claude-plugins-official">GitHub：anthropics&#x2F;claude-plugins-official</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/obra/superpowers">GitHub：obra&#x2F;superpowers</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/OthmanAdi/planning-with-files">GitHub：OthmanAdi&#x2F;planning-with-files</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/PleasePrompto/notebooklm-skill">GitHub：PleasePrompto&#x2F;notebooklm-skill</a></li>
+<li><a target="_blank" rel="noopener" href="https://vercel.com/blog/introducing-react-best-practices">Vercel：Introducing React Best Practices</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/vercel-labs/agent-skills">GitHub：vercel-labs&#x2F;agent-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/vercel-labs/agent-browser">GitHub：vercel-labs&#x2F;agent-browser</a></li>
+<li><a target="_blank" rel="noopener" href="https://skills.sh/">网站：skills.sh</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/plugins">Claude Code：Plugins</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices">Claude Docs：Skill authoring best practices</a></li>
+<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/7VUIzD0tnkImN8atADEGRg">微信文章：Chrome 插件图标 Skill（文字版）</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/travisvn/awesome-claude-skills">GitHub：travisvn&#x2F;awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/BehiSecc/awesome-claude-skills">GitHub：BehiSecc&#x2F;awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-claude-skills">GitHub：VoltAgent&#x2F;awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/K-Dense-AI/claude-scientific-skills">GitHub：K-Dense-AI&#x2F;claude-scientific-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/JimLiu/baoyu-skills/tree/main/skills">GitHub：JimLiu&#x2F;baoyu-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-moltbot-skills">GitHub：VoltAgent&#x2F;awesome-moltbot-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://clawdhub.com/skills">网站：clawdhub.com&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/anthropics/skills">GitHub：anthropics&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/openai/skills">GitHub：openai&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/huggingface/skills">GitHub：huggingface&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/ComposioHQ/awesome-claude-skills">GitHub：ComposioHQ&#x2F;awesome-claude-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/sickn33/antigravity-awesome-skills">GitHub：sickn33&#x2F;antigravity-awesome-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/trailofbits/skills">GitHub：trailofbits&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/affaan-m/everything-claude-code">GitHub：affaan-m&#x2F;everything-claude-code</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kepano/obsidian-skills">GitHub：kepano&#x2F;obsidian-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/expo/skills">GitHub：expo&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/remotion-dev/skills">GitHub：remotion-dev&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/czlonkowski/n8n-skills">GitHub：czlonkowski&#x2F;n8n-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill">GitHub：nextlevelbuilder&#x2F;ui-ux-pro-max-skill</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/madtank/autogenstudio-skills">GitHub：madtank&#x2F;autogenstudio-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/aj47/autogen-studio-skills">GitHub：aj47&#x2F;autogen-studio-skills</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/76da86423267.html">https://xhua.eu.org/posts/76da86423267.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/agent-skills/">Agent Skills</a><a class="post-meta__tags" href="/tags/claude-code/">Claude Code</a><a class="post-meta__tags" href="/tags/github-copilot/">GitHub Copilot</a><a class="post-meta__tags" href="/tags/codex/">Codex</a><a class="post-meta__tags" href="/tags/mcp/">MCP</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Cursor IDE 使用最佳实践与技巧：从入门到精通</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCursor vs GitHub Copilot在选择 AI 编程助手时，了解不同工具的优势至关重要： Cursor 的核心优势：  全项目代码库理解：能够理解整个代码库的上下文，而不仅仅是当前文件 多文件编辑能力：通过 Composer 功能同时编辑多个文件 深度 AI 集成：AI 能力原生内置于 IDE，而非仅作为扩展 复杂项目优势：在处理大型、复杂代码库时表现出色，具备完整的架构感知能力 模型灵活性：支持切换不同的 AI 模型（Claude 4.5 Opus、Sonnet 等）  GitHub Copilot 的优势：  广泛的 IDE 兼容性：作为插件可在 VS Code、JetBrain...</div></div></div></a><a class="pagination-related" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据"><img class="cover" src="https://img.xhua.eu.org/1ab0e1ecb6c92b0d0385a1584232a5d7355d75c54615f7b37af859743d9373c7.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</div></div><div class="info-2"><div class="info-item-1">写在前面：BuildKit&#x2F;Buildx 到底是什么关系？很多人日常只用 docker build，但真正让构建“又快又稳又可审计”的关键在 BuildKit。  BuildKit：Docker 的下一代构建引擎，提供并行构建、增量缓存、RUN --mount、远程缓存导入导出、供应链元数据（SBOM&#x2F;Provenance）等能力。 Buildx：Docker 的构建前端（CLI 插件&#x2F;子命令），用来驱动 BuildKit，并提供多平台、远程 builder、Bake 编排、导出&#x2F;推送、attestation 等高级功能。  截至 2026-01（以官方发布为准），Buildx 最新稳定版本仍在 0.30.x（2025-11 发布 0.30.0/0.30.1），其中包含了对 imagetools 与 attestation 持久化等能力的增强，以及对部分旧命令的弃用提示。 适用读者与版本建议本文面向：  需要在本地&#x2F;CI 中加速镜像构建的人 需要多架构镜像（amd64/arm64）的人 需要把缓存、SBOM、Provenance ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/e0a2af663124.html" title="SRE MCP Tools：运维工程师的AI助手工具箱"><img class="cover" src="https://img.xhua.eu.org/e16beb5e1fd69876853b76d350682f3eb62d53d60bd29d2b5dd0307b1bb62f80.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">SRE MCP Tools：运维工程师的AI助手工具箱</div></div><div class="info-2"><div class="info-item-1">引言在现代互联网时代，站点可靠性工程（SRE）已成为确保服务稳定运行的核心实践。随着系统复杂性的不断增加，运维工程师需要管理的工具和平台也越来越多。从监控告警到事件响应，从部署管理到成本优化，每个环节都需要专业的工具支持。 但是，在面对海量的监控数据、复杂的告警规则、频繁的部署需求时，传统的手工操作已经无法满足现代运维的需求。这时，MCP（Model Context Protocol）工具的出现，为SRE工程师提供了全新的解决方案。 今天，我将为大家介绍一套完整的SRE MCP Tools工具箱，涵盖监控可观测性、部署编排、事件响应、数据库管理等多个方面，帮助运维工程师构建智能化的运维体系。 什么是SRE MCP Tools？SRE MCP Tools是一套基于模型上下文协议（MCP）的运维工具集合，它允许AI助手直接与各种运维工具和平台进行集成，实现自动化的运维操作。通过这些工具，运维工程师可以使用自然语言与AI助手交互，让AI帮助完成复杂的运维任务。 核心优势 🚨 快速发现问题：自动化监控和告警，第一时间发现系统异常 🔧 快速解决问题：自动化故障响应和修复，减少人工干预 ...</div></div></div></a><a class="pagination-related" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-28</div><div class="info-item-2">Cursor IDE 使用最佳实践与技巧：从入门到精通</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCursor vs GitHub Copilot在选择 AI 编程助手时，了解不同工具的优势至关重要： Cursor 的核心优势：  全项目代码库理解：能够理解整个代码库的上下文，而不仅仅是当前文件 多文件编辑能力：通过 Composer 功能同时编辑多个文件 深度 AI 集成：AI 能力原生内置于 IDE，而非仅作为扩展 复杂项目优势：在处理大型、复杂代码库时表现出色，具备完整的架构感知能力 模型灵活性：支持切换不同的 AI 模型（Claude 4.5 Opus、Sonnet 等）  GitHub Copilot 的优势：  广泛的 IDE 兼容性：作为插件可在 VS Code、JetBrain...</div></div></div></a><a class="pagination-related" href="/posts/b0a1603977e7.html" title="生产级大语言模型平台系统设计：多期落地方案与实践"><img class="cover" src="https://img.xhua.eu.org/0c48a51774caee38ab8195ab16d9895325b3056f41cb0b06ee3bff5c009bc2d4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-18</div><div class="info-item-2">生产级大语言模型平台系统设计：多期落地方案与实践</div></div><div class="info-2"><div class="info-item-1">背景与目标随着大语言模型在企业内的应用场景不断扩展，单一模型服务或简单的 API + 网关 架构已经难以满足生产环境下的多租户管理、资源隔离、安全合规、可观测性以及快速迭代等要求。企业需要一套生产级别的大语言模型平台系统，以平台化的方式统一承载模型推理、Agent 编排、MCP 工具生态及 RAG 检索能力。 本文面向有一定 DevOps&#x2F;平台工程基础的读者，设计一套可生产落地的大语言模型平台，从整体架构到关键模块拆解，涵盖：  模型部署与运行时管理 多集群 &#x2F; 多云资源管理与调度 监控、日志、链路追踪与容量管理 安全与访问控制 RAG 平台 Agent 平台 MCP（Model Context Protocol）生态集成 平台运维与发布管理  并按照优先级划分为多期落地路线，便于企业按阶段实施。  本文更偏向平台架构设计与关键实现要点，不绑定某个具体云厂商，可结合 Kubernetes、Service Mesh、向量数据库等基础设施实施。  多期落地规划概览为了降低一次性建设的复杂度，建议将大模型平台拆分为多期，逐步演进：  一期（核心推理与基础运维能力，必...</div></div></div></a><a class="pagination-related" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧"><img class="cover" src="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-28</div><div class="info-item-2">Claude Code 使用最佳实践与技巧</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从基础使用提升到专家级别，真正释放 AI 辅助编程的生产力。 Claude Code 核心理解什么是 Claude CodeClaude Code 是 Anthropic 开发的自主编程代理（Agentic Coding Tool），而非传统的代码补全工具。它的核心特点包括：  终端优先：通过 claude 命令在终端中交互，也支持 Web、桌面应用、IDE 插件等多种形式 自主执行：能够独立规划任务、执行多文件操作、运行命令、验证结果 大上下文：支持 200k+ token 的上下文窗口，适合处理大型代码库 多模态能力：不仅限于编程，还能处理文档编写、构建运行、文件搜索、主题研究等任何可...</div></div></div></a><a class="pagination-related" href="/posts/7ef80ced6f51.html" title="GPT-4.1 提示指南（翻译）"><img class="cover" src="https://img.xhua.eu.org/a5bc40e344df82a2633906aa04eb55447b0890a6c2dacf23b585537f4838f7e4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-21</div><div class="info-item-2">GPT-4.1 提示指南（翻译）</div></div><div class="info-2"><div class="info-item-1">原文 GPT-4.1 Prompting Guide GPT-4.1 模型系列在编码、指令遵循和长上下文处理能力方面相比 GPT-4o 有了显著提升。在本提示指南中，我们整理了从大量内部测试中得出的重要提示技巧，以帮助开发者充分利用这个新模型系列的改进能力。 许多典型的最佳实践仍然适用于 GPT-4.1，例如提供上下文示例、使指令尽可能具体和清晰，以及通过提示诱导规划以最大化模型智能。然而，我们预计充分利用这个模型需要一些提示迁移。GPT-4.1 经过训练，比其前身更严格、更字面地遵循指令，而前身倾向于更自由地从用户和系统提示中推断意图。这也意味着，GPT-4.1 具有高度的可引导性，对明确指定的提示反应灵敏——如果模型行为与您期望的不同，一个坚定且明确澄清您期望行为的单句几乎总是足以引导模型回到正轨。 请继续阅读可用作参考的提示示例，并记住虽然这些指导广泛适用，但没有建议是万能的。AI 工程本质上是一门经验性学科，大型语言模型本质上是非确定性的；除了遵循本指南外，我们建议构建信息丰富的评估并经常迭代，以确保您的提示工程变更为您的用例带来好处。 1. 代理工作流GPT-4.1 是...</div></div></div></a><a class="pagination-related" href="/posts/1d209e12ddec.html" title="使用Python开发自己的MCP服务：AI能力扩展入门指南"><img class="cover" src="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-04-16</div><div class="info-item-2">使用Python开发自己的MCP服务：AI能力扩展入门指南</div></div><div class="info-2"><div class="info-item-1">引言随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的能力。 什么是MCP？基本概念模型上下文协议（MCP）是一个开放标准，用于AI应用程序与大型语言模型之间的通信。它定义了一套标准接口，使应用程序能够向模型提供上下文信息，并允许模型调用应用程序暴露的工具。 简单来说，MCP就像是AI模型和外部世界之间的一座桥梁，让模型能够”看见”和”操作”外部的数据和功能。 为什么需要MCP？想象一下，如果你正在与ChatGPT聊天，希望它能够：  查询你的个人日历 分析你的Excel数据 控制你的智能家居设备 从你的私有数据库中获取信息  这些功能都需要AI模型能够访问外部系统和数据，而MCP正是为解决这一需求而生的。 MCP的核心组件MCP协议定义了...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Agent-Skill-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">Agent Skill 是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6%EF%BC%9A%E6%B8%90%E8%BF%9B%E5%BC%8F%E6%8A%AB%E9%9C%B2%EF%BC%88Progressive-Disclosure%EF%BC%89"><span class="toc-text">核心机制：渐进式披露（Progressive Disclosure）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%94%A8%E6%B3%95%EF%BC%9A%E5%86%99%E4%B8%80%E4%B8%AA%E4%BC%9A%E8%AE%AE%E7%BA%AA%E8%A6%81-Skill%EF%BC%88%E5%8F%AF%E5%A4%8D%E7%94%A8%E3%80%81%E5%8F%AF%E8%BF%81%E7%A7%BB%EF%BC%89"><span class="toc-text">基础用法：写一个会议纪要 Skill（可复用、可迁移）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%85%88%E5%86%99%E5%AF%B9%E7%9B%AE%E5%BD%95%E5%90%8D%E5%92%8C-Frontmatter"><span class="toc-text">1) 先写对目录名和 Frontmatter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%86%8D%E5%86%99%E6%AD%A3%E6%96%87%E6%8C%87%E4%BB%A4%EF%BC%88Instruction%EF%BC%89"><span class="toc-text">2) 再写正文指令（Instruction）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E4%B8%80%EF%BC%9AReference%EF%BC%88%E6%8C%89%E9%9C%80%E8%AF%BB%E5%8F%96%E9%95%BF%E8%B5%84%E6%96%99%EF%BC%89"><span class="toc-text">高级用法一：Reference（按需读取长资料）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E4%BA%8C%EF%BC%9AScript%EF%BC%88%E6%89%A7%E8%A1%8C%E8%87%AA%E5%8A%A8%E5%8C%96%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%A0%86%E6%9B%B4%E5%A4%9A%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%89"><span class="toc-text">高级用法二：Script（执行自动化，而不是堆更多上下文）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skills-%E7%9A%84%E5%88%B6%E4%BD%9C%EF%BC%88%E5%90%AB%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%EF%BC%89"><span class="toc-text">Skills 的制作（含最佳实践）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8-Claude-Code-%E4%B8%AD%E5%88%B6%E4%BD%9C-Skills%EF%BC%88%E4%BB%A5-skill-creator-%E4%B8%BA%E6%A0%B8%E5%BF%83%EF%BC%89"><span class="toc-text">在 Claude Code 中制作 Skills（以 skill-creator 为核心）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%B8%80%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E3%80%8C%E8%8B%B1%E6%96%87%E5%8D%9A%E5%AE%A2%E7%BF%BB%E8%AF%91%E3%80%8DSkill%EF%BC%88%E6%8A%8A%E5%9B%BA%E5%AE%9A%E6%B5%81%E7%A8%8B%E5%9B%BA%E5%8C%96%E4%B8%BA%E5%8F%AF%E5%A4%8D%E7%94%A8-SOP%EF%BC%89"><span class="toc-text">案例一：做一个「英文博客翻译」Skill（把固定流程固化为可复用 SOP）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%BA%8C%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E3%80%8CChrome-%E6%8F%92%E4%BB%B6%E5%9B%BE%E6%A0%87%E3%80%8DSkill%EF%BC%88%E5%85%88%E9%AA%8C%E8%AF%81%E8%84%9A%E6%9C%AC%EF%BC%8C%E5%86%8D%E6%89%93%E5%8C%85%E8%BF%9B-Skill%EF%BC%89"><span class="toc-text">案例二：做一个「Chrome 插件图标」Skill（先验证脚本，再打包进 Skill）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E6%89%A3%E5%AD%90%E4%B8%AD%E5%88%B6%E4%BD%9C-Skills%EF%BC%88%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%AF%B9%E8%AF%9D-%E4%BA%91%E7%AB%AF%E6%B2%99%E7%9B%92%EF%BC%89"><span class="toc-text">在扣子中制作 Skills（自然语言对话 + 云端沙盒）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%B8%80%EF%BC%9A%E4%B8%80%E6%AC%A1%E6%80%A7%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%94%9F%E6%88%90%E3%80%8C%E4%B8%AD%E8%8B%B1%E6%96%87%E6%B7%B7%E5%90%88%E6%8E%92%E7%89%88%E4%BC%98%E5%8C%96%E3%80%8DSkill"><span class="toc-text">案例一：一次性提示词生成「中英文混合排版优化」Skill</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%BA%8C%EF%BC%9A%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D%E5%BE%97%E5%88%B0%E6%BB%A1%E6%84%8F%E4%BA%A7%E7%89%A9%EF%BC%8C%E5%86%8D%E2%80%9C%E5%9B%BA%E5%8C%96%E4%B8%BA-Skill%E2%80%9D"><span class="toc-text">案例二：多轮对话得到满意产物，再“固化为 Skill”</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Skills-%E5%88%B6%E4%BD%9C%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%EF%BC%88%E6%95%B4%E7%90%86%E8%87%AA%E5%AE%98%E6%96%B9%E5%BB%BA%E8%AE%AE%EF%BC%89"><span class="toc-text">Skills 制作最佳实践（整理自官方建议）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%8E%9F%E5%88%99"><span class="toc-text">核心原则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E5%BB%BA%E8%AE%AE%EF%BC%88SKILL-md-%E4%B8%8E%E8%B5%84%E6%BA%90%E5%B1%82%EF%BC%89"><span class="toc-text">结构建议（SKILL.md 与资源层）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E5%8F%8D%E9%A6%88%E5%9B%9E%E8%B7%AF"><span class="toc-text">工作流与反馈回路</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E5%89%8D%E8%87%AA%E6%A3%80%E6%B8%85%E5%8D%95%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E7%94%A8%EF%BC%89"><span class="toc-text">发布前自检清单（可直接复用）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E4%BB%BB%E5%8A%A1%E5%80%BC%E5%BE%97%E5%81%9A%E6%88%90-Skills%EF%BC%9F"><span class="toc-text">什么任务值得做成 Skills？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill-%E6%94%BE%E5%93%AA%E5%84%BF%EF%BC%9F%E4%B8%8D%E5%90%8C%E5%B7%A5%E5%85%B7%E7%9A%84%E5%B8%B8%E8%A7%81%E8%90%BD%E5%9C%B0%E7%82%B9"><span class="toc-text">Skill 放哪儿？不同工具的常见落地点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Claude-Code"><span class="toc-text">Claude Code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OpenAI-Codex"><span class="toc-text">OpenAI Codex</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VS-Code-GitHub-Copilot"><span class="toc-text">VS Code GitHub Copilot</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Cursor"><span class="toc-text">Cursor</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%8A%80%E8%83%BD%E7%9B%AE%E5%BD%95%EF%BC%88%E9%A1%B9%E7%9B%AE%E7%BA%A7-vs-%E5%85%A8%E5%B1%80%EF%BC%89"><span class="toc-text">1) 技能目录（项目级 vs 全局）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE%E7%BA%A7-Skill%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">2) 创建一个项目级 Skill（推荐）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%9C%A8-Cursor-%E9%87%8C%E5%A6%82%E4%BD%95%E8%A7%A6%E5%8F%91-Skills"><span class="toc-text">3) 在 Cursor 里如何触发 Skills</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E5%A6%82%E4%BD%95%E5%9C%A8-Cursor-UI-%E9%87%8C%E6%9F%A5%E7%9C%8B%E5%B7%B2%E5%8F%91%E7%8E%B0%E7%9A%84-Skills"><span class="toc-text">4) 如何在 Cursor UI 里查看已发现的 Skills</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E4%BB%8E-GitHub-%E5%AE%89%E8%A3%85-%E5%AF%BC%E5%85%A5-Skills%EF%BC%88%E5%9B%A2%E9%98%9F%E5%85%B1%E4%BA%AB%EF%BC%89"><span class="toc-text">5) 从 GitHub 安装&#x2F;导入 Skills（团队共享）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E4%BB%8E-Rules-Slash-Commands-%E8%BF%81%E7%A7%BB%E5%88%B0-Skills%EF%BC%88Cursor-2-4-%EF%BC%89"><span class="toc-text">6) 从 Rules&#x2F;Slash Commands 迁移到 Skills（Cursor 2.4+）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB-%E5%8F%AF%E5%A4%8D%E7%94%A8%E7%9A%84-Agent-Skills-%E9%A1%B9%E7%9B%AE%EF%BC%88GitHub%EF%BC%89"><span class="toc-text">共享&#x2F;可复用的 Agent Skills 项目（GitHub）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0-Skills-%E7%9B%AE%E5%BD%95%E7%AB%99%EF%BC%88%E5%8F%AF%E6%A3%80%E7%B4%A2-%E5%8F%91%E7%8E%B0%EF%BC%89"><span class="toc-text">0) Skills 目录站（可检索&#x2F;发现）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AE%98%E6%96%B9-%E5%87%86%E5%AE%98%E6%96%B9-Skills-Catalog%EF%BC%88%E4%BC%98%E5%85%88%E7%9C%8B%EF%BC%89"><span class="toc-text">1) 官方&#x2F;准官方 Skills Catalog（优先看）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%A4%BE%E5%8C%BA%E2%80%9C%E6%8A%80%E8%83%BD%E5%8C%85-%E6%8A%80%E8%83%BD%E5%90%88%E9%9B%86%E2%80%9D%EF%BC%88%E9%80%82%E5%90%88%E5%BF%AB%E9%80%9F%E6%89%BE%E7%81%B5%E6%84%9F-%E6%A8%A1%E6%9D%BF%EF%BC%89"><span class="toc-text">2) 社区“技能包&#x2F;技能合集”（适合快速找灵感&#x2F;模板）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%9D%A2%E5%90%91%E7%89%B9%E5%AE%9A%E4%BA%A7%E5%93%81-%E5%B7%A5%E7%A8%8B%E5%9C%BA%E6%99%AF%E7%9A%84-Skills%EF%BC%88%E6%9B%B4%E2%80%9C%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E2%80%9D%EF%BC%89"><span class="toc-text">3) 面向特定产品&#x2F;工程场景的 Skills（更“即插即用”）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-AutoGen-Studio%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E5%88%B6%E7%B2%98%E8%B4%B4%E7%9A%84-skills%EF%BC%89"><span class="toc-text">4) AutoGen Studio（可直接复制粘贴的 skills）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%9C%A8-Cursor-%E9%87%8C%E5%A4%8D%E7%94%A8%E8%BF%99%E4%BA%9B%E4%BB%93%E5%BA%93%E7%9A%84%E6%8E%A8%E8%8D%90%E5%A7%BF%E5%8A%BF"><span class="toc-text">5) 在 Cursor 里复用这些仓库的推荐姿势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%AE%9E%E7%94%A8-Skills-%E6%8E%A8%E8%8D%90%EF%BC%88%E6%A1%88%E4%BE%8B%E5%90%91%EF%BC%89"><span class="toc-text">6) 实用 Skills 推荐（案例向）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-frontend-design%EF%BC%88UI-%E8%AE%BE%E8%AE%A1%E9%A3%8E%E6%A0%BC%E7%BA%A0%E5%81%8F%EF%BC%89"><span class="toc-text">1) frontend-design（UI 设计风格纠偏）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-superpowers%EF%BC%88%E6%8A%8A%E5%A4%B4%E8%84%91%E9%A3%8E%E6%9A%B4%E4%B8%8E%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%B5%81%E7%A8%8B%E5%81%9A%E6%88%90%E2%80%9C%E5%9B%BA%E5%AE%9A%E5%B7%A5%E4%BD%9C%E6%B5%81%E2%80%9D%EF%BC%89"><span class="toc-text">2) superpowers（把头脑风暴与工程化流程做成“固定工作流”）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-planning-with-files%EF%BC%88%E7%94%A8%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%81%9A%E2%80%9C%E5%A4%96%E9%83%A8%E5%B7%A5%E4%BD%9C%E8%AE%B0%E5%BF%86%E2%80%9D%EF%BC%89"><span class="toc-text">3) planning-with-files（用文件系统做“外部工作记忆”）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-ralph-loop-ralph-wiggum%EF%BC%88%E5%BE%AA%E7%8E%AF%E6%89%A7%E8%A1%8C%EF%BC%9A%E4%B8%80%E6%AC%A1%E5%90%AF%E5%8A%A8%EF%BC%8C%E8%87%AA%E5%8A%A8%E8%BF%AD%E4%BB%A3%E5%88%B0%E7%9B%AE%E6%A0%87%EF%BC%89"><span class="toc-text">4) ralph-loop &#x2F; ralph-wiggum（循环执行：一次启动，自动迭代到目标）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-notebooklm-skill%EF%BC%88%E6%8A%8A-NotebookLM-%E7%9A%84%E2%80%9C%E7%9F%A5%E8%AF%86%E5%BA%93%E8%83%BD%E5%8A%9B%E2%80%9D%E5%B8%A6%E5%88%B0%E6%94%AF%E6%8C%81-Skills-%E7%9A%84%E5%B7%A5%E5%85%B7%EF%BC%89"><span class="toc-text">5) notebooklm-skill（把 NotebookLM 的“知识库能力”带到支持 Skills 的工具）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-obsidian-skills%EF%BC%88%E6%8A%8A-Obsidian-%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%8A%80%E8%83%BD%E5%8C%96%EF%BC%89"><span class="toc-text">6) obsidian-skills（把 Obsidian 工作流技能化）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-react-best-practices%EF%BC%88Vercel-%E7%9A%84-React-%E5%B7%A5%E7%A8%8B%E2%80%9C%E7%BB%8F%E9%AA%8C%E6%B5%93%E7%BC%A9%E5%8C%85%E2%80%9D%EF%BC%89"><span class="toc-text">7) react-best-practices（Vercel 的 React 工程“经验浓缩包”）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-agent-browser%EF%BC%88%E8%BD%BB%E9%87%8F%E4%BA%A4%E4%BA%92%E5%BC%8F%E6%B5%8F%E8%A7%88%E5%99%A8%E5%A3%B3%E5%B1%82%EF%BC%89"><span class="toc-text">8) agent-browser（轻量交互式浏览器壳层）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-skill-creator%EF%BC%88%E7%94%A8-Skill-%E6%9D%A5%E5%88%9B%E5%BB%BA-Skill%EF%BC%89"><span class="toc-text">9) skill-creator（用 Skill 来创建 Skill）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E9%AB%98%E8%B4%A8%E9%87%8F-Skills-%E8%B5%84%E6%BA%90%E5%BA%93%EF%BC%88%E7%94%A8%E6%9D%A5%E2%80%9C%E6%89%BE%E6%8A%80%E8%83%BD-%E5%AD%A6%E5%86%99%E6%B3%95-%E6%8A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E2%80%9D%EF%BC%89"><span class="toc-text">7) 高质量 Skills 资源库（用来“找技能&#x2F;学写法&#x2F;抄工作流”）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Claude-Anthropic-%E5%AE%98%E6%96%B9%E4%B8%8E%E5%87%86%E5%AE%98%E6%96%B9"><span class="toc-text">Claude &#x2F; Anthropic 官方与准官方</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#awesome-claude-skills%EF%BC%88%E5%90%88%E9%9B%86%E7%B1%BB%E7%B4%A2%E5%BC%95%EF%BC%89"><span class="toc-text">awesome-claude-skills（合集类索引）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#skillsmp%EF%BC%88%E8%B6%85%E5%A4%A7%E8%A7%84%E6%A8%A1%E6%94%B6%E5%BD%95-%E8%AF%AD%E4%B9%89%E6%90%9C%E7%B4%A2%EF%BC%89"><span class="toc-text">skillsmp（超大规模收录 + 语义搜索）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#skills-sh%EF%BC%88%E5%AE%89%E8%A3%85%E6%8E%92%E8%A1%8C%E6%A6%9C-%E5%BF%AB%E9%80%9F%E5%AE%89%E8%A3%85%E7%94%9F%E6%80%81%EF%BC%89"><span class="toc-text">skills.sh（安装排行榜 + 快速安装生态）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%91%E7%A0%94%E6%96%B9%E5%90%91%E8%B5%84%E6%BA%90%E5%BA%93%EF%BC%88%E5%9E%82%E7%9B%B4%E9%A2%86%E5%9F%9F%EF%BC%89"><span class="toc-text">科研方向资源库（垂直领域）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%AA%E4%BA%BA%E9%AB%98%E8%B4%A8%E9%87%8F%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%BB%93%E5%BA%93%EF%BC%88%E9%80%82%E5%90%88%E5%AD%A6%E6%8B%86%E8%A7%A3%EF%BC%89"><span class="toc-text">个人高质量工作流仓库（适合学拆解）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#moltbot%EF%BC%88clawbot%EF%BC%89%E7%94%9F%E6%80%81%E6%8A%80%E8%83%BD%E7%B4%A2%E5%BC%95"><span class="toc-text">moltbot（clawbot）生态技能索引</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill-vs-MCP%EF%BC%9A%E5%88%B0%E5%BA%95%E8%AF%A5%E9%80%89%E5%93%AA%E4%B8%AA%EF%BC%9F"><span class="toc-text">Skill vs MCP：到底该选哪个？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE%EF%BC%88%E5%AE%9E%E8%B7%B5%E5%90%91%EF%BC%89"><span class="toc-text">选型建议（实践向）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E6%B8%85%E5%8D%95"><span class="toc-text">常见坑与最佳实践清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

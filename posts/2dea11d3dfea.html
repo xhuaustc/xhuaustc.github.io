@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift上搭建NFS-StorageClass，别再说存储使用不方便 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="动态存储是什么Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。  静态存储：需要管理员手动创建PV，供PVC挂载调用 动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。  StorageClass是什么 StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift上搭建NFS-StorageClass，别再说存储使用不方便">
+<meta property="og:url" content="https://xhua.eu.org/posts/2dea11d3dfea.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="动态存储是什么Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。  静态存储：需要管理员手动创建PV，供PVC挂载调用 动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。  StorageClass是什么 StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.640Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift上搭建NFS-StorageClass，别再说存储使用不方便",
+  "url": "https://xhua.eu.org/posts/2dea11d3dfea.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.640Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/2dea11d3dfea.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift上搭建NFS-StorageClass，别再说存储使用不方便',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift上搭建NFS-StorageClass，别再说存储使用不方便</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift上搭建NFS-StorageClass，别再说存储使用不方便</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.640Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="动态存储是什么"><a href="#动态存储是什么" class="headerlink" title="动态存储是什么"></a>动态存储是什么</h2><p>Openshift持久化存储（PV）有两种，一种是静态的，另一种是动态。</p>
+<ul>
+<li>静态存储：需要管理员手动创建PV，供PVC挂载调用</li>
+<li>动态存储：通过一个称作 Storage Class的对象由存储系统根据PVC的要求自动创建。</li>
+</ul>
+<h2 id="StorageClass是什么"><a href="#StorageClass是什么" class="headerlink" title="StorageClass是什么"></a>StorageClass是什么</h2><ul>
+<li>StorageClass是Openshfit中的一个资源对象，它主要用于描述请求的存储，并提供按需传递动态预配置存储的参数的方法。 </li>
+<li>StorageClass对象还可以用作控制不同级别的存储和对存储的访问的管理机制。</li>
+<li>有了StorageClass后，管理员无需手动创建PV。Openshift的使用者在创建PVC时只需要指定StorageClass,会自动按照对应的StorageClass配置，调用对应的Dynamic provisioning来创建需要的存储</li>
+</ul>
+<h2 id="没有StorageClass时代，如何使用NFS"><a href="#没有StorageClass时代，如何使用NFS" class="headerlink" title="没有StorageClass时代，如何使用NFS"></a>没有StorageClass时代，如何使用NFS</h2><p>每次需要手动创建PV，一句话：麻烦。</p>
+<h2 id="StorageClass时代来了"><a href="#StorageClass时代来了" class="headerlink" title="StorageClass时代来了"></a>StorageClass时代来了</h2><p>一次配置，永久自动，无需手动创建PV，一句话：方便。</p>
+<h2 id="NFS-Provisioner原理"><a href="#NFS-Provisioner原理" class="headerlink" title="NFS Provisioner原理"></a>NFS Provisioner原理</h2><p><img src="https://img.xhua.eu.org/eedb4b5d912f074be0ca3455ddb9e3d1c80f2567c8e963e094dadb920c6de54e.jpg" alt="NFS Provisioner原理">  </p>
+<ol>
+<li>新建PVC时，指定为默认驱动，或者指定storageclass为nfs storage</li>
+<li>运行nfs client provisioner的pod会根据配置，在共享的NFS目录下创建新的文件夹，同时创建新的PV指向该文件夹</li>
+<li>将新建的PVC与2中新建的PV关联，完成PVC的创建</li>
+<li>该PVC就可以被调用的Pod挂载了。</li>
+</ol>
+<h2 id="NFS-StorageClass具体配置步骤"><a href="#NFS-StorageClass具体配置步骤" class="headerlink" title="NFS StorageClass具体配置步骤"></a>NFS StorageClass具体配置步骤</h2><ol>
+<li>准备NFS服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install nfs -y</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /nfsdata/share</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">chown</span> nfsnobody:nfsnobody /nfsdata/share</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">chmod</span> 700 /nfsdata/share</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#开放nfs访问的端口</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">iptables -A INPUT -p tcp --dport 111 -j ACCEPT</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">iptables -A INPUT -p udp --dport 111 -j ACCEPT</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">iptables -A INPUT -p tcp --dport 2049 -j ACCEPT</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">iptables -A INPUT -p udp --dport 2049 -j ACCEPT</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 配置NFS</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> <span class="string">&quot;/nfsdata/share *(rw,async,no_root_squash)&quot;</span> &gt;&gt; /etc/exports</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">exportfs -a <span class="comment">#加载共享目录配置</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">showmount -e <span class="comment">#查看当前可用的共享目录</span></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># 启动NFS</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl restart nfs</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>确定Provisioner安装的project（默认为default）<br>如果使用default project的话</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc project default</span></span><br></pre></td></tr></table></figure>
+<p>如果希望将它部署在自定义的project中，则新建project</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc new-project nfs-provisoner</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>如果安装的project不是default的话，需要更改配置rbac.yaml,再设置权限</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> rbac.yaml</span></span><br><span class="line">kind: ServiceAccount</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nfs-client-provisioner</span><br><span class="line">---</span><br><span class="line">kind: ClusterRole</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: nfs-client-provisioner-runner</span><br><span class="line">rules:</span><br><span class="line">  - apiGroups: [&quot;&quot;]</span><br><span class="line">    resources: [&quot;persistentvolumes&quot;]</span><br><span class="line">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;, &quot;create&quot;, &quot;delete&quot;]</span><br><span class="line">  - apiGroups: [&quot;&quot;]</span><br><span class="line">    resources: [&quot;persistentvolumeclaims&quot;]</span><br><span class="line">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;, &quot;update&quot;]</span><br><span class="line">  - apiGroups: [&quot;storage.k8s.io&quot;]</span><br><span class="line">    resources: [&quot;storageclasses&quot;]</span><br><span class="line">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]</span><br><span class="line">  - apiGroups: [&quot;&quot;]</span><br><span class="line">    resources: [&quot;events&quot;]</span><br><span class="line">    verbs: [&quot;create&quot;, &quot;update&quot;, &quot;patch&quot;]</span><br><span class="line">---</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: run-nfs-client-provisioner</span><br><span class="line">subjects:</span><br><span class="line">  - kind: ServiceAccount</span><br><span class="line">    name: nfs-client-provisioner</span><br><span class="line">    namespace: default</span><br><span class="line">roleRef:</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: nfs-client-provisioner-runner</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">---</span><br><span class="line">kind: Role</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: leader-locking-nfs-client-provisioner</span><br><span class="line">rules:</span><br><span class="line">  - apiGroups: [&quot;&quot;]</span><br><span class="line">    resources: [&quot;endpoints&quot;]</span><br><span class="line">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;, &quot;create&quot;, &quot;update&quot;, &quot;patch&quot;]</span><br><span class="line">---</span><br><span class="line">kind: RoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">metadata:</span><br><span class="line">  name: leader-locking-nfs-client-provisioner</span><br><span class="line">subjects:</span><br><span class="line">  - kind: ServiceAccount</span><br><span class="line">    name: nfs-client-provisioner</span><br><span class="line">    # replace with namespace where provisioner is deployed</span><br><span class="line">    namespace: default</span><br><span class="line">roleRef:</span><br><span class="line">  kind: Role</span><br><span class="line">  name: leader-locking-nfs-client-provisioner</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">NAMESPACE=`oc project -q`</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sed -i<span class="string">&#x27;&#x27;</span> <span class="string">&quot;s/namespace:.*/namespace: <span class="variable">$NAMESPACE</span>/g&quot;</span> ./deploy/rbac.yaml</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc create -f deploy/rbac.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:<span class="variable">$NAMESPACE</span>:nfs-client-provisioner</span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>更新deploy&#x2F;deployment.yaml，设置NFS Server的配置</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> &lt;&lt; <span class="string">EOF | oc create -f -</span></span></span><br><span class="line">kind: Deployment</span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">metadata:</span><br><span class="line">  name: nfs-client-provisioner</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  strategy:</span><br><span class="line">    type: Recreate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: nfs-client-provisioner</span><br><span class="line">    spec:</span><br><span class="line">      serviceAccountName: nfs-client-provisioner</span><br><span class="line">      containers:</span><br><span class="line">        - name: nfs-client-provisioner</span><br><span class="line">          image: docker.io/xhuaustc/nfs-client-provisioner:latest</span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: nfs-client-root</span><br><span class="line">              mountPath: /persistentvolumes</span><br><span class="line">          env:</span><br><span class="line">            - name: PROVISIONER_NAME</span><br><span class="line">              value: fuseim.pri/ifs</span><br><span class="line">            - name: NFS_SERVER</span><br><span class="line">              value: &lt;YOUR NFS SERVER HOSTNAME&gt;</span><br><span class="line">            - name: NFS_PATH</span><br><span class="line">              value: /nfsdata/share</span><br><span class="line">      volumes:</span><br><span class="line">        - name: nfs-client-root</span><br><span class="line">          nfs:</span><br><span class="line">            server: &lt;YOUR NFS SERVER HOSTNAME&gt;</span><br><span class="line">            path: /nfsdata/share</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>创建storageclass</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> &lt;&lt; <span class="string">EOF | oc create -f -</span></span></span><br><span class="line">apiVersion: storage.k8s.io/v1</span><br><span class="line">kind: StorageClass</span><br><span class="line">metadata:</span><br><span class="line">  name: managed-nfs-storage</span><br><span class="line">  annotations:</span><br><span class="line">    storageclass.kubernetes.io/is-default-class: &quot;true&quot; # 设置该storageclass为PVC创建时默认使用的存储机制</span><br><span class="line">provisioner: fuseim.pri/ifs # 匹配deployment中的环境变量&#x27;PROVISIONER_NAME&#x27;</span><br><span class="line">parameters:</span><br><span class="line">  archiveOnDelete: &quot;true&quot; # &quot;false&quot; 删除PVC时不会保留数据，&quot;true&quot;将保留PVC数据</span><br><span class="line">reclaimPolicy: Delete</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<h2 id="NFS-StorageClass使用"><a href="#NFS-StorageClass使用" class="headerlink" title="NFS StorageClass使用"></a>NFS StorageClass使用</h2><ol>
+<li>创建PVC</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> &lt;&lt; <span class="string">EOF | oc create -f -</span></span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: PersistentVolumeClaim</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    volume.beta.kubernetes.io/storage-class: managed-nfs-storage</span><br><span class="line">    volume.beta.kubernetes.io/storage-provisioner: fuseim.pri/ifs</span><br><span class="line">  name: testpvc</span><br><span class="line">spec:</span><br><span class="line">  accessModes:</span><br><span class="line">  - ReadWriteOnce</span><br><span class="line">  resources:</span><br><span class="line">    requests:</span><br><span class="line">      storage: 1Gi</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p>如果storageclass中设置了<code>storageclass.kubernetes.io/is-default-class: &quot;true&quot; </code>，可以更简单地创建PVC</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> &lt;&lt; <span class="string">EOF | oc create -f -</span></span></span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: PersistentVolumeClaim</span><br><span class="line">metadata:</span><br><span class="line">  name: hello-pvc</span><br><span class="line">spec:</span><br><span class="line">  accessModes:</span><br><span class="line">  - ReadWriteOnce</span><br><span class="line">  resources:</span><br><span class="line">    requests:</span><br><span class="line">      storage: 1Gi</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>查看PVC</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get pv</span></span><br><span class="line">NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                            STORAGECLASS          REASON    AGE</span><br><span class="line">pvc-fb952566-4bed-11e9-9007-525400ad3b43   1Gi        RWO            Delete           Bound      test/hello-pvc                 managed-nfs-storage             5m</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get pvc</span></span><br><span class="line">hello-pvc   Bound     pvc-fb952566-4bed-11e9-9007-525400ad3b43   1Gi        RWO            managed-nfs-storage   4m</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>如果storageclass中设置了<code>archiveOnDelete: &quot;true&quot; </code>，在删除PVC时，会将数据目录归档</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span> /nfsdata/share</span></span><br><span class="line">test-hello-pvc-pvc-fb952566-4bed-11e9-9007-525400ad3b43</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc delete pvc hello-pvc</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span> /nfsdata/share</span></span><br><span class="line">archived-test-hello-pvc-pvc-fb952566-4bed-11e9-9007-525400ad3b43</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#数据目录被改名为以archived开头的文件夹，同时删除了对应的PV和PVC</span></span></span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>有了NFS StorageClass后，创建存储就非常简单方便了。<br>Openshift NFS动态存储代码 <a target="_blank" rel="noopener" href="https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client">https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client</a></p>
+<p>引用自：<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/HgDCDgYjkX5en7ORNeG0yA">https://mp.weixin.qq.com/s/HgDCDgYjkX5en7ORNeG0yA</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/2dea11d3dfea.html">https://xhua.eu.org/posts/2dea11d3dfea.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/4362c292014b.html" title="Openshift上部署OpenLDAP实战：为账号一统"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift上部署OpenLDAP实战：为账号一统</div></div><div class="info-2"><div class="info-item-1">   Openshift上部署OpenLDAP也并不仅仅只是为了部署，更重要的是要用它来为各种应用统一账号管理。比如GitLab，Gogs, Nexus, Sonarqube等等，同时结合之前的Openshift使用OpenLDAP做账号管理。理想的世界是，一套Openshift，各种应用，它们的用户认证都在一套OpenLDAP上，同时这套OpenLDAP也是非常方便地部署在Openshift上。 为账号一统的第一步，就是我们需要部署OpenLDAP，这也是该篇主题。以下是之前分享的几篇与OpenLDAP有关的文章。 CentOS上搭建双主高可用OpenLDAP ServerOpenshift使用OpenLDAP作为统一用户认证CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 之前分享的与Openldap相关的几篇文章中，它的部署都是在虚拟机中进行的。那么在Openshift上能否完成部署呢，如果可以的话，那么那些复杂的部署我们都可以将它封装到镜像中去，岂不是更方便？那就一起来操作吧。 应用要求点 方便自定义域及管理员用户名与密码 通过环境变量...</div></div></div></a><a class="pagination-related" href="/posts/84360199a57a.html" title="Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift上搭建Jenkins-Gitlab-Sonarqube自动构建</div></div><div class="info-2"><div class="info-item-1">#Jenkins系统配置详情 安装插件列表：Git Parameter Plug-In Gitlab Hook Plugin SonarQube Scanner for Jenkins JaCoCo plugin Maven Integration plugin Jenkins配置详情：Jenkins-&gt;系统管理-&gt;系统配置 SonarQube servers配置  Name:  SonarqubeServer Server URL: http://sonarqube-sonarqube.apps.test.openshift.com Server version: 5.3 or higher Server authentication token: $TOKEN(从SonarQube Server上创建） Jenkins-&gt;系统管理-&gt;Global Tool Configuration Maven Configuration  Default settings provider: Use default maven settings Default gl...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/852e3377ec0a.html" title="OpenShift-通过Operator-SDK制作Operator"><img class="cover" src="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-通过Operator-SDK制作Operator</div></div><div class="info-2"><div class="info-item-1">制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo=github.com/example-inc/memcached-operator$ # or$ operator-sdk new memcached-ansible-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=ansible$ # or$ operator-sdk new memcached-helm-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=helm operator-sdk new默认使用的type为go，必须在$GOPATH目录下创建项目。type为go时项目的目录结构如下：项目的目录结构 type的可选值还可以为：ansible与helm，如果是这两个，则还可以带参数...</div></div></div></a><a class="pagination-related" href="/posts/191ce310ef24.html" title="查看Java应用状态"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">查看Java应用状态</div></div><div class="info-2"><div class="info-item-1"> jps查看  123$ jps16 jar547 Jps  jmap -heap  1$ jmap -heap 16  jstat -class pid  1$ jstat -class 16 </div></div></div></a><a class="pagination-related" href="/posts/17a022f7f345.html" title="Openshit-新的存储类型LocalVolume该如何使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshit-新的存储类型LocalVolume该如何使用</div></div><div class="info-2"><div class="info-item-1">  使用本地盘的方式的有三种：emptyDir、HostPath与Local Volume Openshift针对Local Volume提供了一个local volume provisioner方便PV的自动创建，但目前它需要创建的PV对应的目录必须是挂载点。否则无法创建PV。 除了自动创建PV的过程外，部分与正常使用Local Volume一样。  手动挂载目录使用Local Volume我们先来看下通过手动的方式创建PV使用Local Volume是如何操作的。 1. 创建StorageClass123456apiVersion: storage.k8s.io/v1kind: StorageClassmetadata:  name: local-hddprovisioner: kubernetes.io/no-provisionervolumeBindingMode: WaitForFirstConsumer 2. 创建PV1234567891011121314151617181920apiVersion: v1 kind: PersistentVolume metadat...</div></div></div></a><a class="pagination-related" href="/posts/558c69203e45.html" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a><a class="pagination-related" href="/posts/b9fba3e32e8f.html" title="OpenShift应用补丁检查与升级"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift应用补丁检查与升级</div></div><div class="info-2"><div class="info-item-1">OpenShift版本补丁查看：https://docs.openshift.com/container-platform/3.11/release_notes/ocp_3_11_release_notes.html 自动查看新增的补丁版本脚本 # -*- coding: utf-8 -*- &quot;&quot;&quot; -------------------------------------------------    File Name：     get_update_v3.11 ------------------------------------------------- &quot;&quot;&quot;  last_index=&quot;RHSA-2020:2992&quot;  last_flag = False  import requests from pyquery import PyQuery  url=&quot;https://docs.openshift.com/container-platform/3.11/release_note...</div></div></div></a><a class="pagination-related" href="/posts/d2be1d48338a.html" title="Openshift结合IaaS的LB与Nginx实现高可用可伸缩外部负载均衡器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift结合IaaS的LB与Nginx实现高可用可伸缩外部负载均衡器</div></div><div class="info-2"><div class="info-item-1">背景 Openshift在集群部署时需要额外提供一个负载均衡器，该负载均衡器对master api及router haproxy中的80与443服务进行负载，实现高可用。 如果在IaaS上部署Openshift集群的话，我们很自然地会使用IaaS的LB服务，直接对LB作TCP端口负载就解决问题了，既实现了需要的负载均衡，而且还有健康检查，负载高可用，非常方便。 但是我们的Openshift集群并不是部署在IaaS上，而是额外部署。IaaS上的LB无法直接将集群中的服务器作为监听器的后端进行负载，这时我们就需要在Openshift集群下额外独立部署负载均衡器。考虑到保证负载均衡器的高可用性，及监控等，这会是一个比较复杂的过程。 那么我们是否可以结合IaaS上的LB现有的机制，制定一套既方便部署，又高可用的方案呢？答案是肯定的。 该篇就是介绍如何结合IaaS的LB与代理应用Nginx实现Openshift高可用的外部负载均衡  原理 负载均衡器应用，首先大家想到的最多的两款应用是：Nginx与Haproxy，我们选用了Nginx。 将IaaS的LB与Nginx结合的思路也很简单。在I...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%AD%98%E5%82%A8%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">动态存储是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#StorageClass%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">StorageClass是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B2%A1%E6%9C%89StorageClass%E6%97%B6%E4%BB%A3%EF%BC%8C%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8NFS"><span class="toc-text">没有StorageClass时代，如何使用NFS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#StorageClass%E6%97%B6%E4%BB%A3%E6%9D%A5%E4%BA%86"><span class="toc-text">StorageClass时代来了</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NFS-Provisioner%E5%8E%9F%E7%90%86"><span class="toc-text">NFS Provisioner原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NFS-StorageClass%E5%85%B7%E4%BD%93%E9%85%8D%E7%BD%AE%E6%AD%A5%E9%AA%A4"><span class="toc-text">NFS StorageClass具体配置步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NFS-StorageClass%E4%BD%BF%E7%94%A8"><span class="toc-text">NFS StorageClass使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

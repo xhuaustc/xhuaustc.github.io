@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-Jenkins共享并支持pipeline | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="诉求 使用Openshift的pipeline构建流水线，在Openshift上统一管理 使用一个公共的Jenkins，而不需要每个Project下都创建一个新的jenkins。以节约资源 在创建新的项目时，尽量少地改动完成以上的需求  问题openshift默认的BuildConfig如果设置为jenkinsPipelineStrategy策略，将会在当前project下查找jenkins服务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-Jenkins共享并支持pipeline">
+<meta property="og:url" content="https://xhua.eu.org/posts/4dad4d371af1.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="诉求 使用Openshift的pipeline构建流水线，在Openshift上统一管理 使用一个公共的Jenkins，而不需要每个Project下都创建一个新的jenkins。以节约资源 在创建新的项目时，尽量少地改动完成以上的需求  问题openshift默认的BuildConfig如果设置为jenkinsPipelineStrategy策略，将会在当前project下查找jenkins服务">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.639Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-Jenkins共享并支持pipeline",
+  "url": "https://xhua.eu.org/posts/4dad4d371af1.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.639Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/4dad4d371af1.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-Jenkins共享并支持pipeline',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-Jenkins共享并支持pipeline</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-Jenkins共享并支持pipeline</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.639Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-4b6198576554fbbe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Openshift Jenkins"></p>
+<h2 id="诉求"><a href="#诉求" class="headerlink" title="诉求"></a>诉求</h2><ol>
+<li>使用Openshift的pipeline构建流水线，在Openshift上统一管理</li>
+<li>使用一个公共的Jenkins，而不需要每个Project下都创建一个新的jenkins。以节约资源</li>
+<li>在创建新的项目时，尽量少地改动完成以上的需求</li>
+</ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>openshift默认的BuildConfig如果设置为jenkinsPipelineStrategy策略，将会在当前project下查找jenkins服务，如果没有的话，将会使用master-config中设置的默认jenkins模板所在位置在当前project下创建一个新的jenkins应用，便使用该应用执行相关的pipeline。<br>每个项目都会创建一个新的jenkins。</p>
+<h2 id="解决思路"><a href="#解决思路" class="headerlink" title="解决思路"></a>解决思路</h2><ul>
+<li>禁用Openshfit默认的JenkinsPipeline机制，不在当前项目下面自动创建Jenkins</li>
+<li>在创建一个新的project时，创建名为jenkins的service，同时将它指向公共的Jenkins服务。</li>
+<li>同时为了在当前Project界面下能够跳转到jenkins的界面，再创建一个jenkins Route，支持跳转到jenkins进行查看运行日志与过程</li>
+<li>项目要被jenkins控制，需要让公共jenkins具有操作当前项目的权限，所以还需要创建system:serviceaccount:jenkins:jenkins编辑当前Project的权限</li>
+</ul>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><ol>
+<li>部署Jenkins作为公共的Jenkins,例如部署在jenkins project下</li>
+<li>创建Project新建模板</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc adm create-bootstrap-project-template --name=bootstrap-project-template -o yaml &gt; project-template.yaml</span></span><br></pre></td></tr></table></figure>
+<p>在以上导出的配置中添加默认的jenkins Service&#x2F;Route&#x2F;RoleBinding</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">- apiVersion: v1</span><br><span class="line">  kind: Service</span><br><span class="line">  metadata:</span><br><span class="line">    name: jenkins</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  selector: &#123;&#125;</span><br><span class="line">  spec:</span><br><span class="line">    externalName: jenkins.jenkins.svc.cluster.local</span><br><span class="line">    type: ExternalName</span><br><span class="line">- apiVersion: route.openshift.io/v1</span><br><span class="line">  kind: Route</span><br><span class="line">  metadata:</span><br><span class="line">    name: jenkins</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  spec:</span><br><span class="line">    host: jenkins-jenkins.apps.example.com</span><br><span class="line">    to:</span><br><span class="line">      kind: Service</span><br><span class="line">      name: jenkins</span><br><span class="line">- apiVersion: authorization.openshift.io/v1</span><br><span class="line">  kind: RoleBinding</span><br><span class="line">  metadata:</span><br><span class="line">    name: edit</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  roleRef:</span><br><span class="line">    name: edit</span><br><span class="line">  subjects:</span><br><span class="line">  - kind: ServiceAccount</span><br><span class="line">    name: jenkins</span><br><span class="line">    namespace: jenkins</span><br><span class="line">  userNames:</span><br><span class="line">  - system:serviceaccount:jenkins:jenkins</span><br></pre></td></tr></table></figure>
+<p>结果展示:</p>
+<ol start="3">
+<li>将Openshift的Master中添加以下设置<ul>
+<li>设置Project默认模板为<code>default/bootstrap-project-template</code></li>
+<li>关闭JenkinsPipeline默认在project下创建的机制</li>
+</ul>
+</li>
+</ol>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line">projectConfig:</span><br><span class="line">  defaultNodeSelector: node-role.kubernetes.io/compute=true</span><br><span class="line">  projectRequestMessage: &#x27;&#x27;</span><br><span class="line">  projectRequestTemplate: &#x27;default/bootstrap-project-template&#x27;</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">jenkinsPipelineConfig:</span><br><span class="line">  autoProvisionEnabled: false</span><br><span class="line">  templateNamespace: openshift</span><br><span class="line">  templateName: jenkins-ephemeral</span><br><span class="line">  serviceName: jenkins</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>在Jenkins中的系统管理-&gt;系统设置中的<code>OpenShift Jenkins Sync</code>中的<code>Namespace</code>中添加<code> ${PROJECT_NAME}</code>,之间是以空格分隔的.<br><img src="https://upload-images.jianshu.io/upload_images/5793257-2cf977f827e34e30.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="添加project名.png"></li>
+</ol>
+<p>结果展示:<br>在Testx中创建一个简单的PipelineConfigBuild进行测试</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: build.openshift.io/v1</span><br><span class="line">kind: BuildConfig</span><br><span class="line">metadata:</span><br><span class="line">  name: test-pipelinex</span><br><span class="line">  namespace: testx</span><br><span class="line">spec:</span><br><span class="line">  strategy:</span><br><span class="line">    jenkinsPipelineStrategy:</span><br><span class="line">      jenkinsfile: |-</span><br><span class="line">        pipeline &#123;</span><br><span class="line">          agent any</span><br><span class="line">          stages &#123;</span><br><span class="line">            stage(&quot;测试&quot;)&#123;</span><br><span class="line">              steps &#123;</span><br><span class="line">                echo &quot;打印一下&quot;</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    type: JenkinsPipeline</span><br></pre></td></tr></table></figure>
+<p>在Testx项目下创建以上的BuildConfig,<code>前提是testx项目名已在jenkins中的系统设置中的OpenShift Jenkins Sync中添加</code><br>Testx项目下的PipelineJenkins可以使用Jenkins项目下的Jenkins服务来执行Pipeline<br><img src="https://upload-images.jianshu.io/upload_images/5793257-456412979fcf01ab.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Testx项目下可以使用Jenkins项目下的Jenkins服务来执行Pipeline"></p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="http://www.10tiao.com/html/360/201903/2663491580/1.html">DevOps的核心内功心法：OpenShift中实现共享Jenkins</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/4dad4d371af1.html">https://xhua.eu.org/posts/4dad4d371af1.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/bfe4fac12931.html" title="Openshift-Network-QoS——Pod网络控制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-Network-QoS——Pod网络控制</div></div><div class="info-2"><div class="info-item-1"> Pod网络（速）控制的必要性高速公路上，当流量大时，如果汽车仍然不限制速度的话，将会很容易发生车祸，我们都会自觉地减速缓慢通过，只有减速才能安全行驶。在平台的集群中也是一样，一台主机上会有大量容器运行，容器相当于高速速上的汽车，对外的网络通信都使用主机出口这条高速路，如果某（几）个容器突然访问流量大增，而且没有作任何网络限速，会占用了主机的网络，严重影响其它容器的网络，进而影响其它业务。 前提 Openshift打开多租户网络模式修改&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml将networkPluginName设置为redhat/openshift-ovs-multitenant  12345...  hostSubnetLength: 9  networkPluginName: redhat/openshift-ovs-multitenant  serviceNetworkCIDR: 172.30.0.0/16...  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换  为Pod添...</div></div></div></a><a class="pagination-related" href="/posts/551f7c289dcf.html" title="Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法</div></div><div class="info-2"><div class="info-item-1">1、HPA介绍HPA（Horizontal Pod Autoscaler）是Openshift中的一个非常重要的对象，它定义了系统如何根据收集对应的Pod的状态（CPU&#x2F;Memory）对DeploymentConfig、ReplicationController对象进行扩容与缩容。  HPA依赖于收集到的Pod资源的使用状态，所以要使HPA生效，Openshift必须安装好cluster metrics应用。 被监控的pod必须设置好了spec.containers.resources.requests属性，HPA才能正常工作。 仅支持CPU&#x2F;Memory使用率的判断，如果自定义监控项，只能使用经验值，不能使用使用率。 支持对象：DeploymentConfig、ReplicationController、Deployment、Replica Set。  2. HPA伸缩过程及算法 HPA进行伸缩过程   收集该HPA控制下所有Pod最近的cpu使用情况（CPU utilization） 对比在扩容条件里记录的cpu限额（CPUUtilization） 调整实...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/e57e3c101040.html" title="云原生简介"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">云原生简介</div></div><div class="info-2"><div class="info-item-1">什么是云原生云原生（Cloud Native）的概念由Pivotal的Matt Stine于2013年首次提出。它是Matt Stine根据多年的架构和咨询经验总结出来的一个思想集合，并得到社区的不断完善和补充，包括DevOps、持续交付、微服务、敏捷基础设施和12要素等几大主题。包括根据业务能力对公司进行文化、组织架构的重组与建设、方法论与原则、还有具体的操作工具。将云计算从传统的以资源为中心，改变为以应用为中心，聚焦于业务，从而满足应用快速迭代的要求。 CNCF（Cloud Native Computing Foundation）云原生计算基金会2015年把云原生定义为三个方面  应用容器化 面向微服务架构 应用支持容器的编排调度  随着CNCF中的项目越来越多，原先的定义已经限制了云原生生态的发展，于是更新了定义  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦合系统。结合可靠的自动化手段，云原生技术使工...</div></div></div></a><a class="pagination-related" href="/posts/de13a1f751d3.html" title="给非技术人员说清楚容器是什么"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">给非技术人员说清楚容器是什么</div></div><div class="info-2"><div class="info-item-1">小明要造一个房子，开始自己买木头、砖头自己造。 出现了一个开发商，他有一个机器，可以在几分钟内造出一个毛坯房，小明只需要按照自己的风格做装修。 巫婆出现，给了小明一个魔法袋，它可以把房子的模型装入袋中，想造房子念个咒语就行。 小明造了很多模板，可以轻松地就能造出很多房子。 来了个商人，告诉小明可以把魔法袋租出去，别人也可以放入模板，也能够造房子，坐收租金。 参考文章https://zhuanlan.zhihu.com/p/53260098 </div></div></div></a><a class="pagination-related" href="/posts/084518f28a58.html" title="如何在Openshift中让Router-Pod独占Router节点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">如何在Openshift中让Router-Pod独占Router节点</div></div><div class="info-2"><div class="info-item-1"> 概念 什么是Router Pod?  Router Pod是Openshift中管理外部流量访问集群服务的重要的入口，它是通过一个haproxy的Pod实现的。由于Router Pod的独特性，几乎所有的流量都过Router中的Pod代理到真正的服务，所以它是一个非常非常重要的服务。  什么是Router节点  因为集群中的Router Pod数量是有限的，外部流量通过负载均衡器到达Router的Pod，所以对于Router Pod必须固定在负载均衡器下的节点上。这些运行Router Pod的节点，我们叫做Router节点。它有两个特点：  运行default&#x2F;router的pod;  被外部负载均衡器监听  为什么需要让Router Pod独占Router节点上几乎所有的外部访问集群服务的流量都通过Router Pod代理，所以它是非常重要。在正式使用时，需要对它进行保护。让它独占节点，防止其它Pod抢占Router Pod的资源，以确保集群下服务的可用性。 具体实施Router Pod独占绑定Router节点 Router节点上添加label  1oc label...</div></div></div></a><a class="pagination-related" href="/posts/b785857b6330.html" title="自定义Service添加到Openshift中的Prometheus"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">自定义Service添加到Openshift中的Prometheus</div></div><div class="info-2"><div class="info-item-1">prometheus.yml中定义了keep, drop, update等状态1234567891011121314151617181920212223242526272829303132333435363738394041424344- job_name: &#x27;kubernetes-service-endpoints&#x27;  tls_config:    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt    # TODO: this should be per target    insecure_skip_verify: true  kubernetes_sd_configs:  - role: endpoints  relabel_configs:    # only scrape infrastructure components    - source_labels: [__meta_kubernetes_namespace]      action: keep      rege...</div></div></div></a><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a><a class="pagination-related" href="/posts/f7e207fa4001.html" title="OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程"><img class="cover" src="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</div></div><div class="info-2"><div class="info-item-1">问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从etcd集群剥离；二、将恢复的新的etcd节点添加到etcd集群。具体步骤如下：  查看etcd状态  1234$ etcdctl2 cluster-health$ ## 获取问题节点的member ID$ etcdctl2 member remove  &lt;member ID&gt;$ ## 将问题etcd服务从etcd集群中删除  停止问题节点上的etcd服务  12$ mkdir -p /etc/origin/node/pods-stopped$ mv /etc/origin/node/pods/* /etc/origin/node/pods-stopped/  删除问题节点上的...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%89%E6%B1%82"><span class="toc-text">诉求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF"><span class="toc-text">解决思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="toc-text">解决方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift模板之项目创建模板（资源限制） | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Openshift创建project时，可以按照设定的模板来创建，这就省去了很多初始化的工作。###文件内容(template.yaml) 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift模板之项目创建模板（资源限制）">
+<meta property="og:url" content="https://xhua.eu.org/posts/65cec275d806.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Openshift创建project时，可以按照设定的模板来创建，这就省去了很多初始化的工作。###文件内容(template.yaml) 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.641Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift模板之项目创建模板（资源限制）",
+  "url": "https://xhua.eu.org/posts/65cec275d806.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.641Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/65cec275d806.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift模板之项目创建模板（资源限制）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift模板之项目创建模板（资源限制）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift模板之项目创建模板（资源限制）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.641Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Openshift创建project时，可以按照设定的模板来创建，这就省去了很多初始化的工作。<br>###文件内容(template.yaml)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Template</span><br><span class="line">metadata:</span><br><span class="line">  creationTimestamp: null</span><br><span class="line">  name: project-request</span><br><span class="line">objects:</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  kind: Project</span><br><span class="line">  metadata:</span><br><span class="line">    annotations:</span><br><span class="line">      openshift.io/description: $&#123;PROJECT_DESCRIPTION&#125;</span><br><span class="line">      openshift.io/display-name: $&#123;PROJECT_DISPLAYNAME&#125;</span><br><span class="line">      openshift.io/requester: $&#123;PROJECT_REQUESTING_USER&#125;</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">    name: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  spec: &#123;&#125;</span><br><span class="line">  status: &#123;&#125;</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  kind: ResourceQuota</span><br><span class="line">  metadata:</span><br><span class="line">    name: $&#123;PROJECT_NAME&#125;-quota</span><br><span class="line">  spec:</span><br><span class="line">    hard:</span><br><span class="line">      pods: 10</span><br><span class="line">      requests.cpu: 4000m</span><br><span class="line">      requests.memory: 8Gi</span><br><span class="line">      resourcequotas: 1</span><br><span class="line">      requests.storage: 25Gi</span><br><span class="line">      persistentvolumeclaims: 5</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  kind: LimitRange</span><br><span class="line">  metadata: </span><br><span class="line">    name: $&#123;PROJECT_NAME&#125;-limits</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">  spec: </span><br><span class="line">    limits: </span><br><span class="line">      - </span><br><span class="line">        type: Container</span><br><span class="line">        max: </span><br><span class="line">          cpu: 4000m</span><br><span class="line">          memory: 1024Mi</span><br><span class="line">        min: </span><br><span class="line">          cpu: 10m</span><br><span class="line">          memory: 5Mi</span><br><span class="line">        default: </span><br><span class="line">          cpu: 4000m</span><br><span class="line">          memory: 1024Mi</span><br><span class="line">        defaultRequest:</span><br><span class="line">          cpu: 100m</span><br><span class="line">          memory: 512Mi</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  groupNames:</span><br><span class="line">  - system:serviceaccounts:$&#123;PROJECT_NAME&#125;</span><br><span class="line">  kind: RoleBinding</span><br><span class="line">  metadata:</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">    name: system:image-pullers</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  roleRef:</span><br><span class="line">    name: system:image-puller</span><br><span class="line">  subjects:</span><br><span class="line">  - kind: SystemGroup</span><br><span class="line">    name: system:serviceaccounts:$&#123;PROJECT_NAME&#125;</span><br><span class="line">  userNames: null</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  groupNames: null</span><br><span class="line">  kind: RoleBinding</span><br><span class="line">  metadata:</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">    name: system:image-builders</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  roleRef:</span><br><span class="line">    name: system:image-builder</span><br><span class="line">  subjects:</span><br><span class="line">  - kind: ServiceAccount</span><br><span class="line">    name: builder</span><br><span class="line">  userNames:</span><br><span class="line">  - system:serviceaccount:$&#123;PROJECT_NAME&#125;:builder</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  groupNames: null</span><br><span class="line">  kind: RoleBinding</span><br><span class="line">  metadata:</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">    name: system:deployers</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  roleRef:</span><br><span class="line">    name: system:deployer</span><br><span class="line">  subjects:</span><br><span class="line">  - kind: ServiceAccount</span><br><span class="line">    name: deployer</span><br><span class="line">  userNames:</span><br><span class="line">  - system:serviceaccount:$&#123;PROJECT_NAME&#125;:deployer</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  groupNames: null</span><br><span class="line">  kind: RoleBinding</span><br><span class="line">  metadata:</span><br><span class="line">    creationTimestamp: null</span><br><span class="line">    name: admin</span><br><span class="line">    namespace: $&#123;PROJECT_NAME&#125;</span><br><span class="line">  roleRef:</span><br><span class="line">    name: admin</span><br><span class="line">  subjects:</span><br><span class="line">  - kind: User</span><br><span class="line">    name: $&#123;PROJECT_ADMIN_USER&#125;</span><br><span class="line">  userNames:</span><br><span class="line">  - $&#123;PROJECT_ADMIN_USER&#125;</span><br><span class="line">parameters:</span><br><span class="line">- name: PROJECT_NAME</span><br><span class="line">- name: PROJECT_DISPLAYNAME</span><br><span class="line">- name: PROJECT_DESCRIPTION</span><br><span class="line">- name: PROJECT_ADMIN_USER</span><br><span class="line">- name: PROJECT_REQUESTING_USER</span><br></pre></td></tr></table></figure>
+
+<h3 id="将它导入模板"><a href="#将它导入模板" class="headerlink" title="将它导入模板"></a>将它导入模板</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc create -f template.yaml -n default</span><br></pre></td></tr></table></figure>
+
+<h3 id="将它设为Project默认配置"><a href="#将它设为Project默认配置" class="headerlink" title="将它设为Project默认配置"></a>将它设为Project默认配置</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#/etc/origin/master/master-config.yaml</span><br><span class="line">...</span><br><span class="line">projectConfig:</span><br><span class="line">  projectRequestTemplate: &quot;default/project-request&quot;</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+
+<h3 id="重启Master，使配置生效"><a href="#重启Master，使配置生效" class="headerlink" title="重启Master，使配置生效"></a>重启Master，使配置生效</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart atomic-openshift-master</span><br></pre></td></tr></table></figure>
+
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc new-project tem-test</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/65cec275d806.html">https://xhua.eu.org/posts/65cec275d806.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/6a6e96f6251d.html" title="Openshift生产环境部署配置事项"><img class="cover" src="https://img.xhua.eu.org/7f22b77f268e751b9611748deb43413ac72d9958c04521eaa06eaa2632fac6b3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift生产环境部署配置事项</div></div><div class="info-2"><div class="info-item-1">1. 主机配置推荐 master 16核 32GB 网卡带宽不低于1Gb。CPU x86_64架构，核数和主机数线性递增，每增加一台主机增加0.1核。5台主机4.5核，总的核数为4+0.1 * 主机数内存与主机数线性递增，每增一台主机增加200M内存，5台8G，总的内存数为7+0.2 * 主机数 node 40核 256GB  网卡带宽不低于1Gb根据应用场景估算  2. 磁盘目录挂载 master磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var&#x2F;lib&#x2F;docker：100GB 做raid高可用&#x2F;var&#x2F;lib&#x2F;etcd [ssd]：20GB 做raid高可用&#x2F;var ：50GB 可根据实际进行调整，主要emptyDir的存储在&#x2F;var&#x2F;lib&#x2F;origin目录下 node磁盘格式：xfs ftype&#x3D;1&#x2F; : 10GB&#x2F;var&#x2F;log ：50GB&#x2F;var...</div></div></div></a><a class="pagination-related" href="/posts/b7b877349e97.html" title="Openshift排错技巧——From-Redhat大客户交流会"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift排错技巧——From-Redhat大客户交流会</div></div><div class="info-2"><div class="info-item-1"> 今天参加Redhat大客户交流会，有一个主题是Redhat的小伙伴介绍Openshift的排错技巧。这个还是很值得参考的，于是将内容发在了这里，以便更多的小伙伴能够从中受益。当然Redhat小伙伴列出的也只是一部分，同时有些排错细节PPT中也并没有具体写，这篇中我就不扩展了。以下为PPT的内容。 OpenShift排错技巧 环境基本信息收集 日志等级 应用程序 OC客户端排错 镜像仓库 网络 路由 Installer DNS Etcd  日志等级openshift service log:&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master.env #同时作用于API和ControllersDEBUG_LOGLEVEL&#x3D;4 &#x2F;etc&#x2F;sysconfig&#x2F;atomic-openshift-nodeOPTIONS&#x3D;–loglevel&#x3D;4 错误等级  0 - Errors and warning only 2 - Normal information 4 - Debugging-leve...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/c1cb5e8c61ba.html" title="OpenShift灾备的方案及步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift灾备的方案及步骤</div></div><div class="info-2"><div class="info-item-1">https://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restoring-cluster.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-master-host.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_restore-etcd-quorum.htmlhttps://docs.openshift.com/container-platform/3.11/admin_guide&#x2F;assembly_replace-etcd-member.html </div></div></div></a><a class="pagination-related" href="/posts/5a77edf030a8.html" title="Openshift-Route证书HTTPS配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Route证书HTTPS配置</div></div><div class="info-2"><div class="info-item-1">后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None </div></div></div></a><a class="pagination-related" href="/posts/a45bfc874439.html" title="Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警</div></div><div class="info-2"><div class="info-item-1">Openshift从3.9版本开始官方支持Prometheus和Grafana 从官方部署脚本 openshift-ansible 中的目录playbooks下的列表 中可以看到相关部署脚本openshift-prometheusopenshift-grafana  既然官方支持，部署安装就十分简单了。 部署安装Prometheus &#x2F;etc&#x2F;ansible&#x2F;hosts添加配置  12[OSEv3:vars]openshift_hosted_prometheus_deploy=true  执行安装  1ansible-playbook  playbooks/openshift-prometheus/config.yml  打开宿主机的9100端口（kubernetes-nodes-exporter）  1ansible all -m shell -a &#x27;iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 9100 -j ACCEPT; servic...</div></div></div></a><a class="pagination-related" href="/posts/35c6bb7f80fa.html" title="Docker安装镜像仓库的三种方法"><img class="cover" src="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker安装镜像仓库的三种方法</div></div><div class="info-2"><div class="info-item-1">一、docker-distribution 安装docker-distribution软件  1yum install docker-distribution  配置registry&#x2F;config.yml文件  123456789101112# /etc/docker-distribution/registry/config.ymlversion: 0.1log:fields:service: registrystorage:cache:layerinfo: inmemoryfilesystem:rootdirectory: /var/lib/registryhttp:addr: :5000  启动docker-distribution服务  12systemctl start docker-distributionsystemctl enable docker-distribution 运维 二、运行容器registry直接运行docker run 12docker run -d -p 5000:5000 -v /data/registry:/var/lib/regi...</div></div></div></a><a class="pagination-related" href="/posts/d5eceb7414d3.html" title="Openshift-GitLab安装及使用Nodeport支持ssh访问"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-GitLab安装及使用Nodeport支持ssh访问</div></div><div class="info-2"><div class="info-item-1"> 部署Gitlab 创建gitlab项目  1oc new-project gitlab  创建cicd serviceaccount  1$ oc create serviceaccount cicd -n gitlab  导入Gitlab模板  12wget https://gitee.com/xhua/OpenshiftOneClick/raw/3.11/openshift-templates/gitlab-template.yamloc create -f openshift-template.json -n openshift  创建持久化存储（如果没有pv的情况下）  123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384$ cat gitlab-pv.yamlapiVersion: v1items:- ap...</div></div></div></a><a class="pagination-related" href="/posts/8b2b11346a0d.html" title="Openshift-Nginx-Router替换默认Haproxy-Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Nginx-Router替换默认Haproxy-Router</div></div><div class="info-2"><div class="info-item-1"> 什么是Router Router在Openshift集群的一个不可非常重要的组件，它作为外部请求访问集群内部资源的入口，为Openshift上的应用提供边缘负载均衡。 Router可以为应用提供HTTP和websocket流量的负载均衡，同时支持HTTPS连接。Openshift上有一个特殊的资源叫Route，通过它可以方便地配置Router。 Openshift集群默认使用Haproxy应用作为Router的实现，它通过容器的形式运行在相应的Node上，同时Router Pod网络使用的宿主机的网络，即hostNetwork=true。 除了Haproxy,我们还可以使用Nginx来实现Router，这也是本文的重点。 不管是Haproxy还是Nginx方案都是使用了软件负载均衡器，还可以使用F5等硬件负载均衡器来替换Router，达到性能的提升。   Nginx Router与默认Router比较 如何替换Openshift默认Router卸载当前Router 用system:admin登录集群  1$ oc login -u system:admin  选择default...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E5%AE%83%E5%AF%BC%E5%85%A5%E6%A8%A1%E6%9D%BF"><span class="toc-text">将它导入模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E5%AE%83%E8%AE%BE%E4%B8%BAProject%E9%BB%98%E8%AE%A4%E9%85%8D%E7%BD%AE"><span class="toc-text">将它设为Project默认配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%90%AFMaster%EF%BC%8C%E4%BD%BF%E9%85%8D%E7%BD%AE%E7%94%9F%E6%95%88"><span class="toc-text">重启Master，使配置生效</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81"><span class="toc-text">验证</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

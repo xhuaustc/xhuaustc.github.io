@@ -1,0 +1,259 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>SOPS对配置文件数据进行加密 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="SOPS 是由Mozilla 开发的一款开源的文本编辑工具，它支持对YAML, JSON, ENV, INI 和BINARY 文本格式的文件进行编辑，并利用AWS KMS, GCP KMS, Azure Key Vault 或PGP 等加密方式对编辑的文件进行加密和解密。在当前它还可以与heml secret作用，为Kubernetes的secret资源数据进行加密。本篇主要介绍sops的基本用法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SOPS对配置文件数据进行加密">
+<meta property="og:url" content="https://xhua.eu.org/posts/cf903a398614.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="SOPS 是由Mozilla 开发的一款开源的文本编辑工具，它支持对YAML, JSON, ENV, INI 和BINARY 文本格式的文件进行编辑，并利用AWS KMS, GCP KMS, Azure Key Vault 或PGP 等加密方式对编辑的文件进行加密和解密。在当前它还可以与heml secret作用，为Kubernetes的secret资源数据进行加密。本篇主要介绍sops的基本用法">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.630Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "SOPS对配置文件数据进行加密",
+  "url": "https://xhua.eu.org/posts/cf903a398614.html",
+  "image": "https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.630Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/cf903a398614.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'SOPS对配置文件数据进行加密',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">SOPS对配置文件数据进行加密</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">SOPS对配置文件数据进行加密</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.630Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><strong>SOPS</strong> 是由Mozilla 开发的一款开源的文本编辑工具，它支持对YAML, JSON, ENV, INI 和BINARY 文本格式的文件进行编辑，并利用AWS KMS, GCP KMS, Azure Key Vault 或PGP 等加密方式对编辑的文件进行加密和解密。<br>在当前它还可以与heml secret作用，为Kubernetes的secret资源数据进行加密。<br>本篇主要介绍sops的基本用法，而helm secret的使用不做介绍。</p>
+<p>##GPG进行加密</p>
+<ol>
+<li>生成GPG文件</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gpg --generate-key <span class="comment"># 根据引导生成gpg加密文件</span></span></span><br></pre></td></tr></table></figure>
+<p>或者自动生成</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">gpg --batch --generate-key &lt;&lt;EOF</span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash"><span class="built_in">echo</span> Generating a basic OpenPGP key <span class="keyword">for</span> HELM Secret</span></span><br><span class="line">Key-Type: RSA</span><br><span class="line">Key-Length: 4096</span><br><span class="line">Subkey-Type: RSA</span><br><span class="line">Subkey-Length: 4096</span><br><span class="line">Name-Real: Michael</span><br><span class="line">Name-Comment: Personal PGP</span><br><span class="line">Name-Email: mpan@sample.com</span><br><span class="line">Expire-Date: 0</span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash">no-ask-passphrase</span></span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash">no-protection</span></span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash">commit</span></span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash"><span class="built_in">echo</span> <span class="keyword">done</span></span></span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>查看GPG列表</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gpg -k</span></span><br><span class="line">/home/vagrant/.gnupg/pubring.kbx</span><br><span class="line">--------------------------------</span><br><span class="line">pub   rsa3072 2021-04-07 [SC] [expires: 2023-04-07]</span><br><span class="line">      FA21E3EDC58BA05535435756543DF0088828FFCC</span><br><span class="line">uid           [ultimate] Michael &lt;micael@example.com&gt;</span><br><span class="line">sub   rsa3072 2021-04-07 [E] [expires: 2023-04-07]</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>使用SOPS对文件a.yaml进行加密</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> <span class="string">&quot;A: hello&quot;</span> &gt; a.yaml</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sops --gpg FA21E3EDC58BA05535435756543DF0088828FFCC -e file.yaml &gt; file_encode.yaml</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>解密文件</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sops -d file_encode.yaml</span> </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment">#或者 使用sops file_encode.yaml对加密文件直接编辑</span></span></span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>通过.sops.yaml来设置默认加密规则</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> &lt;&lt;<span class="string">EOF &gt; .sops.yaml</span></span></span><br><span class="line">creation_rules:</span><br><span class="line">        - pgp: &#x27;FA21E3EDC58BA05535435756543DF0088828FFCC&#x27;</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p>**公钥用于加密，私钥用于解密。**它们的导入与导出对于文件的传输与交流很重要。<br>5. 公钥导入与导出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> $ </span><span class="language-bash">gpg --<span class="built_in">export</span> --armor <span class="string">&quot;mpan@sample.com&quot;</span> &gt; personal_gpg.pub</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gpg --import personal_gpg.pub</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>私钥的导入与导出</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gpg --export-secret-key -a &quot;mpan@sample.com&quot; &gt; personal_gpg</span><br><span class="line">gpg --import  personal_gpg</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>删除公钥与私钥</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gpg --delete-keys FA21E3EDC58BA05535435756543DF0088828FFCC</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gpg --delete-secret-keys FA21E3EDC58BA05535435756543DF0088828FFCC</span></span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>保存gpg密钥的网站（可选）<br>KeyBase：<a target="_blank" rel="noopener" href="https://keybase.io/">https://keybase.io/</a><br>KeysOpenPGP<a target="_blank" rel="noopener" href="https://keys.openpgp.org/">https://keys.openpgp.org/</a></li>
+</ol>
+<h2 id="KMS加密"><a href="#KMS加密" class="headerlink" title="KMS加密"></a>KMS加密</h2><ol>
+<li>在aws平台的KMS服务创建一个密钥，获取它的arn ID</li>
+<li>文件加密时使用–kms设置加密密钥。<code>前提是当前aws客户端已经设置了认证私钥，并赋予了访问该kms密钥的权限</code></li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sops --kms <span class="string">&quot;arn:aws:kms:ap-east-1:982938942:key/f2232fa3-7678-8922-8778-f2232fa3&quot;</span> -e file.yaml &gt; file_encode.yaml</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>解密文件方式一致</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sops -d file_encode.yaml</span></span><br></pre></td></tr></table></figure>
+<h2 id="使用Age加密"><a href="#使用Age加密" class="headerlink" title="使用Age加密"></a>使用Age加密</h2><p><a target="_blank" rel="noopener" href="https://github.com/FiloSottile/age">Age</a> 是一个简单，现代和安全的文件加密工具。</p>
+<ol>
+<li>安装</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew tap filippo.io/age https://filippo.io/age</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew install age</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>生成密钥对</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">age-keygen -o key.txt</span></span><br><span class="line">Public key: age1st0m5a72gtlk3pz3fnvy08huq8d9llut2vnjwxzkeudejkc0fs9s6dj9ev</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>使用公钥对数据进行加密</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sops -a age1st0m5a72gtlk3pz3fnvy08huq8d9llut2vnjwxzkeudejkc0fs9s6dj9ev -e secrets.yaml &gt; secrets_enc.yaml</span></span><br></pre></td></tr></table></figure>
+<h2 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h2><ol>
+<li>在解密时报如下错误</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vagrant@ubuntu-focal:~$ sops a2.yaml</span><br><span class="line">Failed to get the data key required to decrypt the SOPS file.</span><br><span class="line"></span><br><span class="line">Group 0: FAILED</span><br><span class="line">  FA21E3EDC58BA05535435756543DF0088828FFCC: FAILED</span><br><span class="line">    - | could not decrypt data key with PGP key:</span><br><span class="line">      | golang.org/x/crypto/openpgp error: Could not load secring:</span><br><span class="line">      | open /home/vagrant/.gnupg/secring.gpg: no such file or</span><br><span class="line">      | directory; GPG binary error: exit status 2</span><br></pre></td></tr></table></figure>
+<p>需要设置GPG_TTY环境变量</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export GPG_TTY=$(tty)</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://my.oschina.net/u/3952901/blog/4409303">Helm 插件之 helm-secrets：利用 PGP 加密你的 Values 文件</a><br><a target="_blank" rel="noopener" href="https://github.com/mozilla/sops/issues/304">Cannot decrypt with GPG 2.2.5 and SOPS 3.0.0 #304</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/cf903a398614.html">https://xhua.eu.org/posts/cf903a398614.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/83182fac4bba6ce55f8d0a918eb731acef28825ab0e0f138e9ab9b3b8c32540d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/522406dc14b5.html" title="Scrum敏捷开发"><img class="cover" src="https://img.xhua.eu.org/08610d5404f631e65e15a4035506b037ef8df6428b0dd1dd53d8a400c00525a6.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Scrum敏捷开发</div></div><div class="info-2"><div class="info-item-1">团队成员 一般情况人数在5~9个左右 团队要跨职能(包含开发人员、测试人员、用户介面设计师等) 团队成员构成在Sprint内不允许变化。  用户故事建模为开发任务需求编写用户故事    重要性 用户故事 测试方法 预估时间    30 做为一个会员，可以查看自己的购物清单，以便一起购买 登录，点击购买清单Tab 16h   Sprint计划会议（两周一次，4个小时） 设定本Sprint目标及优先级 挑选本Sprint所要开发的需求（Story) 逐一将Story细分成Task 确定每日站会时间和地点 确定演示会议和回顾会议日期计划会议输出：     Story Task Hour    A 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   B 1. 编写自动化验收测试2. 设计用户界面3. 编写用户界面程序代码 4. 编写数据库代码5. 编写单元测试 6. 人工测试 3h5h8h8h8h8h   第日立会为早上9：00至9：15     Demo演示时间为：2018-07-1...</div></div></div></a><a class="pagination-related" href="/posts/12af42c297f6.html" title="Openshift上使用Nginx-Pod作灰度发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift上使用Nginx-Pod作灰度发布</div></div><div class="info-2"><div class="info-item-1">参考文章：使用 Nginx 实现灰度发布 什么是灰度发布 **【百度百科】**灰度发布（又名金丝雀发布）是指在黑与白之间，能够平滑过渡的一种发布方式。 在其上可以进行A&#x2F;B testing，即让一部分用户继续用产品特性A，一部分用户开始用产品特性B，如果用户对B没有什么反对意见，那么逐步扩大范围，把所有用户都迁移到B上面来。 除了AB test灰度发布另一种思想是，只发布给一小部分用户，如：App在发布之前，针对性的给一小批用户测试下新版本，用小流量发布的方式来检验新版会不会有问题。 灰度发布可以保证整体系统的稳定，在初始灰度的时候就可以发现、调整问题，以保证其影响度。  Openshift上实现蓝绿部署   在openshift上的部署两个版本的Service：service01, service02。在创建Route的时候，可以非常简单地指定同一个Route流量访问两个service的百分比service01（25%流量）, service02（75%流量）。所有请求该Route的流量会被按指定的比例访问后service。      对应的Route yaml配置文...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/9bf126597211.html" title="Jmeter简单配置使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jmeter简单配置使用</div></div><div class="info-2"><div class="info-item-1"> 创建Test Plan 测试计划File-&gt;New或者直接点击New图标 添加Thread Group 测试任务右击测试计划，Add-&gt;Threads(Users)-&gt;Thread Group 添加HTTP Cookie 请求Cookie管理右击Thread Group，Add-&gt;Config Element-&gt;HTTP Cookie Manager 添加HTTP Header  请求头管理右击Thread Group，Add-&gt;Config Element-&gt;HTTP Header Manager 添加HTTP Request 请求右击Thread Group，Add-&gt;Sampler-&gt;HTTP Request 添加User Defined Variables 用户定义变量右击Thread Group，Add-&gt;Config Element-&gt;User Defined Variable 添加报告Result Tree 结果树右击Thread Group，Add-&gt;Listener-&gt;View R...</div></div></div></a><a class="pagination-related" href="/posts/1554de812850.html" title="系统僵尸进程管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">系统僵尸进程管理</div></div><div class="info-2"><div class="info-item-1"> 查看系统僵尸进程数top    查看僵尸进程详情ps -ef|grep defunct    停止僵尸进程kill -9 $Parent PID   </div></div></div></a><a class="pagination-related" href="/posts/4639aac39f9a.html" title="持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 ##构建工具概览  Make Ant NAnt与MSBuild Maven Rake Buildr Psake  构建部署脚本化的原则与实践 为部署流水线的每个阶段创建脚本 使用恰当的技术部署应用程序 使用同样的脚本向所有环境部署 使用操作系统自带的包管理工具 确保部署流程是幂等的 部署系统的增量式演进  部署脚本化 多层的部署和测试   层 配置    应用／服务／组件 应用配置   中间件 中间件配置   操作系统 操作系统配置   硬件 硬件    测试环境配置 部署前对基础设施做标准冒烟测试，如果发现问题，就让环境配置流程快速失败，并给出测试结果 确认能从数据库中拿到一条记录 确认能连上网站 断言消息代理中的已注册的消息集合是正确的 透过防火墙发送ping，证明线路通畅    推荐策略 总是使用相对路径 消除手工步骤 从二进制包到版本控制库的内建可追溯性二进制包记录版本信息，如Java应用可以在MANIFEST中包含元数据，另外可以将构建流程生成的每个二进制包的MD5值及名字和版本标识符一起放在数据库中 不要把二进制包作为构建的...</div></div></div></a><a class="pagination-related" href="/posts/29c771c693e3.html" title="使用Ansible-Tower与Jenkins集成实现CI-CD"><img class="cover" src="https://img.xhua.eu.org/417cb66870058dd036ecb4dd3a5f72dc88b36b52abfdda5217a1e56abbc6d983.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-21</div><div class="info-item-2">使用Ansible-Tower与Jenkins集成实现CI-CD</div></div><div class="info-2"><div class="info-item-1">Ansible Tower是什么？Ansible Tower是一个基于Web的用户界面，提供了IT自动化的企业解决方案。它有一个友好用户的仪表板来管理部署和监控资源。Ansible Tower为Ansible增加自动化，可视化管理和监控能力。 为什么要使用Ansible Tower替换Ansible与Jenkins集成？使用Ansible Tower与Jenkins集成，打开了一个充满可能性的世界。与一篇中介绍的《Ansible与Jenkins集成实现CI&#x2F;CD》进行比较，它可以从Jenkins中删除很多配置，比如部署应用的服务器的访问配置，管理playbook执行，最重要的是，避免在Jenkins端配置SSH密钥，同时Jenkins不需要知道应用程序的部署服务器地址：它可能位于公有云中，物理机中，甚至是笔记本电脑上的虚拟客户端。 把这些配置与过程都放到Ansible Tower中进行集中管理。 Ansible Tower的组件    Credentials: Ansible Tower在运行作业时，访问Tower外部服务或者连接主机时需要进行身份验证。Credenti...</div></div></div></a><a class="pagination-related" href="/posts/ef3675d1c305.html" title="Git-+-Jenkins-提交Git-触发Jenkins-Job"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Git-+-Jenkins-提交Git-触发Jenkins-Job</div></div><div class="info-2"><div class="info-item-1">利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!/bin/bashecho ====== trigger jenkins job: maglev-verify in 10s  =======(sleep 10 &amp;&amp; .git/hooks/post-push) &amp;  .git&#x2F;hooks&#x2F;post-push  123#!/bin/bashbranch=$(git rev-parse --abbrev-ref @&#123;upstream&#125;)curl -k --user $&#123;USER&#125;=$&#123;TOKEN&#125; http://$&#123;JENKINS_URL&#125;/job/$&#123;JOB_NAME&#125;/buildWithParameters --data-urlencode TAG=$branch</div></div></div></a><a class="pagination-related" href="/posts/63c9fc8a8ef1.html" title="Jenkins-Pipeline触发机制"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jenkins-Pipeline触发机制</div></div><div class="info-2"><div class="info-item-1">设置好了功能强大的流水线后，接下来我们要做的就是去执行流水线，如果都靠手动去触发流水线，显然不符合带着自动化基因新一代工程师的风格，必须自动触发。那么Jenkins的Pipeline支持哪些触发机制呢。一起来看一下。 定时触发：croncron规则与crontab的规则是一样的 12345678910111213pipeline&#123;	agent any	triggers&#123;		cron(&#x27;0 0 * * *&#x27;)	&#125;	stages&#123;		stage(&#x27;半夜触发&#x27;)&#123;			steps&#123;				echo &quot;凌晨执行&quot;			&#125;		&#125;	&#125;&#125;  轮询代码仓库周期性检查代码，看代码是否有更新。这种方式需要使用 12345678910111213pipeline&#123;	agent any	triggers&#123;		pollSCM(&#x27;* * * * *&#x27;)	&#125;	stages&#123;		stage(&#...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#KMS%E5%8A%A0%E5%AF%86"><span class="toc-text">KMS加密</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8Age%E5%8A%A0%E5%AF%86"><span class="toc-text">使用Age加密</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="toc-text">错误处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

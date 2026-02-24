@@ -1,0 +1,244 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Openshift从3.9版本开始官方支持Prometheus和Grafana 从官方部署脚本 openshift-ansible 中的目录playbooks下的列表 中可以看到相关部署脚本openshift-prometheusopenshift-grafana  既然官方支持，部署安装就十分简单了。 部署安装Prometheus &#x2F;etc&#x2F;ansible&#x2F;host">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警">
+<meta property="og:url" content="https://xhua.eu.org/posts/a45bfc874439.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Openshift从3.9版本开始官方支持Prometheus和Grafana 从官方部署脚本 openshift-ansible 中的目录playbooks下的列表 中可以看到相关部署脚本openshift-prometheusopenshift-grafana  既然官方支持，部署安装就十分简单了。 部署安装Prometheus &#x2F;etc&#x2F;ansible&#x2F;host">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.640Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警",
+  "url": "https://xhua.eu.org/posts/a45bfc874439.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.640Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/a45bfc874439.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift3-9上部署Prometheus+Grafana实现集群的监控与告警</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.640Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="Openshift从3-9版本开始官方支持Prometheus和Grafana"><a href="#Openshift从3-9版本开始官方支持Prometheus和Grafana" class="headerlink" title="Openshift从3.9版本开始官方支持Prometheus和Grafana"></a>Openshift从3.9版本开始官方支持Prometheus和Grafana</h2><blockquote>
+<p>从官方部署脚本 <strong><a target="_blank" rel="noopener" href="https://github.com/openshift/openshift-ansible">openshift-ansible</a></strong> 中的目录playbooks下的列表 中可以看到相关部署脚本<br><strong><a target="_blank" rel="noopener" href="https://github.com/openshift/openshift-ansible/tree/release-3.9/playbooks/openshift-prometheus">openshift-prometheus</a></strong><br><strong><a target="_blank" rel="noopener" href="https://github.com/openshift/openshift-ansible/tree/release-3.9/playbooks/openshift-grafana">openshift-grafana</a></strong></p>
+</blockquote>
+<p>既然官方支持，部署安装就十分简单了。</p>
+<h2 id="部署安装Prometheus"><a href="#部署安装Prometheus" class="headerlink" title="部署安装Prometheus"></a>部署安装Prometheus</h2><blockquote>
+<p>&#x2F;etc&#x2F;ansible&#x2F;hosts添加配置</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:vars]</span><br><span class="line">openshift_hosted_prometheus_deploy=true</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>执行安装</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook  playbooks/openshift-prometheus/config.yml</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>打开宿主机的9100端口（kubernetes-nodes-exporter）</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible all -m shell -a &#x27;iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 9100 -j ACCEPT; service iptables save&#x27;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>完成</p>
+</blockquote>
+<p>查看下资源状态</p>
+<blockquote>
+<p>prometheus会默认部署在新创建的project中：openshift-metrics<br>1个statefulset资源：prometheus<br>1个DaemonSet资源：prometheus-node-exporter<br>4个Service资源：alertmanager 、alerts、prometheus、prometheus-node-exporter<br>3个route资源：alertmanager、alerts、prometheus<br>3个ServiceAccount：prometheus、prometheus-node-exporter、prometheus-reader </p>
+</blockquote>
+<h2 id="部署安装Grafana"><a href="#部署安装Grafana" class="headerlink" title="部署安装Grafana"></a>部署安装Grafana</h2><p><strong><code>注意，3.9-release分支下的grafana安装脚本有问题，请使用最新master分支下的脚本进行安装</code></strong></p>
+<blockquote>
+<p>检查节点的label</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc get node -l node-role.kubernetes.io/infra=true</span><br></pre></td></tr></table></figure>
+<p>如果没有node-role.kubernetes.io&#x2F;infra&#x3D;true标签的Node节点的话，需要给Node配置标签</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc label node nodename1 node-role.kubernetes.io/infra=true</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>&#x2F;etc&#x2F;ansible&#x2F;hosts添加配置</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:vars]</span><br><span class="line">grafana_namespace=openshift-grafana</span><br><span class="line">grafana_user=grafana</span><br><span class="line">grafana_password=grafana</span><br><span class="line">grafana_datasource_name=&quot;default&quot;</span><br><span class="line">grafana_prometheus_namespace=&quot;openshift-metrics&quot;</span><br><span class="line">grafana_prometheus_sa=prometheus</span><br><span class="line">grafana_node_exporter=false</span><br><span class="line">grafana_graph_granularity=&quot;2m&quot;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>执行安装</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook playbooks/openshift-grafana/config.yml</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>完成</p>
+</blockquote>
+<p>查看下资源状态</p>
+<blockquote>
+<p>1个deployment：grafana<br>1个service: grafana<br>1个route: grafana<br>1个serviceaccount: grafana<br>1个configmap:grafana-config </p>
+</blockquote>
+<p>最终效果图<br><img src="https://upload-images.jianshu.io/upload_images/5793257-47d86fb6b96ea48e.JPG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="展示图1"></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-a529a2c71988ad60.JPG?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="展示图2"></p>
+<p>补充：<br>grafana admin密码丢失，如何重置？</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ grafana-cli admin reset-admin-password --homepath &quot;/usr/share/grafana&quot; admin</span><br></pre></td></tr></table></figure>
+<p>prometheus中配置内存使用率(node_memory_requests_total是我自己写的exporter监控数据)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(node_memory_requests_total) by(node_name) / sum(label_replace(machine_memory_bytes, &#x27;node_name&#x27;, &quot;$1&quot;, &quot;instance&quot;, &quot;(.*)&quot; )) by (node_name)</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/a45bfc874439.html">https://xhua.eu.org/posts/a45bfc874439.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/1f94b61afe3b.html" title="Openshift3-9部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift3-9部署手册</div></div><div class="info-2"><div class="info-item-1">说明：本文主要介绍通过Ansible来部署Openshift 3.9 一、准备系统准备   节点类型 说明    Masters 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 最少4vCPU最少16GB内存&#x2F;var&#x2F;最少40GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   额外的etcd节点 最少20GB用来存储etcd数据 &nbsp;   注：在安装时可以通过ansible_inventory的配置忽略以上系统要求扩展：对于生产部署时，Master的配置要求计算规则如下：每1000个pods需要额外的1核...</div></div></div></a><a class="pagination-related" href="/posts/c982647841f2.html" title="Openshift-gitlab-redmine-testlink集成"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-gitlab-redmine-testlink集成</div></div><div class="info-2"><div class="info-item-1"> Gitlab:使用Git作为代码管理工具，并在此基础上搭建起来的web服务。Redmine:项目管理和bug跟踪工具。TestLink:基于web的测试用例管理系统，主要功能是测试用例的创建、管理和执行，并且还提供了一些简单的统计功能。Redmine作为项目问题及bug收集汇总的地方，gitlab及testlink通过调用redmine的api进行对问题进行更新。那第它们之间是怎么配置的呢？下面就一起来配置下。  Redmine部署与插件安装相关配置在github项目：https://github.com/xhuaustc/redmine-openshift  Dockerfile中更新了docker-entrypoint.sh文件，更新了数据库的编码（mysql: utf8mb4 ) 创建镜像   12$ docker build -t harbor.local.com/public/redmine .$ docker push harbor.local.com/public/redmine  在openshift上创建新的项目  创建工程 1$ oc new-project...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3c9aa01de06e.html" title="Rancher大屏"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Rancher大屏</div></div><div class="info-2"><div class="info-item-1">   </div></div></div></a><a class="pagination-related" href="/posts/863aac1da72a.html" title="OpenShift-Route会话保持与负载均衡策略"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route会话保持与负载均衡策略</div></div><div class="info-2"><div class="info-item-1">Route会话保持OpenShift Router是基于Haproxy反向代理实现的，客户端请求与后端应用POD通过cookie来实现会话保持。  默认是开启会话保持的，基于cookie的会话保持。 如果设置haproxy.router.openshift.io/disable_cookies为True，将会禁用基于cookie的会话保持，而使用balance的负载策略。  此过程分为两个阶段：第一次请求阶段、再次发起请求阶段 第一次请求阶段客户端发起第一次请求时，Router会给返回的数据中添加一条指定的cookie。  客户端请求到达Router节点。 Router节点通过默认的负载均衡策略选择后端应用POD。 后端应用POD返回数据到Router节点。 Router根据后端应用POD,给返回的数据包set-cookie: cookiename[HASH值]&#x3D;cookievalue(HASH值），有效期为SESSION(浏览器客户端关闭前有效)。  再次发起请求阶段客户端再次发起请求时，会带上第一次Router设置的cookie,Router根据该cookie值选择...</div></div></div></a><a class="pagination-related" href="/posts/ff93f3dfa6fc.html" title="Openshift集群全环境备份"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境备份</div></div><div class="info-2"><div class="info-item-1"> 创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是万能的，应用自己的数据我们应该保证有单独的备份。 创建Master节点备份在系统基础架构进行更改，都需要对节点做备份。比如说，系统升级，集群升级或者任何重大更新。通过定期备份数据，当集群出现故障时，我们就能使用备份恢复集群。 Master主机上运行着非常重要的服务：API、Controllers。&#x2F;etc&#x2F;origin&#x2F;master目录下存放着许多重要的文件。  API、Controllers服务等的配置文件  安装生成的证书  云提供商提供的配置文件  密钥和其它身份认证文件   另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#...</div></div></div></a><a class="pagination-related" href="/posts/17a022f7f345.html" title="Openshit-新的存储类型LocalVolume该如何使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshit-新的存储类型LocalVolume该如何使用</div></div><div class="info-2"><div class="info-item-1">  使用本地盘的方式的有三种：emptyDir、HostPath与Local Volume Openshift针对Local Volume提供了一个local volume provisioner方便PV的自动创建，但目前它需要创建的PV对应的目录必须是挂载点。否则无法创建PV。 除了自动创建PV的过程外，部分与正常使用Local Volume一样。  手动挂载目录使用Local Volume我们先来看下通过手动的方式创建PV使用Local Volume是如何操作的。 1. 创建StorageClass123456apiVersion: storage.k8s.io/v1kind: StorageClassmetadata:  name: local-hddprovisioner: kubernetes.io/no-provisionervolumeBindingMode: WaitForFirstConsumer 2. 创建PV1234567891011121314151617181920apiVersion: v1 kind: PersistentVolume metadat...</div></div></div></a><a class="pagination-related" href="/posts/688ce06e973e.html" title="镜像命名规范与Dockerfile编写规范"><img class="cover" src="https://img.xhua.eu.org/57a8f992b61307a0a6f4c1fd5b4df56f6b28f747304f403453aff19e08d8acee.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">镜像命名规范与Dockerfile编写规范</div></div><div class="info-2"><div class="info-item-1">镜像命名规范镜像地址：镜像仓库&#x2F;项目名&#x2F;镜像名:标签名  项目名，公共项目使用名称：base，并设置为公开；其它项目使用英文小写项目名，设置为私有。 镜像名中应该包含使用的组件名称及版本信息，使用-连接。 基础镜像命名规则基础镜像命名应按照操作系统大版本：版本号-构建版本的格式命名，例如：base/rehl7:7.6-1 公共镜像全名规则公共镜像命名应按照服务名-中间件-上级中间件：服务版本号-中间件版本号-上级中间件版本号-构建版本的格式命名，中间件名称可以包含大版本号，例如：base/tomcat8-openjdk8:8.5.23-jre8u212-1 应用命名规则使用格式：系统-模块:系统版本-模块版本-构建版本，例如：sys/sys-rs:1.1-1.1-1   同一应用镜像在以上标签的规则下，还可以根据发布流程设置多个标签，以满足部署时版本依赖的管理要求。例如sys/sys-rs:v1代表v1.x的最新版本。  镜像制作规范 关键字使用大写 FROM镜像，指定明确的Tag，不要使用latest 发布向后兼容的镜像可以使用同一个Tag号，否则使用新的T...</div></div></div></a><a class="pagination-related" href="/posts/420369a1c884.html" title="Openshift-Build构建详解"><img class="cover" src="https://img.xhua.eu.org/5ef4b3415345b152cb52311dc957488ebc14f39ed408cb4a3eb244715dbc4566.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Build构建详解</div></div><div class="info-2"><div class="info-item-1">Build是什么Build是Openshift容器平台上将输入转化为输出的过程，通常情况下是将代码转化为镜像的过程。 Build的配置叫BuildConfig，它将定义构建策略及构建参数。设置的构建策略和参数确定了Build的构建过程。 Openshift构建有四种主要策略  Docker 构建 源代码构建（S2i) 自定义构建 Pipeline构建可以实现复杂的工作流  Docker构建、S2i构建、Pipeline构建是默认支持的。 不同的构建有六种源  Git Dockerfile Binary Image Input secrets External artifacts  其中Binary和Git不能同时使用。 Dockerfile和Image可以单独使用，也可以与Git或Binary一起使用。 如果使用Binary作为BuildConfig.spec.source.type，只能通过命令行工具oc start-build来构建。 BuildConfig实例 123456789101112131415161718192021222324252627282930kind: ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Openshift%E4%BB%8E3-9%E7%89%88%E6%9C%AC%E5%BC%80%E5%A7%8B%E5%AE%98%E6%96%B9%E6%94%AF%E6%8C%81Prometheus%E5%92%8CGrafana"><span class="toc-text">Openshift从3.9版本开始官方支持Prometheus和Grafana</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E5%AE%89%E8%A3%85Prometheus"><span class="toc-text">部署安装Prometheus</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E5%AE%89%E8%A3%85Grafana"><span class="toc-text">部署安装Grafana</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

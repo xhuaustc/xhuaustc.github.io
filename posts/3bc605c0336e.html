@@ -1,0 +1,278 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift运维点汇总 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift运维点汇总">
+<meta property="og:url" content="https://xhua.eu.org/posts/3bc605c0336e.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.638Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift运维点汇总",
+  "url": "https://xhua.eu.org/posts/3bc605c0336e.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.638Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/3bc605c0336e.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift运维点汇总',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift运维点汇总</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift运维点汇总</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.638Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h3><ol>
+<li><p>部署</p>
+<blockquote>
+<p>镜像同步（UAT-&gt;PRO）<br> 应用部署配置</p>
+<blockquote>
+<p> New Project&#x2F;New App<br>环境变量<br>cpu与内存资源限制<br>健康检查<br>复本数量<br>创建router<br>特殊Node节点绑定<br>pod的亲和与互斥<br>pod网速限速（特别是对外提供服务的pod）</p>
+</blockquote>
+<p>应用配置中心(gitlab)</p>
+</blockquote>
+</li>
+<li><p>更新</p>
+<blockquote>
+<p>镜像同步<br>应用新版本部署</p>
+</blockquote>
+</li>
+<li><p>监控</p>
+<blockquote>
+<p>Pod EFK<br>Registry与Router等重要服务的监控</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="物理层"><a href="#物理层" class="headerlink" title="物理层"></a>物理层</h3><ol>
+<li><p>创建资源</p>
+<blockquote>
+<p>负载均衡器<br>NAS存储<br>应用私有网络</p>
+</blockquote>
+</li>
+<li><p>监控</p>
+<blockquote>
+<p>vpc<br>负载均衡器<br>主机状态监控（CPU与内存）</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="集群层"><a href="#集群层" class="headerlink" title="集群层"></a>集群层</h3><ol>
+<li><p>备份</p>
+<blockquote>
+<p>etcd全量备份<br>应用配置备份(Ark)<br>应用备份（oc export)</p>
+</blockquote>
+</li>
+<li><p>集群版本管理</p>
+<blockquote>
+<p>集群升级（每个大版本升级）</p>
+</blockquote>
+</li>
+<li><p>日志归档与清理</p>
+<blockquote>
+<p>EFK日志清理<br>hawkular-cassandra日志清理<br>journal日志归档</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">journalctl --vacuum-time=3days或者journalctl --vacuum-size=200M或者在/etc/systemd/journald.conf中设置日志大小</span><br></pre></td></tr></table></figure>
+<p> message日志归档</p>
+</blockquote>
+</li>
+<li><p>Node节点管理</p>
+<blockquote>
+<p>ansible脚本扩容<br>Node的隔离与恢复（关闭调度维护）</p>
+</blockquote>
+</li>
+<li><p>资源管理</p>
+<blockquote>
+<p>资源配置范围管理（LimitRange）<br>资源的配额管理<br>PV（Persistent Volumes）的创建<br>项目间的网络隔离</p>
+</blockquote>
+</li>
+<li><p>监控告警</p>
+<blockquote>
+<p>Heapster + Influxdb + Grafana 集群监控<br>统一的日志监控 EFK<br>Pod监控Restart数<br>Node节点资源使用情况（Limit + Request + Real）</p>
+</blockquote>
+</li>
+<li><p>权限控制</p>
+<blockquote>
+<p>管理员账号<br>运维人员账号</p>
+</blockquote>
+</li>
+<li><p>Harbor私有镜像仓库的运维</p>
+<blockquote>
+<p>镜像备份<br>高可用<br>可用性监控与告警</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="网络区域划分"><a href="#网络区域划分" class="headerlink" title="网络区域划分"></a>网络区域划分</h3><blockquote>
+<p>核心区<br>DMZ区<br>互联网区</p>
+</blockquote>
+<h3 id="中间件层"><a href="#中间件层" class="headerlink" title="中间件层"></a>中间件层</h3><ol>
+<li>Redis</li>
+<li>RDB</li>
+<li>Rabbitmq</li>
+<li>FastDFS</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/3bc605c0336e.html">https://xhua.eu.org/posts/3bc605c0336e.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/fa53403b8d6b.html" title="OpenShift通过EgressIP为Project设置对外的出口IP"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift通过EgressIP为Project设置对外的出口IP</div></div><div class="info-2"><div class="info-item-1">集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]&#125;&#x27; 支持指定特定的IP段 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressCIDRs&quot;: [&quot;192.168.1.0/24&quot;]&#125;&#x27;  为项目指定静态出口IP  1$ oc patch netnamespace &lt;project-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.100&quot;]&#125;&#x27;  OpenShift容器平...</div></div></div></a><a class="pagination-related" href="/posts/e607688e15ca.html" title="OpenShift访问外部需要认证的镜像仓库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift访问外部需要认证的镜像仓库</div></div><div class="info-2"><div class="info-item-1">docker login登录成功后，会在~&#x2F;.docker&#x2F;中创建config.json文件，内容格式如下： 123456&#123;          &quot;auths&quot;: &#123;                  &quot;https://registry.example.com&quot;: &#123;                          &quot;auth&quot;: &quot;c2xmams6c2RmbGtq&quot;                  &#125;&#125;       两种方式：  认证信息必须存放在OpenShift的NameSpace中的Secret下。  12oc -n &lt;test-namespace&gt; create secret docker-registry &lt;pull-secret&gt; --docker-server=registry.example.com --docker-username=&lt;username&gt; --docker-e...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3c19c6380d6c.html" title="一条命令解决Kubernetes更改默认的namespace"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">一条命令解决Kubernetes更改默认的namespace</div></div><div class="info-2"><div class="info-item-1"> K8S默认是在default的namespace下，但是很多时候我们是在一个新的namespace下部署应用，每个操作都需要指定namespace，非常不方便。那么有没有办法切换namespce呢？如果可以切换的话，那有没有更简单的办法。 最简单的方式切换namespace，赠送一个方便的脚本可以将它alias到一个新的命令”kubectl ns” 12$  alias kubectl=&#x27;_kubectl_custom()&#123; if [[ &quot;$1&quot; == &quot;project&quot; &amp;&amp; &quot;$2&quot; != &quot;&quot; ]]; then ccontext=`kubectl config current-context`; kubectl config set-context $ccontext --namespace=$2; elif [[ &quot;$1&quot; == &quot;projects&quot; &amp;&amp; &quot;$2&quot; == &quo...</div></div></div></a><a class="pagination-related" href="/posts/3e4333ef6f0f.html" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a><a class="pagination-related" href="/posts/dae9f91bc2e9.html" title="Openshift集群升级3-6至3-7"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群升级3-6至3-7</div></div><div class="info-2"><div class="info-item-1">更新方法与策略：自动升级方法  更新openshift-ansible的脚本代码   12git pull git checkout -b release-3.7 安装需要的包  1ansible all -m yum -a &#x27;name=pyOpenSSL state=present&#x27;  关闭Service Catalog和Template Service Broker。3.7 以上版本默认会启用 Service Catalog 和 Template Service Broker  123456# /etc/ansible/hosts...openshift_enable_service_catalog=falsetemplate_service_broker_install=falseansible_service_broker_install=false...  关闭etcd目录的selinux检查关闭任务Check selinux label of ‘‘与Make sure the ‘‘ has the proper label  12345678910...</div></div></div></a><a class="pagination-related" href="/posts/e607688e15ca.html" title="OpenShift访问外部需要认证的镜像仓库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift访问外部需要认证的镜像仓库</div></div><div class="info-2"><div class="info-item-1">docker login登录成功后，会在~&#x2F;.docker&#x2F;中创建config.json文件，内容格式如下： 123456&#123;          &quot;auths&quot;: &#123;                  &quot;https://registry.example.com&quot;: &#123;                          &quot;auth&quot;: &quot;c2xmams6c2RmbGtq&quot;                  &#125;&#125;       两种方式：  认证信息必须存放在OpenShift的NameSpace中的Secret下。  12oc -n &lt;test-namespace&gt; create secret docker-registry &lt;pull-secret&gt; --docker-server=registry.example.com --docker-username=&lt;username&gt; --docker-e...</div></div></div></a><a class="pagination-related" href="/posts/a33a393500a3.html" title="OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警</div></div><div class="info-2"><div class="info-item-1"> 背景大家知道OpenShfit官方通过Prometheus Operator可以快速构建高可用的监控告警平台，它不仅能够收集集群本身的监控指标，还可以通过ServiceMonitor扩展以监控应用自身的指标，实现单集群内部的统一监控。但是生产实践中，我们并不会只采用一个OpenShift部署应用，还会部署非容器应用，在非容器环境下也可能会部署Prometheus来监控相关服务（特别是现在Prometheus已经成为了监控的一个标配），甚至有可能会在不同的网络区部署多个集群，由于不同网络的隔离特性显然一组Prometheus是无法满足所有平台及应用的监控的。这就使得生产中会有很多套Prometheus集群需要管理与维护，查看监控指标也很分散，也就让我们想到必须采用一种办法能够将各处的指标统一收集，实现多集群多Prometheus服务的统一监控。目前实现这种要求的方法主要有两个，一个是通过Prometheus联邦 Federate，另一个是通过Thanos。今天主要介绍集群外部如何使用Prometheus联邦机制收集OpenShift内部Prometheus服务的监控指标。 操作实...</div></div></div></a><a class="pagination-related" href="/posts/eb02cfa8b57d.html" title="Openshift实现Etcd一键备份与一键恢复脚本"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift实现Etcd一键备份与一键恢复脚本</div></div><div class="info-2"><div class="info-item-1"> 一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!/bin/bashexport ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)oc login -u system:adminexport ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)oc project kube-systemoc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key -...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%94%E7%94%A8"><span class="toc-text">应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%A9%E7%90%86%E5%B1%82"><span class="toc-text">物理层</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%B1%82"><span class="toc-text">集群层</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%8C%BA%E5%9F%9F%E5%88%92%E5%88%86"><span class="toc-text">网络区域划分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%B1%82"><span class="toc-text">中间件层</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

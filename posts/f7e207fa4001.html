@@ -1,0 +1,225 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从e">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程">
+<meta property="og:url" content="https://xhua.eu.org/posts/f7e207fa4001.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="问题etcd集群中某个etcd出现故障，使用docker ps -a | grep etcd | grep -v POD查看etcd节点，发现它异常退出。 123$ docker logs -f &lt;etcd-container-id&gt;....etcdserver : open wal error: wal: file not found  恢复步骤大方向步骤：一、将问题etcd节点从e">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.636Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程",
+  "url": "https://xhua.eu.org/posts/f7e207fa4001.html",
+  "image": "https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.636Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/f7e207fa4001.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift中etcd集群的某个etcd服务文件损坏，导致节点故障，恢复过程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.636Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>etcd集群中某个etcd出现故障，使用<code>docker ps -a | grep etcd | grep -v POD</code>查看etcd节点，发现它异常退出。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ docker logs -f &lt;etcd-container-id&gt;</span><br><span class="line">....</span><br><span class="line">etcdserver : open wal error: wal: file not found </span><br></pre></td></tr></table></figure>
+<h2 id="恢复步骤"><a href="#恢复步骤" class="headerlink" title="恢复步骤"></a>恢复步骤</h2><p>大方向步骤：<br><strong>一、将问题etcd节点从etcd集群剥离；</strong><br><strong>二、将恢复的新的etcd节点添加到etcd集群。</strong><br>具体步骤如下：</p>
+<ol>
+<li>查看etcd状态</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ etcdctl2 cluster-health</span><br><span class="line">$ ## 获取问题节点的member ID</span><br><span class="line">$ etcdctl2 member remove  &lt;member ID&gt;</span><br><span class="line">$ ## 将问题etcd服务从etcd集群中删除</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>停止问题节点上的etcd服务</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /etc/origin/node/pods-stopped</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/pods/* /etc/origin/node/pods-stopped/</span></span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>删除问题节点上的etcd数据</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">rm</span> -rf /var/lib/etcd/*</span></span><br></pre></td></tr></table></figure>
+<p>4.更新ansible中的inventory hosts内容，设置new_etcd配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">[OSEv3:children]</span><br><span class="line">masters</span><br><span class="line">etcd</span><br><span class="line">nodes</span><br><span class="line">new_etcd</span><br><span class="line"></span><br><span class="line">[OSEv3:vars]</span><br><span class="line">openshift_is_atomic=false</span><br><span class="line"></span><br><span class="line">[masters]</span><br><span class="line">master-1</span><br><span class="line">master-2</span><br><span class="line">master-3</span><br><span class="line"></span><br><span class="line">[nodes]</span><br><span class="line">master-1</span><br><span class="line">master-2</span><br><span class="line">master-3</span><br><span class="line">...</span><br><span class="line">[etcd]</span><br><span class="line">master-1</span><br><span class="line">#master-2</span><br><span class="line">master-3</span><br><span class="line"></span><br><span class="line">[new_etcd]</span><br><span class="line">master-2</span><br></pre></td></tr></table></figure>
+<p><code>需要注意：</code>将问题节点从masters&#x2F;nodes中注释掉，否则执行etcd扩容会报如下错误。<br><code>TASK [Run variable sanity checks] </code><br><code>fatal: [master-1]: FAILED! =&gt; {&quot;msg&quot;: &quot;last_checked_host: master-2, last_checked_var: ansible_python;&#39;NoneType&#39; object has no attribute &#39;__getitem__&#39;&quot;}</code></p>
+<ol start="5">
+<li>更新节点的node group配置</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ansible-playbook playbooks/openshift-master/openshift_node_group.yml</span></span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>执行etcd扩容脚本</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ansible-playbook playbooks/openshift-etcd/scaleup.yml</span></span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>执行完成扩容后，进行验证。<br><code>注意</code>：如果在<code>hosts</code>中将masters对应的节点注释掉，在etcd安装时会使用本地服务的方式安装运行，这个适合独立的节点部署etcd。</li>
+</ol>
+<h2 id="etcd命令"><a href="#etcd命令" class="headerlink" title="etcd命令"></a>etcd命令</h2><p>etcd压测脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl --write-out=table check perf</span></span><br></pre></td></tr></table></figure>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/install_config/adding_hosts_to_existing_cluster.html#adding-etcd-hosts-to-existing-cluster">Adding etcd Hosts to existing cluster
+</a>&#96;</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/f7e207fa4001.html">https://xhua.eu.org/posts/f7e207fa4001.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/9b1f97f2e546c1bdedb2277fcf178cb139833ebcc6c0d7c6d862bb8d1620cc38.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/9730fbcd8bb6.html" title="OpenShift中如何将PV与PVC绑定"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift中如何将PV与PVC绑定</div></div><div class="info-2"><div class="info-item-1">PV&#x2F;PVC是什么？PV（Persistent Volume）：描述的是持久化的Volume实体概念，生命周期与Pod创建和销毁事件无关。要么运行事先准备好，要么通过动态创建。PVC（PersistentVolumeClaim）：PVC是对PV的请求，申明Pod所希望使用的持久化存储的属性，例如容量，读写权限。 Kubernete Volumes能够帮忙应用持久化数据，PV&#x2F;PVC是Kubernetes Volumes存储类型的一种，其它类型还有：本地存储：emptyDir &#x2F; hostPath网络存储：in-tree: aws ElasticBlockStore &#x2F; gcePersistentDisk &#x2F; nfsout-of-tree：csi等网络存储插件Project Volume：secret &#x2F; configmap &#x2F; downwardAPI &#x2F; serviceAccountToken PV&#x2F;PVC的意义 使用不同的控制器来管理计算与存储资源，解耦POD与Volume的生命周期，实现...</div></div></div></a><a class="pagination-related" href="/posts/e9021798429a.html" title="OpenShift上使用NFS作为共享存储的线上问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift上使用NFS作为共享存储的线上问题</div></div><div class="info-2"><div class="info-item-1"> NFS exports文件配置格式&lt;输出目录&gt; [客户端1 选项（访问权限,用户映射,其他）] [客户端2 选项（访问权限,用户映射,其他）] a. 输出目录：输出目录是指NFS系统中需要共享给客户机使用的目录； b. 客户端：客户端是指网络中可以访问这个NFS输出目录的计算机客户端常用的指定方式 指定ip地址的主机：192.168.0.200指定子网中的所有主机：192.168.0.0&#x2F;24 192.168.0.0&#x2F;255.255.255.0指定域名的主机：david.bsmart.cn指定域中的所有主机：.bsmart.cn所有主机： c. 选项：选项用来设置输出目录的访问权限、用户映射等。 NFS主要有3类选项：  访问权限选项  设置输出目录只读：ro设置输出目录读写：rw  用户映射选项all_squash：将远程访问的所有普通用户及所属组都映射为匿名用户或用户组（nfsnobody）；no_all_squash：与all_squash取反（默认设置）；root_squash：将root用户及所属组都映射为匿名用户或用户组（默认设置）；...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/17fd09f230fb.html" title="Openshift网络插件动态切换"><img class="cover" src="https://img.xhua.eu.org/8fa378a33eeba62f347cc799820c761a8ae6a3ecb2ce55c0fcf7d8bc709a09f3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift网络插件动态切换</div></div><div class="info-2"><div class="info-item-1">Openshift 3.11版本Openshift SDN网络插件ovs-subnet 与 ovs-multitenant切换  更改节点上的networkPluginName的配置    master节点：/etc/origin/master/master-config.yaml node节点：/etc/origin/node/node-config.yaml 将networkPluginName中的redhat/openshift-ovs-subnet换成redhat/openshift-ovs-multitenant,或者反过来。  12$ ansible all -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshift-ovs-multitenant/g&quot; /etc/origin/node/node-config.yaml&#x27;$ ansible masters  -m shell -a &#x27;sed -i &quot;s/openshift-ovs-subnet/openshif...</div></div></div></a><a class="pagination-related" href="/posts/551f7c289dcf.html" title="Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-HPA（Horizontal-Pod-Autoscaler）自动伸缩过程及算法</div></div><div class="info-2"><div class="info-item-1">1、HPA介绍HPA（Horizontal Pod Autoscaler）是Openshift中的一个非常重要的对象，它定义了系统如何根据收集对应的Pod的状态（CPU&#x2F;Memory）对DeploymentConfig、ReplicationController对象进行扩容与缩容。  HPA依赖于收集到的Pod资源的使用状态，所以要使HPA生效，Openshift必须安装好cluster metrics应用。 被监控的pod必须设置好了spec.containers.resources.requests属性，HPA才能正常工作。 仅支持CPU&#x2F;Memory使用率的判断，如果自定义监控项，只能使用经验值，不能使用使用率。 支持对象：DeploymentConfig、ReplicationController、Deployment、Replica Set。  2. HPA伸缩过程及算法 HPA进行伸缩过程   收集该HPA控制下所有Pod最近的cpu使用情况（CPU utilization） 对比在扩容条件里记录的cpu限额（CPUUtilization） 调整实...</div></div></div></a><a class="pagination-related" href="/posts/6e5f72fcd352.html" title="Service-iptables实现原理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Service-iptables实现原理</div></div><div class="info-2"><div class="info-item-1"> </div></div></div></a><a class="pagination-related" href="/posts/fbd2703af665.html" title="Docker中使用命令COPY-ADD导入文件对权限的影响"><img class="cover" src="https://img.xhua.eu.org/dafb05d9920eff85c9bc37cc048b382a74876c704e19731457294aca239cacf1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker中使用命令COPY-ADD导入文件对权限的影响</div></div><div class="info-2"><div class="info-item-1">1、文件保留权限原文件的权限所属用户与组为镜像中的用户可以使用--chown=jenkins:jenkins来指定用户所属 1COPY --chown=1001:1001 sample.txt sample.txt  2、压缩包（ADD）保留权限原文件的权限保留压缩包内文件的用户与组 </div></div></div></a><a class="pagination-related" href="/posts/471d3cbe64a8.html" title="OpenShift管理节点Master与计算节点Node的配置说明"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift管理节点Master与计算节点Node的配置说明</div></div><div class="info-2"><div class="info-item-1">配置文件Master节点的配置文件地址：&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yamlNode节点的配置文件在：openshift-node项目下的configmap中。OpenShift集群的配置信息都在这两个文件中，包括有覆盖默认插件，连接到etcd，自动创建服务帐户，构建映像名称，自定义项目请求，配置卷插件等等。 参考文章Master and Node Configuration </div></div></div></a><a class="pagination-related" href="/posts/dbbeaaab9bb5.html" title="OpenShift用户与组的管理功能如何在Kubernetes上实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift用户与组的管理功能如何在Kubernetes上实现</div></div><div class="info-2"><div class="info-item-1"> OpenShift中有用户及组的概念，并且提供了User与Group资源类型，可以非常方便地为OpenShift集群创建用户，创建组，以组给用户进行组管理，并授权。这也大大方便了集群账号的管理与权限的控制。 12345[openshift@master01 ~] oc create user dev-user # 创建用户dev-user[openshift@master01 ~] oc adm groups new my-group # 创建组my-group[openshift@master01 ~] oc adm groups new my-group dev-user # 创建组my-group，并添加dev-user到该组[openshift@master01 ~] oc adm groups add-users my-group dev-user # 为组my-group添加用户dev-user[openshift@master01 ~] oc adm groups remove-users my-group dev-user # 将用户dev-user从my-gr...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D%E6%AD%A5%E9%AA%A4"><span class="toc-text">恢复步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#etcd%E5%91%BD%E4%BB%A4"><span class="toc-text">etcd命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

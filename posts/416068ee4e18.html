@@ -1,0 +1,307 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="《持续交付发布可靠软件的系统方法》读书笔记 什么是部署流水线部署流水线是指软件从版本控制到用户手中这一过程的自动化表现形式。价值流图    产品可行性评估  产品探索  产品计划与评估  开发  最后测试与审核  发布    3天 1周 7天 10天 10天 10天 3天 7周 1周 2天 2小时    开发到发布的流水线：会有很多次构建通过这一流程走向最后的发布 流水线各个阶段：交付团队-&amp;gt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析">
+<meta property="og:url" content="https://xhua.eu.org/posts/416068ee4e18.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="《持续交付发布可靠软件的系统方法》读书笔记 什么是部署流水线部署流水线是指软件从版本控制到用户手中这一过程的自动化表现形式。价值流图    产品可行性评估  产品探索  产品计划与评估  开发  最后测试与审核  发布    3天 1周 7天 10天 10天 10天 3天 7周 1周 2天 2小时    开发到发布的流水线：会有很多次构建通过这一流程走向最后的发布 流水线各个阶段：交付团队-&amp;gt">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.632Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析",
+  "url": "https://xhua.eu.org/posts/416068ee4e18.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.632Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/416068ee4e18.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">持续交付发布可靠软件的系统方法（部署流水线）第五章：部署流水线解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.632Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><a href="/DevOps/%E3%80%8A%E6%8C%81%E7%BB%AD%E4%BA%A4%E4%BB%98%E5%8F%91%E5%B8%83%E5%8F%AF%E9%9D%A0%E8%BD%AF%E4%BB%B6%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%96%B9%E6%B3%95%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">《持续交付发布可靠软件的系统方法》读书笔记</a></p>
+<h2 id="什么是部署流水线"><a href="#什么是部署流水线" class="headerlink" title="什么是部署流水线"></a>什么是部署流水线</h2><p>部署流水线是指软件从版本控制到用户手中这一过程的自动化表现形式。<br>价值流图</p>
+<table>
+<thead>
+<tr>
+<th>产品可行性评估</th>
+<th></th>
+<th>产品探索</th>
+<th></th>
+<th>产品计划与评估</th>
+<th></th>
+<th>开发</th>
+<th></th>
+<th>最后测试与审核</th>
+<th></th>
+<th>发布</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3天</td>
+<td>1周</td>
+<td>7天</td>
+<td>10天</td>
+<td>10天</td>
+<td>10天</td>
+<td>3天</td>
+<td>7周</td>
+<td>1周</td>
+<td>2天</td>
+<td>2小时</td>
+</tr>
+</tbody></table>
+<ul>
+<li>开发到发布的流水线：会有很多次构建通过这一流程走向最后的发布</li>
+<li>流水线各个阶段：<br>交付团队-&gt;版本控制库-&gt;构建和单元测试-&gt;自动化验收测试-&gt;用户验收测试-&gt;发布</li>
+<li>一般而言，只要某个构建使这个流程任一阶段失败，都会停止，不会进入下一个阶段。<ul>
+<li>提交阶段【自动化测试（主要是单元测试），代码分析】</li>
+</ul>
+</li>
+<li>自动化验收测试阶段【功能与非功能测试】</li>
+<li>手工测试阶段【对自动化测试的补充，探索性测试，集成测试等】</li>
+<li>发布阶段【部署到生产环境或试运行环境】</li>
+</ul>
+<h2 id="最基本的部署流水线"><a href="#最基本的部署流水线" class="headerlink" title="最基本的部署流水线"></a>最基本的部署流水线</h2><p><img src="https://img.xhua.eu.org/2e569d364b917a6e3bae9dec84669000ee66a661f3c936c4856d030eda792800.jpg" alt="基本的部署流水线">  </p>
+<h2 id="部署流水线的相关实践"><a href="#部署流水线的相关实践" class="headerlink" title="部署流水线的相关实践"></a>部署流水线的相关实践</h2><ul>
+<li>只生成一次二进制包。对于不需要编译的语言，二制包指的是所有源文件的集合。这些二进制包应保存在文件系统的某个位置，让流水线后续阶段能够轻松访问到，但不要放在版本控制库中。二进制包应与环境无关。</li>
+<li>对不同环境采用同一部署方式<ul>
+<li>使用属性文件保存配置信息。比如分别为每个环境保存一个属性文件，并将其放在版本控制库中，部署时，通过本地服务器的主机名来查找到正确的配置，如果环境中有多台服务器，可以将环境变量提供给部署脚本</li>
+<li>将配置放在一个目录服务中（LDAP或ActiveDiretory）或数据库中</li>
+</ul>
+</li>
+<li>对部署进行冒烟测试<br>当应用程序部署时，应用一个自动化脚本做下冒烟测试。这个测试的流程是：<ul>
+<li>启动用户程序</li>
+<li>检查主页面</li>
+<li>检查应用程序所依赖的服务，比如数据库，消息队列等</li>
+</ul>
+</li>
+<li>向生产环境的副本中部署<br> 如果预算充足，可以建立与生产环境一样的环境</li>
+<li>每次变更都要立即在流水线中传递<br>对于一些特殊情况，验收测试是比较耗时的，版本在验收测试时可能会产生冲突，这时可以在单元测试结束时，将最近还没构建的所有变更全部拿来进行构建</li>
+<li>只要有环节失败，就停止整个流水线</li>
+</ul>
+<h2 id="提交阶段"><a href="#提交阶段" class="headerlink" title="提交阶段"></a>提交阶段</h2><ul>
+<li>编译代码</li>
+<li>运行一套提交测试【单元测试，容易失败的特定测试】</li>
+<li>为后续阶段创建二进制包</li>
+<li>执行代码分析检查代码的健康状况</li>
+<li>为后续阶段准备工作，比如准备后续测试所用的数据库</li>
+</ul>
+<h2 id="自动化验收测试之门"><a href="#自动化验收测试之门" class="headerlink" title="自动化验收测试之门"></a>自动化验收测试之门</h2><ul>
+<li>每次提交后，应立即运行提交测试，提交阶段完成后，立即做验收测试，简单的验收测试为：运行代码，查看主页</li>
+<li>尽管验收测试非常有价值，但它们的创建与维护成本也非常高，所以牢记不要把所有验收测试条件盲目的自动化</li>
+</ul>
+<h2 id="后续的测试阶段"><a href="#后续的测试阶段" class="headerlink" title="后续的测试阶段"></a>后续的测试阶段</h2><p>部署流水线应支持测试人员根据自己的需求将任意一个版本部署到自己的测试环境</p>
+<ul>
+<li>手工测试</li>
+<li>非功能测试</li>
+</ul>
+<h2 id="发布准备"><a href="#发布准备" class="headerlink" title="发布准备"></a>发布准备</h2><p>把发布环节视为部署流水线的一个自然结果</p>
+<ul>
+<li>让参与项目交付过程的人共同创建维护一个发布计划</li>
+<li>通过尽可能多的自动化过程最小化人的错误发生的可能性</li>
+<li>在类生产环境中经常做发布流程演练</li>
+<li>如果事情并没有按计划执行，要有撤销本次发布的能力</li>
+<li>作为升级和撤销过程的一部分，制定配置迁移和数据迁移策略</li>
+</ul>
+<p>自动部署与发布</p>
+<ul>
+<li>在具有代表性环境上执行自动化验收测试套件</li>
+<li>对生产环境的任何修改都应该通过自动化过程完成【程序的部署，配置，软件栈，网络拓扑，状态的所有修改）</li>
+<li>管理生产环境的流程，也应用于测试环境</li>
+<li>使用虚拟化技术，最佳配置管理降低成本</li>
+</ul>
+<p>变更的撤销策略</p>
+<ul>
+<li>让旧版本仍旧处于可用状态，保持一段时间</li>
+<li>从头部署旧版本</li>
+</ul>
+<h2 id="实现一个部署流水线"><a href="#实现一个部署流水线" class="headerlink" title="实现一个部署流水线"></a>实现一个部署流水线</h2><ul>
+<li>对价值流建模，创建一个可工作的简单框架</li>
+<li>将构建和部署流程自动化</li>
+<li>将单元测试和代码分析自动化</li>
+<li>将验收测试自动化</li>
+<li>将发布自动化<br>注意以下几点：</li>
+<li>增量实现整个流水线，如果有手工操作部分，记录开始结束时间，想办法把它自动化</li>
+<li>部署流水线是构建、部署、测试和发布整个流程中有效，也是最重要的统计数据来源</li>
+<li>不断改进部署流水线</li>
+</ul>
+<h2 id="度量"><a href="#度量" class="headerlink" title="度量"></a>度量</h2><p>最重要的全局度量指标是流水线周期时间。用约束理论来对流水线进行优化：</p>
+<ul>
+<li>识别系统中的约束</li>
+<li>确保最大限度地提高流程中这部分的产出</li>
+<li>根据这一约束调整其他环节的产出</li>
+<li>为约束环节扩容，增加资源</li>
+<li>理顺约束环节，找到下一个约束点</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/416068ee4e18.html">https://xhua.eu.org/posts/416068ee4e18.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/8f583cb100a6.html" title="持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第八章：自动化验收测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 验收测试通常是在每一个通过提交测试的软件版本上执行的。  验收测试的目的：对于一个单独的验收测试，它的目的是验证一个用户故事或需求的验收条件是否被满足。如功能验收条件和非功能验收条件。 如果每次提交测试后都在该版本上运行自动化验收测试，会有如下效果： 反馈环大大缩短，能够更快地定位问题 测试、开发人员和客户需要紧密合作才能创建一个良好的自动化测试套件，这会促进他们之间的良好合作 有助于让每个人更关注业务的价值   验收测试与单元测试的区别：验收测试是针对业务的，单元测试是面向开发的。  创建验收测试  分析人员与测试人员和客户紧密合作，定义验收条件    分析人员向开发人员讲解需求，以及它的业务上下文，并检查一遍验收条件    测试人员与开发人员讨论，并就“哪些自动化验收测试来证明验收条件被满足”达成一致    开发人员认为工作完成是指所有单元测试和组件测试通过，验收测试全部实现，并证明系统满足需求。此时可以向分析人员、测试人员和客户进行演示    应用程序驱动层应用程序驱动层是一个知道如何与应用程序打交道的层次。它所用的API是以某种...</div></div></div></a><a class="pagination-related" href="/posts/f510512cbabb.html" title="持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第九章：非功能需求的测试</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 性能、吞吐量、容量概念性能：对处理单一事务所花时间的一种度量，既可以单独衡量，也可以在一定的负载下衡量。吞吐量：系统在一定时间内处理事务的数量，通常它受限于系统中的某个瓶颈容量：一定的负载下，当每个单独请求的响应时间维持在可接受范围内时，系统所能承担的最大吞吐量。非功能性：有效性、容量、安全性、可维护性等。 非功能需求管理将非功能需求与功能需求一样对待。  创建一些具体任务来管理非功能需求 有必要的话，向功能需求中加入非功能需求的验收条件  如何为容量编程 为何要做容量测试高德纳著名格言：在97%的时间里，我们都应该忘记那种小的效率提升：过早优化是所有罪恶之根。然而，我们也不能让另外非常关键的3%的机会与我们擦肩而过。一个优秀程序员不会因为这个原则而对其置之不理，他们非常聪明，只会在识别出那段关键代码后，才会非常细心地去查看。在找到解决方案之前，必须先找出问题的根源。容量测试会告诉我们是否存在问题，以便我们可以修复它。不要枉自猜测，而要先进行度量。 解决容量问题现代软件系统中，最昂贵的是网络通信或磁盘存储，在性能和应用程序的稳定性方面，...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/4ddf67db285d.html" title="持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 引言发布到生产环境和部署到测试环境的差异应该被封装在一组配置文件中，遵循一样的部署过程。启动自动部署系统，将要部署的软件版本与环境名称告诉它，点击开始，后缀部署与发布使用相同的流程。我们需要有一个列表，其中包含能够部署到每个环境的所有构建，并且只要通过点击就可以选择一个软件版本向某个环境进行自动部署。同时这种方式是对环境修改的唯一途径（包括对操作系统和第三方软件配置的修改）。 创建发布策略（文档） 每个环境的部署由发布由谁负责 创建一个资产和配置管理策略 部署时所用的技术的描述。运维团队与开发团队应对其达成共识 实现部署流水线的计划 枚举所有的环境，包括用于验收测试、容量测试、集成测试、用户验收测试的环境，以及每个构建在这些环境中的移动过程 描述在测试和生产环境中部署时应该遵循的流程，比如一个变更申请，及申请授权等 对应用程序的监控需求，包括用于通知运维团队关于应用程序相关状态的API和服务 讨论部署时和运行时的配置方法如何管理，以及它们与自动化部署流程是如何关联在一起的 描述应用程序如何与所有外部系统集成 如何记录日志详情，以便运维人...</div></div></div></a><a class="pagination-related" href="/posts/bddce2843d8e.html" title="Windows-WSL2开发环境，一点不逊色于Mac"><img class="cover" src="https://img.xhua.eu.org/8f7e11d04583892dc1b4415f2fd68e5cceb3bfc793426b53acefb2c1b90020c5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-20</div><div class="info-item-2">Windows-WSL2开发环境，一点不逊色于Mac</div></div><div class="info-2"><div class="info-item-1">一直使用Mac来做开发，但没想到现在Windows也这么好用。通过WSL，拥有了Windows酣畅的操作特性，又有了Linux的兼容性。作为开发环境一点不逊色于Mac，甚至更易使用。下面就操练起来吧。 WSL21. 安装控制面板 -&gt; 程序和功能 -&gt; 启用和关闭windows 功能， 勾选如下功能：    - 适用于Linux的Windows子系统    - 虚拟机平台 确定。   2. 升级WSLhttps://docs.microsoft.com/en-us/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package下载 Linux 内核更新包 WSL2 Linux kernel update package for x64 machines，并安装。 设置wsl默认版本为 `2`， PowerShell 1wsl --set-default-version 2   升级已安装的分发，可使用wsl --set-version, PowerShell 1wsl --set...</div></div></div></a><a class="pagination-related" href="/posts/f62135323f93.html" title="通过跳板机代理将本地文件传输到远端服务器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">通过跳板机代理将本地文件传输到远端服务器</div></div><div class="info-2"><div class="info-item-1"> 通过-J参数指定跳板机  123$ ssh -J user@&lt;bastion:port&gt; &lt;user@remote:port&gt;// scp$ scp -J user@&lt;bastion:port&gt; sourcefile &lt;user@remote:port&gt;:  在.ssh&#x2F;config中配置  123456789101112### The Bastion HostHost jump  HostName 10.2.3.2  Port 3022  User jump### The Remote HostHost remote  HostName 172.32.2.7  Port 22  User root  ProxyJump jump 使用普通参数就可以实现跳转 12$ ssh remote$ scp &lt;sourcefile&gt; remote:/data/ </div></div></div></a><a class="pagination-related" href="/posts/d1a90c6e8453.html" title="CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式"><img class="cover" src="https://img.xhua.eu.org/02c300ae74aa07d1b945e64f2afe3899b96a9638cc87741acd13bcd5866daee6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式</div></div><div class="info-2"><div class="info-item-1"> 命令行模式 环境准备   克隆代码  1git clone  启动私有docker hub  12 docker run -d -p 5000:5000 -v /data/registry:/var/lib/registry --name registry --restart=always registry  制作建置环境  1docker build -t localhost:5000/maven dockers/maven  dockers&#x2F;maven&#x2F;Dockerfile 1234FROM ## 安装openjdk## 安装MavenCMD [&quot;mvn&quot;]  集成、测试、验证  进行自动化测试   1docker-compose run --rm test docker-compose.yaml 123456789101112131415161718192021222324data：  image: alpine  volumes:    - ~/.m2:/root/.m2  command: &quot;/bin/bash&quo...</div></div></div></a><a class="pagination-related" href="/posts/0a0be0426bc4.html" title="将字符串进行压缩后保存该如何做？"><img class="cover" src="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">将字符串进行压缩后保存该如何做？</div></div><div class="info-2"><div class="info-item-1">如何将zip文件挂载到容器Pod中呢？Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。具体的操作如下： 12$ echo &quot;abc&quot; | gzip | base64H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA 解密操作： 1$ echo &quot;H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA&quot; | base64 -d | gunzip 大家可以尝试下。另外需要注意的是，将该数据挂载到POD的文件中，文件是压缩后的gz文件。 </div></div></div></a><a class="pagination-related" href="/posts/99938be39f4b.html" title="gogs创建用户"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">gogs创建用户</div></div><div class="info-2"><div class="info-item-1">&#x2F;opt&#x2F;gogs&#x2F;gogs admin create-user –name&#x3D;root –password&#x3D;123456 –admin&#x3D;true --email&#x3D;abc@123.com –config&#x3D;&#x2F;etc&#x2F;gogs&#x2F;conf&#x2F;app.ini 123oc project cicd &amp;&amp;gogspodname=$(oc get pod | grep gogs | grep -v postgresql| awk &#x27;&#123;print $1&#125;&#x27;)oc rsh $gogspodname /opt/gogs/gogs admin create-user --name=root --password=123456 --admin=true --email=abc@123.com --config=/etc/gogs/conf/app.ini </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%83%A8%E7%BD%B2%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">什么是部署流水线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%9F%BA%E6%9C%AC%E7%9A%84%E9%83%A8%E7%BD%B2%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">最基本的部署流水线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%9A%84%E7%9B%B8%E5%85%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">部署流水线的相关实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%90%E4%BA%A4%E9%98%B6%E6%AE%B5"><span class="toc-text">提交阶段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E9%AA%8C%E6%94%B6%E6%B5%8B%E8%AF%95%E4%B9%8B%E9%97%A8"><span class="toc-text">自动化验收测试之门</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD%E7%9A%84%E6%B5%8B%E8%AF%95%E9%98%B6%E6%AE%B5"><span class="toc-text">后续的测试阶段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E5%87%86%E5%A4%87"><span class="toc-text">发布准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E9%83%A8%E7%BD%B2%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">实现一个部署流水线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%A6%E9%87%8F"><span class="toc-text">度量</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

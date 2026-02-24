@@ -1,0 +1,321 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Cursor创建一个python项目的所有交互 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文内容主要参考自《用cursor玩转AI辅助编程》，将详细记录如何借助 Cursor AI 高效开发一个基于 FastAPI 和 Vue.js 的销售数据分析系统。适合希望了解 AI 辅助编程实践的 Python 全栈开发者。文章涵盖了从项目初始化、依赖配置、数据库设计、后端与前端开发、数据处理、API 实现、测试到前后端联调的完整流程。通过真实的对话与操作示例，帮助读者掌握在实际开发场景下如何">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cursor创建一个python项目的所有交互">
+<meta property="og:url" content="https://xhua.eu.org/posts/b9e5a0c5a4ad.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="本文内容主要参考自《用cursor玩转AI辅助编程》，将详细记录如何借助 Cursor AI 高效开发一个基于 FastAPI 和 Vue.js 的销售数据分析系统。适合希望了解 AI 辅助编程实践的 Python 全栈开发者。文章涵盖了从项目初始化、依赖配置、数据库设计、后端与前端开发、数据处理、API 实现、测试到前后端联调的完整流程。通过真实的对话与操作示例，帮助读者掌握在实际开发场景下如何">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg">
+<meta property="article:published_time" content="2025-07-27T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.626Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="FastAPI">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Vue.js">
+<meta property="article:tag" content="全栈开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cursor创建一个python项目的所有交互",
+  "url": "https://xhua.eu.org/posts/b9e5a0c5a4ad.html",
+  "image": "https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg",
+  "datePublished": "2025-07-27T02:00:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.626Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/b9e5a0c5a4ad.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Cursor创建一个python项目的所有交互',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Cursor创建一个python项目的所有交互</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Cursor创建一个python项目的所有交互</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-07-27T02:00:00.000Z" title="发表于 2025-07-27 10:00:00">2025-07-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.626Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>本文内容主要参考自《用cursor玩转AI辅助编程》，将详细记录如何借助 Cursor AI 高效开发一个基于 FastAPI 和 Vue.js 的销售数据分析系统。适合希望了解 AI 辅助编程实践的 Python 全栈开发者。文章涵盖了从项目初始化、依赖配置、数据库设计、后端与前端开发、数据处理、API 实现、测试到前后端联调的完整流程。通过真实的对话与操作示例，帮助读者掌握在实际开发场景下如何高效利用 Cursor 进行协作，显著提升开发效率与代码质量。</p>
+<h1 id="后端开发"><a href="#后端开发" class="headerlink" title="后端开发"></a>后端开发</h1><h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2><ol>
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">我需要开发一个销售数据分析系统，主要功能包括数据处理、统计分析和API。 </span><br><span class="line">请推荐合适的Python框架和技术栈，并帮助我搭建基础项目结构。 </span><br><span class="line">系统需要处理CSV格式的销售数据，进行数据清洗和分析，最后通过Web API框架提供查询API。 </span><br><span class="line">请帮我细化开发步骤，以便后续和你沟通时，能够一步一步实现。</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">感谢你的建议！不过我想做一些调整： </span><br><span class="line">1. 我希望使用MySQL而不是PostgreSQL，因为我在本地电脑已经安装了MySQL </span><br><span class="line">2. 暂时不需要Docker，我们先在本地开发运行即可 </span><br><span class="line">3. 其他的技术选型都很好，我们继续使用FastAPI和Pandas </span><br><span class="line">请帮我调整项目结构和依赖配置来适配这些变更内容。</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">现在的技术选型我很满意。 </span><br><span class="line">请帮我把实现细节细化一下，并生成COMPOSER 可以理解的提示词，以便后续项目实现 </span><br></pre></td></tr></table></figure>
+<p>生成结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line">我来帮你把项目实现细节拆分成更具体的步骤，并按照实现顺序组织。 </span><br><span class="line">1. 基础框架搭建 </span><br><span class="line">步骤1.1：创建项目结构 </span><br><span class="line">mkdir sales_analysis </span><br><span class="line">cd sales_analysis </span><br><span class="line"># 创建所需目录 </span><br><span class="line">mkdir -p app/api/endpoints app/core app/models app/schemas app/services tests data </span><br><span class="line">步骤1.2：创建虚拟环境和安装依赖 </span><br><span class="line">python -m venv venv </span><br><span class="line">source venv/bin/activate  # Linux/Mac </span><br><span class="line">pip install -r requirements.txt </span><br><span class="line">2. 数据模型设计 </span><br><span class="line">步骤2.1：创建基础数据模型 </span><br><span class="line">from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey </span><br><span class="line">from sqlalchemy.orm import relationship </span><br><span class="line">from app.core.database import Base </span><br><span class="line">class Product(Base): </span><br><span class="line">    __tablename__ = &quot;products&quot; </span><br><span class="line">    id </span><br><span class="line">= Column(Integer, primary_key=True, index=True) </span><br><span class="line">    name = Column(String(100), nullable=False) </span><br><span class="line">    category = Column(String(50)) </span><br><span class="line">    price = Column(Float, nullable=False) </span><br><span class="line">class Sale(Base): </span><br><span class="line">    __tablename__ = &quot;sales&quot; </span><br><span class="line"> </span><br><span class="line">    id = Column(Integer, primary_key=True, index=True) </span><br><span class="line">    product_id = Column(Integer, ForeignKey(&quot;products.id&quot;)) </span><br><span class="line">    quantity = Column(Integer, nullable=False) </span><br><span class="line">    sale_date = Column(DateTime, nullable=False) </span><br><span class="line">    total_amount = Column(Float, nullable=False) </span><br><span class="line">3. 数据处理服务 </span><br><span class="line">步骤3.1：CSV数据处理服务 </span><br><span class="line">import pandas as pd </span><br><span class="line">from sqlalchemy.orm import Session </span><br><span class="line">from app.models.sales import Product, Sale </span><br><span class="line">from datetime import datetime </span><br><span class="line"> </span><br><span class="line">class DataProcessor: </span><br><span class="line">    @staticmethod </span><br><span class="line">    def process_csv(file_path: str, db: Session): </span><br><span class="line">        df = pd.read_csv(file_path) </span><br><span class="line">        # 数据清洗和转换逻辑 </span><br><span class="line">        # 将处理后的数据保存到数据库 </span><br><span class="line">4.  API开发 </span><br><span class="line">步骤4.1：创建API路由 </span><br><span class="line">from fastapi import APIRouter, Depends, HTTPException </span><br><span class="line">from sqlalchemy.orm import Session </span><br><span class="line">from app.core.database import get_db </span><br><span class="line">from app.services.data_processor import DataProcessor </span><br><span class="line"> </span><br><span class="line">router = APIRouter() </span><br><span class="line"> </span><br><span class="line">@router.get(&quot;/sales/summary&quot;) </span><br><span class="line">def get_sales_summary(db: Session = Depends(get_db)): </span><br><span class="line">    # 实现销售汇总统计 </span><br><span class="line">    pass </span><br><span class="line"> </span><br><span class="line">@router.get(&quot;/sales/trend&quot;) </span><br><span class="line">def get_sales_trend(start_date: str, end_date: str, db: Session = Depends(get_db)): </span><br><span class="line">    # 实现销售趋势分析 </span><br><span class="line">    pass </span><br><span class="line">5. 数据分析服务 </span><br><span class="line">步骤5.1：创建分析服务 </span><br><span class="line">import pandas as pd </span><br><span class="line">from sqlalchemy.orm import Session </span><br><span class="line">from app.models.sales import Sale, Product </span><br><span class="line"> </span><br><span class="line">class SalesAnalytics: </span><br><span class="line">    @staticmethod </span><br><span class="line">    def calculate_summary(db: Session): </span><br><span class="line">        # 实现销售汇总统计逻辑 </span><br><span class="line">        pass </span><br><span class="line"> </span><br><span class="line">    @staticmethod </span><br><span class="line">    def analyze_trends(db: Session, start_date: str, end_date: str): </span><br><span class="line">        # 实现销售趋势分析逻辑 </span><br><span class="line">        pass </span><br><span class="line">实现顺序和提示词 </span><br><span class="line">1. 设置项目基础结构 </span><br><span class="line">请帮我创建sales_analysis项目的基础目录结构，包括所有必要的空文件。 </span><br><span class="line">2. 创建数据库配置 </span><br><span class="line">请帮我实现MySQL数据库配置文件，包括database.py和config.py，需要支持环境变量配置。 </span><br><span class="line">3. 实现数据模型 </span><br><span class="line">请帮我实现销售数据分析系统的SQLAlchemy数据模型，包括产品表和销售记录表。 </span><br><span class="line">4. 实现数据处理服务 </span><br><span class="line">请帮我实现CSV数据处理服务，包括数据清洗和导入数据库的功能。 </span><br><span class="line">5. 实现API路由 </span><br><span class="line">请帮我实现销售数据分析系统的FastAPI路由，包括数据导入、查询和分析API。 </span><br><span class="line">6. 实现数据分析服务 </span><br><span class="line">请帮我实现销售数据分析服务，包括销售汇总、趋势分析等功能。 </span><br><span class="line">测试数据示例 </span><br><span class="line">创建示例CSV文件 `data/sample_sales.csv`: </span><br><span class="line">product_id,product_name,category,price,quantity,sale_date </span><br><span class="line">1,产品A,电子,99.9,2,2024-01-01 </span><br><span class="line">2,产品B,服装,199.9,1,2024-01-02 </span><br><span class="line">下一步建议 </span><br><span class="line">1. 我们可以从创建项目基础结构开始 </span><br><span class="line">2. 然后实现数据库配置 </span><br><span class="line">3. 接着是数据模型的实现 </span><br><span class="line">你想从哪个部分开始？每个步骤我都可以提供详细的代码实现。</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>将返回结果保存在notepads中</li>
+</ol>
+<h2 id="基础配置-环境搭建"><a href="#基础配置-环境搭建" class="headerlink" title="基础配置&#x2F;环境搭建"></a>基础配置&#x2F;环境搭建</h2><ol>
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">请帮我创建sales_analysis项目的基础目录结构，包括所有必要的空文件。 </span><br><span class="line">目录是这样的： </span><br><span class="line">sales_analysis/ </span><br><span class="line">├── app/ </span><br><span class="line">第5章  Cursor项目进阶：销售数据分析（后端Python部分）  |  97 </span><br><span class="line"> </span><br><span class="line">│   ├── __init__.py </span><br><span class="line">│   ├── main.py           # FastAPI应用入口 </span><br><span class="line">│   ├── api/ </span><br><span class="line">│   │   ├── __init__.py </span><br><span class="line">│   │   └── endpoints/ </span><br><span class="line">│   ├── core/ </span><br><span class="line">│   │   ├── config.py </span><br><span class="line">│   │   └── database.py </span><br><span class="line">│   ├── models/ </span><br><span class="line">│   ├── schemas/ </span><br><span class="line">│   └── services/ </span><br><span class="line">├── tests/ </span><br><span class="line">├── data/ </span><br><span class="line">└── requirements.txt </span><br><span class="line">其中 requirements.txt 内部的依赖是这样的： </span><br><span class="line">fastapi&gt;=0.104.0 </span><br><span class="line">uvicorn&gt;=0.24.0 </span><br><span class="line">pandas&gt;=2.1.0 </span><br><span class="line">numpy&gt;=1.24.0 </span><br><span class="line">sqlalchemy&gt;=2.0.0 </span><br><span class="line">mysqlclient&gt;=2.2.0 </span><br><span class="line">python-dotenv&gt;=1.0.0 </span><br><span class="line">pydantic&gt;=2.4.0 </span><br><span class="line">pytest&gt;=7.4.0 </span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">以下是我的真实的MySQL连接信息，请帮我做对应文件的修改 </span><br><span class="line">localhost:3306 </span><br><span class="line">用户名：root </span><br><span class="line">密码：root </span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">帮我创建虚拟环境和安装依赖 </span><br></pre></td></tr></table></figure>
+<h2 id="功能实现"><a href="#功能实现" class="headerlink" title="功能实现"></a>功能实现</h2><ol>
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 请帮我实现销售数据分析系统的SQLAlchemy数据模型，包括产品表和销售记录表。 </span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@Codebase 请帮我在database.py中添加创建表的代码</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">我现在想用运行方法的形式启动整个项目，这样后续我做代码调试时会更方便。 </span><br><span class="line">请你帮我修改必要的代码 </span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 请帮我实现CSV文件的数据处理服务，包括数据清洗和导入数据库的功能。</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 请帮我实现销售数据分析系统的FastAPI路由，包括数据导入、查询和分析API。 </span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 请帮我实现销售数据分析服务，包括销售汇总、趋势分析等功能。</span><br></pre></td></tr></table></figure>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><ol>
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@notepads @Codebase  </span><br><span class="line">我现在已经写完代码了，需要测试，请你帮我生成一份测试计划 </span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>将生成内容保存到 notepads中</li>
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 帮我生成单元测试的部分</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">我需要在cursor中对这个文件做Debug，请告诉我如何配置</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>在notepads中添加以下内容</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">## 异常处理 </span><br><span class="line">在写代码时，如果你捕获了异常，就需要打印异常堆栈信息和当时请求的参数，方便我后续排查问题。</span><br></pre></td></tr></table></figure>
+
+<h1 id="前端开发"><a href="#前端开发" class="headerlink" title="前端开发"></a>前端开发</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><ol>
+<li>启动后端项目，获取API文档</li>
+<li>添加doc 索引, <a target="_blank" rel="noopener" href="https://vuejs.**g/guide/introduction.html,%E5%90%8D%E5%AD%97%E4%B8%BA">https://vuejs.**g/guide/introduction.html,名字为</a> Vue.js</li>
+<li>复制<a target="_blank" rel="noopener" href="http://localhost:8000/openapi.json%EF%BC%8C%E5%86%85%E5%AE%B9%E4%BF%9D%E5%AD%98%E5%88%B0%E6%96%87%E4%BB%B6api.md">http://localhost:8000/openapi.json，内容保存到文件api.md</a></li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 文档</span><br><span class="line">以下是 API 文档的JSON 定义</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="需求分析-1"><a href="#需求分析-1" class="headerlink" title="需求分析"></a>需求分析</h2><ol>
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">@api.md @Vue.js</span><br><span class="line">我希望你基于api.md中的API内容，开发一个前端项目。 </span><br><span class="line">项目需要用到Vue.js和其他一些配套的前端组件。 </span><br><span class="line">整体页面风格希望可以做得简洁、大方。 </span><br><span class="line">对于一些数据展示的业务模块，希望可以增加图表组件的支持，看上去更加直观。 </span><br><span class="line">我希望你可以清晰罗列每个步骤，方便我后续在“COMPOSER”面板中与Cursor进行沟通 </span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>复制输出到新的nodepads 中</li>
+<li>chat</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">需要运行前端项目，在电脑上需要安装哪些软件？</span><br></pre></td></tr></table></figure>
+<h2 id="后端开发-1"><a href="#后端开发-1" class="headerlink" title="后端开发"></a>后端开发</h2><ol>
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 现在帮我创建Vue项目 </span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">帮我生成一份测试CSV文件，数据尽可能多一些，方便我后续在前端用图表展示。 </span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@notepads @Codebase 在前端单击“点击上传”选项时，希望可以加一个进度条，上传成功后希望可以有一个</span><br><span class="line">提示消息，而且现在上传文件没有请求后端接口，你来修复一下 </span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@Codebase 我在数据库中查看sale_records表数据时，发现有一些数据的total_amount算得不对，</span><br><span class="line">大部分是对的。请你分析可能的原因并给出解决方案。 </span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 帮我实现销售数据管理模块的其他功能 </span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>后端更新了接口后，前端需要对应适配<br>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads @Codebase 请基于最新的API对现有的代码做出修改与适配</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>数据分析模块 agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads 帮我生成数据分析模块的代码 </span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>agent</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@Codebase 我希望光标悬浮在品类分析图表上可以显示数字</span><br></pre></td></tr></table></figure>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="提示词参考"><a href="#提示词参考" class="headerlink" title="提示词参考"></a>提示词参考</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">@note @Codebase </span><br><span class="line">我需要实现一个文章管理模块，要求如下： </span><br><span class="line">1. 功能需求： </span><br><span class="line">   - </span><br><span class="line">文章的增删改查操作 </span><br><span class="line">   - </span><br><span class="line">支持分页列表展示 </span><br><span class="line">   - </span><br><span class="line">包含标题、内容、发布时间等字段 </span><br><span class="line">2. 技术要求： </span><br><span class="line">   - </span><br><span class="line">使用SpringBoot框架 </span><br><span class="line">   - </span><br><span class="line">MyBatis 作为ORM框架 </span><br><span class="line">   - </span><br><span class="line">遵循RESTful API设计规范 </span><br><span class="line">3. 预期输出： </span><br><span class="line">   - </span><br><span class="line">后端API代码 </span><br><span class="line">   - </span><br><span class="line">数据库表设计 </span><br><span class="line">   - </span><br><span class="line">前端页面代码（Vue.js） </span><br><span class="line">4. 质量规范： </span><br><span class="line">   - </span><br><span class="line">需要添加适当的注释 </span><br><span class="line">   - </span><br><span class="line">包含异常处理 </span><br><span class="line">   - </span><br><span class="line">遵循项目现有的代码风格 </span><br></pre></td></tr></table></figure>
+<h2 id="使用上下文，"><a href="#使用上下文，" class="headerlink" title="使用上下文，"></a>使用上下文，</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">@notepads @Codebase @docs @file @git @cursor rules @Folders @Chat @Link @Web @Recent changes  @Code</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>本文由AI生成，内容仅供参考。在实际部署前，请根据具体环境进行测试和验证。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/b9e5a0c5a4ad.html">https://xhua.eu.org/posts/b9e5a0c5a4ad.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/cursor/">Cursor</a><a class="post-meta__tags" href="/tags/python/">Python</a><a class="post-meta__tags" href="/tags/fastapi/">FastAPI</a><a class="post-meta__tags" href="/tags/vue-js/">Vue.js</a><a class="post-meta__tags" href="/tags/%E5%85%A8%E6%A0%88%E5%BC%80%E5%8F%91/">全栈开发</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/c076d9f3f05d.html" title="vLLM高性能大模型推理引擎使用指南"><img class="cover" src="https://img.xhua.eu.org/daaca0b411fbe28fb31f728aff34d87083919fff6300004fea34ff5fce7ad91b.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">vLLM高性能大模型推理引擎使用指南</div></div><div class="info-2"><div class="info-item-1">在当今AI快速发展的时代，大模型推理性能直接影响着应用的用户体验和成本效益。vLLM作为一个高性能的大模型推理引擎，为开发者提供了快速、高效的模型服务解决方案。本文将详细介绍如何使用vLLM进行离线推理和在线服务部署，特别是如何利用uv工具进行快速环境管理，以及如何部署兼容OpenAI API的模型服务。 什么是vLLMvLLM（Very Large Language Model）是由UC Berkeley开发的高性能大语言模型推理和服务引擎。它具有以下特点：  高吞吐量：通过PagedAttention等技术优化，显著提升推理速度 内存效率：动态内存管理，减少显存占用 易于使用：提供简洁的Python API和OpenAI兼容接口 灵活部署：支持批量推理和在线服务两种模式  环境准备与安装系统要求 操作系统：Linux Python版本：3.9 - 3.12 硬件：NVIDIA GPU（推荐）  使用uv工具快速安装uv是一个超快的Python环境管理器，可以显著加速环境创建和包安装过程。 1. 安装uv工具12345# 在Linux/macOS上安装uvcurl -LsSf ...</div></div></div></a><a class="pagination-related" href="/posts/7ef80ced6f51.html" title="GPT-4.1 提示指南（翻译）"><img class="cover" src="https://img.xhua.eu.org/a5bc40e344df82a2633906aa04eb55447b0890a6c2dacf23b585537f4838f7e4.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">GPT-4.1 提示指南（翻译）</div></div><div class="info-2"><div class="info-item-1">原文 GPT-4.1 Prompting Guide GPT-4.1 模型系列在编码、指令遵循和长上下文处理能力方面相比 GPT-4o 有了显著提升。在本提示指南中，我们整理了从大量内部测试中得出的重要提示技巧，以帮助开发者充分利用这个新模型系列的改进能力。 许多典型的最佳实践仍然适用于 GPT-4.1，例如提供上下文示例、使指令尽可能具体和清晰，以及通过提示诱导规划以最大化模型智能。然而，我们预计充分利用这个模型需要一些提示迁移。GPT-4.1 经过训练，比其前身更严格、更字面地遵循指令，而前身倾向于更自由地从用户和系统提示中推断意图。这也意味着，GPT-4.1 具有高度的可引导性，对明确指定的提示反应灵敏——如果模型行为与您期望的不同，一个坚定且明确澄清您期望行为的单句几乎总是足以引导模型回到正轨。 请继续阅读可用作参考的提示示例，并记住虽然这些指导广泛适用，但没有建议是万能的。AI 工程本质上是一门经验性学科，大型语言模型本质上是非确定性的；除了遵循本指南外，我们建议构建信息丰富的评估并经常迭代，以确保您的提示工程变更为您的用例带来好处。 1. 代理工作流GPT-4.1 是...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/6aa04c23d95b.html" title="Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）"><img class="cover" src="https://img.xhua.eu.org/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-13</div><div class="info-item-2">Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）</div></div><div class="info-2"><div class="info-item-1">本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：  如何创建标准的 Python 包工程骨架（src 布局） 在 pyproject.toml 中使用 PEP 621 声明元数据与 project.scripts 生成命令行脚本 使用 build 本地构建分发产物（sdist&#x2F;wheel） 使用 twine 校验并上传到 TestPyPI 与 PyPI 常见问题与排错要点  参考标准：PEP 517&#x2F;518（构建系统），PEP 621（项目元数据）。 适用环境 Python ≥ 3.8（推荐 3.10+） macOS&#x2F;Linux&#x2F;Windows 包管理：pip 或 pipx   一、项目骨架（src 布局）推荐使用「src 布局」以避免导入歧义，目录结构如下： 1234567891011mycli/├─ pyproject.toml├─ README.md├─ LICENSE├─ src/│  └─ mycli/│     ├─ __init__.py│     ├─ __main__....</div></div></div></a><a class="pagination-related" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通"><img class="cover" src="https://img.xhua.eu.org/d1245375296649146ee3ca43fcaa518ca98a923c8d836383cb19550a574ec9cf.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-28</div><div class="info-item-2">Cursor IDE 使用最佳实践与技巧：从入门到精通</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程时代，选择正确的工具和掌握最佳实践能够显著提升开发效率。Cursor IDE 作为一款原生集成 AI 能力的代码编辑器，正在改变开发者的工作方式。据用户反馈，合理使用 Cursor 的 Agent 模式配合上下文管理，可以将功能开发时间缩短 60%。本文将系统性地介绍 Cursor 的核心功能、最佳实践和常见陷阱，帮助你充分发挥这款工具的潜力。 为什么选择 CursorCursor vs GitHub Copilot在选择 AI 编程助手时，了解不同工具的优势至关重要： Cursor 的核心优势：  全项目代码库理解：能够理解整个代码库的上下文，而不仅仅是当前文件 多文件编辑能力：通过 Composer 功能同时编辑多个文件 深度 AI 集成：AI 能力原生内置于 IDE，而非仅作为扩展 复杂项目优势：在处理大型、复杂代码库时表现出色，具备完整的架构感知能力 模型灵活性：支持切换不同的 AI 模型（Claude 4.5 Opus、Sonnet 等）  GitHub Copilot 的优势：  广泛的 IDE 兼容性：作为插件可在 VS Code、JetBrain...</div></div></div></a><a class="pagination-related" href="/posts/1d209e12ddec.html" title="使用Python开发自己的MCP服务：AI能力扩展入门指南"><img class="cover" src="https://img.xhua.eu.org/008ff9056c7bc3e71e6323c85ba989ef9a03524b0b5ffd578e82618c4dceded2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-04-16</div><div class="info-item-2">使用Python开发自己的MCP服务：AI能力扩展入门指南</div></div><div class="info-2"><div class="info-item-1">引言随着人工智能技术的快速发展，大语言模型（LLM）如ChatGPT、Claude等已经成为了改变我们工作和生活方式的强大工具。但你是否想过，如何让这些AI模型具备访问外部工具和数据的能力，从而解决更复杂的问题？今天，我将向大家介绍一项令人兴奋的技术——模型上下文协议（Model Context Protocol，简称MCP），并教你如何使用Python开发自己的MCP服务，为AI模型赋予更强大的能力。 什么是MCP？基本概念模型上下文协议（MCP）是一个开放标准，用于AI应用程序与大型语言模型之间的通信。它定义了一套标准接口，使应用程序能够向模型提供上下文信息，并允许模型调用应用程序暴露的工具。 简单来说，MCP就像是AI模型和外部世界之间的一座桥梁，让模型能够”看见”和”操作”外部的数据和功能。 为什么需要MCP？想象一下，如果你正在与ChatGPT聊天，希望它能够：  查询你的个人日历 分析你的Excel数据 控制你的智能家居设备 从你的私有数据库中获取信息  这些功能都需要AI模型能够访问外部系统和数据，而MCP正是为解决这一需求而生的。 MCP的核心组件MCP协议定义了...</div></div></div></a><a class="pagination-related" href="/posts/c076d9f3f05d.html" title="vLLM高性能大模型推理引擎使用指南"><img class="cover" src="https://img.xhua.eu.org/daaca0b411fbe28fb31f728aff34d87083919fff6300004fea34ff5fce7ad91b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-05</div><div class="info-item-2">vLLM高性能大模型推理引擎使用指南</div></div><div class="info-2"><div class="info-item-1">在当今AI快速发展的时代，大模型推理性能直接影响着应用的用户体验和成本效益。vLLM作为一个高性能的大模型推理引擎，为开发者提供了快速、高效的模型服务解决方案。本文将详细介绍如何使用vLLM进行离线推理和在线服务部署，特别是如何利用uv工具进行快速环境管理，以及如何部署兼容OpenAI API的模型服务。 什么是vLLMvLLM（Very Large Language Model）是由UC Berkeley开发的高性能大语言模型推理和服务引擎。它具有以下特点：  高吞吐量：通过PagedAttention等技术优化，显著提升推理速度 内存效率：动态内存管理，减少显存占用 易于使用：提供简洁的Python API和OpenAI兼容接口 灵活部署：支持批量推理和在线服务两种模式  环境准备与安装系统要求 操作系统：Linux Python版本：3.9 - 3.12 硬件：NVIDIA GPU（推荐）  使用uv工具快速安装uv是一个超快的Python环境管理器，可以显著加速环境创建和包安装过程。 1. 安装uv工具12345# 在Linux/macOS上安装uvcurl -LsSf ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91"><span class="toc-text">后端开发</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90"><span class="toc-text">需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-text">基础配置&#x2F;环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%9F%E8%83%BD%E5%AE%9E%E7%8E%B0"><span class="toc-text">功能实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91"><span class="toc-text">前端开发</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87"><span class="toc-text">准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90-1"><span class="toc-text">需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91-1"><span class="toc-text">后端开发</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%8F%82%E8%80%83"><span class="toc-text">提示词参考</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%8C"><span class="toc-text">使用上下文，</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

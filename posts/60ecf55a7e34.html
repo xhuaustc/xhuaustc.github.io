@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CentOS上搭建双主高可用OpenLDAP-Server | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="OpenLDAP单机搭建手册参考：CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 配置双主高可用OpenLDAP 准备两台centos 7服务器，作为两台OpenLDAP Server的运行主机     Server ID 系统版本 IP    1 centos 7 192.168.1.2   2 centos 7 192.168.1.3    按照CentO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CentOS上搭建双主高可用OpenLDAP-Server">
+<meta property="og:url" content="https://xhua.eu.org/posts/60ecf55a7e34.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="OpenLDAP单机搭建手册参考：CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 配置双主高可用OpenLDAP 准备两台centos 7服务器，作为两台OpenLDAP Server的运行主机     Server ID 系统版本 IP    1 centos 7 192.168.1.2   2 centos 7 192.168.1.3    按照CentO">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.634Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "CentOS上搭建双主高可用OpenLDAP-Server",
+  "url": "https://xhua.eu.org/posts/60ecf55a7e34.html",
+  "image": "https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.634Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/60ecf55a7e34.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CentOS上搭建双主高可用OpenLDAP-Server',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">CentOS上搭建双主高可用OpenLDAP-Server</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CentOS上搭建双主高可用OpenLDAP-Server</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.634Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>OpenLDAP单机搭建手册参考：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/b5df1eb1f4de">CentOS上OpenLDAP Server使用cn&#x3D;config方式配置</a></p>
+<h2 id="配置双主高可用OpenLDAP"><a href="#配置双主高可用OpenLDAP" class="headerlink" title="配置双主高可用OpenLDAP"></a>配置双主高可用OpenLDAP</h2><ol>
+<li>准备两台centos 7服务器，作为两台OpenLDAP Server的运行主机</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Server ID</th>
+<th>系统版本</th>
+<th>IP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>centos 7</td>
+<td>192.168.1.2</td>
+</tr>
+<tr>
+<td>2</td>
+<td>centos 7</td>
+<td>192.168.1.3</td>
+</tr>
+</tbody></table>
+<ol start="2">
+<li>按照<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/b5df1eb1f4de">CentOS上OpenLDAP Server使用cn&#x3D;config方式配置</a>的方式在两台主机上部署好OpenLDAP Server。做到第6步即可，即<code>启动openldap server</code></li>
+<li>在两台主机上启动syncprov模块</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> syncprov_mod.ldif</span></span><br><span class="line">dn: cn=module,cn=config</span><br><span class="line">objectClass: olcModuleList</span><br><span class="line">cn: module</span><br><span class="line">olcModulePath: /usr/lib64/openldap</span><br><span class="line">olcModuleLoad: syncprov.la</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -Y EXTERNAL -H ldapi:/// -f syncprov_mod.ldif</span></span><br><span class="line">SASL/EXTERNAL authentication started</span><br><span class="line">SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth</span><br><span class="line">SASL SSF: 0</span><br><span class="line">adding new entry &quot;cn=module,cn=config&quot;</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>启动OpenLDAP主主同步<br>在两台机器上创建configrep.ldif文件，并执行配置</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> configrep.ldif</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">## Update Server ID with LDAP URL ###</span></span></span><br><span class="line"></span><br><span class="line">dn: cn=config</span><br><span class="line">changetype: modify</span><br><span class="line">replace: olcServerID</span><br><span class="line">olcServerID: 1 ldap://192.168.1.2</span><br><span class="line">olcServerID: 2 ldap://192.168.1.3</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">## Enable replication ###</span></span></span><br><span class="line"></span><br><span class="line">dn: olcOverlay=syncprov,olcDatabase=&#123;2&#125;hdb,cn=config</span><br><span class="line">changetype: add</span><br><span class="line">objectClass: olcOverlayConfig</span><br><span class="line">objectClass: olcSyncProvConfig</span><br><span class="line">olcOverlay: syncprov</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">## Adding details for replication ###</span></span></span><br><span class="line"></span><br><span class="line">dn: olcDatabase=&#123;2&#125;hdb,cn=config</span><br><span class="line">changetype: modify</span><br><span class="line">add: olcSyncRepl</span><br><span class="line">olcSyncRepl:</span><br><span class="line">  rid=001</span><br><span class="line">  provider=ldap://192.168.1.2</span><br><span class="line">  binddn=&quot;cn=Manager,dc=example,dc=com&quot;</span><br><span class="line">  bindmethod=simple</span><br><span class="line">  credentials=redhat</span><br><span class="line">  searchbase=&quot;dc=example,dc=com&quot;</span><br><span class="line">  type=refreshAndPersist</span><br><span class="line">  retry=&quot;5 5 300 5&quot;</span><br><span class="line">  timeout=1</span><br><span class="line">olcSyncRepl:</span><br><span class="line">  rid=002</span><br><span class="line">  provider=ldap://192.168.1.3</span><br><span class="line">  binddn=&quot;cn=Manager,dc=example,dc=com&quot;</span><br><span class="line">  bindmethod=simple</span><br><span class="line">  credentials=redhat</span><br><span class="line">  searchbase=&quot;dc=example,dc=com&quot;</span><br><span class="line">  type=refreshAndPersist</span><br><span class="line">  retry=&quot;5 5 300 5&quot;</span><br><span class="line">  timeout=1</span><br><span class="line">-</span><br><span class="line">add: olcMirrorMode</span><br><span class="line">olcMirrorMode: TRUE</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapmodify -Y EXTERNAL -H ldapi:/// -f configrep.ldif</span></span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>配置ldap启动host，更新<code>/etc/sysconfig/slapd</code></li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> /etc/sysconfig/slapd</span></span><br><span class="line">SLAPD_URLS=&quot;ldapi:/// ldap://192.168.1.2&quot;</span><br></pre></td></tr></table></figure>
+<p><code>192.168.1.2</code>、<code>192.168.1.3</code>根据主机ip确定。<br>6. 重启slapd</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl restart slapd</span></span><br></pre></td></tr></table></figure>
+<p>至此，dc&#x3D;example,dc&#x3D;com 下的内容便可以在两个服务器上同步了。</p>
+<h2 id="实践测试"><a href="#实践测试" class="headerlink" title="实践测试"></a>实践测试</h2><ol>
+<li>在ldap1服务器192.168.1.2中创建ldap server的基础结构</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> base.ldif</span></span><br><span class="line">dn: dc=example,dc=com</span><br><span class="line">objectClass: dcObject</span><br><span class="line">objectClass: organization</span><br><span class="line">o: example.com</span><br><span class="line"></span><br><span class="line">dn: ou=users,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">objectClass: top</span><br><span class="line">ou: users</span><br><span class="line"></span><br><span class="line">dn: ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">objectClass: top</span><br><span class="line">ou: groups       </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd -h 192.168.1.2 -x -D <span class="string">&quot;cn=Manager,dc=example,dc=com&quot;</span> -w redhat -f base.ldif</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>检查ldap1和ldap2中的数据对比</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 检查ldap1 192.168.1.2中的数据</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -h 192.168.1.2 -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -b dc=example,dc=com -w redhat</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">extended LDIF</span>                                                                                                                                                                                                   </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"> </span>                                                                                                                                                                                                               </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">LDAPv3</span>                                                                                                                                                                                                          </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">base &lt;dc=example,dc=com&gt; with scope subtree</span>                                                                                                                                                                     </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">filter: (objectclass=*) 19L, 623C</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">requesting: ALL</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"></span><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">example.com</span></span><br><span class="line">dn: dc=example,dc=com</span><br><span class="line">objectClass: dcObject</span><br><span class="line">objectClass: organization</span><br><span class="line">o: example.com</span><br><span class="line">dc: example</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">users</span>, example.com</span></span><br><span class="line">dn: ou=users,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">ou: users</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">groups</span>, example.com</span></span><br><span class="line">dn: ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">ou: groups</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">search result</span></span><br><span class="line">search: 2</span><br><span class="line">result: 0 Success</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">numResponses: 4</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">numEntries: 3</span></span><br></pre></td></tr></table></figure>
+<p>与ldap2 192.168.1.3中的数据进行对比</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment"># 检查ldap2 192.168.1.3中的数据</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapsearch -h 192.168.1.3 -x -D <span class="string">&#x27;cn=Manager,dc=example,dc=com&#x27;</span> -b dc=example,dc=com -w redhat</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">extended LDIF</span>                                                                                                                                                                                                   </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"> </span>                                                                                                                                                                                                               </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">LDAPv3</span>                                                                                                                                                                                                          </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">base &lt;dc=example,dc=com&gt; with scope subtree</span>                                                                                                                                                                     </span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">filter: (objectclass=*) 19L, 623C</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">requesting: ALL</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"></span><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">example.com</span></span><br><span class="line">dn: dc=example,dc=com</span><br><span class="line">objectClass: dcObject</span><br><span class="line">objectClass: organization</span><br><span class="line">o: example.com</span><br><span class="line">dc: example</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">users</span>, example.com</span></span><br><span class="line">dn: ou=users,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">ou: users</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">groups</span>, example.com</span></span><br><span class="line">dn: ou=groups,dc=example,dc=com</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">ou: groups</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">search result</span></span><br><span class="line">search: 2</span><br><span class="line">result: 0 Success</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">numResponses: 4</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">numEntries: 3</span></span><br></pre></td></tr></table></figure>
+<p>数据是一样的，注意：ldap2 192.168.1.3服务器的数据是从192.168.1.2中同步过来的。<br>3. 可以对ldap2 192.168.1.3中进行数据更新，再查看ldap1 192.168.1.2中的数据。确认互为主<br>在ldap2中添加用户</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> users.ldif</span></span><br><span class="line">dn: uid=testuser,ou=users,dc=example,dc=com</span><br><span class="line">uid: testuser</span><br><span class="line">cn: testuser</span><br><span class="line">objectClass: shadowAccount</span><br><span class="line">objectClass: top</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: posixAccount</span><br><span class="line">userPassword: &#123;SSHA&#125;5rMM/3f8Ki13IyarGTtwzieoTu7KMgwc</span><br><span class="line">shadowLastChange: 17016</span><br><span class="line">shadowMin: 0</span><br><span class="line">shadowMax: 99999</span><br><span class="line">shadowWarning: 7</span><br><span class="line">loginShell: /bin/bash</span><br><span class="line">uidNumber: 1000</span><br><span class="line">gidNumber: 1000</span><br><span class="line">homeDirectory: /home/testuser</span><br><span class="line">sn: testuser</span><br><span class="line">mail: testuser@example.com</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ldapadd  -h 192.168.1.3 -x -D cn=Manager,dc=example,dc=com -f users.ldif -w redhat</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="http://v.colinlee.fish/posts/openldap-speedy-tutorial-replication.html">OpenLDAP 极速搭建：双主同步</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/60ecf55a7e34.html">https://xhua.eu.org/posts/60ecf55a7e34.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/d4c7918cf1ea787335aca05ec8834b1b3d2e83d12ecb9fdfd5911ce3016f2ea2.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/e6f145ab3bbb.html" title="Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储"><img class="cover" src="https://img.xhua.eu.org/4328c75cf6fc869f4b312ec595d7c5ea52567c3ba061d57733a7ddb5f01cbf25.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Ceph的搭建流程及openshift上使用ceph-rbd实现动态存储</div></div><div class="info-2"><div class="info-item-1">Ceph分布式块存储部署机器列表   名称 核数 内存 ip hostname 外挂磁盘大小（G）    管理节点admin 2 4 192.168.1.2 admin.ceph.com    监控节点monitor 2 4 192.168.1.3 monitor.ceph.com    存储节点node1 2 4 192.168.1.4 node1.ceph.com 100G   存储节点node2 2 4 192.168.1.5 node2.ceph.com 100G   部署Ceph RBD 1、给每台机器设置hostname  12345# 设置hostname  hostnamectl --static set-hostname admin.ceph.com   #192.168.1.2 hostnamectl --static set-hostname monitor.ceph.com #192.168.1.3 hostnamectl --static set-hostname node1.ceph.com   #192.168.1.4 hostnamectl --s...</div></div></div></a><a class="pagination-related" href="/posts/78dd6e98294c.html" title="CentOS上OpenLDAP-Server使用cn=config方式配置"><img class="cover" src="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CentOS上OpenLDAP-Server使用cn=config方式配置</div></div><div class="info-2"><div class="info-item-1">翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装openldap包  1yum install -y openldap openldap-clients openldap-servers LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d 123456789101112[root@rhel7 ~]# cd /etc/openldap/slapd.d/[root@rhel7 slapd.d]# ls -ldrwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=co...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/ff93f3dfa6fc.html" title="Openshift集群全环境备份"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境备份</div></div><div class="info-2"><div class="info-item-1"> 创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是万能的，应用自己的数据我们应该保证有单独的备份。 创建Master节点备份在系统基础架构进行更改，都需要对节点做备份。比如说，系统升级，集群升级或者任何重大更新。通过定期备份数据，当集群出现故障时，我们就能使用备份恢复集群。 Master主机上运行着非常重要的服务：API、Controllers。&#x2F;etc&#x2F;origin&#x2F;master目录下存放着许多重要的文件。  API、Controllers服务等的配置文件  安装生成的证书  云提供商提供的配置文件  密钥和其它身份认证文件   另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#...</div></div></div></a><a class="pagination-related" href="/posts/da2b64a21883.html" title="对文件目录设置acl权限"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">对文件目录设置acl权限</div></div><div class="info-2"><div class="info-item-1">尽管 sudo 可以设置某个用户有特殊权限，确实会增大这个用户的权限。 为了限制这个特殊目录只有特定用户可以读，您可以对特殊用户设置目录访问控制列表 acl。 以 user 用户为例，这样设置之后可以实现只有 user 用户可以对这个目录有读权限，其他普通用户无权限 setfacl -m u:user:r– &#x2F;目录名&#x2F;文件名 如果想要一次设置可以添加 -R 参数 递归设置整个目录，以及整个目录下的所有文件 setfacl -R -m u:user:r– &#x2F;目录名&#x2F; 这样就可以保证某个特殊普通用户对这个目录有可读权限 如果这个目录需要 user 用户可以 cd 进入的话，设置时可以增加大写 X 参数，设置 acl 的时候，大写 X 表示遇到目录给执行权限，遇到文件对象不给执行权限 setfacl -m u:user:r-X &#x2F;目录名&#x2F;setfacl -m u:user:r-X &#x2F;目录名&#x2F;文件名 这样设置，可以让 user 用户能 cd 进入特殊目录 </div></div></div></a><a class="pagination-related" href="/posts/5d02d748c56e.html" title="Kubernetes工具集（持续收集------）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes工具集（持续收集------）</div></div><div class="info-2"><div class="info-item-1">Kubescope cliKubescope cli 是一个可以运行在本地或 Kubernetes 中的工具，可直接从 Docker Daemon 中收集容器指标并可视化。和 cAdvisor 等其他集群指标收集服务一样， kubescope cli 收集指标的周期是 1 秒（而不是 10-15 秒）。如果周期是 10-15 秒，你可能会在测试期间错过一些引发性能瓶颈的问题。如果你使用 cAdvisor 进行测试，每次都要使用新的 Pod 作为测试对象，因为 Kubernetes 在超过资源限制时就会将 Pod 杀死，然后重新启动一个全新的 Pod。而 kubescope cli 就没有这方面的忧虑，它直接从 Docker Daemon 中收集容器指标（你可以自定义收集指标的时间间隔），并使用正则表达式来选择和过滤你想要显示的容器。  KubeMarkKubemark是K8s官方提供的一个对K8s集群进行性能测试的工具。它可以模拟出一个K8s cluster（Kubemark cluster），不受资源限制，从而能够测试的集群规模比真实集群大的多。这个cluster中master...</div></div></div></a><a class="pagination-related" href="/posts/3e4333ef6f0f.html" title="Openshift-3scale简单介绍"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-3scale简单介绍</div></div><div class="info-2"><div class="info-item-1">API经济3scale做了什么？关注指标 支持应用数据 完整用例的数量 用户数量 资金价值 开发速度 部署速度 迁移工作量 已有问题  完整的API管理不仅仅只是创建与发布，还需要配套全方位的运维 创建与发布API 度量和计费 安全 &amp; 认证 API文档Portal 扩展性 &amp; 集中策略 API监控 版本控制 生命周期 配置 &amp; 告警 API测试  3scale架构（可容器化部署） 实验内容github.com&#x2F;hgueere </div></div></div></a><a class="pagination-related" href="/posts/67a6791f98e4.html" title="OpenShift-4-3部署安装（国内需要使用科学上网支持）"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-4-3部署安装（国内需要使用科学上网支持）</div></div><div class="info-2"><div class="info-item-1">准备好本机访问科学上网环境 安装pip软件  1$ yum install python2-pip  安装shadowsocks包  1pip install shadowsocks -i https://pypi.douban.com/simple  编辑文件&#x2F;etc&#x2F;shadowsocks.json  123456789101112$ cat &gt; /etc/shadowsocks.json &lt;&lt;EOF&#123;    &quot;server&quot;:&quot;shadowsocks的IP&quot;,    &quot;server_port&quot;:8388,    &quot;local_address&quot;: &quot;0.0.0.0&quot;,    &quot;local_port&quot;:1080,    &quot;password&quot;:&quot;fuuuuuuuuuuuuckgfw&quot;,    &quot;timeout&quot;:300,    &quot;method&q...</div></div></div></a><a class="pagination-related" href="/posts/1f94b61afe3b.html" title="Openshift3-9部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9部署手册</div></div><div class="info-2"><div class="info-item-1">说明：本文主要介绍通过Ansible来部署Openshift 3.9 一、准备系统准备   节点类型 说明    Masters 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 最少4vCPU最少16GB内存&#x2F;var&#x2F;最少40GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   额外的etcd节点 最少20GB用来存储etcd数据 &nbsp;   注：在安装时可以通过ansible_inventory的配置忽略以上系统要求扩展：对于生产部署时，Master的配置要求计算规则如下：每1000个pods需要额外的1核...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%8F%8C%E4%B8%BB%E9%AB%98%E5%8F%AF%E7%94%A8OpenLDAP"><span class="toc-text">配置双主高可用OpenLDAP</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E8%B7%B5%E6%B5%8B%E8%AF%95"><span class="toc-text">实践测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>RAGFlow 使用指南：从深度解析到生产化部署运维全攻略 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略1. 引言：为什么选择 RAGFlow？在 RAG（检索增强生成）领域，业界公认的挑战在于：“Garbage in, garbage out”。如果输入的上下文质量低下、版式混乱，LLM 再强也无法给出准确答案。 RAGFlow 的核心优势在于它对高质量数据接入的执着。它不只是简单的“向量化工具”，而是强调两点：  细粒度文档解析（Deep">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略">
+<meta property="og:url" content="https://xhua.eu.org/posts/f3be144d72f7.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略1. 引言：为什么选择 RAGFlow？在 RAG（检索增强生成）领域，业界公认的挑战在于：“Garbage in, garbage out”。如果输入的上下文质量低下、版式混乱，LLM 再强也无法给出准确答案。 RAGFlow 的核心优势在于它对高质量数据接入的执着。它不只是简单的“向量化工具”，而是强调两点：  细粒度文档解析（Deep">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg">
+<meta property="article:published_time" content="2025-12-30T08:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.627Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="RAGFlow">
+<meta property="article:tag" content="知识库">
+<meta property="article:tag" content="运维">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "RAGFlow 使用指南：从深度解析到生产化部署运维全攻略",
+  "url": "https://xhua.eu.org/posts/f3be144d72f7.html",
+  "image": "https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg",
+  "datePublished": "2025-12-30T08:00:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.627Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/f3be144d72f7.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'RAGFlow 使用指南：从深度解析到生产化部署运维全攻略',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-12-30T08:00:00.000Z" title="发表于 2025-12-30 16:00:00">2025-12-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.627Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="RAGFlow-使用指南：从深度解析到生产化部署运维全攻略"><a href="#RAGFlow-使用指南：从深度解析到生产化部署运维全攻略" class="headerlink" title="RAGFlow 使用指南：从深度解析到生产化部署运维全攻略"></a>RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</h1><h2 id="1-引言：为什么选择-RAGFlow？"><a href="#1-引言：为什么选择-RAGFlow？" class="headerlink" title="1. 引言：为什么选择 RAGFlow？"></a>1. 引言：为什么选择 RAGFlow？</h2><p>在 RAG（检索增强生成）领域，业界公认的挑战在于：“Garbage in, garbage out”。如果输入的上下文质量低下、版式混乱，LLM 再强也无法给出准确答案。</p>
+<p>RAGFlow 的核心优势在于它对<strong>高质量数据接入</strong>的执着。它不只是简单的“向量化工具”，而是强调两点：</p>
+<ul>
+<li><strong>细粒度文档解析（DeepDoc）</strong>：针对图片、表格等复杂版式，通过 OCR 和版面分析，确保文档被“吃透”。</li>
+<li><strong>可追溯引用</strong>：每一个答案都能精准追溯到原始文档片段，有效降低大模型幻觉。</li>
+</ul>
+<p>如果你需要处理大量复杂的 PDF、扫描件、金融财报或技术手册，RAGFlow 提供的“数据质量优先”路径将是你的不二之选。</p>
+<hr>
+<h2 id="2-核心功能深度解析"><a href="#2-核心功能深度解析" class="headerlink" title="2. 核心功能深度解析"></a>2. 核心功能深度解析</h2><h3 id="2-1-知识库（Datasets）与-DeepDoc-解析"><a href="#2-1-知识库（Datasets）与-DeepDoc-解析" class="headerlink" title="2.1 知识库（Datasets）与 DeepDoc 解析"></a>2.1 知识库（Datasets）与 DeepDoc 解析</h3><p>知识库是 RAGFlow 的底座。它将非结构化文件转化为可检索的证据库。</p>
+<ul>
+<li><strong>深度解析（DeepDoc）</strong>：这是 RAGFlow 的杀手锏。它在解析阶段执行 OCR、表格结构识别等重度预处理。</li>
+<li><strong>切分策略（Chunking）</strong>：<ul>
+<li><strong>通用文档</strong>：建议使用中等 chunk + 适度重叠，兼顾语义完整性。</li>
+<li><strong>手册&#x2F;规范</strong>：推荐按标题层级切分，减少跨章节误导。</li>
+</ul>
+</li>
+<li><strong>最佳实践</strong>：<ul>
+<li><strong>先小样验证</strong>：先导入 5-10 份典型文档调试效果，再大规模导入。</li>
+<li><strong>元数据过滤</strong>：利用分类、版本等标签，在检索时减少噪声。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-2-搜索与对话：AI-Search-vs-AI-Chat"><a href="#2-2-搜索与对话：AI-Search-vs-AI-Chat" class="headerlink" title="2.2 搜索与对话：AI Search vs AI Chat"></a>2.2 搜索与对话：AI Search vs AI Chat</h3><p>RAGFlow 提供了两种不同的检索交互方式：</p>
+<table>
+<thead>
+<tr>
+<th align="left">特性</th>
+<th align="left">AI Search (单轮搜索)</th>
+<th align="left">AI Chat (多轮对话)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>定位</strong></td>
+<td align="left">智能百科，追求快、稳、证据直观</td>
+<td align="left">业务助理，追求深度理解、多轮推进</td>
+</tr>
+<tr>
+<td align="left"><strong>交互</strong></td>
+<td align="left">单轮（不维护上下文）</td>
+<td align="left">多轮（保留历史对话）</td>
+</tr>
+<tr>
+<td align="left"><strong>策略</strong></td>
+<td align="left">预设的混合检索（Hybrid Search）</td>
+<td align="left">可自定义 RAG 策略与 Agent 流程</td>
+</tr>
+<tr>
+<td align="left"><strong>展示</strong></td>
+<td align="left">直接在答案下方列出所有 chunks</td>
+<td align="left">通过引用标签展示来源，更像成品体验</td>
+</tr>
+<tr>
+<td align="left"><strong>建议场景</strong></td>
+<td align="left">故障排查、条款快速定位</td>
+<td align="left">方案咨询、复杂文档对比</td>
+</tr>
+</tbody></table>
+<h3 id="2-3-Chat-Assistant：面向业务的入口"><a href="#2-3-Chat-Assistant：面向业务的入口" class="headerlink" title="2.3 Chat Assistant：面向业务的入口"></a>2.3 Chat Assistant：面向业务的入口</h3><p>Assistant 是 RAGFlow 的封装层，将模型、知识库、Prompt 整合为可运营的服务。</p>
+<ul>
+<li><strong>System Prompt</strong>：定义角色人设和规则（如“无依据则拒答”）。</li>
+<li><strong>参数精修</strong>：针对不同助理配置不同的温度、Top-K 和 Rerank 模型。</li>
+<li><strong>工具调用</strong>：支持挂载外部工具（搜索、计算等），赋予助理行动力。</li>
+</ul>
+<h3 id="2-4-Agent-与-Workflow：从问答升级到自动化"><a href="#2-4-Agent-与-Workflow：从问答升级到自动化" class="headerlink" title="2.4 Agent 与 Workflow：从问答升级到自动化"></a>2.4 Agent 与 Workflow：从问答升级到自动化</h3><p>Workflow 将 RAG 从简单的“一问一答”升级为“多步任务”。</p>
+<ul>
+<li><strong>核心组件</strong>：<ul>
+<li><strong>基础节点</strong>：Begin, Answer, Message。</li>
+<li><strong>检索节点</strong>：Retrieval, Rerank, Rewrite（重写查询词）。</li>
+<li><strong>逻辑节点</strong>：Generate, Categorize, Switch, Python Executor。</li>
+</ul>
+</li>
+<li><strong>注意</strong>：若要在 Workflow 中运行 <strong>Python Executor</strong> 节点进行自定义逻辑计算，必须部署 <strong>Sandbox Executor Manager</strong> 服务，否则代码将无法执行。</li>
+<li><strong>设计原则</strong>：<strong>Workflow 优先，Agent 其次</strong>。能用固定流程解决的，就不要让模型自由发挥，以确保结果的一致性。</li>
+</ul>
+<h3 id="2-5-Memory：实现长期协作记忆"><a href="#2-5-Memory：实现长期协作记忆" class="headerlink" title="2.5 Memory：实现长期协作记忆"></a>2.5 Memory：实现长期协作记忆</h3><p>Memory 将对话转为可检索的结构化记忆，存入 <code>DOC_ENGINE</code>（ES 或 Infinity）。</p>
+<ul>
+<li><strong>记忆类型</strong>：Raw（原始）、Semantic（语义）、Episodic（情景）、Procedural（流程）。</li>
+<li><strong>读写逻辑</strong>：通过 LLM 自动抽取关键信息，并基于向量相似度召回。</li>
+<li><strong>调参旋钮</strong>：<code>keywords_similarity_weight</code>（文本 vs 向量权重）和 <code>similarity_threshold</code>（阈值控制召回灵活性）。</li>
+</ul>
+<hr>
+<h2 id="3-团队协作与组织管理"><a href="#3-团队协作与组织管理" class="headerlink" title="3. 团队协作与组织管理"></a>3. 团队协作与组织管理</h2><p>RAGFlow 支持多人协作，提供了细粒度的资源管理能力：</p>
+<ul>
+<li><strong>资源共享</strong>：支持团队成员间共享 Dataset 和 Agent。</li>
+<li><strong>Admin 工具链</strong>：<ul>
+<li><strong>Admin UI</strong>：可视化管理用户、修改密码、查看服务状态。</li>
+<li><strong>Admin CLI</strong>：应急时通过命令行管理资源、恢复服务。</li>
+</ul>
+</li>
+<li><strong>权限边界</strong>：企业版支持更高级的模型和助理共享功能。</li>
+</ul>
+<hr>
+<h2 id="4-架构设计与生产部署"><a href="#4-架构设计与生产部署" class="headerlink" title="4. 架构设计与生产部署"></a>4. 架构设计与生产部署</h2><h3 id="4-1-核心组件概览"><a href="#4-1-核心组件概览" class="headerlink" title="4.1 核心组件概览"></a>4.1 核心组件概览</h3><p>基于 <code>docker-compose</code> 的标准部署包含：</p>
+<ul>
+<li><strong>存储层</strong>：MySQL（元数据）、Elasticsearch&#x2F;Infinity（文档引擎）、MinIO（对象存储）。</li>
+<li><strong>中间件</strong>：Redis&#x2F;Valkey（任务队列）。</li>
+<li><strong>计算层</strong>：RAGFlow API、Admin Server、Worker（处理解析任务）、Sandbox Executor Manager（可选，代码执行沙箱）。</li>
+</ul>
+<h3 id="4-2-部署实战"><a href="#4-2-部署实战" class="headerlink" title="4.2 部署实战"></a>4.2 部署实战</h3><ul>
+<li><strong>快速启动</strong>：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 进入 docker 目录并启动 (默认 CPU 模式)</span></span><br><span class="line"><span class="built_in">cd</span> ragflow/docker</span><br><span class="line">docker compose up -d</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p><strong>生产化思路：Web 与 Worker 分离</strong><br>解析任务（Worker）极为消耗资源，建议将其部署在带有 GPU 的节点上，而 Web&#x2F;API 则部署在常规节点，实现负载隔离。</p>
+</li>
+<li><p><strong>GPU 加速解析</strong>：<br>如果需要 GPU 加速，在 <code>.env</code> 中设置 <code>DEVICE=gpu</code>。对于自定义环境，建议使用 <code>uv</code> 管理依赖，并安装匹配 CUDA 版本的 <code>torch</code>。</p>
+</li>
+</ul>
+<h3 id="4-3-部署-Sandbox-Executor-实现-Workflow-代码运行"><a href="#4-3-部署-Sandbox-Executor-实现-Workflow-代码运行" class="headerlink" title="4.3 部署 Sandbox Executor (实现 Workflow 代码运行)"></a>4.3 部署 Sandbox Executor (实现 Workflow 代码运行)</h3><p>如果你需要使用 Workflow 中的 <code>Python Executor</code> 运行自定义代码，必须额外部署沙箱环境：<br>当前ragflow 沙箱依赖 gVisor 提供内核级隔离，请确保宿主机已安装。如果使用pod sidecar的方式部署的话，需要构建支持gVisor的Dind容器。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> docker:<span class="number">27</span>-dind</span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apk add --no-cache curl bash</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> curl -Lo /usr/local/bin/runsc https://storage.googleapis.com/gvisor/releases/release/latest/x86_64/runsc &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    <span class="built_in">chmod</span> +x /usr/local/bin/runsc</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">mkdir</span> -p /etc/docker &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    <span class="built_in">echo</span> <span class="string">&#x27;&#123; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">        &quot;runtimes&quot;: &#123; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">            &quot;runsc&quot;: &#123; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">                &quot;path&quot;: &quot;/usr/local/bin/runsc&quot; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">            &#125; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">        &#125; \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">    &#125;&#x27;</span> &gt; /etc/docker/daemon.json</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">2375</span> <span class="number">2376</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="string">&quot;dockerd-entrypoint.sh&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-可观测性与运维"><a href="#4-4-可观测性与运维" class="headerlink" title="4.4 可观测性与运维"></a>4.4 可观测性与运维</h3><ul>
+<li><strong>健康检查</strong>：访问 <code>/v1/system/healthz</code> 接口进行监控接入。</li>
+<li><strong>全链路追踪（Tracing）</strong>：集成 <strong>Langfuse</strong>。无需修改代码，只需在后台配置 Key，即可实时监控检索、重排、生成的完整链路。</li>
+<li><strong>安全性</strong>：<strong>严禁使用默认密码</strong>。务必修改 <code>.env</code> 中的 <code>MYSQL_PASSWORD</code>、<code>MINIO_PASSWORD</code> 等敏感配置。</li>
+</ul>
+<hr>
+<h2 id="5-选型建议与对比"><a href="#5-选型建议与对比" class="headerlink" title="5. 选型建议与对比"></a>5. 选型建议与对比</h2><table>
+<thead>
+<tr>
+<th align="left">维度</th>
+<th align="left">RAGFlow</th>
+<th align="left">Dify</th>
+<th align="left">LangChain &#x2F; LlamaIndex</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>核心优势</strong></td>
+<td align="left"><strong>复杂文档解析、可追溯性</strong></td>
+<td align="left">应用搭建、工作流编排</td>
+<td align="left">研发灵活性、高度可组合</td>
+</tr>
+<tr>
+<td align="left"><strong>适用团队</strong></td>
+<td align="left">追求检索效果、有运维能力</td>
+<td align="left">追求快速上线、业务优先</td>
+<td align="left">深度研发、自研平台</td>
+</tr>
+<tr>
+<td align="left"><strong>主要挑战</strong></td>
+<td align="left">部署较重、解析耗时较长</td>
+<td align="left">RAG 深度调节受限</td>
+<td align="left">维护成本高、需补齐运维面</td>
+</tr>
+</tbody></table>
+<p><strong>推荐路径</strong>：</p>
+<ul>
+<li>如果文档包含大量表格、公式或扫描件：<strong>必选 RAGFlow</strong>。</li>
+<li>如果需要一个全能的 AI 应用平台：<strong>优先 Dify</strong>。</li>
+<li>如果需要集成到现有成熟系统作为 RAG 引擎：<strong>RAGFlow &#x2F; 自研</strong>。</li>
+</ul>
+<hr>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6. 总结"></a>6. 总结</h2><p>RAGFlow 是一个“硬核”的 RAG 引擎。它不追求花哨的 UI，而是通过 DeepDoc 把数据底座打扎实，通过可观测性把 RAG 链路变得透明。在生产化过程中，建议将解析任务视作独立的计算任务进行治理，并充分利用其可追溯能力来构建业务闭环。</p>
+<hr>
+<h2 id="相关资源"><a href="#相关资源" class="headerlink" title="相关资源"></a>相关资源</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/infiniflow/ragflow">RAGFlow GitHub Repository</a></li>
+<li><a target="_blank" rel="noopener" href="https://ragflow.io/docs/v0.22.1/">官方 0.22.1 文档中心</a></li>
+<li><a target="_blank" rel="noopener" href="https://ragflow.io/docs/v0.22.1/tracing">Langfuse 追踪配置指南</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/f3be144d72f7.html">https://xhua.eu.org/posts/f3be144d72f7.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/rag/">RAG</a><a class="post-meta__tags" href="/tags/agent/">Agent</a><a class="post-meta__tags" href="/tags/ragflow/">RAGFlow</a><a class="post-meta__tags" href="/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/">知识库</a><a class="post-meta__tags" href="/tags/%E8%BF%90%E7%BB%B4/">运维</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/9e579dee3c9a77be8fbf6096f6c6e836159ab13adc00214775fd08d50a159fa8.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用"><img class="cover" src="https://img.xhua.eu.org/68658d9962fcadac50f2aeada47d66c20bebfa94d25f209bcb103bdba65cb749.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</div></div><div class="info-2"><div class="info-item-1">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用随着 Apple Silicon (M1&#x2F;M2&#x2F;M3&#x2F;M4) 芯片的普及，Mac 已经成为一个强大的 AI 开发工作站。凭借其统一内存架构 (Unified Memory Architecture)，Mac 能够处理比同等配置显卡更大的模型。本文将介绍如何在 Mac 上使用 MLX 框架高效微调大语言模型（如 Qwen、Llama、Mistral 等），并探讨微调在不同业务场景中的应用。 一、 核心概念解析在开始动手之前，我们需要理解几个关键的技术术语。 1. 什么是微调 (Fine-tuning)？微调是在预训练模型（Base Model）的基础上，使用特定领域的数据进行进一步训练。就像是一个已经读完大学的“通才”，通过学习法律卷宗，变成了一位“律师”。 2. SFT (监督微调)SFT (Supervised Fine-Tuning) 是最常用的微调方式。它通过 (Input, Output) 对来教导模型如何响应指令。  编程场景示例:  输入: “帮我写一个 Pyth...</div></div></div></a><a class="pagination-related" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程"><img class="cover" src="https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">排障记录：删除Namespace olm一直Terminating的处理过程</div></div><div class="info-2"><div class="info-item-1">引言在集群日常维护中，删除一个 Namespace 看起来是“删掉一堆资源”的简单动作，但如果控制面无法完成资源发现（discovery），或某些资源的 finalizers 无法被对应控制器清理，Namespace 就会长期卡在 Terminating。 本文记录一次删除 olm Namespace 失败的排障过程：先是 NamespaceDeletionDiscoveryFailure，解决后又卡在 ClusterServiceVersion（CSV）清理阶段，最终通过移除 CSV 的 finalizer 完成删除。文末附一套可复用的排查清单与风险提示。  警告：olm 相关资源通常属于 Operator Lifecycle Manager（OLM）核心组件。生产集群中不建议随意删除；本文的“强制移除 finalizer &#x2F; 删除 APIService”属于应急手段，务必理解影响范围后再执行。  现象：Namespace olm 一直 Terminating删除 olm 后一直停留在 Terminating，查看 Namespace 状态发现： 123456Disc...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b0a1603977e7.html" title="生产级大语言模型平台系统设计：多期落地方案与实践"><img class="cover" src="https://img.xhua.eu.org/0c48a51774caee38ab8195ab16d9895325b3056f41cb0b06ee3bff5c009bc2d4.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-18</div><div class="info-item-2">生产级大语言模型平台系统设计：多期落地方案与实践</div></div><div class="info-2"><div class="info-item-1">背景与目标随着大语言模型在企业内的应用场景不断扩展，单一模型服务或简单的 API + 网关 架构已经难以满足生产环境下的多租户管理、资源隔离、安全合规、可观测性以及快速迭代等要求。企业需要一套生产级别的大语言模型平台系统，以平台化的方式统一承载模型推理、Agent 编排、MCP 工具生态及 RAG 检索能力。 本文面向有一定 DevOps&#x2F;平台工程基础的读者，设计一套可生产落地的大语言模型平台，从整体架构到关键模块拆解，涵盖：  模型部署与运行时管理 多集群 &#x2F; 多云资源管理与调度 监控、日志、链路追踪与容量管理 安全与访问控制 RAG 平台 Agent 平台 MCP（Model Context Protocol）生态集成 平台运维与发布管理  并按照优先级划分为多期落地路线，便于企业按阶段实施。  本文更偏向平台架构设计与关键实现要点，不绑定某个具体云厂商，可结合 Kubernetes、Service Mesh、向量数据库等基础设施实施。  多期落地规划概览为了降低一次性建设的复杂度，建议将大模型平台拆分为多期，逐步演进：  一期（核心推理与基础运维能力，必...</div></div></div></a><a class="pagination-related" href="/posts/475a94dfb51a.html" title="LangChain框架入门与实践：组件详解、使用场景与示例"><img class="cover" src="https://img.xhua.eu.org/9fc1cdf8c8977cbf80c76c219e1b45cd8838a4300c9634013138eac9dedeef93.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-09</div><div class="info-item-2">LangChain框架入门与实践：组件详解、使用场景与示例</div></div><div class="info-2"><div class="info-item-1">背景与目标读者LangChain 是一个面向大型语言模型（Large Language Models, LLM）应用开发的开源框架，由 Harrison Chase 于 2022 年发布，并在 2023 年成立公司后快速发展。它通过统一的抽象与模块化组件，帮助开发者高效构建复杂的 AI 应用，如聊天机器人、文档问答（RAG）、智能代理（Agent）与自动摘要等。 本文面向有一定 Python 基础、希望系统了解并快速上手 LangChain 的工程师与技术爱好者，覆盖核心组件、常见应用场景与可运行示例代码。  LangChain 是什么，为什么需要它？ 统一接口：屏蔽不同模型与服务的差异（如 OpenAI、Hugging Face、本地模型等），提供一致的调用方式。 组件化设计：围绕模型、提示（Prompt）、链（Chain）、代理（Agent）、记忆（Memory）、索引（Indexes&#x2F;Retriever）等模块化组合，便于扩展与维护。 工程化能力：提供可观测（Callbacks）、持久化（Checkpointers&#x2F;Message History）、工具...</div></div></div></a><a class="pagination-related" href="/posts/3ce7fb915f3c.html" title="LightRAG：轻量级检索增强生成系统详解"><img class="cover" src="https://img.xhua.eu.org/57deb8c28c2131d70e8ca4a62d8fbdf542a722f639d2faef875a761dc2efe28a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-13</div><div class="info-item-2">LightRAG：轻量级检索增强生成系统详解</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的快速发展，如何让AI系统能够访问和处理大量外部知识成为了一个关键挑战。检索增强生成（Retrieval-Augmented Generation，RAG）技术应运而生，而LightRAG作为一个轻量级且高效的RAG系统，通过结合知识图谱和向量检索技术，为企业级知识管理和智能问答提供了优秀的解决方案。 LightRAG 简介LightRAG是一个现代化的检索增强生成系统，专注于提供高质量的问答和知识管理功能。该系统最大的特点是将传统的向量检索与知识图谱技术相结合，实现了更精准和上下文相关的信息检索。 核心特性 轻量级设计：优化的架构设计，降低资源消耗 多模态支持：同时支持向量检索和图谱检索 多存储后端：兼容Neo4j、PostgreSQL、Faiss等多种存储系统 多模型支持：支持OpenAI、Hugging Face、Ollama等主流LLM 生产就绪：提供完整的API接口和Web UI界面 高并发处理：支持并发索引和查询操作  系统架构设计LightRAG采用分层模块化架构，确保了系统的可扩展性和维护性。 整体架构LightRAG的架构分为索引（Ind...</div></div></div></a><a class="pagination-related" href="/posts/e0a2af663124.html" title="SRE MCP Tools：运维工程师的AI助手工具箱"><img class="cover" src="https://img.xhua.eu.org/e16beb5e1fd69876853b76d350682f3eb62d53d60bd29d2b5dd0307b1bb62f80.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">SRE MCP Tools：运维工程师的AI助手工具箱</div></div><div class="info-2"><div class="info-item-1">引言在现代互联网时代，站点可靠性工程（SRE）已成为确保服务稳定运行的核心实践。随着系统复杂性的不断增加，运维工程师需要管理的工具和平台也越来越多。从监控告警到事件响应，从部署管理到成本优化，每个环节都需要专业的工具支持。 但是，在面对海量的监控数据、复杂的告警规则、频繁的部署需求时，传统的手工操作已经无法满足现代运维的需求。这时，MCP（Model Context Protocol）工具的出现，为SRE工程师提供了全新的解决方案。 今天，我将为大家介绍一套完整的SRE MCP Tools工具箱，涵盖监控可观测性、部署编排、事件响应、数据库管理等多个方面，帮助运维工程师构建智能化的运维体系。 什么是SRE MCP Tools？SRE MCP Tools是一套基于模型上下文协议（MCP）的运维工具集合，它允许AI助手直接与各种运维工具和平台进行集成，实现自动化的运维操作。通过这些工具，运维工程师可以使用自然语言与AI助手交互，让AI帮助完成复杂的运维任务。 核心优势 🚨 快速发现问题：自动化监控和告警，第一时间发现系统异常 🔧 快速解决问题：自动化故障响应和修复，减少人工干预 ...</div></div></div></a><a class="pagination-related" href="/posts/05696bb73c9b.html" title="从零构建RAG文档问答系统：技术栈与实现方案详解"><img class="cover" src="https://img.xhua.eu.org/9c3e0a3e1e6b76eb0b4376ad2609349f0aa2b06b15f0ae7881c4431cc3c253e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-11</div><div class="info-item-2">从零构建RAG文档问答系统：技术栈与实现方案详解</div></div><div class="info-2"><div class="info-item-1">从零构建RAG文档问答系统：技术栈与实现方案详解引言在人工智能快速发展的今天，如何让AI模型基于特定文档内容进行准确回答，成为了一个重要的技术挑战。传统的问答系统往往存在”幻觉”问题，即模型会生成看似合理但实际不准确的信息。为了解决这个问题，我们构建了一个基于RAG（Retrieval-Augmented Generation）技术的文档问答系统。 本文将详细介绍这个项目的技术栈选择、架构设计、实现方案以及开发过程中的关键决策。 项目概述项目源代码: https://github.com/xhuaustc/rag-qa-system    我们的RAG文档问答系统具有以下核心特性：  🔍 多格式文档支持: PDF、DOCX、Markdown、TXT等 🤖 多LLM后端: Ollama、OpenAI、Azure OpenAI 📝 智能文档分块: 支持中英文混合文本的智能分块 🔗 向量检索: 基于ChromaDB的高效向量检索 💬 智能问答: 基于文档内容的智能问答 ⚙️ 灵活配置: 支持环境变量和代码配置 🛠️ 模块化设计: 清晰的模块分离和扩展性  技术栈选择核心框架...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#RAGFlow-%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%E5%88%B0%E7%94%9F%E4%BA%A7%E5%8C%96%E9%83%A8%E7%BD%B2%E8%BF%90%E7%BB%B4%E5%85%A8%E6%94%BB%E7%95%A5"><span class="toc-text">RAGFlow 使用指南：从深度解析到生产化部署运维全攻略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%BC%95%E8%A8%80%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9-RAGFlow%EF%BC%9F"><span class="toc-text">1. 引言：为什么选择 RAGFlow？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90"><span class="toc-text">2. 核心功能深度解析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E7%9F%A5%E8%AF%86%E5%BA%93%EF%BC%88Datasets%EF%BC%89%E4%B8%8E-DeepDoc-%E8%A7%A3%E6%9E%90"><span class="toc-text">2.1 知识库（Datasets）与 DeepDoc 解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%90%9C%E7%B4%A2%E4%B8%8E%E5%AF%B9%E8%AF%9D%EF%BC%9AAI-Search-vs-AI-Chat"><span class="toc-text">2.2 搜索与对话：AI Search vs AI Chat</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-Chat-Assistant%EF%BC%9A%E9%9D%A2%E5%90%91%E4%B8%9A%E5%8A%A1%E7%9A%84%E5%85%A5%E5%8F%A3"><span class="toc-text">2.3 Chat Assistant：面向业务的入口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-Agent-%E4%B8%8E-Workflow%EF%BC%9A%E4%BB%8E%E9%97%AE%E7%AD%94%E5%8D%87%E7%BA%A7%E5%88%B0%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="toc-text">2.4 Agent 与 Workflow：从问答升级到自动化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-Memory%EF%BC%9A%E5%AE%9E%E7%8E%B0%E9%95%BF%E6%9C%9F%E5%8D%8F%E4%BD%9C%E8%AE%B0%E5%BF%86"><span class="toc-text">2.5 Memory：实现长期协作记忆</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C%E4%B8%8E%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86"><span class="toc-text">3. 团队协作与组织管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E4%B8%8E%E7%94%9F%E4%BA%A7%E9%83%A8%E7%BD%B2"><span class="toc-text">4. 架构设计与生产部署</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E6%A6%82%E8%A7%88"><span class="toc-text">4.1 核心组件概览</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E9%83%A8%E7%BD%B2%E5%AE%9E%E6%88%98"><span class="toc-text">4.2 部署实战</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E9%83%A8%E7%BD%B2-Sandbox-Executor-%E5%AE%9E%E7%8E%B0-Workflow-%E4%BB%A3%E7%A0%81%E8%BF%90%E8%A1%8C"><span class="toc-text">4.3 部署 Sandbox Executor (实现 Workflow 代码运行)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E4%B8%8E%E8%BF%90%E7%BB%B4"><span class="toc-text">4.4 可观测性与运维</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE%E4%B8%8E%E5%AF%B9%E6%AF%94"><span class="toc-text">5. 选型建议与对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E6%80%BB%E7%BB%93"><span class="toc-text">6. 总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%BA%90"><span class="toc-text">相关资源</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

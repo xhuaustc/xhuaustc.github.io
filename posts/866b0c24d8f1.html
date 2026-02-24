@@ -1,0 +1,446 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift之服务网格Istio | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="什么是服务网格？服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。 Istio是什么？Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift之服务网格Istio">
+<meta property="og:url" content="https://xhua.eu.org/posts/866b0c24d8f1.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="什么是服务网格？服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。 Istio是什么？Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.641Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift之服务网格Istio",
+  "url": "https://xhua.eu.org/posts/866b0c24d8f1.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.641Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/866b0c24d8f1.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift之服务网格Istio',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift之服务网格Istio</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift之服务网格Istio</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.641Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-446ecfa3826c2ba1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Openshift Istio"></p>
+<h2 id="什么是服务网格？"><a href="#什么是服务网格？" class="headerlink" title="什么是服务网格？"></a>什么是服务网格？</h2><p>服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。</p>
+<h2 id="Istio是什么？"><a href="#Istio是什么？" class="headerlink" title="Istio是什么？"></a>Istio是什么？</h2><p>Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部署的服务建立网络，该网络具有负载均衡、服务间认证、监控等功能，而不需要对服务的代码做任何改动。想要让服务支持 Istio，只需要在您的环境中部署一个特殊的 sidecar，使用 Istio 控制平面功能配置和管理代理，拦截微服务之间的所有网络通信。</p>
+<h2 id="Istio能做什么？"><a href="#Istio能做什么？" class="headerlink" title="Istio能做什么？"></a>Istio能做什么？</h2><p>Istio 提供了一个完整的解决方案，通过为整个服务网格提供行为洞察和操作控制来满足微服务应用程序的多样化需求。它在服务网络中统一提供了许多关键功能：</p>
+<ul>
+<li>流量管理。控制服务之间的流量和API调用的流向，使得调用更可靠，并使网络在恶劣情况下更加健壮。</li>
+<li>服务身份和安全。为网格中的服务提供可验证身份，并提供保护服务流量的能力，使其可以在不同可信度的网络上流转。</li>
+<li>策略执行。将组织策略应用于服务之间的互动，确保访问策略得以执行，资源在消费者之间良好分配。可以通过通过配置网格而不是修改应用程序代码来完成策略的更改。</li>
+<li>遥测：了解服务之间的依赖关系，以及它们之间流量的本质和流向，从而提供快速识别问题的能力。</li>
+</ul>
+<h2 id="Istio的基本架构"><a href="#Istio的基本架构" class="headerlink" title="Istio的基本架构"></a>Istio的基本架构</h2><p>Istio 服务网格逻辑上分为数据平面和控制平面。</p>
+<ul>
+<li>Envoy（数据平面Proxy）</li>
+<li>Mixer(负责在服务网格上执行访问控制和使用策略，并从 Envoy 代理和其他服务收集遥测数据。)</li>
+<li>Pilot(Envoy sidecar 提供服务发现功能，为智能路由（例如 A&#x2F;B 测试、金丝雀部署等）和弹性（超时、重试、熔断器等）提供流量管理功能。)</li>
+<li>Citadel(通过内置身份和凭证管理可以提供强大的服务间和最终用户身份验证。)</li>
+</ul>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-bd1c964fc107321c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/8600" alt="Istio架构图"></p>
+<h2 id="什么是Red-Hat-OpenShift服务网格？"><a href="#什么是Red-Hat-OpenShift服务网格？" class="headerlink" title="什么是Red Hat OpenShift服务网格？"></a>什么是Red Hat OpenShift服务网格？</h2><ul>
+<li>Red Hat OpenShift服务网格是一个平台，它提供了对服务网格的行为监控和操作，提供了连接、保护和监控微服务应用程序的统一方式。</li>
+<li>基于开源Istio项目，Red Hat OpenShift服务网格在现有的应用程序上添加了一个透明层，而不需要对服务代码进行任何更改。通过在整个环境中部署一个特殊的sidecar proxy，拦截微服务之间的所有网络通信，通过使用控制平面的配置，管理服务网格，可以达到服务的网络控制。</li>
+<li>Red Hat OpenShift Service Mesh能够简单地实现服务发现、负载均衡、服务间的认证、故障恢复、统计、监控，同时也提供了复杂的功能，包括A&#x2F;B测试、金丝雀发布、速率限制、访问控制和端到端认证。</li>
+<li>当前最新版本的Openshift Service Mesh为 Technology Preview 7（技术预览版7）。它增了3scale Istio Adapter，同时相关软件服务版本为Istio 1.11、Kiali 0.13.x、Jaeger 1.9.0</li>
+</ul>
+<h2 id="Red-Hat-OpenShift-Service-Mesh当前问题"><a href="#Red-Hat-OpenShift-Service-Mesh当前问题" class="headerlink" title="Red Hat OpenShift Service Mesh当前问题"></a>Red Hat OpenShift Service Mesh当前问题</h2><ul>
+<li>Red Hat OpenShift Service Mesh不支持网络多租户</li>
+<li>Red Hat OpenShift Service Mesh不支持IPV6</li>
+<li>istio-init容器需要有privileged权限，或者至少需要root并具有NET管理功能。因为istio-init需要配置Pod中的iptable规则来拦截网络连接。</li>
+</ul>
+<h2 id="安装Red-Hat-OpenShift-Service-MeshOpenShift-Service-Mesh"><a href="#安装Red-Hat-OpenShift-Service-MeshOpenShift-Service-Mesh" class="headerlink" title="安装Red Hat OpenShift Service MeshOpenShift Service Mesh"></a>安装Red Hat OpenShift Service MeshOpenShift Service Mesh</h2><h4 id="准备环境"><a href="#准备环境" class="headerlink" title="准备环境"></a>准备环境</h4><ul>
+<li>Openshift 3.11</li>
+<li>oc命令行工具与Openshift集群版本匹配</li>
+<li>执行oc命令时，必须使用集群管理员账号</li>
+<li>配置所有Node节点系统参数</li>
+<li>安装的版本为0.7.0</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cat /etc/sysctl.d/99-elasticsearch.conf </span><br><span class="line">vm.max_map_count = 262144</span><br><span class="line">$ sysctl vm.max_map_count=262144</span><br></pre></td></tr></table></figure>
+<ul>
+<li>相关镜像</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/istio-operator:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/openshift-ansible:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/citadel:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/proxyv2:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/pilot:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/mixer:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/galley:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/sidecar-injector:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/proxy-init:0.7.0</span><br><span class="line">registry.access.redhat.com/openshift-istio-tech-preview/kiali:0.13.0</span><br><span class="line">registry.access.redhat.com/distributed-tracing-tech-preview/jaeger-elasticsearch:5.6.10</span><br><span class="line">registry.access.redhat.com/distributed-tracing-tech-preview/jaeger-agent:1.9.0</span><br><span class="line">registry.access.redhat.com/distributed-tracing-tech-preview/jaeger-collector:1.9.0</span><br><span class="line">registry.access.redhat.com/distributed-tracing-tech-preview/jaeger-query:1.9.0</span><br><span class="line">docker.io/grafana/grafana:5.4.0</span><br><span class="line">docker.io/prom/prometheus:v2.3.1</span><br></pre></td></tr></table></figure>
+<h4 id="开始安装"><a href="#开始安装" class="headerlink" title="开始安装"></a>开始安装</h4><ol>
+<li>创建CRD文件<code>istio-installation.yaml</code></li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">$ cat istio-installation.yaml</span><br><span class="line">apiVersion: &quot;istio.openshift.com/v1alpha1&quot;</span><br><span class="line">kind: &quot;Installation&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;istio-installation&quot;</span><br><span class="line">spec:</span><br><span class="line">  deployment_type: openshift</span><br><span class="line">  istio:</span><br><span class="line">    authentication: true</span><br><span class="line">    community: false</span><br><span class="line">    prefix: registry.access.redhat.com/openshift-istio-tech-preview/</span><br><span class="line">    version: 0.7.0</span><br><span class="line">  jaeger:</span><br><span class="line">    prefix: registry.access.redhat.com/distributed-tracing-tech-preview/</span><br><span class="line">    version: 1.9.0</span><br><span class="line">    elasticsearch_memory: 1Gi</span><br><span class="line">  kiali:</span><br><span class="line">    username: username</span><br><span class="line">    password: password</span><br><span class="line">    prefix: registry.access.redhat.com/openshift-istio-tech-preview/</span><br><span class="line">    version: 0.13.0</span><br><span class="line">  launcher:</span><br><span class="line">    openshift:</span><br><span class="line">      user: user</span><br><span class="line">      password: password</span><br><span class="line">    github:</span><br><span class="line">      username: username</span><br><span class="line">      token: token</span><br><span class="line">    catalog:</span><br><span class="line">      filter: booster.mission.metadata.istio</span><br><span class="line">      branch: v71</span><br><span class="line">      repo: https://github.com/fabric8-launcher/launcher-booster-catalog.git</span><br><span class="line">  threeScale:</span><br><span class="line">    enabled: false</span><br><span class="line">    prefix: registry.access.redhat.com/openshift-istio-tech-preview/</span><br><span class="line">    version: 0.2.0</span><br><span class="line">    adapter:</span><br><span class="line">      listenAddr: 3333</span><br><span class="line">      logLevel: info</span><br><span class="line">      logJSON: true</span><br><span class="line">      reportMetrics: true</span><br><span class="line">      metricsPort: 8080</span><br><span class="line">      cacheTTLSeconds: 300</span><br><span class="line">      cacheRefreshSeconds: 180</span><br><span class="line">      cacheEntriesMax: 1000</span><br><span class="line">      cacheRefreshRetries: 1</span><br><span class="line">      allowInsecureConn: false</span><br><span class="line">      clientTimeoutSeconds: 10</span><br></pre></td></tr></table></figure>
+<p><strong>注意</strong><br><code>metadata.name</code>必须是<code>istio-installation</code><br><code>spec.launcher.openshift.user</code>和<code>spec.launcher.openshift.password</code>为openshift集群对应的用户名和密码<br><code>spec.launcher.github.username</code>和<code>spec.launcher.github.token</code>为github对应的账号信息<br>以上是最全的安装，当前也有最简安装的配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cat istio-installation.yaml</span><br><span class="line">apiVersion: &quot;istio.openshift.com/v1alpha1&quot;</span><br><span class="line">kind: &quot;Installation&quot;</span><br><span class="line">metadata:</span><br><span class="line">  name: &quot;istio-installation&quot;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>安装istio operator相关文件准备<br>相关的配置文件在github上<a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/tree/maistra-0.7/istio">https://github.com/Maistra/openshift-ansible/tree/maistra-0.7/istio</a><br>相关文件配置列表如下<br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/cr-full.yaml" title="cr-full.yaml">cr-full.yaml</a><br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/cr-kiali.yaml" title="cr-kiali.yaml">cr-kiali.yaml</a><br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/cr-minimal.yaml" title="cr-minimal.yaml">cr-minimal.yaml</a><br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/istio_community_operator_template.yaml" title="istio_community_operator_template.yaml">istio_community_operator_template.yaml</a><br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/istio_product_operator_template.yaml" title="istio_product_operator_template.yaml">istio_product_operator_template.yaml</a><br><a target="_blank" rel="noopener" href="https://github.com/Maistra/openshift-ansible/blob/maistra-0.7/istio/master-config.patch" title="master-config.patch">master-config.patch</a></li>
+<li>安装istio operator</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc new-project istio-operator</span><br><span class="line">$ oc new-app -f istio_product_operator_template.yaml --param=OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=&lt;master public url&gt; --param=OPENSHIFT_ISTIO_PREFIX=registry.access.redhat.com/openshift-istio-tech-preview/</span><br></pre></td></tr></table></figure>
+<ul>
+<li>OPENSHIFT_ISTIO_MASTER_PUBLIC_URL为openshift集群对外的master地址，例如：<a target="_blank" rel="noopener" href="https://master.example.com:8443/">https://master.example.com:8443</a></li>
+<li>OPENSHIFT_ISTIO_PREFIX为openshift istio的镜像前缀，如果将准备中的镜像都导入到了自己的私有仓库中，就可以使用它换成自己的镜像仓库地址</li>
+</ul>
+<ol start="4">
+<li>验证operator安装是否成功</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ oc logs -n istio-operator $(oc -n istio-operator get pods -l name=istio-operator --output=jsonpath=&#123;.items..metadata.name&#125;)</span><br><span class="line"></span><br><span class="line">time=&quot;2019-02-11T05:28:25Z&quot; level=info msg=&quot;Go Version: go1.9.4&quot;</span><br><span class="line">time=&quot;2019-02-11T05:28:25Z&quot; level=info msg=&quot;Go OS/Arch: linux/amd64&quot;</span><br><span class="line">time=&quot;2019-02-11T05:28:25Z&quot; level=info msg=&quot;operator-sdk Version: 0.0.5+git&quot;</span><br><span class="line">time=&quot;2019-02-11T05:28:25Z&quot; level=info msg=&quot;Metrics service istio-operator created&quot;</span><br><span class="line">time=&quot;2019-02-11T05:28:25Z&quot; level=info msg=&quot;Watching resource istio.openshift.com/v1alpha1, kind Installation, namespace istio-operator, resyncPeriod 0&quot;</span><br><span class="line">time=&quot;2019-02-11T05:33:10Z&quot; level=info msg=&quot;Installing istio for Installation istio-installation&quot;</span><br></pre></td></tr></table></figure>
+<p>有类似如上的输出就说明安装好了。<br>5. 部署控制平面CONTROL PLANE</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">oc create -f istio-installation.yaml -n istio-operator</span><br></pre></td></tr></table></figure>
+<p>其中istio-installation.yaml为第一步创建的文件。<br>该步骤将创建istio-system项目，并调用operator中的ansible任务完成istio的安装。可以通过观察名为openshift-ansible-istio-installer-job的pod的状态，来确认安装的进度，如果它的状态为completed,说明安装完成。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">$ oc get pods -n istio-system</span><br><span class="line">NAME                                          READY     STATUS      RESTARTS   AGE</span><br><span class="line">3scale-istio-adapter-7df4db48cf-sc98s         1/1       Running     0          13s</span><br><span class="line">elasticsearch-0                               1/1       Running     0          29s</span><br><span class="line">grafana-c7f5cc6b6-vg6db                       1/1       Running     0          33s</span><br><span class="line">istio-citadel-d6d6bb7bb-jgfwt                 1/1       Running     0          1m</span><br><span class="line">istio-egressgateway-69448cf7dc-b2qj5          1/1       Running     0          1m</span><br><span class="line">istio-galley-f49696978-q949d                  1/1       Running     0          1m</span><br><span class="line">istio-ingressgateway-7759647fb6-pfpd5         1/1       Running     0          1m</span><br><span class="line">istio-pilot-7595bfd696-plffk                  2/2       Running     0          1m</span><br><span class="line">istio-policy-779454b878-xg7nq                 2/2       Running     2          1m</span><br><span class="line">istio-sidecar-injector-6655b6ffdb-rn69r       1/1       Running     0          1m</span><br><span class="line">istio-telemetry-dd9595888-8xjz2               2/2       Running     2          1m</span><br><span class="line">jaeger-agent-gmk72                            1/1       Running     0          25s</span><br><span class="line">jaeger-collector-7f644df9f5-dbzcv             1/1       Running     1          25s</span><br><span class="line">jaeger-query-6f47bf4777-h4wmh                 1/1       Running     1          25s</span><br><span class="line">kiali-7cc48b6cbb-74gcf                        1/1       Running     0          17s</span><br><span class="line">openshift-ansible-istio-installer-job-fbtfj   0/1       Completed   0          2m</span><br><span class="line">prometheus-5f9fd67f8-r6b86                    1/1       Running     0          1m</span><br><span class="line"></span><br><span class="line">$ oc get pods -n devex</span><br><span class="line">NAME                          READY     STATUS    RESTARTS   AGE</span><br><span class="line">configmapcontroller-1-8rr6w   1/1       Running   0          1m</span><br><span class="line">launcher-backend-2-2wg86      1/1       Running   0          1m</span><br><span class="line">launcher-frontend-2-jxjsd     1/1       Running   0          1m</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>配置master-config，使得应用能够自动注入istio-proxy sidecar<br>在master-config.yaml文件所在目录下新建文件master-config.patch，内容见下面的代码块</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ cd /etc/origin/master/</span><br><span class="line">$ cat master-config.patch</span><br><span class="line">admissionConfig:</span><br><span class="line">  pluginConfig:</span><br><span class="line">    MutatingAdmissionWebhook:</span><br><span class="line">      configuration:</span><br><span class="line">        apiVersion: apiserver.config.k8s.io/v1alpha1</span><br><span class="line">        kubeConfigFile: /dev/null</span><br><span class="line">        kind: WebhookAdmission</span><br><span class="line">    ValidatingAdmissionWebhook:</span><br><span class="line">      configuration:</span><br><span class="line">        apiVersion: apiserver.config.k8s.io/v1alpha1</span><br><span class="line">        kubeConfigFile: /dev/null</span><br><span class="line">        kind: WebhookAdmission</span><br><span class="line">$ cp -p master-config.yaml master-config.yaml.prepatch</span><br><span class="line">$ oc ex config patch master-config.yaml.prepatch -p &quot;$(cat master-config.patch)&quot; &gt; master-config.yaml</span><br><span class="line">$ /usr/local/bin/master-restart api &amp;&amp; /usr/local/bin/master-restart controllers</span><br></pre></td></tr></table></figure>
+<ol start="7">
+<li>创建自动注入istio-proxy的deployment，需要满足以下两个条件</li>
+</ol>
+<ul>
+<li>所在project下的容器需要privileged与anyuid的scc</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">oc adm policy add-scc-to-user anyuid -z &lt;service account&gt; -n &lt;namespace&gt;</span><br><span class="line">oc adm policy add-scc-to-user privileged -z &lt;service account&gt; -n &lt;namespace&gt;</span><br></pre></td></tr></table></figure>
+<p><service account>默认为default<br><namespace>为需要istio控制的project</p>
+<ul>
+<li>deployment中添加annotations <code>sidecar.istio.io/inject: &quot;true&quot;</code><br>例如</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: sleep</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      annotations:</span><br><span class="line">        sidecar.istio.io/inject: &quot;true&quot;</span><br><span class="line">      labels:</span><br><span class="line">        app: sleep</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: sleep</span><br><span class="line">        image: tutum/curl</span><br><span class="line">        command: [&quot;/bin/sleep&quot;,&quot;infinity&quot;]</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br></pre></td></tr></table></figure>
+
+<h2 id="卸载Red-Hat-OpenShift-Service-Mesh"><a href="#卸载Red-Hat-OpenShift-Service-Mesh" class="headerlink" title="卸载Red Hat OpenShift Service Mesh"></a>卸载Red Hat OpenShift Service Mesh</h2><ol>
+<li>删除自定义资源</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc delete -n istio-operator installation istio-installation</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>删除operator</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc process -f istio_product_operator_template.yaml | oc delete -f -</span><br></pre></td></tr></table></figure>
+<h2 id="升级Red-Hat-OpenShift-Service-Mesh"><a href="#升级Red-Hat-OpenShift-Service-Mesh" class="headerlink" title="升级Red Hat OpenShift Service Mesh"></a>升级Red Hat OpenShift Service Mesh</h2><p>目前Red Hat OpenShift Service Mesh不支持升级，如果需要使用新版本的Service Mesh，只能通过先卸载再安装的方式。</p>
+<h2 id="实战Bookinfo"><a href="#实战Bookinfo" class="headerlink" title="实战Bookinfo"></a>实战Bookinfo</h2><p>目前Istio的测试例子几本都是用Bookinfo这个应用，它也是istio项目官方的测试例子，同样Red Hat Openshift Service Mesh也是用这个例子来做演练。<br>这个Bookinfo应用包含有4个微服务，分别是：</p>
+<ul>
+<li>productpage，该页面会去调用details和reviews服务</li>
+<li>details，该服务获取书的信息</li>
+<li>reviews，该服务包括对书的评价，它会调用rating服务</li>
+<li>ratings，该服务包括书的评分<br>同时reviews服务有三个版本：<br>v1版本不调用 ratings服务<br>v2版本，调用ratings服务，同时给评星显示五个黑色的星星<br>v3版本，调用ratings服务，同时给评星显示五个红色的星星</li>
+</ul>
+<h4 id="安装Bookinfo应用"><a href="#安装Bookinfo应用" class="headerlink" title="安装Bookinfo应用"></a>安装Bookinfo应用</h4><ol>
+<li>为bookinfo应用单独创建一个project</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc new-project myproject</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为myproject项目的容器默认添加privileged与anyuid scc</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc adm policy add-scc-to-user anyuid -z default -n myproject</span><br><span class="line">$ oc adm policy add-scc-to-user privileged -z default -n myproject</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>在myproject项目下部署应用</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc apply -n myproject -f https://raw.githubusercontent.com/Maistra/bookinfo/master/bookinfo.yaml</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>为bookinfo创建ingress gateway，使得外部能够访问到bookinfo服务</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc apply -n myproject -f https://raw.githubusercontent.com/Maistra/bookinfo/master/bookinfo-gateway.yaml</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>获得ingress gateway的请求域名</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route -n istio-system istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.host&#125;&#x27;</span><br><span class="line">istio-ingressgateway-istio-system.apps.example.com</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>浏览器中访问：<a target="_blank" rel="noopener" href="http://istio-ingressgateway-istio-system.apps.example.com/productpage">http://istio-ingressgateway-istio-system.apps.example.com/productpage</a></li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-4bcaa6d154fbd260.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="ratings v1"></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-12a901d86bf6225d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="ratings v2"></p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-68b12208ca6c828c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="ratings v3"></p>
+<p>至此，Bookinfo应用已成功部署好了。</p>
+<h4 id="添加额外的规则"><a href="#添加额外的规则" class="headerlink" title="添加额外的规则"></a>添加额外的规则</h4><ol>
+<li>不启用mutual TLS</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">$ curl -o destination-rule-all.yaml https://raw.githubusercontent.com/istio/istio/release-1.0/samples/bookinfo/networking/destination-rule-all.yaml</span><br><span class="line">$ oc apply -f destination-rule-all.yaml</span><br><span class="line"></span><br><span class="line">$ cat destination-rule-all.yaml</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: productpage</span><br><span class="line">spec:</span><br><span class="line">  host: productpage</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: reviews</span><br><span class="line">spec:</span><br><span class="line">  host: reviews</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">  - name: v3</span><br><span class="line">    labels:</span><br><span class="line">      version: v3</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: ratings</span><br><span class="line">spec:</span><br><span class="line">  host: ratings</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">  - name: v2-mysql</span><br><span class="line">    labels:</span><br><span class="line">      version: v2-mysql</span><br><span class="line">  - name: v2-mysql-vm</span><br><span class="line">    labels:</span><br><span class="line">      version: v2-mysql-vm</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: details</span><br><span class="line">spec:</span><br><span class="line">  host: details</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>启用mutual TLS</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">$ curl -o destination-rule-all-mtls.yaml https://raw.githubusercontent.com/istio/istio/release-1.0/samples/bookinfo/networking/destination-rule-all-mtls.yaml</span><br><span class="line">$ oc apply -f destination-rule-all-mtls.yaml</span><br><span class="line"></span><br><span class="line">$ cat destination-rule-all-mtls.yaml</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: productpage</span><br><span class="line">spec:</span><br><span class="line">  host: productpage</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    tls:</span><br><span class="line">      mode: ISTIO_MUTUAL</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: reviews</span><br><span class="line">spec:</span><br><span class="line">  host: reviews</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    tls:</span><br><span class="line">      mode: ISTIO_MUTUAL</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">  - name: v3</span><br><span class="line">    labels:</span><br><span class="line">      version: v3</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: ratings</span><br><span class="line">spec:</span><br><span class="line">  host: ratings</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    tls:</span><br><span class="line">      mode: ISTIO_MUTUAL</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">  - name: v2-mysql</span><br><span class="line">    labels:</span><br><span class="line">      version: v2-mysql</span><br><span class="line">  - name: v2-mysql-vm</span><br><span class="line">    labels:</span><br><span class="line">      version: v2-mysql-vm</span><br><span class="line">---</span><br><span class="line">apiVersion: networking.istio.io/v1alpha3</span><br><span class="line">kind: DestinationRule</span><br><span class="line">metadata:</span><br><span class="line">  name: details</span><br><span class="line">spec:</span><br><span class="line">  host: details</span><br><span class="line">  trafficPolicy:</span><br><span class="line">    tls:</span><br><span class="line">      mode: ISTIO_MUTUAL</span><br><span class="line">  subsets:</span><br><span class="line">  - name: v1</span><br><span class="line">    labels:</span><br><span class="line">      version: v1</span><br><span class="line">  - name: v2</span><br><span class="line">    labels:</span><br><span class="line">      version: v2</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>列出所有的目标规则</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc get destinationrules -o yaml</span><br></pre></td></tr></table></figure>
+<h4 id="删除Bookinfo应用"><a href="#删除Bookinfo应用" class="headerlink" title="删除Bookinfo应用"></a>删除Bookinfo应用</h4><ol>
+<li>下载清除Bookinfo的脚本代码</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ curl -o cleanup.sh https://raw.githubusercontent.com/Maistra/bookinfo/master/cleanup.sh &amp;&amp; chmod +x ./cleanup.sh</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>执行cleanup.sh</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ./cleanup.sh</span><br><span class="line">namespace ? [default] myproject</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>确认清除完成</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ oc get virtualservices -n myproject</span><br><span class="line">No resources found.</span><br><span class="line">$ oc get gateway -n myproject</span><br><span class="line">No resources found.</span><br><span class="line">$ oc get pods -n myproject</span><br><span class="line">No resources found.</span><br></pre></td></tr></table></figure>
+<h2 id="RedHat-Openshift-Service-Mesh扩展组件"><a href="#RedHat-Openshift-Service-Mesh扩展组件" class="headerlink" title="RedHat Openshift Service Mesh扩展组件"></a>RedHat Openshift Service Mesh扩展组件</h2><p>**RedHat Openshift Service Mesh的全量安装，还包括以下组件：分布式追踪Jaeger、Istio可视化工具Kiali、Prometheus监控及Grafana监控展示。下面分别介绍各个组件的功能与使用。<br>请确保上一步安装的Bookinfo应用正常访问。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-9e5f49204f159071.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Openshift Service Mesh扩展组件"></p>
+<h4 id="分布式追踪Jaeger"><a href="#分布式追踪Jaeger" class="headerlink" title="分布式追踪Jaeger"></a>分布式追踪Jaeger</h4><p>Jaeger是Uber开源的分布式跟踪系统，现在已经成为CNCF的开源项目，其灵感来源于Google的Dapper和twitter的Zipkin，从2016年开始该系统在Uber内部得到了广泛的应用。 Jaege在设计上参考了Google的Dapper。</p>
+<ol>
+<li>访问并刷新几次bookinfo页面:<a target="_blank" rel="noopener" href="http://istio-ingressgateway-istio-system.apps.example.com/productpage">http://istio-ingressgateway-istio-system.apps.example.com/productpage</a></li>
+<li>打开jaeger页面</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route -n istio-system jaeger-query -o jsonpath=&#x27;&#123;.spec.host&#125;&#x27;</span><br><span class="line">jaeger-query-istio-system.apps.example.com</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>浏览器访问<a target="_blank" rel="noopener" href="https://jaeger-query-istio-system.apps.example.com/">https://jaeger-query-istio-system.apps.example.com</a></li>
+<li>jaeger页面的左侧Service选择productpage，并点击<code>Find Traces</code>按钮，将在右侧显示轨迹列表</li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-6d0ccd8aab18fb7c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="jaeger主页"><br>5. 点击列表中的一条轨迹，将打开该轨迹的详细视图</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-c9d6ed080338b04e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="轨迹详细视图"></p>
+<ul>
+<li>从上图中可以看出，该追踪轨迹是由多个嵌套块组成。每个嵌套都对应一个Bookinfo服务的调用，所有的这些都是为了响应<code>/productpage</code>请求而执行的。</li>
+<li>该请求总共耗时46.23ms,详情服务（detail）耗时1.76ms，评论服务（reviews）耗时32.28ms，评分服务（ratings）耗时17.41ms。</li>
+<li>每个请求都是由调用客户端与服务端组成，例如：productpage details.myproject.svc.cluster.local:9080，即表示productpage服务调用了details服务。</li>
+</ul>
+<h4 id="Kiali"><a href="#Kiali" class="headerlink" title="Kiali"></a>Kiali</h4><p>Kiali为网格管理和可观察性提供了良好的用户体验的可视化工具。Kiali 提供以下功能：</p>
+<ul>
+<li>服务拓扑图</li>
+<li>分布式跟踪</li>
+<li>指标度量收集和图标</li>
+<li>配置校验</li>
+<li>健康检查和显示</li>
+<li>服务发现</li>
+</ul>
+<ol>
+<li>查看Kiali域名地址</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route -n istio-system kiali -o jsonpath=&#x27;&#123;.spec.host&#125;&#x27;</span><br><span class="line">kiali-istio-system.apps.example.com</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>浏览器访问 <a target="_blank" rel="noopener" href="https://kiali-istio-system.apps.example.com/">https://kiali-istio-system.apps.example.com</a></li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-9dddde967b1c3524.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="kiali登录界面"><br>使用安装istio时的istio-installation.yaml中配置的kiali的用户名和密码登录，如：username，password<br>3. OverView页面</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-a60b2d56e5abbdd1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="kiali overview页面"><br>可查看各project的运行状况。<br>4. Graph页面<br>在Graph页面上选择Namespace为myproject，可查看bookinfo这个项目的微服务关系图。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-54e9b5d9cd7062e6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Kiali Graph页面"></p>
+<ul>
+<li>在Graph页面中能够看到一个包含所有微服务的图表，在页面上可以方便看到这些服务的相互交互关系。</li>
+<li>点击Legend按钮，可以查看每个节点图标代表的含义</li>
+<li>鼠标悬停在某个节点上，能够看到该节点相关的调用关系</li>
+<li>点击节点，展示该节点相关调用关系的详情</li>
+</ul>
+<ol start="5">
+<li>Service页面<br>Service页面可以查看项目的微服务列表，及服务相关的额外信息，如：健康状态、请求错误率。</li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-9ff1aed27b233342.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Kiali Service页面"></p>
+<ul>
+<li>点击具体服务，可查看服务的详情信息</li>
+</ul>
+<ol start="6">
+<li>Istio Config 页面<br>Istio Config页面，可以查看当前运行的Istio配置信息，包括熔断器，规则、网关、故障注入、路由、路由规则、虚拟服务。</li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-bd21055912f7d082.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Istio Config 页面"></p>
+<ul>
+<li>点击具体的信息条目查看详情</li>
+<li>只能查看，不能修改</li>
+</ul>
+<ol start="7">
+<li>分布式追踪器链接<br>分布式追踪器链接,跳转到对应的Jaeger页面</li>
+</ol>
+<h4 id="Prometheus监控"><a href="#Prometheus监控" class="headerlink" title="Prometheus监控"></a>Prometheus监控</h4><p>Prometheus是一个开源的服务工具包，可以按指定的时间间隔从配置的目标中获取监控数据，同时它还支持告警。经常使用Grafana来展示相关数据。</p>
+<ol>
+<li>查看Prometheus页面地址</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route -n istio-system prometheus -o jsonpath=&#x27;&#123;.spec.host&#125;&#x27;</span><br><span class="line">prometheus-istio-system.apps.example.com</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>浏览器访问<a target="_blank" rel="noopener" href="http://prometheus-istio-system.apps.example.com/">http://prometheus-istio-system.apps.example.com</a></li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-dc80a9760d6d6568.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Prometheus监控"></p>
+<h4 id="Grafana监控展示"><a href="#Grafana监控展示" class="headerlink" title="Grafana监控展示"></a>Grafana监控展示</h4><p>Grafana是一个开源的监控展示工具，它可以与很多不同的数据源连接，如Mysql, InfluxDB,Prometheus等。图表丰富美观，同时也有告警功能。</p>
+<ol>
+<li>查看Grafana页面地址</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ oc get route -n istio-system grafana -o jsonpath=&#x27;&#123;.spec.host&#125;&#x27;</span><br><span class="line">grafana-istio-system.apps.example.com</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>浏览器访问<a target="_blank" rel="noopener" href="http://grafana-istio-system.apps.example.com/">http://grafana-istio-system.apps.example.com</a></li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-3d3215177d9bbf53.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Grafana监控展示"></p>
+<ol start="3">
+<li>选择Istio Mesh Dashboard查看网格服务监控情况</li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-038479faa6ade121.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Istio Mesh Dashboard"></p>
+<ol start="4">
+<li>在Istio Mesh Dashboard页面下点击相关Service，查看对应Service的监控详情</li>
+</ol>
+<p><img src="https://upload-images.jianshu.io/upload_images/5793257-d248bca5187a7a45.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="Istio Service详情"></p>
+<ol start="5">
+<li>RedHat Openshift Service Mesh Grafana默认的监控图表，不仅仅只有应用服务的监控，同时也有Istio相关组件的监控(Mixer,Pilot)。所有的监控图表如下：</li>
+</ol>
+<ul>
+<li>Istio Galley Dashboard</li>
+<li>Istio Mesh Dashboard</li>
+<li>Istio Performance Dashboard</li>
+<li>Istio Service Dashboard</li>
+<li>Istio Workload Dashboard</li>
+<li>Mixer Dashboard</li>
+<li>Pilot Dashboard</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>Istio 目前是在服务网格的产品中最为火热的产品，目前最新版本为1.1.0</li>
+<li>随着服务网格越来越火热，相关的周边应用也不断出现，分布式追踪工具Jaeger，Istio配置管理工具Kiali及监控Prometheus与Grafana也让服务网格更加的完整，可靠。</li>
+<li>与之前Openshift 3.10版本手动安装Istio相比，在Openshift 3.11版本通过Istio-operator安装部署，更加方便也更加稳定。</li>
+</ul>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/servicemesh-install/servicemesh-install.html">Openshift官方文档之：Service Mesh</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/866b0c24d8f1.html">https://xhua.eu.org/posts/866b0c24d8f1.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/3069f6ea7b88.html" title="Openshift使用OpenLDAP作为统一用户认证"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift使用OpenLDAP作为统一用户认证</div></div><div class="info-2"><div class="info-item-1"> 背景Openshift默认的用户认证是使用HTPasswd，之前的部署方式也都是使用了HTPasswd的方式。其实Openshift官方默认支持LDAP协议，可以很容易地将OpenLDAP与Openshift进行集成，使用OpenLDAP集中管理用户。 环境 centos 7.4 openshift 3.10 openldap 2.4.44  openldap安装与使用介绍Openshift集群3.9升级到3.10 用户账号配置及验证登录 Openshift中配置验证方式为LDAPPasswordIdentityProvider  LDAP URL说明： 12345678910111213141516ldapurl     = scheme &quot;://&quot; [hostport] [&quot;/&quot;[dn [&quot;?&quot; [attributes] [&quot;?&quot; [scope][&quot;?&quot; [filter] [&quot;?&quot; extensions]]]]]]scheme   = &quot;ldap...</div></div></div></a><a class="pagination-related" href="/posts/82cffe541eda.html" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/67d0da6a2d75.html" title="OpenShift使用HostPath挂载本地目录无权限"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用HostPath挂载本地目录无权限</div></div><div class="info-2"><div class="info-item-1">123456789101112131415161718192021222324252627282930313233apiVersion: v1kind: DeploymentConfigmetadata:  name: centos  namespace: monitorspec:  replicas: 1  template:    metadata:      labels:        busybox: &#x27;true&#x27;    spec:      containers:        - args:          image: &#x27;centos:v2&#x27;          imagePullPolicy: IfNotPresent          name: busybox          securityContext:            runAsUser: 1000            runAsGroup: 2000  #该特性在k8s 1.10之后才支持，本环境未支持，参见Support for RunAsGrou...</div></div></div></a><a class="pagination-related" href="/posts/169c43378e6a.html" title="Openshift开启Calico-BGP-与-OVS性能PK"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift开启Calico-BGP-与-OVS性能PK</div></div><div class="info-2"><div class="info-item-1"> Openshift网络方案选择 大家都知道K8S在网络插件选择上有很多种，默认的是Flannel，但是它的性能一般，互联网中使用最多的是Calico BGP，因为它的性能非常好。 而对于Openshift，官方只支持ovs一种网络方案，同时RedHat也表示ovs在Openshift平台上运行是最合适的。但是ovs的网络性能怎样呢？因为ovs方案对数据需要进行加包，解包的过程，性能肯定是会受影响的。同时经过实测，在万兆网络中的损耗近50%，虽然在绝大部分场景下ovs已经够用了，但是但是跟几乎无损耗的Calico BGP比起来还是逊色不少。 很庆幸，Openshift虽然官方不作Calico网络方案的支持，但还是很体贴地把它加入到了Openshift的安装脚本中，从而让大家都能方便地使用Calico网络方案，包括IPIP及BGP方案。  安装步骤 在ansible hosts中设置关闭openshift默认的sdn方案，开启calico方案&#x2F;etc&#x2F;ansible&#x2F;hosts  1234[OSEv3:vars]os_sdn_network_plugi...</div></div></div></a><a class="pagination-related" href="/posts/fa53403b8d6b.html" title="OpenShift通过EgressIP为Project设置对外的出口IP"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift通过EgressIP为Project设置对外的出口IP</div></div><div class="info-2"><div class="info-item-1">集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]&#125;&#x27; 支持指定特定的IP段 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressCIDRs&quot;: [&quot;192.168.1.0/24&quot;]&#125;&#x27;  为项目指定静态出口IP  1$ oc patch netnamespace &lt;project-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.100&quot;]&#125;&#x27;  OpenShift容器平...</div></div></div></a><a class="pagination-related" href="/posts/496c2ceb4f14.html" title="OpenShift-Router通过分片实现不同环境网络南北流量隔离"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router通过分片实现不同环境网络南北流量隔离</div></div><div class="info-2"><div class="info-item-1">在企业实践中，通常会部署多个OpenShift集群：开发测试、生产等。每个集群都是独立的，通过物理资源进行隔离。这种方式管理简单，易于理解，但是消耗的资源更多，每个集群都需要额外的控制节点及运维节点。有没有办法，使不同环境运行在同一个集群上，并且它们之间实现隔离呢？答案是可以的。对于不同的环境，做好资源隔离，我们需要对计算资源——宿主机做好规划，同时还需要对网络做好规划。宿主机的隔离，可以通过给主机添加label的方法，规划pod的调度。本篇中，我们只针对网络Route部分做好开发测试环境与生产环境的隔离。 OpenShift集群Route分片机制大家都知道OpenShift管理南北流量是通过Route来实现的，所谓的Route本质就是一个Haproxy&#x2F;Nginx服务，与K8S中的Ingress类似。默认情况下，OpenShift集群的Router是全局共用的，也就是说，在创建新的Route资源、Pod更新或者证书更新时，所有的OpenShift Router Pod都会更新Haproxy&#x2F;Nginx的配置，并重新加载。所有的Route后台应用可以通过任一R...</div></div></div></a><a class="pagination-related" href="/posts/35c6bb7f80fa.html" title="Docker安装镜像仓库的三种方法"><img class="cover" src="https://img.xhua.eu.org/b678a09edb80191e7636d1f1066712b24403c636aa618de6056639815f0c3d0e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Docker安装镜像仓库的三种方法</div></div><div class="info-2"><div class="info-item-1">一、docker-distribution 安装docker-distribution软件  1yum install docker-distribution  配置registry&#x2F;config.yml文件  123456789101112# /etc/docker-distribution/registry/config.ymlversion: 0.1log:fields:service: registrystorage:cache:layerinfo: inmemoryfilesystem:rootdirectory: /var/lib/registryhttp:addr: :5000  启动docker-distribution服务  12systemctl start docker-distributionsystemctl enable docker-distribution 运维 二、运行容器registry直接运行docker run 12docker run -d -p 5000:5000 -v /data/registry:/var/lib/regi...</div></div></div></a><a class="pagination-related" href="/posts/4dad4d371af1.html" title="Openshift-Jenkins共享并支持pipeline"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Jenkins共享并支持pipeline</div></div><div class="info-2"><div class="info-item-1"> 诉求 使用Openshift的pipeline构建流水线，在Openshift上统一管理 使用一个公共的Jenkins，而不需要每个Project下都创建一个新的jenkins。以节约资源 在创建新的项目时，尽量少地改动完成以上的需求  问题openshift默认的BuildConfig如果设置为jenkinsPipelineStrategy策略，将会在当前project下查找jenkins服务，如果没有的话，将会使用master-config中设置的默认jenkins模板所在位置在当前project下创建一个新的jenkins应用，便使用该应用执行相关的pipeline。每个项目都会创建一个新的jenkins。 解决思路 禁用Openshfit默认的JenkinsPipeline机制，不在当前项目下面自动创建Jenkins 在创建一个新的project时，创建名为jenkins的service，同时将它指向公共的Jenkins服务。 同时为了在当前Project界面下能够跳转到jenkins的界面，再创建一个jenkins Route，支持跳转到jenkins进行查看运行日志...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC%EF%BC%9F"><span class="toc-text">什么是服务网格？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Istio%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-text">Istio是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Istio%E8%83%BD%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-text">Istio能做什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Istio%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84"><span class="toc-text">Istio的基本架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFRed-Hat-OpenShift%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC%EF%BC%9F"><span class="toc-text">什么是Red Hat OpenShift服务网格？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Red-Hat-OpenShift-Service-Mesh%E5%BD%93%E5%89%8D%E9%97%AE%E9%A2%98"><span class="toc-text">Red Hat OpenShift Service Mesh当前问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Red-Hat-OpenShift-Service-MeshOpenShift-Service-Mesh"><span class="toc-text">安装Red Hat OpenShift Service MeshOpenShift Service Mesh</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E7%8E%AF%E5%A2%83"><span class="toc-text">准备环境</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%AE%89%E8%A3%85"><span class="toc-text">开始安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B8%E8%BD%BDRed-Hat-OpenShift-Service-Mesh"><span class="toc-text">卸载Red Hat OpenShift Service Mesh</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7Red-Hat-OpenShift-Service-Mesh"><span class="toc-text">升级Red Hat OpenShift Service Mesh</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E6%88%98Bookinfo"><span class="toc-text">实战Bookinfo</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Bookinfo%E5%BA%94%E7%94%A8"><span class="toc-text">安装Bookinfo应用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E9%A2%9D%E5%A4%96%E7%9A%84%E8%A7%84%E5%88%99"><span class="toc-text">添加额外的规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4Bookinfo%E5%BA%94%E7%94%A8"><span class="toc-text">删除Bookinfo应用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RedHat-Openshift-Service-Mesh%E6%89%A9%E5%B1%95%E7%BB%84%E4%BB%B6"><span class="toc-text">RedHat Openshift Service Mesh扩展组件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E8%BF%BD%E8%B8%AAJaeger"><span class="toc-text">分布式追踪Jaeger</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Kiali"><span class="toc-text">Kiali</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Prometheus%E7%9B%91%E6%8E%A7"><span class="toc-text">Prometheus监控</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Grafana%E7%9B%91%E6%8E%A7%E5%B1%95%E7%A4%BA"><span class="toc-text">Grafana监控展示</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

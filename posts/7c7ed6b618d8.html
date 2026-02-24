@@ -1,0 +1,664 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenClaw：开源AI代理与技能生态系统详解 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 O">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenClaw：开源AI代理与技能生态系统详解">
+<meta property="og:url" content="https://xhua.eu.org/posts/7c7ed6b618d8.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 O">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg">
+<meta property="article:published_time" content="2026-02-05T10:08:08.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.627Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="开源">
+<meta property="article:tag" content="自动化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenClaw：开源AI代理与技能生态系统详解",
+  "url": "https://xhua.eu.org/posts/7c7ed6b618d8.html",
+  "image": "https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg",
+  "datePublished": "2026-02-05T10:08:08.000Z",
+  "dateModified": "2026-02-24T07:27:54.627Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/7c7ed6b618d8.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenClaw：开源AI代理与技能生态系统详解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenClaw：开源AI代理与技能生态系统详解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenClaw：开源AI代理与技能生态系统详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.627Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。</p>
+<p>OpenClaw 的核心理念是通过 <strong>Gateway 网关架构</strong>，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。</p>
+<h2 id="OpenClaw-是什么？"><a href="#OpenClaw-是什么？" class="headerlink" title="OpenClaw 是什么？"></a>OpenClaw 是什么？</h2><p>OpenClaw 是一个<strong>适用于任何操作系统的 AI 智能体 Gateway（网关）</strong>，它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。</p>
+<h3 id="Gateway-架构"><a href="#Gateway-架构" class="headerlink" title="Gateway 架构"></a>Gateway 架构</h3><p>OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">聊天应用 + 插件 → Gateway → Pi 智能体</span><br><span class="line">                        ↓</span><br><span class="line">                    CLI / Web 控制界面 / macOS 应用 / 移动节点</span><br></pre></td></tr></table></figure>
+
+<p>Gateway 网关负责：</p>
+<ul>
+<li>管理多个聊天渠道的连接</li>
+<li>路由消息到不同的智能体</li>
+<li>维护会话状态</li>
+<li>处理媒体文件</li>
+<li>提供统一的管理界面</li>
+</ul>
+<h3 id="核心特性"><a href="#核心特性" class="headerlink" title="核心特性"></a>核心特性</h3><h4 id="1-本地化部署，保护隐私"><a href="#1-本地化部署，保护隐私" class="headerlink" title="1. 本地化部署，保护隐私"></a>1. 本地化部署，保护隐私</h4><p>OpenClaw 运行在用户的本地计算机上（支持 Mac、Windows 和 Linux），这意味着：</p>
+<ul>
+<li>所有对话历史、上下文和偏好设置都存储在本地</li>
+<li>不依赖云端服务器，数据完全由用户控制</li>
+<li>符合隐私保护的最高标准</li>
+</ul>
+<h4 id="2-多渠道-Gateway-网关"><a href="#2-多渠道-Gateway-网关" class="headerlink" title="2. 多渠道 Gateway 网关"></a>2. 多渠道 Gateway 网关</h4><p>OpenClaw 通过单个 Gateway 进程支持多种消息平台：</p>
+<ul>
+<li><strong>WhatsApp</strong>：通过配对流程连接</li>
+<li><strong>Telegram</strong>：Bot API 集成</li>
+<li><strong>Discord</strong>：Bot 集成</li>
+<li><strong>iMessage</strong>：macOS 本地集成</li>
+<li><strong>插件渠道</strong>：通过扩展包添加 Mattermost 等更多渠道</li>
+</ul>
+<p>这种统一的网关架构让用户可以在任何平台上与 AI 助手交互，所有消息都通过同一个 Gateway 处理。</p>
+<h4 id="3-强大的系统访问能力"><a href="#3-强大的系统访问能力" class="headerlink" title="3. 强大的系统访问能力"></a>3. 强大的系统访问能力</h4><p>OpenClaw 拥有广泛的系统权限：</p>
+<ul>
+<li><strong>文件系统访问</strong>：读写文件、管理目录</li>
+<li><strong>终端执行</strong>：运行命令、执行脚本</li>
+<li><strong>浏览器控制</strong>：自动化网页浏览、数据提取</li>
+<li><strong>代码执行</strong>：编写和运行程序</li>
+</ul>
+<h4 id="4-持久化记忆系统"><a href="#4-持久化记忆系统" class="headerlink" title="4. 持久化记忆系统"></a>4. 持久化记忆系统</h4><p>OpenClaw 能够：</p>
+<ul>
+<li>学习用户的偏好和习惯</li>
+<li>记住历史对话上下文</li>
+<li>根据过往经验优化响应</li>
+<li>跨会话保持连续性</li>
+</ul>
+<h4 id="5-24-7-自主运行"><a href="#5-24-7-自主运行" class="headerlink" title="5. 24&#x2F;7 自主运行"></a>5. 24&#x2F;7 自主运行</h4><p>通过后台任务和 Webhook 机制，OpenClaw 可以：</p>
+<ul>
+<li>定时执行任务</li>
+<li>监控事件触发</li>
+<li>自动处理日常事务</li>
+<li>无需用户干预即可完成工作</li>
+</ul>
+<h4 id="6-丰富的工具集成"><a href="#6-丰富的工具集成" class="headerlink" title="6. 丰富的工具集成"></a>6. 丰富的工具集成</h4><p>OpenClaw 可以与各种个人工具无缝集成：</p>
+<ul>
+<li>日历管理（Google Calendar、Apple Calendar）</li>
+<li>任务管理（Todoist、Things、Notion）</li>
+<li>邮件处理（Gmail、Outlook）</li>
+<li>财务软件</li>
+<li>开发工具</li>
+</ul>
+<h2 id="OpenClaw-的实际应用场景"><a href="#OpenClaw-的实际应用场景" class="headerlink" title="OpenClaw 的实际应用场景"></a>OpenClaw 的实际应用场景</h2><h3 id="日常任务自动化"><a href="#日常任务自动化" class="headerlink" title="日常任务自动化"></a>日常任务自动化</h3><ul>
+<li>管理邮件收件箱，自动分类和回复</li>
+<li>安排日程，处理会议邀请</li>
+<li>航班值机提醒</li>
+<li>账单支付提醒</li>
+</ul>
+<h3 id="开发工作流"><a href="#开发工作流" class="headerlink" title="开发工作流"></a>开发工作流</h3><ul>
+<li>代码审查和重构建议</li>
+<li>自动化测试执行</li>
+<li>文档生成</li>
+<li>Git 操作自动化</li>
+</ul>
+<h3 id="信息管理"><a href="#信息管理" class="headerlink" title="信息管理"></a>信息管理</h3><ul>
+<li>网页内容提取和总结</li>
+<li>RSS 订阅管理</li>
+<li>知识库构建</li>
+<li>笔记整理</li>
+</ul>
+<h3 id="智能家居控制"><a href="#智能家居控制" class="headerlink" title="智能家居控制"></a>智能家居控制</h3><ul>
+<li>通过集成 Home Assistant 控制智能设备</li>
+<li>自动化场景设置</li>
+<li>设备状态监控</li>
+</ul>
+<h2 id="OpenClaw-Skills：可扩展的能力系统"><a href="#OpenClaw-Skills：可扩展的能力系统" class="headerlink" title="OpenClaw Skills：可扩展的能力系统"></a>OpenClaw Skills：可扩展的能力系统</h2><p>OpenClaw 的真正强大之处在于其**技能（Skills）**系统。技能是可以扩展 OpenClaw 能力的插件，用户可以通过安装第三方技能来增强代理的功能。</p>
+<h3 id="什么是-Skills？"><a href="#什么是-Skills？" class="headerlink" title="什么是 Skills？"></a>什么是 Skills？</h3><p>Skills 遵循 Anthropic 开发的 <strong>Agent Skill 规范</strong>，这是一个开放标准，用于 AI 编码助手的能力扩展。每个 Skill 本质上是一个包含以下内容的包：</p>
+<ul>
+<li><code>SKILL.md</code>：技能的描述、使用说明和触发条件</li>
+<li>可执行脚本或工具</li>
+<li>配置文件</li>
+<li>依赖声明</li>
+</ul>
+<h3 id="ClawHub：技能市场"><a href="#ClawHub：技能市场" class="headerlink" title="ClawHub：技能市场"></a>ClawHub：技能市场</h3><p>ClawHub 是 OpenClaw 的官方技能市场，截至 2026 年 2 月，已经托管了<strong>超过 3000+ 社区构建的技能</strong>。用户可以通过简单的命令安装技能：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx clawhub@latest install &lt;skill-slug&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Awesome-OpenClaw-Skills：精选技能集合"><a href="#Awesome-OpenClaw-Skills：精选技能集合" class="headerlink" title="Awesome OpenClaw Skills：精选技能集合"></a>Awesome OpenClaw Skills：精选技能集合</h2><p><a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-openclaw-skills">awesome-openclaw-skills</a> 是一个社区维护的精选技能列表，从 ClawHub 的 3000+ 技能中筛选出了<strong>1715+ 高质量技能</strong>，并按类别进行了组织。</p>
+<h3 id="筛选标准"><a href="#筛选标准" class="headerlink" title="筛选标准"></a>筛选标准</h3><p>该列表排除了：</p>
+<ul>
+<li>加密货币&#x2F;区块链&#x2F;DeFi 相关技能</li>
+<li>垃圾或批量生成的内容</li>
+<li>重复的技能</li>
+<li>非英文描述的技能</li>
+<li>潜在的风险或有害技能</li>
+</ul>
+<h3 id="主要技能分类"><a href="#主要技能分类" class="headerlink" title="主要技能分类"></a>主要技能分类</h3><h4 id="1-Web-前端开发（46-个技能）"><a href="#1-Web-前端开发（46-个技能）" class="headerlink" title="1. Web &amp; 前端开发（46 个技能）"></a>1. Web &amp; 前端开发（46 个技能）</h4><ul>
+<li><code>frontend-design</code>：创建生产级前端界面</li>
+<li><code>webapp-testing</code>：使用 Playwright 进行 Web 应用测试</li>
+<li><code>remotion-video-toolkit</code>：使用 React 创建视频</li>
+<li><code>vercel-deploy</code>：部署应用到 Vercel</li>
+</ul>
+<h4 id="2-编码代理-IDE（55-个技能）"><a href="#2-编码代理-IDE（55-个技能）" class="headerlink" title="2. 编码代理 &amp; IDE（55 个技能）"></a>2. 编码代理 &amp; IDE（55 个技能）</h4><ul>
+<li><code>claude-code-skill</code>：MCP（模型上下文协议）集成</li>
+<li><code>cursor-agent</code>：Cursor CLI 代理</li>
+<li><code>mcp-builder</code>：创建 MCP 服务器</li>
+<li><code>skill-creator</code>：创建新技能的指南</li>
+</ul>
+<h4 id="3-Git-GitHub（34-个技能）"><a href="#3-Git-GitHub（34-个技能）" class="headerlink" title="3. Git &amp; GitHub（34 个技能）"></a>3. Git &amp; GitHub（34 个技能）</h4><ul>
+<li><code>github-pr</code>：获取、预览、合并和测试 GitHub PR</li>
+<li><code>git-sync</code>：自动同步本地更改到远程仓库</li>
+<li><code>conventional-commits</code>：使用约定式提交规范</li>
+</ul>
+<h4 id="4-DevOps-云服务（144-个技能）"><a href="#4-DevOps-云服务（144-个技能）" class="headerlink" title="4. DevOps &amp; 云服务（144 个技能）"></a>4. DevOps &amp; 云服务（144 个技能）</h4><ul>
+<li><code>kubernetes</code>：Kubernetes 和 OpenShift 集群管理</li>
+<li><code>docker-diag</code>：Docker 容器高级日志分析</li>
+<li><code>aws-infra</code>：基于聊天的 AWS 基础设施辅助</li>
+<li><code>terraform</code>：基础设施即代码</li>
+</ul>
+<h4 id="5-浏览器-自动化（69-个技能）"><a href="#5-浏览器-自动化（69-个技能）" class="headerlink" title="5. 浏览器 &amp; 自动化（69 个技能）"></a>5. 浏览器 &amp; 自动化（69 个技能）</h4><ul>
+<li><code>browser-use</code>：基于云的浏览器自动化</li>
+<li><code>playwright-cli</code>：通过 Playwright CLI 进行浏览器自动化</li>
+<li><code>firecrawl-skills</code>：网页抓取和爬取</li>
+</ul>
+<h4 id="6-AI-LLM（159-个技能）"><a href="#6-AI-LLM（159-个技能）" class="headerlink" title="6. AI &amp; LLM（159 个技能）"></a>6. AI &amp; LLM（159 个技能）</h4><ul>
+<li><code>gemini-deep-research</code>：使用 Gemini 进行复杂研究</li>
+<li><code>agent-memory</code>：AI 代理的持久化内存系统</li>
+<li><code>prompt-engineering-expert</code>：提示工程专家</li>
+<li><code>multi-viewpoint-debates</code>：从多个角度辩论决策</li>
+</ul>
+<h4 id="7-搜索-研究（148-个技能）"><a href="#7-搜索-研究（148-个技能）" class="headerlink" title="7. 搜索 &amp; 研究（148 个技能）"></a>7. 搜索 &amp; 研究（148 个技能）</h4><ul>
+<li><code>perplexity</code>：通过 Perplexity API 进行 AI 驱动的搜索</li>
+<li><code>exa</code>：通过 Exa AI API 进行神经网络搜索</li>
+<li><code>arxiv-watcher</code>：搜索和总结 ArXiv 论文</li>
+<li><code>youtube-summarizer</code>：获取 YouTube 转录并生成结构化摘要</li>
+</ul>
+<h4 id="8-生产力-任务管理（93-个技能）"><a href="#8-生产力-任务管理（93-个技能）" class="headerlink" title="8. 生产力 &amp; 任务管理（93 个技能）"></a>8. 生产力 &amp; 任务管理（93 个技能）</h4><ul>
+<li><code>todoist</code>：管理 Todoist 任务和项目</li>
+<li><code>notion</code>：Notion API 集成</li>
+<li><code>obsidian</code>：Obsidian vault 管理</li>
+<li><code>linear</code>：Linear 问题跟踪</li>
+</ul>
+<h4 id="9-通信（58-个技能）"><a href="#9-通信（58-个技能）" class="headerlink" title="9. 通信（58 个技能）"></a>9. 通信（58 个技能）</h4><ul>
+<li><code>telegram-bot</code>：构建和管理 Telegram 机器人</li>
+<li><code>discord</code>：通过 Discord 工具控制 Discord</li>
+<li><code>slack</code>：Slack 集成</li>
+<li><code>email-manager-lite</code>：通过任何 IMAP&#x2F;SMTP 提供商发送和读取邮件</li>
+</ul>
+<h4 id="10-健康-健身（35-个技能）"><a href="#10-健康-健身（35-个技能）" class="headerlink" title="10. 健康 &amp; 健身（35 个技能）"></a>10. 健康 &amp; 健身（35 个技能）</h4><ul>
+<li><code>garmin-health</code>：Garmin 数据（睡眠、HRV、VO2 max）</li>
+<li><code>oura-ring</code>：Oura Ring 准备度和睡眠评分</li>
+<li><code>strava</code>：Strava 活动分析</li>
+<li><code>workout-logger</code>：记录锻炼、跟踪进度</li>
+</ul>
+<h3 id="技能安装示例"><a href="#技能安装示例" class="headerlink" title="技能安装示例"></a>技能安装示例</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装前端设计技能</span></span><br><span class="line">npx clawhub@latest install frontend-design</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 GitHub PR 管理技能</span></span><br><span class="line">npx clawhub@latest install github-pr</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Kubernetes 管理技能</span></span><br><span class="line">npx clawhub@latest install kubernetes</span><br></pre></td></tr></table></figure>
+
+<h3 id="手动安装"><a href="#手动安装" class="headerlink" title="手动安装"></a>手动安装</h3><p>你也可以手动将技能文件夹复制到以下位置之一：</p>
+<ul>
+<li><strong>全局</strong>：<code>~/.openclaw/skills/</code></li>
+<li><strong>工作区</strong>：<code>&lt;project&gt;/skills/</code></li>
+</ul>
+<p>优先级：工作区 &gt; 本地 &gt; 内置</p>
+<h2 id="安全考虑"><a href="#安全考虑" class="headerlink" title="安全考虑"></a>安全考虑</h2><p>虽然 OpenClaw 和其技能生态系统非常强大，但也存在一些安全隐患需要注意：</p>
+<h3 id="1-配置暴露风险"><a href="#1-配置暴露风险" class="headerlink" title="1. 配置暴露风险"></a>1. 配置暴露风险</h3><p>网络安全研究人员发现，某些配置可能会在网络上暴露私人消息、凭证和 API 密钥。因此，在配置 OpenClaw 时需要特别注意：</p>
+<ul>
+<li>不要将敏感配置文件提交到公共仓库</li>
+<li>使用环境变量管理 API 密钥</li>
+<li>定期审查访问权限</li>
+</ul>
+<h3 id="2-恶意技能风险"><a href="#2-恶意技能风险" class="headerlink" title="2. 恶意技能风险"></a>2. 恶意技能风险</h3><p>2026 年 2 月，安全研究人员在 ClawHub 上发现了<strong>341 个恶意技能</strong>，这些技能通过社会工程学攻击窃取用户数据。攻击方式包括：</p>
+<ul>
+<li>伪装成合法技能（如 “solana-wallet-tracker”）</li>
+<li>在文档中包含虚假的前置条件</li>
+<li>诱导用户下载安装脚本</li>
+<li>部署木马程序（如 Atomic Stealer）</li>
+</ul>
+<h3 id="安全最佳实践"><a href="#安全最佳实践" class="headerlink" title="安全最佳实践"></a>安全最佳实践</h3><ol>
+<li><strong>审查技能代码</strong>：在安装前查看技能的源代码</li>
+<li><strong>使用可信来源</strong>：优先选择官方或社区验证的技能</li>
+<li><strong>最小权限原则</strong>：只授予必要的权限</li>
+<li><strong>定期更新</strong>：保持 OpenClaw 和技能的最新版本</li>
+<li><strong>监控活动</strong>：定期检查系统日志和网络活动</li>
+<li><strong>使用安全扫描工具</strong>：如 <code>skillguard</code>、<code>skillvet</code> 等技能可以扫描其他技能的安全性</li>
+</ol>
+<h2 id="OpenClaw-的技术架构"><a href="#OpenClaw-的技术架构" class="headerlink" title="OpenClaw 的技术架构"></a>OpenClaw 的技术架构</h2><h3 id="核心组件架构图"><a href="#核心组件架构图" class="headerlink" title="核心组件架构图"></a>核心组件架构图</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">flowchart LR</span><br><span class="line">  A[&quot;聊天应用 + 插件&quot;] --&gt; B[&quot;Gateway 网关&quot;]</span><br><span class="line">  B --&gt; C[&quot;Pi 智能体&quot;]</span><br><span class="line">  B --&gt; D[&quot;CLI&quot;]</span><br><span class="line">  B --&gt; E[&quot;Web 控制界面&quot;]</span><br><span class="line">  B --&gt; F[&quot;macOS 应用&quot;]</span><br><span class="line">  B --&gt; G[&quot;iOS 和 Android 节点&quot;]</span><br></pre></td></tr></table></figure>
+
+<h3 id="Gateway-网关核心功能"><a href="#Gateway-网关核心功能" class="headerlink" title="Gateway 网关核心功能"></a>Gateway 网关核心功能</h3><p>Gateway 是 OpenClaw 的中枢，提供以下核心能力：</p>
+<h4 id="1-多智能体路由"><a href="#1-多智能体路由" class="headerlink" title="1. 多智能体路由"></a>1. 多智能体路由</h4><ul>
+<li>按智能体隔离会话</li>
+<li>按工作区分离上下文</li>
+<li>按发送者创建独立会话</li>
+</ul>
+<h4 id="2-媒体支持"><a href="#2-媒体支持" class="headerlink" title="2. 媒体支持"></a>2. 媒体支持</h4><ul>
+<li>发送和接收图片</li>
+<li>音频文件处理</li>
+<li>文档传输</li>
+</ul>
+<h4 id="3-Web-控制界面"><a href="#3-Web-控制界面" class="headerlink" title="3. Web 控制界面"></a>3. Web 控制界面</h4><ul>
+<li>浏览器仪表板管理</li>
+<li>聊天历史查看</li>
+<li>配置管理</li>
+<li>会话和节点管理</li>
+</ul>
+<h4 id="4-移动节点"><a href="#4-移动节点" class="headerlink" title="4. 移动节点"></a>4. 移动节点</h4><ul>
+<li>iOS 和 Android 节点配对</li>
+<li>Canvas 功能支持</li>
+<li>跨设备同步</li>
+</ul>
+<h3 id="配置系统"><a href="#配置系统" class="headerlink" title="配置系统"></a>配置系统</h3><p>OpenClaw 的配置文件位于 <code>~/.openclaw/openclaw.json</code>，支持：</p>
+<ul>
+<li>渠道白名单配置</li>
+<li>群组提及规则</li>
+<li>智能体路由规则</li>
+<li>安全令牌管理</li>
+</ul>
+<p>示例配置：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;channels&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;whatsapp&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;allowFrom&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;+15555550123&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;groups&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;*&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;requireMention&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span> <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;messages&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;groupChat&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;mentionPatterns&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;@openclaw&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="与其他-AI-代理的比较"><a href="#与其他-AI-代理的比较" class="headerlink" title="与其他 AI 代理的比较"></a>与其他 AI 代理的比较</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>OpenClaw</th>
+<th>AutoGPT</th>
+<th>LangChain Agents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开源</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>本地运行</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>技能市场</td>
+<td>✅ (ClawHub)</td>
+<td>❌</td>
+<td>部分</td>
+</tr>
+<tr>
+<td>多平台消息</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>持久化记忆</td>
+<td>✅</td>
+<td>部分</td>
+<td>部分</td>
+</tr>
+<tr>
+<td>24&#x2F;7 运行</td>
+<td>✅</td>
+<td>部分</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>浏览器控制</td>
+<td>✅</td>
+<td>部分</td>
+<td>部分</td>
+</tr>
+</tbody></table>
+<h2 id="社区与生态系统"><a href="#社区与生态系统" class="headerlink" title="社区与生态系统"></a>社区与生态系统</h2><h3 id="Moltbook：AI-代理的社交网络"><a href="#Moltbook：AI-代理的社交网络" class="headerlink" title="Moltbook：AI 代理的社交网络"></a>Moltbook：AI 代理的社交网络</h3><p>OpenClaw 生态系统还包括 Moltbook，一个专为 AI 代理设计的社交网络平台，代理可以在这里：</p>
+<ul>
+<li>发布更新</li>
+<li>与其他代理互动</li>
+<li>分享经验和知识</li>
+<li>参与社区讨论</li>
+</ul>
+<h3 id="开发者资源"><a href="#开发者资源" class="headerlink" title="开发者资源"></a>开发者资源</h3><ul>
+<li><strong>官方文档（中文）</strong>：<a target="_blank" rel="noopener" href="https://docs.openclaw.ai/zh-CN">docs.openclaw.ai&#x2F;zh-CN</a></li>
+<li><strong>官方文档（英文）</strong>：<a target="_blank" rel="noopener" href="https://docs.openclaw.ai/">docs.openclaw.ai</a></li>
+<li><strong>GitHub 仓库</strong>：<a target="_blank" rel="noopener" href="https://github.com/openclaw">github.com&#x2F;openclaw</a></li>
+<li><strong>Discord 社区</strong>：活跃的开发者和用户社区</li>
+<li><strong>技能开发指南</strong>：详细的技能创建教程</li>
+</ul>
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><p>OpenClaw 项目正在快速发展，未来可能的方向包括：</p>
+<ol>
+<li><strong>更强的安全机制</strong>：改进技能审核流程，防止恶意代码</li>
+<li><strong>更好的多代理协作</strong>：允许多个 OpenClaw 实例协同工作</li>
+<li><strong>企业级功能</strong>：团队协作、权限管理、审计日志</li>
+<li><strong>更丰富的集成</strong>：支持更多第三方服务和平台</li>
+<li><strong>AI 模型优化</strong>：针对特定任务优化模型性能</li>
+<li><strong>跨平台移动端</strong>：iOS 和 Android 原生应用</li>
+</ol>
+<h2 id="如何开始使用-OpenClaw"><a href="#如何开始使用-OpenClaw" class="headerlink" title="如何开始使用 OpenClaw"></a>如何开始使用 OpenClaw</h2><p>OpenClaw 提供多种安装方式，适合不同的使用场景。</p>
+<h3 id="方式一：标准安装（推荐个人使用）"><a href="#方式一：标准安装（推荐个人使用）" class="headerlink" title="方式一：标准安装（推荐个人使用）"></a>方式一：标准安装（推荐个人使用）</h3><h4 id="第-1-步：安装-OpenClaw"><a href="#第-1-步：安装-OpenClaw" class="headerlink" title="第 1 步：安装 OpenClaw"></a>第 1 步：安装 OpenClaw</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g openclaw@latest</span><br></pre></td></tr></table></figure>
+
+<h4 id="第-2-步：新手引导并安装服务"><a href="#第-2-步：新手引导并安装服务" class="headerlink" title="第 2 步：新手引导并安装服务"></a>第 2 步：新手引导并安装服务</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openclaw onboard --install-daemon</span><br></pre></td></tr></table></figure>
+
+<p>这个命令会启动交互式向导，引导你完成初始配置。</p>
+<h4 id="第-3-步：配对渠道并启动-Gateway"><a href="#第-3-步：配对渠道并启动-Gateway" class="headerlink" title="第 3 步：配对渠道并启动 Gateway"></a>第 3 步：配对渠道并启动 Gateway</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配对 WhatsApp（或其他渠道）</span></span><br><span class="line">openclaw channels login</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动 Gateway 网关</span></span><br><span class="line">openclaw gateway --port 18789</span><br></pre></td></tr></table></figure>
+
+<h3 id="方式二：Docker-安装（推荐容器化部署）"><a href="#方式二：Docker-安装（推荐容器化部署）" class="headerlink" title="方式二：Docker 安装（推荐容器化部署）"></a>方式二：Docker 安装（推荐容器化部署）</h3><p>Docker 安装适合需要隔离环境或在 VPS 上运行的场景。</p>
+<h4 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h4><ul>
+<li>✅ 需要隔离的、可丢弃的 Gateway 环境</li>
+<li>✅ 在 VPS 或云服务器上运行</li>
+<li>✅ 需要容器化部署</li>
+<li>❌ 本地开发（标准安装更快）</li>
+</ul>
+<h4 id="快速开始（推荐）"><a href="#快速开始（推荐）" class="headerlink" title="快速开始（推荐）"></a>快速开始（推荐）</h4><p>从 OpenClaw 仓库根目录运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./docker-setup.sh</span><br></pre></td></tr></table></figure>
+
+<p>这个脚本会自动完成：</p>
+<ul>
+<li>构建 Gateway 镜像</li>
+<li>运行新手引导向导</li>
+<li>配置提供商设置</li>
+<li>通过 Docker Compose 启动 Gateway</li>
+<li>生成并保存 Gateway 令牌</li>
+</ul>
+<h4 id="手动安装流程"><a href="#手动安装流程" class="headerlink" title="手动安装流程"></a>手动安装流程</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 构建镜像</span></span><br><span class="line">docker build -t openclaw:<span class="built_in">local</span> -f Dockerfile .</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 运行新手引导</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> openclaw-cli onboard</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 启动 Gateway</span></span><br><span class="line">docker compose up -d openclaw-gateway</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置渠道"><a href="#配置渠道" class="headerlink" title="配置渠道"></a>配置渠道</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># WhatsApp（QR 码）</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> openclaw-cli channels login</span><br><span class="line"></span><br><span class="line"><span class="comment"># Telegram（Bot Token）</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> openclaw-cli channels add --channel telegram --token <span class="string">&quot;&lt;token&gt;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Discord（Bot Token）</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> openclaw-cli channels add --channel discord --token <span class="string">&quot;&lt;token&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="访问控制界面"><a href="#访问控制界面" class="headerlink" title="访问控制界面"></a>访问控制界面</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 获取带令牌的仪表板 URL</span></span><br><span class="line">docker compose run --<span class="built_in">rm</span> openclaw-cli dashboard --no-open</span><br></pre></td></tr></table></figure>
+
+<h4 id="高级配置"><a href="#高级配置" class="headerlink" title="高级配置"></a>高级配置</h4><p><strong>额外挂载目录</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> OPENCLAW_EXTRA_MOUNTS=<span class="string">&quot;<span class="variable">$HOME</span>/.codex:/home/node/.codex:ro,<span class="variable">$HOME</span>/github:/home/node/github:rw&quot;</span></span><br><span class="line">./docker-setup.sh</span><br></pre></td></tr></table></figure>
+
+<p><strong>持久化容器 home 目录</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> OPENCLAW_HOME_VOLUME=<span class="string">&quot;openclaw_home&quot;</span></span><br><span class="line">./docker-setup.sh</span><br></pre></td></tr></table></figure>
+
+<p><strong>安装系统包</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> OPENCLAW_DOCKER_APT_PACKAGES=<span class="string">&quot;ffmpeg build-essential&quot;</span></span><br><span class="line">./docker-setup.sh</span><br></pre></td></tr></table></figure>
+
+<h4 id="智能体沙箱（Docker-隔离）"><a href="#智能体沙箱（Docker-隔离）" class="headerlink" title="智能体沙箱（Docker 隔离）"></a>智能体沙箱（Docker 隔离）</h4><p>OpenClaw 支持在 Docker 容器中运行智能体工具，实现安全隔离：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;agents&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaults&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;sandbox&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;non-main&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;scope&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;workspaceAccess&quot;</span><span class="punctuation">:</span> <span class="string">&quot;none&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;docker&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;image&quot;</span><span class="punctuation">:</span> <span class="string">&quot;openclaw-sandbox:bookworm-slim&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;network&quot;</span><span class="punctuation">:</span> <span class="string">&quot;none&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;readOnlyRoot&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;memory&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1g&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;cpus&quot;</span><span class="punctuation">:</span> <span class="number">1</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>构建沙箱镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scripts/sandbox-setup.sh</span><br></pre></td></tr></table></figure>
+
+<h3 id="方式三：Ansible-自动化安装（推荐生产环境）"><a href="#方式三：Ansible-自动化安装（推荐生产环境）" class="headerlink" title="方式三：Ansible 自动化安装（推荐生产环境）"></a>方式三：Ansible 自动化安装（推荐生产环境）</h3><p>Ansible 安装是<strong>生产服务器的推荐方式</strong>，提供安全优先的自动化部署。</p>
+<h4 id="适用场景-1"><a href="#适用场景-1" class="headerlink" title="适用场景"></a>适用场景</h4><ul>
+<li>✅ 生产环境部署</li>
+<li>✅ 需要安全加固</li>
+<li>✅ VPS&#x2F;云服务器</li>
+<li>✅ 团队协作环境</li>
+</ul>
+<h4 id="一键安装"><a href="#一键安装" class="headerlink" title="一键安装"></a>一键安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -fsSL https://raw.githubusercontent.com/openclaw/openclaw-ansible/main/install.sh | bash</span><br></pre></td></tr></table></figure>
+
+<h4 id="安装内容"><a href="#安装内容" class="headerlink" title="安装内容"></a>安装内容</h4><p>Ansible playbook 会自动安装和配置：</p>
+<ol>
+<li><strong>Tailscale</strong>：Mesh VPN，安全远程访问</li>
+<li><strong>UFW 防火墙</strong>：仅允许 SSH + Tailscale 端口</li>
+<li><strong>Docker CE + Compose V2</strong>：用于智能体沙箱</li>
+<li><strong>Node.js 22.x + pnpm</strong>：运行时依赖</li>
+<li><strong>OpenClaw</strong>：基于主机运行（非容器化）</li>
+<li><strong>Systemd 服务</strong>：带安全加固的自动启动</li>
+</ol>
+<h4 id="4-层安全架构"><a href="#4-层安全架构" class="headerlink" title="4 层安全架构"></a>4 层安全架构</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│ 1. 防火墙（UFW）                     │</span><br><span class="line">│    仅开放 SSH(22) + Tailscale       │</span><br><span class="line">├─────────────────────────────────────┤</span><br><span class="line">│ 2. VPN（Tailscale）                  │</span><br><span class="line">│    Gateway 仅通过 VPN 访问          │</span><br><span class="line">├─────────────────────────────────────┤</span><br><span class="line">│ 3. Docker 隔离                       │</span><br><span class="line">│    智能体工具在容器中执行            │</span><br><span class="line">├─────────────────────────────────────┤</span><br><span class="line">│ 4. Systemd 加固                      │</span><br><span class="line">│    NoNewPrivileges + 非特权用户     │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h4 id="安装后设置"><a href="#安装后设置" class="headerlink" title="安装后设置"></a>安装后设置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 切换到 openclaw 用户</span></span><br><span class="line">sudo -i -u openclaw</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行新手引导</span></span><br><span class="line">openclaw onboard</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置渠道</span></span><br><span class="line">openclaw channels login</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查服务状态</span></span><br><span class="line">sudo systemctl status openclaw</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看日志</span></span><br><span class="line">sudo journalctl -u openclaw -f</span><br></pre></td></tr></table></figure>
+
+<h4 id="系统要求"><a href="#系统要求" class="headerlink" title="系统要求"></a>系统要求</h4><ul>
+<li><strong>操作系统</strong>：Debian 11+ 或 Ubuntu 20.04+</li>
+<li><strong>权限</strong>：Root 或 sudo 权限</li>
+<li><strong>网络</strong>：互联网连接</li>
+<li><strong>Ansible</strong>：2.14+（自动安装）</li>
+</ul>
+<h4 id="验证安全性"><a href="#验证安全性" class="headerlink" title="验证安全性"></a>验证安全性</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测试外部攻击面（应该只显示端口 22）</span></span><br><span class="line">nmap -p- YOUR_SERVER_IP</span><br></pre></td></tr></table></figure>
+
+<h4 id="手动安装-1"><a href="#手动安装-1" class="headerlink" title="手动安装"></a>手动安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 安装先决条件</span></span><br><span class="line">sudo apt update &amp;&amp; sudo apt install -y ansible git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 克隆仓库</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/openclaw/openclaw-ansible.git</span><br><span class="line"><span class="built_in">cd</span> openclaw-ansible</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 安装 Ansible collections</span></span><br><span class="line">ansible-galaxy collection install -r requirements.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 运行 playbook</span></span><br><span class="line">./run-playbook.sh</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装方式对比"><a href="#安装方式对比" class="headerlink" title="安装方式对比"></a>安装方式对比</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>标准安装</th>
+<th>Docker 安装</th>
+<th>Ansible 安装</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>适用场景</td>
+<td>个人开发</td>
+<td>容器化部署</td>
+<td>生产环境</td>
+</tr>
+<tr>
+<td>安装难度</td>
+<td>⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td>中</td>
+<td>高</td>
+<td>最高</td>
+</tr>
+<tr>
+<td>隔离性</td>
+<td>无</td>
+<td>容器隔离</td>
+<td>多层隔离</td>
+</tr>
+<tr>
+<td>自动更新</td>
+<td>手动</td>
+<td>手动</td>
+<td>Systemd 管理</td>
+</tr>
+<tr>
+<td>防火墙</td>
+<td>需手动配置</td>
+<td>需手动配置</td>
+<td>自动配置</td>
+</tr>
+<tr>
+<td>VPN 支持</td>
+<td>需手动配置</td>
+<td>需手动配置</td>
+<td>自动集成 Tailscale</td>
+</tr>
+<tr>
+<td>推荐用途</td>
+<td>本地测试</td>
+<td>VPS 部署</td>
+<td>企业生产</td>
+</tr>
+</tbody></table>
+<h3 id="访问控制界面-1"><a href="#访问控制界面-1" class="headerlink" title="访问控制界面"></a>访问控制界面</h3><p>Gateway 启动后，打开浏览器访问控制界面：</p>
+<ul>
+<li><strong>本地访问</strong>：<a target="_blank" rel="noopener" href="http://127.0.0.1:18789/">http://127.0.0.1:18789/</a></li>
+<li><strong>远程访问</strong>：参考官方文档配置 SSH 或 Tailscale</li>
+</ul>
+<p><img src="https://mintlify.s3.us-west-1.amazonaws.com/clawdhub/zh-CN/whatsapp-openclaw.jpg" alt="OpenClaw 控制界面"></p>
+<h3 id="配置访问控制（可选）"><a href="#配置访问控制（可选）" class="headerlink" title="配置访问控制（可选）"></a>配置访问控制（可选）</h3><p>编辑 <code>~/.openclaw/openclaw.json</code> 配置文件：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;channels&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;whatsapp&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;allowFrom&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;+15555550123&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;groups&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;*&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;requireMention&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span> <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;messages&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;groupChat&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;mentionPatterns&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;@openclaw&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="安装技能扩展"><a href="#安装技能扩展" class="headerlink" title="安装技能扩展"></a>安装技能扩展</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装技能管理工具</span></span><br><span class="line">npx clawhub@latest install skill-creator</span><br><span class="line"></span><br><span class="line"><span class="comment"># 浏览可用技能</span></span><br><span class="line">npx clawhub@latest search</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装常用技能</span></span><br><span class="line">npx clawhub@latest install github-pr</span><br><span class="line">npx clawhub@latest install todoist</span><br><span class="line">npx clawhub@latest install email-manager-lite</span><br></pre></td></tr></table></figure>
+
+<h3 id="开始使用"><a href="#开始使用" class="headerlink" title="开始使用"></a>开始使用</h3><p>在配置的消息平台上发送消息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">帮我检查今天的日程安排</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总结我收件箱中未读的重要邮件</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">创建一个新的 GitHub PR 用于修复 bug #123</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>OpenClaw 代表了个人 AI 助手的新方向——一个真正能够自主执行任务、保护用户隐私、可无限扩展的开源解决方案。通过其丰富的技能生态系统（特别是 awesome-openclaw-skills 精选列表），用户可以轻松找到并安装满足特定需求的功能扩展。</p>
+<p>然而，在享受 OpenClaw 带来的便利时，我们也必须保持警惕，注意安全风险，特别是在安装第三方技能时。遵循最佳实践，审查代码，使用可信来源，是确保安全使用 OpenClaw 的关键。</p>
+<p>随着 AI 代理技术的不断发展，OpenClaw 及其社区正在塑造一个更加智能、自动化和个性化的数字未来。无论你是开发者、运维工程师，还是普通用户，OpenClaw 都值得你去探索和尝试。</p>
+<h2 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h2><ul>
+<li><strong>OpenClaw 官网</strong>：<a target="_blank" rel="noopener" href="https://openclaw.ai/">openclaw.ai</a></li>
+<li><strong>官方文档（中文）</strong>：<a target="_blank" rel="noopener" href="https://docs.openclaw.ai/zh-CN">docs.openclaw.ai&#x2F;zh-CN</a></li>
+<li><strong>ClawHub 技能市场</strong>：<a target="_blank" rel="noopener" href="https://clawhub.com/">clawhub.com</a></li>
+<li><strong>Awesome OpenClaw Skills</strong>：<a target="_blank" rel="noopener" href="https://github.com/VoltAgent/awesome-openclaw-skills">github.com&#x2F;VoltAgent&#x2F;awesome-openclaw-skills</a></li>
+<li><strong>社区 Discord</strong>：加入官方 Discord 服务器获取支持</li>
+<li><strong>完整文档索引</strong>：<a target="_blank" rel="noopener" href="https://docs.openclaw.ai/llms.txt">docs.openclaw.ai&#x2F;llms.txt</a></li>
+</ul>
+<hr>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/7c7ed6b618d8.html">https://xhua.eu.org/posts/7c7ed6b618d8.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ai/">AI</a><a class="post-meta__tags" href="/tags/openclaw/">OpenClaw</a><a class="post-meta__tags" href="/tags/ai-agent/">AI Agent</a><a class="post-meta__tags" href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/">自动化</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E6%BA%90/">开源</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧"><img class="cover" src="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Claude Code 使用最佳实践与技巧</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从基础使用提升到专家级别，真正释放 AI 辅助编程的生产力。 Claude Code 核心理解什么是 Claude CodeClaude Code 是 Anthropic 开发的自主编程代理（Agentic Coding Tool），而非传统的代码补全工具。它的核心特点包括：  终端优先：通过 claude 命令在终端中交互，也支持 Web、桌面应用、IDE 插件等多种形式 自主执行：能够独立规划任务、执行多文件操作、运行命令、验证结果 大上下文：支持 200k+ token 的上下文窗口，适合处理大型代码库 多模态能力：不仅限于编程，还能处理文档编写、构建运行、文件搜索、主题研究等任何可...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3ce7fb915f3c.html" title="LightRAG：轻量级检索增强生成系统详解"><img class="cover" src="https://img.xhua.eu.org/57deb8c28c2131d70e8ca4a62d8fbdf542a722f639d2faef875a761dc2efe28a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-13</div><div class="info-item-2">LightRAG：轻量级检索增强生成系统详解</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的快速发展，如何让AI系统能够访问和处理大量外部知识成为了一个关键挑战。检索增强生成（Retrieval-Augmented Generation，RAG）技术应运而生，而LightRAG作为一个轻量级且高效的RAG系统，通过结合知识图谱和向量检索技术，为企业级知识管理和智能问答提供了优秀的解决方案。 LightRAG 简介LightRAG是一个现代化的检索增强生成系统，专注于提供高质量的问答和知识管理功能。该系统最大的特点是将传统的向量检索与知识图谱技术相结合，实现了更精准和上下文相关的信息检索。 核心特性 轻量级设计：优化的架构设计，降低资源消耗 多模态支持：同时支持向量检索和图谱检索 多存储后端：兼容Neo4j、PostgreSQL、Faiss等多种存储系统 多模型支持：支持OpenAI、Hugging Face、Ollama等主流LLM 生产就绪：提供完整的API接口和Web UI界面 高并发处理：支持并发索引和查询操作  系统架构设计LightRAG采用分层模块化架构，确保了系统的可扩展性和维护性。 整体架构LightRAG的架构分为索引（Ind...</div></div></div></a><a class="pagination-related" href="/posts/48e8b33bb2e1.html" title="LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理"><img class="cover" src="https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-30</div><div class="info-item-2">LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理</div></div><div class="info-2"><div class="info-item-1">背景与目标LiteLLM Proxy 是一个 OpenAI API 兼容的模型网关，支持将来自 OpenAI、Azure OpenAI、Bedrock、Vertex AI 以及本地&#x2F;自建的 OpenAI 兼容推理服务（如 vLLM）统一到一套接口之下，并提供虚拟 API Key、用量与预算、速率限制、缓存、日志&#x2F;指标、路由、负载均衡与回退等能力。本文将演示：  如何用 Docker 快速部署 LiteLLM Proxy（含最小可用与带数据库的完整模式） 如何把 vLLM 暴露的 OpenAI 兼容接口接入到 LiteLLM Proxy 进行统一代理 如何生成虚拟 Key、设置每分钟请求数（RPM）限速 如何查询模型列表等常用“免费”功能  参考与更多细节请见官方文档：  LiteLLM Proxy Docker 快速上手 vLLM Provider 文档  你将学到什么 用 Docker 启动 LiteLLM Proxy，并验证 /chat/completions 将本地 vLLM（OpenAI 兼容接口）纳入代理，统一用 OpenAI 协议调用 配置同名模型...</div></div></div></a><a class="pagination-related" href="/posts/0ca62b9873a9.html" title="Fabric：开源AI工作流与Prompt辅助框架详解"><img class="cover" src="https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-08</div><div class="info-item-2">Fabric：开源AI工作流与Prompt辅助框架详解</div></div><div class="info-2"><div class="info-item-1">在 AI 技术爆发的今天，我们拥有了无数强大的大模型和工具，但如何高效地将这些能力集成到日常工作流中，仍然是一个巨大的挑战。通常我们面临的问题不是”AI 能做什么”，而是”如何让 AI 帮我做这件事”。 Fabric 正是为了解决这个问题而诞生的。它是一个旨在通过 AI 增强人类能力的开源框架，核心理念是将 AI 的原子能力封装成标准化的”模式”（Patterns），让我们能够像使用命令行工具一样方便地调用 AI 能力。 什么是 Fabric？Fabric 由安全专家 Daniel Miessler 创建，它不仅仅是一个工具，更是一种使用 AI 的方法论。 核心痛点 Prompt 管理混乱：每个人都在写 Prompt，但很难复用、版本控制和分享。 集成困难：在这个应用里用 ChatGPT，在那个应用里用 Claude，缺乏统一的入口。 上下文切换：为了使用 AI，需要在不同窗口间频繁切换，打断心流。  核心特性 Patterns（模式）：Fabric 将高质量的 Prompt 封装为 Pattern，每个 Pattern 解决一个具体问题（如”提取视频摘要”、”分析代码安全”、”...</div></div></div></a><a class="pagination-related" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆"><img class="cover" src="https://img.xhua.eu.org/9676ec1567acff651bae8eec0d36ef59abc5aea4cf2869a5d4044330e956e77a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-08</div><div class="info-item-2">15个实用开源AI项目汇总：从PPT生成到语音克隆</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的爆发，GitHub 上涌现了大量优秀的开源 AI 项目。这些项目不仅降低了 AI 技术的使用门槛，还切实解决了许多工作和生活中的痛点。 本文精选了 15 个 偏向实用的开源 AI 项目，涵盖 PPT 自动生成、本地 LLM 交互、应用开发、前端生成、AI 搜索、私有云相册、工作流增强、语音转文字、图像生成、知识库、声音克隆 以及 数据库管理 等领域。无论你是开发者、产品经理还是普通用户，都能从中找到提升效率的利器。 1. Presenton：AI 自动生成 PPTPresenton 是一个开源的 AI 演示文稿生成器，可以看作是 Gamma、Beautiful.ai 的开源替代品。它完全在本地运行，支持使用 OpenAI、Gemini 或本地 Ollama 模型来生成内容。  GitHub: https://github.com/presenton/presenton 主要功能: 多模型支持: 支持 OpenAI, Gemini, Ollama 等多种 LLM 后端。 隐私安全: 数据掌握在自己手中，支持本地运行。 所见即所得: 生成大纲后可进行编辑，再...</div></div></div></a><a class="pagination-related" href="/posts/e0a2af663124.html" title="SRE MCP Tools：运维工程师的AI助手工具箱"><img class="cover" src="https://img.xhua.eu.org/e16beb5e1fd69876853b76d350682f3eb62d53d60bd29d2b5dd0307b1bb62f80.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">SRE MCP Tools：运维工程师的AI助手工具箱</div></div><div class="info-2"><div class="info-item-1">引言在现代互联网时代，站点可靠性工程（SRE）已成为确保服务稳定运行的核心实践。随着系统复杂性的不断增加，运维工程师需要管理的工具和平台也越来越多。从监控告警到事件响应，从部署管理到成本优化，每个环节都需要专业的工具支持。 但是，在面对海量的监控数据、复杂的告警规则、频繁的部署需求时，传统的手工操作已经无法满足现代运维的需求。这时，MCP（Model Context Protocol）工具的出现，为SRE工程师提供了全新的解决方案。 今天，我将为大家介绍一套完整的SRE MCP Tools工具箱，涵盖监控可观测性、部署编排、事件响应、数据库管理等多个方面，帮助运维工程师构建智能化的运维体系。 什么是SRE MCP Tools？SRE MCP Tools是一套基于模型上下文协议（MCP）的运维工具集合，它允许AI助手直接与各种运维工具和平台进行集成，实现自动化的运维操作。通过这些工具，运维工程师可以使用自然语言与AI助手交互，让AI帮助完成复杂的运维任务。 核心优势 🚨 快速发现问题：自动化监控和告警，第一时间发现系统异常 🔧 快速解决问题：自动化故障响应和修复，减少人工干预 ...</div></div></div></a><a class="pagination-related" href="/posts/05696bb73c9b.html" title="从零构建RAG文档问答系统：技术栈与实现方案详解"><img class="cover" src="https://img.xhua.eu.org/9c3e0a3e1e6b76eb0b4376ad2609349f0aa2b06b15f0ae7881c4431cc3c253e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-11</div><div class="info-item-2">从零构建RAG文档问答系统：技术栈与实现方案详解</div></div><div class="info-2"><div class="info-item-1">从零构建RAG文档问答系统：技术栈与实现方案详解引言在人工智能快速发展的今天，如何让AI模型基于特定文档内容进行准确回答，成为了一个重要的技术挑战。传统的问答系统往往存在”幻觉”问题，即模型会生成看似合理但实际不准确的信息。为了解决这个问题，我们构建了一个基于RAG（Retrieval-Augmented Generation）技术的文档问答系统。 本文将详细介绍这个项目的技术栈选择、架构设计、实现方案以及开发过程中的关键决策。 项目概述项目源代码: https://github.com/xhuaustc/rag-qa-system    我们的RAG文档问答系统具有以下核心特性：  🔍 多格式文档支持: PDF、DOCX、Markdown、TXT等 🤖 多LLM后端: Ollama、OpenAI、Azure OpenAI 📝 智能文档分块: 支持中英文混合文本的智能分块 🔗 向量检索: 基于ChromaDB的高效向量检索 💬 智能问答: 基于文档内容的智能问答 ⚙️ 灵活配置: 支持环境变量和代码配置 🛠️ 模块化设计: 清晰的模块分离和扩展性  技术栈选择核心框架...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenClaw-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-text">OpenClaw 是什么？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Gateway-%E6%9E%B6%E6%9E%84"><span class="toc-text">Gateway 架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="toc-text">核心特性</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%9C%AC%E5%9C%B0%E5%8C%96%E9%83%A8%E7%BD%B2%EF%BC%8C%E4%BF%9D%E6%8A%A4%E9%9A%90%E7%A7%81"><span class="toc-text">1. 本地化部署，保护隐私</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%A4%9A%E6%B8%A0%E9%81%93-Gateway-%E7%BD%91%E5%85%B3"><span class="toc-text">2. 多渠道 Gateway 网关</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%BC%BA%E5%A4%A7%E7%9A%84%E7%B3%BB%E7%BB%9F%E8%AE%BF%E9%97%AE%E8%83%BD%E5%8A%9B"><span class="toc-text">3. 强大的系统访问能力</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E6%8C%81%E4%B9%85%E5%8C%96%E8%AE%B0%E5%BF%86%E7%B3%BB%E7%BB%9F"><span class="toc-text">4. 持久化记忆系统</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-24-7-%E8%87%AA%E4%B8%BB%E8%BF%90%E8%A1%8C"><span class="toc-text">5. 24&#x2F;7 自主运行</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E4%B8%B0%E5%AF%8C%E7%9A%84%E5%B7%A5%E5%85%B7%E9%9B%86%E6%88%90"><span class="toc-text">6. 丰富的工具集成</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenClaw-%E7%9A%84%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">OpenClaw 的实际应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A5%E5%B8%B8%E4%BB%BB%E5%8A%A1%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="toc-text">日常任务自动化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text">开发工作流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%A1%E6%81%AF%E7%AE%A1%E7%90%86"><span class="toc-text">信息管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85%E6%8E%A7%E5%88%B6"><span class="toc-text">智能家居控制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenClaw-Skills%EF%BC%9A%E5%8F%AF%E6%89%A9%E5%B1%95%E7%9A%84%E8%83%BD%E5%8A%9B%E7%B3%BB%E7%BB%9F"><span class="toc-text">OpenClaw Skills：可扩展的能力系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Skills%EF%BC%9F"><span class="toc-text">什么是 Skills？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ClawHub%EF%BC%9A%E6%8A%80%E8%83%BD%E5%B8%82%E5%9C%BA"><span class="toc-text">ClawHub：技能市场</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Awesome-OpenClaw-Skills%EF%BC%9A%E7%B2%BE%E9%80%89%E6%8A%80%E8%83%BD%E9%9B%86%E5%90%88"><span class="toc-text">Awesome OpenClaw Skills：精选技能集合</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AD%9B%E9%80%89%E6%A0%87%E5%87%86"><span class="toc-text">筛选标准</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E6%8A%80%E8%83%BD%E5%88%86%E7%B1%BB"><span class="toc-text">主要技能分类</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-Web-%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%EF%BC%8846-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">1. Web &amp; 前端开发（46 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E7%BC%96%E7%A0%81%E4%BB%A3%E7%90%86-IDE%EF%BC%8855-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">2. 编码代理 &amp; IDE（55 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Git-GitHub%EF%BC%8834-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">3. Git &amp; GitHub（34 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-DevOps-%E4%BA%91%E6%9C%8D%E5%8A%A1%EF%BC%88144-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">4. DevOps &amp; 云服务（144 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E6%B5%8F%E8%A7%88%E5%99%A8-%E8%87%AA%E5%8A%A8%E5%8C%96%EF%BC%8869-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">5. 浏览器 &amp; 自动化（69 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-AI-LLM%EF%BC%88159-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">6. AI &amp; LLM（159 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-%E6%90%9C%E7%B4%A2-%E7%A0%94%E7%A9%B6%EF%BC%88148-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">7. 搜索 &amp; 研究（148 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-%E7%94%9F%E4%BA%A7%E5%8A%9B-%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%EF%BC%8893-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">8. 生产力 &amp; 任务管理（93 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-%E9%80%9A%E4%BF%A1%EF%BC%8858-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">9. 通信（58 个技能）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#10-%E5%81%A5%E5%BA%B7-%E5%81%A5%E8%BA%AB%EF%BC%8835-%E4%B8%AA%E6%8A%80%E8%83%BD%EF%BC%89"><span class="toc-text">10. 健康 &amp; 健身（35 个技能）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E5%AE%89%E8%A3%85%E7%A4%BA%E4%BE%8B"><span class="toc-text">技能安装示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85"><span class="toc-text">手动安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E8%80%83%E8%99%91"><span class="toc-text">安全考虑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E9%A3%8E%E9%99%A9"><span class="toc-text">1. 配置暴露风险</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%81%B6%E6%84%8F%E6%8A%80%E8%83%BD%E9%A3%8E%E9%99%A9"><span class="toc-text">2. 恶意技能风险</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">安全最佳实践</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenClaw-%E7%9A%84%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84"><span class="toc-text">OpenClaw 的技术架构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E6%9E%B6%E6%9E%84%E5%9B%BE"><span class="toc-text">核心组件架构图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Gateway-%E7%BD%91%E5%85%B3%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD"><span class="toc-text">Gateway 网关核心功能</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%E8%B7%AF%E7%94%B1"><span class="toc-text">1. 多智能体路由</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%AA%92%E4%BD%93%E6%94%AF%E6%8C%81"><span class="toc-text">2. 媒体支持</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Web-%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2"><span class="toc-text">3. Web 控制界面</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E7%A7%BB%E5%8A%A8%E8%8A%82%E7%82%B9"><span class="toc-text">4. 移动节点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F"><span class="toc-text">配置系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E5%85%B6%E4%BB%96-AI-%E4%BB%A3%E7%90%86%E7%9A%84%E6%AF%94%E8%BE%83"><span class="toc-text">与其他 AI 代理的比较</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BE%E5%8C%BA%E4%B8%8E%E7%94%9F%E6%80%81%E7%B3%BB%E7%BB%9F"><span class="toc-text">社区与生态系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Moltbook%EF%BC%9AAI-%E4%BB%A3%E7%90%86%E7%9A%84%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C"><span class="toc-text">Moltbook：AI 代理的社交网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E8%80%85%E8%B5%84%E6%BA%90"><span class="toc-text">开发者资源</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B"><span class="toc-text">未来展望</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-OpenClaw"><span class="toc-text">如何开始使用 OpenClaw</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F%E4%B8%80%EF%BC%9A%E6%A0%87%E5%87%86%E5%AE%89%E8%A3%85%EF%BC%88%E6%8E%A8%E8%8D%90%E4%B8%AA%E4%BA%BA%E4%BD%BF%E7%94%A8%EF%BC%89"><span class="toc-text">方式一：标准安装（推荐个人使用）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%AE%89%E8%A3%85-OpenClaw"><span class="toc-text">第 1 步：安装 OpenClaw</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%B9%B6%E5%AE%89%E8%A3%85%E6%9C%8D%E5%8A%A1"><span class="toc-text">第 2 步：新手引导并安装服务</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E9%85%8D%E5%AF%B9%E6%B8%A0%E9%81%93%E5%B9%B6%E5%90%AF%E5%8A%A8-Gateway"><span class="toc-text">第 3 步：配对渠道并启动 Gateway</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F%E4%BA%8C%EF%BC%9ADocker-%E5%AE%89%E8%A3%85%EF%BC%88%E6%8E%A8%E8%8D%90%E5%AE%B9%E5%99%A8%E5%8C%96%E9%83%A8%E7%BD%B2%EF%BC%89"><span class="toc-text">方式二：Docker 安装（推荐容器化部署）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">适用场景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">快速开始（推荐）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85%E6%B5%81%E7%A8%8B"><span class="toc-text">手动安装流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%B8%A0%E9%81%93"><span class="toc-text">配置渠道</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2"><span class="toc-text">访问控制界面</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E9%85%8D%E7%BD%AE"><span class="toc-text">高级配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E6%B2%99%E7%AE%B1%EF%BC%88Docker-%E9%9A%94%E7%A6%BB%EF%BC%89"><span class="toc-text">智能体沙箱（Docker 隔离）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F%E4%B8%89%EF%BC%9AAnsible-%E8%87%AA%E5%8A%A8%E5%8C%96%E5%AE%89%E8%A3%85%EF%BC%88%E6%8E%A8%E8%8D%90%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%EF%BC%89"><span class="toc-text">方式三：Ansible 自动化安装（推荐生产环境）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF-1"><span class="toc-text">适用场景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85"><span class="toc-text">一键安装</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%86%85%E5%AE%B9"><span class="toc-text">安装内容</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E5%B1%82%E5%AE%89%E5%85%A8%E6%9E%B6%E6%9E%84"><span class="toc-text">4 层安全架构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%90%8E%E8%AE%BE%E7%BD%AE"><span class="toc-text">安装后设置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%A6%81%E6%B1%82"><span class="toc-text">系统要求</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E5%AE%89%E5%85%A8%E6%80%A7"><span class="toc-text">验证安全性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-1"><span class="toc-text">手动安装</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%96%B9%E5%BC%8F%E5%AF%B9%E6%AF%94"><span class="toc-text">安装方式对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%E7%95%8C%E9%9D%A2-1"><span class="toc-text">访问控制界面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="toc-text">配置访问控制（可选）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%8A%80%E8%83%BD%E6%89%A9%E5%B1%95"><span class="toc-text">安装技能扩展</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8"><span class="toc-text">开始使用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toc-text">参考资源</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

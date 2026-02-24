@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>某股份制银行：容器云平台建设实践 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="容器云平台建设行业背景 当前银行业普遍的共识之一是要以金融科技为依托，通过科技创新引领银行的转型升级。云计算、大数据、人工智能成为各银行科技部门重点的投资建设领域。云计算领域的建设主要集中在IaaS和PaaS，目标是降低数据中心成本的同时，为上层应用的创新、快速迭代和稳定运行提供有效支撑。传统的IaaS调度的是虚拟机或者物理机，粒度较大，相对传统的虚拟化技术，在资源使用率、灵活性和弹性方面提升度并">
+<meta property="og:type" content="article">
+<meta property="og:title" content="某股份制银行：容器云平台建设实践">
+<meta property="og:url" content="https://xhua.eu.org/posts/ac86335f2d7c.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="容器云平台建设行业背景 当前银行业普遍的共识之一是要以金融科技为依托，通过科技创新引领银行的转型升级。云计算、大数据、人工智能成为各银行科技部门重点的投资建设领域。云计算领域的建设主要集中在IaaS和PaaS，目标是降低数据中心成本的同时，为上层应用的创新、快速迭代和稳定运行提供有效支撑。传统的IaaS调度的是虚拟机或者物理机，粒度较大，相对传统的虚拟化技术，在资源使用率、灵活性和弹性方面提升度并">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.644Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "某股份制银行：容器云平台建设实践",
+  "url": "https://xhua.eu.org/posts/ac86335f2d7c.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.644Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/ac86335f2d7c.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '某股份制银行：容器云平台建设实践',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">某股份制银行：容器云平台建设实践</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">某股份制银行：容器云平台建设实践</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.644Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><strong>容器云平台建设行业背景</strong></p>
+<p>当前银行业普遍的共识之一是要以金融科技为依托，通过科技创新引领银行的转型升级。云计算、大数据、人工智能成为各银行科技部门重点的投资建设领域。云计算领域的建设主要集中在IaaS和PaaS，目标是降低数据中心成本的同时，为上层应用的创新、快速迭代和稳定运行提供有效支撑。传统的IaaS调度的是虚拟机或者物理机，粒度较大，相对传统的虚拟化技术，在资源使用率、灵活性和弹性方面提升度并不高。依托传统IaaS建设而成的PaaS，也会面临同样的问题。而容器技术恰好可以比较好的解决这些问题，并且在微服务、DevOps、分布式等方面天生具备优势，因此成为数据中心新一代云基础架构的选择。</p>
+<p><strong>建设容器云平台的意义</strong></p>
+<p>1.让应用真正意义上弹性扩缩容</p>
+<p>传统方式下应用和基础环境资源（计算、网络、存储、监控等） 是紧耦合的关系，应用的扩容、缩容意味着基础环境资源的扩容和缩容。基础环境的扩、缩容耗时会非常长，因为涉及到非常多需要人工介入的环境，而且都是串行的，比如创建主机、分配存储、网络接入、操作系统安装、网络访问关系开通、应用部署、监控审计部署、接入负载均衡等等。整个流程走下来通常需要数天到数周的时间。后来我们通过IaaS、虚拟化、自动化工具已经大幅度缩减了基础环境资源扩容的时间，但是整个流程下来仍然需要数个小时到数天，这对于真正需要弹性的应用来说还是不够。</p>
+<p>容器云环境下，应用和基础环境资源是解耦的，应用的扩缩容不需要涉及基础环境资源的扩缩容，仅仅需要修改应用部署模板文件中的副本数，然后在容器云平台执行即可。容器云平台会根据副本数来自动创建或者删除副本，使得最终的副本数是部署模板文件中定义的副本数。整个扩容或缩容流程可以在数秒到数十秒内完成。这样当应用面临突发业务量增长，需要紧急扩容的时候，就可以非常快的完成，实现了真正意义上的弹性扩容。</p>
+<p>2.为应用微服务化提供有力支撑</p>
+<p>应用微服务化是当前应用改造的一个重点方向，因为大家都看到了微服务的好处，就是迭代效率高、资源使用率高(单一微服务可自行扩容)、单一微服务故障 对全局影响有限。但是传统方式下的应用微服务化开发运营是缺乏体系支撑的，成本高昂、便捷性差。比如一个应用由20个微服务组成，每个微服务需要2个副本保持高可用，传统方式下就需要申请20个负载均衡、40个虚拟机来确保隔离性，同时还要为这40个虚拟机分配相应的网络、存储，部署配套的监控审计等，消耗了大量的资源。传统方式下的这套架构没有弹性扩缩容能力，也缺乏自动化的部署管理工具，对运维人员来说，管理的应用从1个变为20个，大大增加了工作量和复杂度，便利性会很差。从应用开发人员的角度看，传统方式下做微服务化改造，随着微服数量的增加，服务之间依赖关系的增加，开发人员会面临很大的挑战。需要部署专门的服务注册发现系统，需要对应用层代码做侵入实现服务的注册发现机制，需要对应用代码做修改以实现服务的探活和依赖性处理。这些服务治理方面的工作牵扯了开发人员很大的精力，使得应用人员无法将精力集中在业务开发本身上，是一种低效率的做法。</p>
+<p>容器云环境提供了一套成熟的支撑体系，可以很好的支撑应用的微服务化改造，成本低廉、便捷性好。还是以之前的应用为例，20个微服务中，仅仅对外部提供服务的微服务需要申请负载均衡，内部微服务之间的调用通过service机制即可实现。如果很多微服都需要对外提供服务，也可以通过ingress将所有服务收敛到一个入口上，这样对负载均衡的需求数量就大幅度下降。容器化的微服务都是运行在一个计算机群内，可以共享计算节点，扩容、缩容都不需要申请虚拟机，资源的使用效率可以最高。容器云也为应用的部署运行提供很好的编排工具，可以实现应用变更的完全自动化、滚动升级、一键回滚。对应用开发人员来说，容器云环境可以提供比较完善的可配置化的微服治理框架，包括服务注册发现、服务探活、依赖性处理等，不需要对应用代码做侵入修改，这样可以让应用开发人员将更多精力集中在业务开发本身。</p>
+<p>3.让应用实现自动化故障探测、隔离和恢复</p>
+<p>传统方式下的应用故障判断、隔离和恢复完全依赖人工介入，耗时很长。比如一旦出现某个应用节点的故障，需要运维人员人工判断是哪一个节点出了问题，然后人工将该节点从负载均衡摘除。随后人工恢复故障节点，再挂到负载均衡下面。这就导致很长的故障窗口期，对业务连续性并不友好.</p>
+<p>容器方式下，应用的故障判别、隔离和恢复完全自动化实现，无需人工干预。容器云环境提供一套应用服务的自主探测和处理机制，同时也会检测每一个节点，一旦发现某个应用副本异常，会立即将其从service摘除，之后自动删除故障副本，并在可用的节点上新建新的副本。当探测到新建副本已经可以提供服务后，会自动将新建副本挂载到service下面。这种完全自动化的故障处理恢复机制为应用提供了故障自愈能力，将故障窗口减小到最小。</p>
+<p>4.大幅度提升资源使用效率</p>
+<p>在没有虚拟机之前，我们使用裸机部署应用，一个裸机部署一个应用，造成了大量的 资源闲置。后来使用虚拟机后，一个裸机上可以虚拟出多个主机，可以部署多个应用，资源使用效率得到了很大的提升。虚拟机之间可以共享CPU，但是无法共享内存和存储，比如一个虚拟机申请了32GB内存和100GB存储，这些资源只能被这个虚拟机独占，无法和其它虚拟机共享。</p>
+<p>容器的本质是进程，进程间是可以共享宿主机的CPU、内存、存储和网络的，资源使用效率得到最充分的利用。当然做到这一点的前提是容器能够确保进程运行的基本资源不被抢占，资源层面实现良好的隔离性。同时允许设置资源使用配额上限，避免影响其它应用进程。</p>
+<p><strong>容器云平台架构设计</strong></p>
+<p>1.总体架构设计</p>
+<p>总体架构图如下：</p>
+<p><img src="https://img.xhua.eu.org/230b635ea964f5bd29907cdbce0df8f8cbf6d32f9122f071489c1127ec1fe57d.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>自服务管理平台提供8大板块服务，都是按照支持多租户的目标设计实现。其中资源申请板块是租户申请容器资源的入口，包含帐号申请，K8S和镜像库资源申请，日志接入申请。资源变更板块是租户进行资源变更的入口，包括K8S资源扩容和回收，以及帐号权限的修改。集群管理板块为云平台管理员和租户提供集群范围资源的管理，镜像库管理板块提供镜像库和镜像的管理，应用管理板块主要为租户提供K8S namespace内资源的管理，模板管理板块包含K8S资源模板和Helm模板，运维助手提供Pod历史查询以及集群健康检查管理，帐号授权管理板块为云平台管理员提供租户授权管理。</p>
+<p>自服务管理平台南向通过K8S API和镜像库API对接多个K8S集群和两个镜像库，实现容器资源的统一纳管。最右边的是行内的运营支撑工具体系，其中统一身份认证为自服务管理平台提供租户帐号的登陆鉴权服务，流程系统(即ITOMS)通过API和自服务管理平台的资源申请板块对接，提供统一的资源申请入口。CMDB和自服务管理平台自身的CMDB交互，提供应用、容器、资源之间的关系视图；DevOps工具链可以从自服务平台获取用户和权限，然后通过K8S API和镜像库API实现应用的自动化流水线发布。ELK日志系统用于存储容器应用的日志，集中监控告警系统接收来自K8S节点和容器应用的监控数据，提供告警推送、置维护、统一监控视图的能力。</p>
+<p>2.多集群管理设计</p>
+<p>根据银行内网络安全的要求，K8S集群不能通过Overlay网络跨网络隔离区。因此一个K8S集群只能限定在一个网络隔离区内。目前生产和灾备数据中心的每个网络隔离区部署一套或多套K8S集群，所有集群统一由自服务管理平台纳管。同一网络隔离区内，生产和灾备数据中心各部署K8S集群，为应用提供双活容灾部署架构支撑。生产和灾备数据中心分别部署一套镜像库系统，为各自数据中心内的K8S集群提供镜像服务。允许租户跨集群管理自己的容器资源。整体示意图如下：</p>
+<p><img src="https://img.xhua.eu.org/2b6cd8a642a29b666d96bc7a3743578219767444fc71b09c2ba88d864066d2cc.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>3.多租户管理设计</p>
+<p>通过K8S命名空间和镜像库命名空间实现租户资源隔离，一个租户对应于一个或者多个命名空间。云平台管理员可以通过RBAC机制为租户授予相应命名空间的管理权限。租户对授权命名空间内的资源具有管理员权限，但是无法访问非授权命名空间。对于一个租户来说，管理员可以授予他一个K8S集群内一个或多个命名空间的管理权限，也可以授予他多个K8S集群内命名空间的管理权限。整体示意图如下：</p>
+<p><img src="https://img.xhua.eu.org/33ecfd74c5555d9ca2d728d9c4759bd38d2f70fa21fd15ddf876a7b8f790766b.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>4.专用和共享计算节点</p>
+<p>容器云平台为应用提供两种类型的K8S集群，分别是计算节点共享的K8S集群和计算节点专用的K8S集群。从资源利用率角度，首推共享计算节点的K8S集群。计算节点直接采用物理机，多个应用共享计算节点组成的资源池，资源的弹性和使用效率最高。</p>
+<p>如应用需要调整缺省Linux Kernel参数，或者有特殊的敏感的出网络访问关系，或者有很高的安全隔离性要求，可以考虑采用计算节点专用的K8S集群。专用的计算节点考虑资源利用率，主要以虚拟机为主。特殊的应用场景（如GPU）可以使用物理机。通过给计算节点打应用标签的方式，然后在应用部署模板里指定nodeSelector的方式，实现计算节点的独占。</p>
+<p>5.存储后端实现</p>
+<p>使用Ceph分布式存储作为容器云平台的后端存储，为应用提供持久化的数据存储能力。在生产和灾备数据中心各部署一个Ceph集群，为所属数据中心的K8S集群提供持久化存储后端服务。每个K8S集群创建2个Storage Class。rbd-class提供ReadWriteOnce类型PVC，后台对接的是Ceph RBD；cephfs-class提供ReadWriteMany类型PVC，后台对接的是CephFS。租户可动态申请PVC，仅有创建权限，没有删除权限。整体示意图如下：</p>
+<p><img src="https://img.xhua.eu.org/67e02135d36849f90d9f36b4a561da534992d1b137619ab1e22b69ed997e8653.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>6.应用监控告警</p>
+<p>每一个计算节点上会部署一个监控Agent。应用如需监控，需要在应用部署模板的环境变量里声明监控类型。应用容器启动后，监控Agent会通过容器接口获得容器监控类型环境变量，并自动匹配监控模板(脚本)。监控Agent将监控数据发送到监控服务器。监控服务器根据触发条件判断是否发送告警信息到集中告警平台。在集中告警平台上为每个应用创建虚拟节点，和IP解耦。告警平台收到告警信息后，根据告警数据包含的应用名称字段自动匹配到虚拟节点。虚节点上可设置维护状态，应用变更的时候为了避免告警可以设置虚节点为维护状态，变更完成后可以解除维护状态。示意图如下：</p>
+<p><img src="https://img.xhua.eu.org/be829411a196586fd4f18289ddd89f5f2efb09ed2df598d2a5d32fed09b5fdbf.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>目前可监控的应用指标如下：</p>
+<p>1.应用容器状态。如果容器状态异常会触发告警;</p>
+<p>2.应用Deployment副本数，如果副本数和期望的不一致，会触发告警;</p>
+<p>3.应用Statefulset副本数， 如果副本数和期望的不一致，会触发告警;</p>
+<p>4.应用Pod状态，如异常，会触发告警;</p>
+<p>5.应用容器内部文件系统使用率，如超过80%，会触发告警;</p>
+<p>7.应用日志处理</p>
+<p>每个计算节点部署一个日志收集代理，该代理面向节点上所有的容器。如应用容器需要监控，就需要在Pod yaml里通过环境变量声明日志路径和kafka topic。容器启动后，日志代理会根据容器环境变量定义的日志路径自动匹配对应的宿主机日志文件路径，并将日志抓取后发送到kafka topic。当前的日志代理以换行符作为分割符，如应用的一条日志里有多行纪录，这条日志会被切分成多个消息来处理，在Kibana上也会呈现多条记录。为了适配这类一条日志有多行纪录的应用，我们也正在设计开发一种可定制化分隔符的日志引擎，可以允许应用在Pod的yaml里声明日志分隔符。</p>
+<p>8.应用双活容灾部署架构</p>
+<p>生产、灾备中心每个网络区都建设一个K8S集群，都有各自独立的镜像库和后端分布式存储。应用双活要求应用同时运行在生产、灾备中心的两个K8S集群上，前端可以通过负载均衡引流。任意一个数据中心的集群故障不影响应用的可用性。示意图如下：</p>
+<p><img src="https://img.xhua.eu.org/922df393e48ab09cd834ca5a5949af23e4cabaee656b1b5450bb6ae463aa7f8d.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>ev6i39ygdkg</p>
+<p><strong>应用容器化最佳实践总结</strong></p>
+<p>1.镜像和配置分离原则：制作应用镜像时，需要将配置分离出来，这样做可以让应用镜像在不同环境（比如测试和生产）都一致，变得只是配置信息。配置信息可通过环境变量或者加载卷的方式注入容器。在K8S环境下，除了环境变量注入，还可以通过ConfigMap和Serect方式注入配置。ConfigMap和Secret都支持通过卷加载的方式挂载到容器。Secret通常用于保存敏感信息（如密码）.</p>
+<p>2.微服务原则：容器环境天生要求微服务化，一个容器只提供一种服务。每个容器原则上只对外提供一个服务监听端口。</p>
+<p>3.使用第三方基础镜像制作应用镜像的时候必须包含必要的系统trouleshooting工具，至少包括ps、netstat、ping、curl。否则出现问题的时候会妨碍排错。</p>
+<p>4.支持通过NodePort和Ingress对外发布服务。NodePort适用于对外服务较少场景；Ingress适用于对外服务较多，需要统一入口场景。Ingress需要作为应用的的一部分部署在应用命名空间。使用Ingress只需要对外通过一个NodePort暴露服务。</p>
+<p>5.NodePort需要向容器平台管理员申请。请仅仅使用分配给项目组的NodePort，禁止使用未经申请的NodePort，否则容易其它项目组产生端口冲突 .</p>
+<p>6.如使用StatefulSet部署有状态应用，副本数必须大于等于2，并且在验证了单个Pod失效不影响服务的前提下，才可以生产上线。原因是StatefulSet的Pod在宿主机故障情况下没有自动HA能力，需要人为干预杀死Pod才能触发重建。</p>
+<p>7.Deployment&#x2F;StatefulSet&#x2F;Pod的yaml里，必须配置liveness&#x2F;readiness探测，并通过测试才能生产上线。这对于应用的可用性非常重要，请一定重视 。</p>
+<p>8.Deployment&#x2F;StatefulSet&#x2F;Pod的yaml里，必须对Container的resources做设置。因为生产环境出于考虑极端情况（一半节点不可用）下的应用高可用。对于独占计算节点的应用，要求应用namespace下所有Pod的request总合不能超过分配总资源(CPU，内存)的50%-1，单个Pod的limit不能超过单个节点资源的60%。</p>
+<p>9.对于可以和其它应用共享计算节点(通常是物理节点)的应用，namespace下所有Pod的request总合和limites总合不能超过分配的总资源（比如分配了16C&#x2F;64G，那么request总合&#x2F;limites总合不能超过16C&#x2F;64G）。</p>
+<p>10.对于使用独占宿主机节点的应用，Deployment&#x2F;StatefulSet&#x2F;Pod的yaml里，必须配置NodeSelector。生产环境NodeSelector的value值是项目的英文名，测试环境统一是testapp。对于和其它应用共享宿主机节点的应用，可以不配置NodeSelector。</p>
+<p>11.对于重要系统，Deployment&#x2F;StatefulSet里，副本(replica)数必须大于2（包含2），禁止为1。这样才能确保服务在单个副本故障的情况下依然可用。对于可靠性要求不高的系统，在资源充足的情况下尽量也保持副本数大于等于2。如资源受限，并且上线前明确说明对可靠性要求不高，可以允许副本数为1 。</p>
+<p>12.Pod产生的日志，推荐通过直接写入stdout并配置Kafka Topic的方式，转发到ELK。如果一定要持久化保存，有如下三种方案，但是都要求首先应用层面要做好日志轮循(rotation)，控制好总量大小，因为PVC和HostPath用的宿主机目录通常是无法扩容的。目前仅写入stdout、HostPath的日志，才可以被日志引擎处理发往ELK，HostPath需要挂载到日志目录。HostPath方式受限使用，需要一事一议。写入PVC或者直接写入容器自身的日志将不能被日志引擎抓取。</p>
+<p>a)使用StatefulSet方式部署Pod，需要在yaml里声明PVC容量和StorageClass（名字为rbd-class，提供ReadWriteOnce类型的PV），并且通过将日志同时写入stdout，且在yaml里声明stdout日志路径和Kafka Topic的方式，将日志发往ELK。一旦使用PVC，Pod的可用性就会和PVC的可用性关联起来。对于可用性要求很高的系统（A&#x2F;B类系统），如果使用PVC，前提条件是应用实现了灾备双活部署。</p>
+<p>b)使用Deployment方式部署Pod，需要在yaml里声明共享型（ReadWriteMany类型）PVC的名字，并且通过将日志同时写入stdout，且在yaml里声明stdout日志路径和Kafka Topic的方式，将日志发往ELK。在多副本情况下，需要应用做好日志文件区分，避免多副本写同一个日志文件。一旦使用PVC，Pod的可用性就会和PVC的可用性关联起来。对于可用性要求很高的系统（A&#x2F;B类系统），如果使用PVC，前提条件是应用实现了灾备双活部署。</p>
+<p>c)使用HostPath，将日志写入宿主机的某个目录。这需要应用在多副本的情况下，能够做好日志区分，将所有Pod的日志放到同一个父目录下。如需使用此种方式，请提前联系容器平台管理员创建目录。即使使用HostPath存放日志，可直接通过在yaml里声明日志文件路径和Kafka Topic的方式，将日志发往ELK。使用HostPath存放日志主要的问题是Pod一旦迁移到新的节点，日志写入也会迁移到新的节点，旧节点上的日志文件写入会中断。HostPath仅仅适用于专用计算节点场景，并且需要一事一议。</p>
+<p>13.如果两个服务之间有依赖关系，必须在上线前解决启动顺序问题。可以考虑使用K8S的initcontainer机制做探测。</p>
+<p>14.对于重要系统，原则上要求应用层面必须实现灾备双活部署，也即应用同时运行在生产、灾备的两个K8S集群上，前端可通过负载均衡引流。任意一个集群的故障不影响应用的可用性</p>
+<p>15.生产上线前，请确保在测试环境完成应用HA测试验证，具体的要求是：</p>
+<p>a) 杀死任意服务中的单个Pod不影响整体业务</p>
+<p>b) 杀死任意服务中的所有Pod，待Pod重启完成后，整体业务服务不受影响</p>
+<p>c) 节点故障不影响整体业务</p>
+<p>16. 尽可能通过配置prestop或者处理SIGTERM信号，来实现应用容器的优雅停止。缺省情况下，没有配置优雅停止的话，K8S会在grace-period时间（缺省30秒，可在Pod Yaml里调整）到期后，通过SIGKILL杀死Pod内进程。</p>
+<p><strong>应用容器化改造案例(某支付类系统)</strong></p>
+<p>1.改造背景</p>
+<p>支付类系统作为银行的核心系统之一，为了保证可用性和性能，之前都是运行在小型机上，运行成本高昂、可扩展性较差。为了解决这些问题，支付类系统需要进行分布式改造，把应用程序从小型机迁移到X86 PC服务器上，导致服务器的规模从几台扩展为几十台，使得部署环节更加复杂、容易出错。因此希望利用容器平台提供的服务注册发现、动态伸缩以及快速故障检测恢复等能力，降低分布式系统的部署和管理难度。</p>
+<p>2.技术实现</p>
+<p>如下是某支付类系统容器化后的部署架构，该系统的后端采用容器化方式部署运行。后端也根据微服务的方式，从一个大模块拆分成几个微服务模块，更便于分布式的部署。</p>
+<p><img src="https://img.xhua.eu.org/1927a60ef7472f7fd83fedb0105a47a1d5a05d723d964bf8ab95ad3809f43e81.jpg" alt="某股份制银行：容器云平台建设实践">  </p>
+<p>行内现有的支付类系统大多是有状态的，因为要生成和节点相关的交易流水号。容器化改造时，为了尽可能不影响现有业务逻辑，也需要维持这种有状态的方式。可以利用K8S提供的StatefulSet实现有状态的部署，每个Pod会有固定的名字，比如payapp-01、payapp-02。这样可以根据Pod名字中的索引（01、02等）自动生成交易流水号。</p>
+<p>由于现有前置应用和后端应用之间是长连接，只能采用一个Pod一个Service的方式提供服务。每一个Pod都要通过NodePort Service对外提供服务。后端Pod在启动后，会将Pod所在的节点IP地址和自己的NodePort注册到前置应用里，然后由前置应用校验适配后，发起到后端Pod的连接，并一直保持这个连接。为了保持较好的可扩展性，可以预先在前置应用里配置额外的服务端口，这样需要扩展的时候，只需要扩容后端的副本(Pod)数量和Service数量即可。当然，后期如果可以改造为短连接方式，就可以采用1个Service对应多个副本的方式，扩容会更方便，也可省略服务向前置应用的注册环节。</p>
+<p>支付类系统是银行的重要系统，必须具备双活容灾能力，具体实现是在生产和同城灾备数据中心的两个K8S集群上分别部署一个多副本的StatefulSet，各副本(Pod)仅和所在数据中心的前置交互。任意数据中心的故障不影响整体业务。</p>
+<p>3.效果总结</p>
+<p>通过上述容器化改造，达到了如下目的和效果：</p>
+<ol>
+<li>支付类应用可以顺利从小型机迁移到X86的虚拟机上。之前只能纵向扩展的问题得到解决，应用得以分布式部署，横向扩展。</li>
+<li>应用的弹性扩容能力得到大幅提供，只需要修改部署模板里的副本数即可实现横向扩展。</li>
+<li>资源使用效率得到大幅提高，因为做了服务拆分，可以针对模块来匹配资源，扩容所需的资源力度更细，避免了资源的浪费。</li>
+<li>应用分布式改造后的部署管理更加简便和高效、可以实现全自动化的部署、升级和回滚。</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/ac86335f2d7c.html">https://xhua.eu.org/posts/ac86335f2d7c.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/191ce310ef24.html" title="查看Java应用状态"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">查看Java应用状态</div></div><div class="info-2"><div class="info-item-1"> jps查看  123$ jps16 jar547 Jps  jmap -heap  1$ jmap -heap 16  jstat -class pid  1$ jstat -class 16 </div></div></div></a><a class="pagination-related" href="/posts/2192f822e66c.html" title="技术中台"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">技术中台</div></div><div class="info-2"><div class="info-item-1">金融机构中台战略之路 在传统金融机构体系中，系统往往由各个项目组独立建设，每个机构中有成百上千套复杂的系统，它们相互调用，形成复杂的网状结构，很难进行管理。随着银行数字化转型的深入，大量业务以互联网的形式向用户开放，对系统高并发、大数据量、强一致性等需求越来越高。与此同时，为了满足用户多样化的需求，银行必须从以业务为中心向以人为中心转变，并做出快速响应。中台建设正是目前解决这些问题的新兴平台型企业架构。 企业中台为业务而生，快速敏捷地响应业务变化，以服务的形式为业务提供支撑，服务接入层以统一的路由适配转发。在整个技术构架上需要考虑可拓展性、敏捷性、轻量化，并注重与前台的交互，灵活地通过服务编排实现应用功能，满足前台需求。因此中台融合分布式、微服务、容器云、DevOps、大数据处理及高可用高性能高并发架构，遵循“高内聚、松耦合”设计原则。业务中台需要微服务、云原生、分布式事务体系支撑，并设计业务模型和微服务边界，最终形成业务单元；数据中台汇聚企业内外割裂的数据，并通过统一治理、建模加工，消除数据孤岛，实现数据资产化，为企业提供客户画像、商品智能推荐、业务实时监控，达到数据驱动业务能...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3c19c6380d6c.html" title="一条命令解决Kubernetes更改默认的namespace"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">一条命令解决Kubernetes更改默认的namespace</div></div><div class="info-2"><div class="info-item-1"> K8S默认是在default的namespace下，但是很多时候我们是在一个新的namespace下部署应用，每个操作都需要指定namespace，非常不方便。那么有没有办法切换namespce呢？如果可以切换的话，那有没有更简单的办法。 最简单的方式切换namespace，赠送一个方便的脚本可以将它alias到一个新的命令”kubectl ns” 12$  alias kubectl=&#x27;_kubectl_custom()&#123; if [[ &quot;$1&quot; == &quot;project&quot; &amp;&amp; &quot;$2&quot; != &quot;&quot; ]]; then ccontext=`kubectl config current-context`; kubectl config set-context $ccontext --namespace=$2; elif [[ &quot;$1&quot; == &quot;projects&quot; &amp;&amp; &quot;$2&quot; == &quo...</div></div></div></a><a class="pagination-related" href="/posts/1f94b61afe3b.html" title="Openshift3-9部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9部署手册</div></div><div class="info-2"><div class="info-item-1">说明：本文主要介绍通过Ansible来部署Openshift 3.9 一、准备系统准备   节点类型 说明    Masters 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 最少4vCPU最少16GB内存&#x2F;var&#x2F;最少40GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   额外的etcd节点 最少20GB用来存储etcd数据 &nbsp;   注：在安装时可以通过ansible_inventory的配置忽略以上系统要求扩展：对于生产部署时，Master的配置要求计算规则如下：每1000个pods需要额外的1核...</div></div></div></a><a class="pagination-related" href="/posts/87d0ba016aa6.html" title="OpenShift中如何通过脚本获取Alertmanager的告警数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中如何通过脚本获取Alertmanager的告警数据</div></div><div class="info-2"><div class="info-item-1">一、为什么需要通过脚本获取告警信息 二、Alertmanager的告警信息 三、amtool工具获取告警信息 12# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093# oc exec -it alertmanager-main-0 -c alertmanager -n openshift-monitoring -- amtool alert query &#x27;severity=critical&#x27; --alertmanager.url http://localhost:9093 -o extended -o：默认值为simple，输出格式，还可以是extended，json 四、amtool更多功能 </div></div></div></a><a class="pagination-related" href="/posts/4362c292014b.html" title="Openshift上部署OpenLDAP实战：为账号一统"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift上部署OpenLDAP实战：为账号一统</div></div><div class="info-2"><div class="info-item-1">   Openshift上部署OpenLDAP也并不仅仅只是为了部署，更重要的是要用它来为各种应用统一账号管理。比如GitLab，Gogs, Nexus, Sonarqube等等，同时结合之前的Openshift使用OpenLDAP做账号管理。理想的世界是，一套Openshift，各种应用，它们的用户认证都在一套OpenLDAP上，同时这套OpenLDAP也是非常方便地部署在Openshift上。 为账号一统的第一步，就是我们需要部署OpenLDAP，这也是该篇主题。以下是之前分享的几篇与OpenLDAP有关的文章。 CentOS上搭建双主高可用OpenLDAP ServerOpenshift使用OpenLDAP作为统一用户认证CentOS上OpenLDAP Server使用cn&#x3D;config方式配置 之前分享的与Openldap相关的几篇文章中，它的部署都是在虚拟机中进行的。那么在Openshift上能否完成部署呢，如果可以的话，那么那些复杂的部署我们都可以将它封装到镜像中去，岂不是更方便？那就一起来操作吧。 应用要求点 方便自定义域及管理员用户名与密码 通过环境变量...</div></div></div></a><a class="pagination-related" href="/posts/de0ae4c0444d.html" title="快速使用SonarQube对应用进行静态代码扫描"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">快速使用SonarQube对应用进行静态代码扫描</div></div><div class="info-2"><div class="info-item-1">1、启动SonarQube服务 12$ mkdir -p /sonar/&#123;conf,data,extensions&#125;$ docker run -v /sonar/conf:/opt/sonarqube/conf -v /sonar/data:/opt/sonarqube/data -v /sonar/extensions:/opt/sonarqube/extensions -p 9000:9000 xhuaustc/sonarqube:7.9.1 本地目录为~/Downloads/sonar/2、登录SonarQube服务端：http://127.0.0.1:9000/projects，登录用户名：admin，密码：admin3、创建新的项目,获得projectKey与token值4、下载对应版本的sonar scanner工具：SonarScanner下载地址5、请在代码目录中执行扫描工具 123456/xx/bin/sonar-scanner \  -Dsonar.projectKey=test \  -Dsonar.sources=. \  -Dsona...</div></div></div></a><a class="pagination-related" href="/posts/02c4b11486c5.html" title="Openshift自定义Router成倍提升集群性能"><img class="cover" src="https://img.xhua.eu.org/487deabc05ec1621abaed75ed3be4a1b652a7b478638ae7cb46e8bcd672063e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift自定义Router成倍提升集群性能</div></div><div class="info-2"><div class="info-item-1">为什么要自定义Router Openshift的Router节点其实就是一个Haproxy容器应用，这个已经不是什么秘密了。我们平常使用时，不需要关心Haproxy的配置，因为它的默认配置完全满足绝大多数情况的需求。 但是它的默认配置并没有把最大的性能发挥出来，这时就需要我们对Haproxy的配置进行自定义了。 如果你需要实现一些新的功能，比如说将Mysql通过Router对外提供服务等  怎样自定义Router Router Pod根据haproxy-config模板创建haproxy.conf配置文件，默认文件为/var/lib/haproxy/conf/haproxy-config.template Router Haproxy镜像启动时会根据环境变量TEMPLATE_FILE来选择最终使用的模板文件 向Router Pod中放入自定义的模板文件，并将它的路径传给环境变量TEMPLATE_FILE 模板文件中的相关函数     函数 说明    processEndpointsForAlias(alias ServiceAliasConfig, svc ServiceUni...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解">OpenClaw：开源AI代理与技能生态系统详解</a><time datetime="2026-02-05T10:08:08.000Z" title="发表于 2026-02-05 18:08:08">2026-02-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧">Claude Code 使用最佳实践与技巧</a><time datetime="2026-01-28T09:21:22.000Z" title="发表于 2026-01-28 17:21:22">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/11eb1b4f9e5f.html" title="Cursor IDE 使用最佳实践与技巧：从入门到精通">Cursor IDE 使用最佳实践与技巧：从入门到精通</a><time datetime="2026-01-28T09:12:17.000Z" title="发表于 2026-01-28 17:12:17">2026-01-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清">Agent Skill：从使用到原理，一次讲清</a><time datetime="2026-01-25T02:47:57.000Z" title="发表于 2026-01-25 10:47:57">2026-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/92b9c5787fcf.html" title="Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据">Docker BuildKit 新特性与最佳实践：更快构建、更强缓存与供应链元数据</a><time datetime="2026-01-22T02:00:00.000Z" title="发表于 2026-01-22 10:00:00">2026-01-22</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

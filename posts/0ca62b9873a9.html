@@ -1,0 +1,585 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Fabric：开源AI工作流与Prompt辅助框架详解 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在 AI 技术爆发的今天，我们拥有了无数强大的大模型和工具，但如何高效地将这些能力集成到日常工作流中，仍然是一个巨大的挑战。通常我们面临的问题不是”AI 能做什么”，而是”如何让 AI 帮我做这件事”。 Fabric 正是为了解决这个问题而诞生的。它是一个旨在通过 AI 增强人类能力的开源框架，核心理念是将 AI 的原子能力封装成标准化的”模式”（Patterns），让我们能够像使用命令行工具一样">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fabric：开源AI工作流与Prompt辅助框架详解">
+<meta property="og:url" content="https://xhua.eu.org/posts/0ca62b9873a9.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="在 AI 技术爆发的今天，我们拥有了无数强大的大模型和工具，但如何高效地将这些能力集成到日常工作流中，仍然是一个巨大的挑战。通常我们面临的问题不是”AI 能做什么”，而是”如何让 AI 帮我做这件事”。 Fabric 正是为了解决这个问题而诞生的。它是一个旨在通过 AI 增强人类能力的开源框架，核心理念是将 AI 的原子能力封装成标准化的”模式”（Patterns），让我们能够像使用命令行工具一样">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg">
+<meta property="article:published_time" content="2025-12-08T08:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.626Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Fabric">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Prompt Engineering">
+<meta property="article:tag" content="Tools">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Fabric：开源AI工作流与Prompt辅助框架详解",
+  "url": "https://xhua.eu.org/posts/0ca62b9873a9.html",
+  "image": "https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg",
+  "datePublished": "2025-12-08T08:00:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.626Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/0ca62b9873a9.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Fabric：开源AI工作流与Prompt辅助框架详解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Fabric：开源AI工作流与Prompt辅助框架详解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Fabric：开源AI工作流与Prompt辅助框架详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-12-08T08:00:00.000Z" title="发表于 2025-12-08 16:00:00">2025-12-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.626Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在 AI 技术爆发的今天，我们拥有了无数强大的大模型和工具，但如何高效地将这些能力集成到日常工作流中，仍然是一个巨大的挑战。通常我们面临的问题不是”AI 能做什么”，而是”如何让 AI 帮我做这件事”。</p>
+<p><strong>Fabric</strong> 正是为了解决这个问题而诞生的。它是一个旨在通过 AI 增强人类能力的开源框架，核心理念是将 AI 的原子能力封装成标准化的”模式”（Patterns），让我们能够像使用命令行工具一样方便地调用 AI 能力。</p>
+<h2 id="什么是-Fabric？"><a href="#什么是-Fabric？" class="headerlink" title="什么是 Fabric？"></a>什么是 Fabric？</h2><p>Fabric 由安全专家 Daniel Miessler 创建，它不仅仅是一个工具，更是一种使用 AI 的方法论。</p>
+<h3 id="核心痛点"><a href="#核心痛点" class="headerlink" title="核心痛点"></a>核心痛点</h3><ul>
+<li><strong>Prompt 管理混乱</strong>：每个人都在写 Prompt，但很难复用、版本控制和分享。</li>
+<li><strong>集成困难</strong>：在这个应用里用 ChatGPT，在那个应用里用 Claude，缺乏统一的入口。</li>
+<li><strong>上下文切换</strong>：为了使用 AI，需要在不同窗口间频繁切换，打断心流。</li>
+</ul>
+<h3 id="核心特性"><a href="#核心特性" class="headerlink" title="核心特性"></a>核心特性</h3><ul>
+<li><strong>Patterns（模式）</strong>：Fabric 将高质量的 Prompt 封装为 Pattern，每个 Pattern 解决一个具体问题（如”提取视频摘要”、”分析代码安全”、”撰写技术文章”）。</li>
+<li><strong>命令行优先</strong>：通过 CLI 接口，Fabric 可以轻松接入 Shell 管道（Pipeline），与其他 Linux 工具（如 grep, pbpaste, cat）组合使用。</li>
+<li><strong>多模型支持</strong>：支持 OpenAI, Anthropic, Google, Ollama 等多种后端模型。</li>
+<li><strong>YouTube 集成</strong>：内置强大的 YouTube 视频内容提取功能。</li>
+</ul>
+<h2 id="安装与配置"><a href="#安装与配置" class="headerlink" title="安装与配置"></a>安装与配置</h2><p>Fabric 使用 Go 语言重构后，安装变得非常简单。</p>
+<h3 id="1-安装-Fabric"><a href="#1-安装-Fabric" class="headerlink" title="1. 安装 Fabric"></a>1. 安装 Fabric</h3><p><strong>Linux &#x2F; macOS (推荐一键安装):</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -fsSL https://raw.githubusercontent.com/danielmiessler/fabric/main/scripts/installer/install.sh | bash</span><br></pre></td></tr></table></figure>
+
+<p><strong>Windows (PowerShell):</strong></p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">iwr</span> <span class="literal">-useb</span> https://raw.githubusercontent.com/danielmiessler/fabric/main/scripts/installer/install.ps1 | <span class="built_in">iex</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 Go 安装 (适用于开发者):</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go install github.com/danielmiessler/fabric/cmd/fabric@latest</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-配置"><a href="#2-配置" class="headerlink" title="2. 配置"></a>2. 配置</h3><p>安装完成后，运行 setup 命令进行初始化，配置 API Key 和相关设置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fabric --setup</span><br></pre></td></tr></table></figure>
+
+<p>在此过程中，你需要提供各大模型提供商的 API Key（如 OpenAI API Key）。配置信息会保存在 <code>~/.config/fabric/</code> 目录下。</p>
+<h2 id="常用功能与使用示例"><a href="#常用功能与使用示例" class="headerlink" title="常用功能与使用示例"></a>常用功能与使用示例</h2><p>Fabric 的强大之处在于它可以融入你的命令行工作流。</p>
+<h3 id="基础用法"><a href="#基础用法" class="headerlink" title="基础用法"></a>基础用法</h3><p>基本语法结构：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fabric --pattern [pattern_name]</span><br><span class="line"><span class="comment"># 或者简写</span></span><br><span class="line">fabric -p [pattern_name]</span><br></pre></td></tr></table></figure>
+
+<h3 id="场景一：总结文章内容"><a href="#场景一：总结文章内容" class="headerlink" title="场景一：总结文章内容"></a>场景一：总结文章内容</h3><p>你可以将剪贴板的内容直接投喂给 Fabric：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 读取剪贴板内容并总结</span></span><br><span class="line">pbpaste | fabric --pattern summarize</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将文件内容传递给 Fabric 进行分析</span></span><br><span class="line"><span class="built_in">cat</span> config.yaml | fabric --pattern analyze_claims</span><br></pre></td></tr></table></figure>
+
+<h3 id="场景二：YouTube-视频智慧提取"><a href="#场景二：YouTube-视频智慧提取" class="headerlink" title="场景二：YouTube 视频智慧提取"></a>场景二：YouTube 视频智慧提取</h3><p>这是 Fabric 最受欢迎的功能之一。它可以直接抓取 YouTube 视频字幕，并提取其中的核心观点和智慧，而不仅仅是简单的摘要。<code>依赖 YouTube APIKEY</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 提取视频中的核心智慧（Wisdom）</span></span><br><span class="line">fabric -y <span class="string">&quot;https://www.youtube.com/watch?v=VIDEO_ID&quot;</span> --pattern extract_wisdom</span><br></pre></td></tr></table></figure>
+
+<h3 id="场景三：代码分析与解释"><a href="#场景三：代码分析与解释" class="headerlink" title="场景三：代码分析与解释"></a>场景三：代码分析与解释</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解释一段代码</span></span><br><span class="line"><span class="built_in">cat</span> complex_function.py | fabric --pattern explain_code</span><br><span class="line"></span><br><span class="line"><span class="comment"># 为代码生成文档</span></span><br><span class="line"><span class="built_in">cat</span> main.go | fabric --pattern create_design_document</span><br></pre></td></tr></table></figure>
+
+<h3 id="场景四：即时流式输出"><a href="#场景四：即时流式输出" class="headerlink" title="场景四：即时流式输出"></a>场景四：即时流式输出</h3><p>使用 <code>--stream</code> 或 <code>-s</code> 参数可以获得类似 ChatGPT 的打字机效果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;解释量子纠缠&quot;</span> | fabric --pattern explain_terms --stream</span><br></pre></td></tr></table></figure>
+
+<h2 id="常用核心命令详解"><a href="#常用核心命令详解" class="headerlink" title="常用核心命令详解"></a>常用核心命令详解</h2><p>为了让大家更直观地理解 Fabric 的能力，这里精选了几个最具代表性的 Pattern 进行详细说明：</p>
+<table>
+<thead>
+<tr>
+<th align="left">Pattern 名称</th>
+<th align="left">功能描述</th>
+<th align="left">典型应用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>summarize</strong></td>
+<td align="left">内容摘要专家。将输入内容压缩为一句话总结、10个主要观点和5个核心收获（Takeaways）。</td>
+<td align="left">快速阅读长文章、会议纪要或复杂的文档。</td>
+</tr>
+<tr>
+<td align="left"><strong>extract_wisdom</strong></td>
+<td align="left">智慧提取器（Fabric 核心）。从内容中提取核心观点、洞见、名言、习惯和事实，不仅仅是摘要，而是深度提炼。</td>
+<td align="left">深度阅读文章、视频或书籍，提取最有价值的信息。</td>
+</tr>
+<tr>
+<td align="left"><strong>explain_code</strong></td>
+<td align="left">代码解释器。解释代码的功能、逻辑，如果是安全工具输出则解释其含义，如果是配置文件则解释设置项。</td>
+<td align="left">接手新项目时快速理解代码，或学习新的编程语言&#x2F;框架。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_command</strong></td>
+<td align="left">根据工具的帮助文档（Help）生成正确的 CLI 命令。它能通过阅读文档，生成精准的 Bash 命令。</td>
+<td align="left">忘记某个复杂 Linux 命令的参数时，直接把 help 信息投喂给它生成命令。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_formal_email</strong></td>
+<td align="left">商务邮件写作助手。根据上下文和目的，撰写语气得体、专业规范的正式邮件。</td>
+<td align="left">回复客户咨询、发送正式通知或进行商务沟通。</td>
+</tr>
+<tr>
+<td align="left"><strong>humanize</strong></td>
+<td align="left">人性化重写工具。将 AI 生成的生硬文本重写为自然、流畅、具有”人味”的内容。它会优化句子节奏、去除机器味，使其更像真人的表达。</td>
+<td align="left">让 ChatGPT 生成的邮件、文案或对话看起来更自然、更有亲和力。</td>
+</tr>
+<tr>
+<td align="left"><strong>fix_typos</strong></td>
+<td align="left">文本校对专家。专注于修复拼写错误、语法问题和标点符号错误，不改变原意，只做清洗和专业化处理。</td>
+<td align="left">发送重要文档、邮件或发布文章前的最后一道检查。</td>
+</tr>
+<tr>
+<td align="left"><strong>clean_text</strong></td>
+<td align="left">文本清洗工具。修复断行、格式混乱的文本，添加正确的段落和标点，不做内容修改。</td>
+<td align="left">处理 PDF 复制出来的乱码文本，或 OCR 识别后的混乱文本。</td>
+</tr>
+<tr>
+<td align="left"><strong>write_essay</strong></td>
+<td align="left">写作专家。根据输入的主题，模仿特定作者（默认或指定）的风格撰写清晰、有深度的文章。</td>
+<td align="left">撰写博客、专栏文章或深度评论。</td>
+</tr>
+<tr>
+<td align="left"><strong>summarize_meeting</strong></td>
+<td align="left">会议纪要生成器。提取会议概览、关键点、任务分配、决策、挑战、时间线和后续步骤。</td>
+<td align="left">整理 Zoom&#x2F;Teams 会议转录文本，快速生成可分发的会议纪要。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_prd</strong></td>
+<td align="left">产品需求文档（PRD）生成器。将产品创意或描述转化为包含目标、功能、用户故事、技术要求等章节的完整 PRD。</td>
+<td align="left">产品经理快速草拟需求文档，或将头脑风暴的结果结构化。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_design_document</strong></td>
+<td align="left">软件架构设计专家。基于输入的需求描述，使用 C4 模型（Context, Container, Deployment）生成详细的设计文档，包含 Mermaid 图表代码。</td>
+<td align="left">架构师或技术负责人进行系统设计和文档编写。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_git_diff_commit</strong></td>
+<td align="left">Git 提交信息生成器。分析代码变更（git diff），生成符合 Conventional Commits 规范的提交命令和 commit message。</td>
+<td align="left">开发者提交代码时，自动生成规范、清晰的 commit log。</td>
+</tr>
+<tr>
+<td align="left"><strong>analyze_terraform_plan</strong></td>
+<td align="left">专家级 Terraform 计划分析器。它能分析 Terraform plan 的输出，评估基础设施变更、安全风险、成本影响和合规性考量。</td>
+<td align="left">DevOps 工程师在执行 <code>terraform apply</code> 前进行自动化代码审查。</td>
+</tr>
+<tr>
+<td align="left"><strong>analyze_claims</strong></td>
+<td align="left">真实性分析专家。分析内容中的核心主张，提供支持证据、反驳证据，并识别逻辑谬误，进行真实性评级（A-F）。</td>
+<td align="left">阅读具有争议性的文章、新闻或辩论，进行批判性思考和事实核查。</td>
+</tr>
+<tr>
+<td align="left"><strong>analyze_candidates</strong></td>
+<td align="left">候选人&#x2F;竞选者对比分析。分析并对比两名候选人在关键议题上的立场、政策优劣势及背景信息。</td>
+<td align="left">选举期间对比候选人政纲，或用于对比两个待选方案&#x2F;人物。</td>
+</tr>
+<tr>
+<td align="left"><strong>suggest_pattern</strong></td>
+<td align="left">Fabric 导航员。根据你的需求描述，智能推荐最适合的 Fabric Pattern，并解释原因和用法。</td>
+<td align="left">刚接触 Fabric，不知道该用哪个 Pattern 解决手头问题时。</td>
+</tr>
+<tr>
+<td align="left"><strong>improve_prompt</strong></td>
+<td align="left">Prompt 优化专家。基于 Prompt Engineering 最佳实践（如 CoT、Few-Shot），优化输入的 Prompt，使其更清晰、高效。</td>
+<td align="left">当你的 Prompt 效果不佳时，用它来”修一修”。</td>
+</tr>
+<tr>
+<td align="left"><strong>create_pattern</strong></td>
+<td align="left">Pattern 制造机。将一段普通的 Prompt 或指令，转化为符合 Fabric 标准结构的 Pattern（包含 Identity, Steps, Output Instructions 等）。</td>
+<td align="left">想要将自己常用的 Prompt 封装成 Fabric Pattern 分享或复用时。</td>
+</tr>
+</tbody></table>
+<h2 id="Fabric-Patterns-大全"><a href="#Fabric-Patterns-大全" class="headerlink" title="Fabric Patterns 大全"></a>Fabric Patterns 大全</h2><p>Pattern 是 Fabric 的灵魂。以下是 Fabric 目前支持的所有 Pattern 分类列表（按功能前缀分类）：</p>
+<h3 id="Analyze（分析类）"><a href="#Analyze（分析类）" class="headerlink" title="Analyze（分析类）"></a>Analyze（分析类）</h3><p>这类 Pattern 用于对输入内容进行深度分析，挖掘潜在信息、逻辑漏洞或安全风险。</p>
+<ul>
+<li><code>analyze_answers</code>: 分析回答的质量和相关性。</li>
+<li><code>analyze_bill</code>: 分析账单或发票。</li>
+<li><code>analyze_bill_short</code>: 简短版账单分析。</li>
+<li><code>analyze_candidates</code>: 分析求职者简历。</li>
+<li><code>analyze_cfp_submission</code>: 分析会议征稿提交内容。</li>
+<li><code>analyze_claims</code>: <strong>核心功能</strong>，分析文本中提出的所有主张（Claims）及其真实性。</li>
+<li><code>analyze_comments</code>: 分析评论区的情感和观点。</li>
+<li><code>analyze_debate</code>: 分析辩论双方的论点和逻辑。</li>
+<li><code>analyze_email_headers</code>: 分析邮件头，用于安全取证。</li>
+<li><code>analyze_incident</code>: 分析安全事件或事故报告。</li>
+<li><code>analyze_interviewer_techniques</code>: 分析面试官的提问技巧。</li>
+<li><code>analyze_logs</code>: <strong>运维必备</strong>，智能分析系统日志。</li>
+<li><code>analyze_malware</code>: 分析恶意软件特征（需谨慎使用）。</li>
+<li><code>analyze_military_strategy</code>: 分析军事策略。</li>
+<li><code>analyze_mistakes</code>: 分析失败原因和错误。</li>
+<li><code>analyze_paper</code>: 深度分析学术论文。</li>
+<li><code>analyze_paper_simple</code>: 简单版论文分析。</li>
+<li><code>analyze_patent</code>: 分析专利文档。</li>
+<li><code>analyze_personality</code>: 基于文本分析人物性格。</li>
+<li><code>analyze_presentation</code>: 分析演示文稿结构和内容。</li>
+<li><code>analyze_product_feedback</code>: 分析产品用户反馈。</li>
+<li><code>analyze_proposition</code>: 分析提案或建议。</li>
+<li><code>analyze_prose</code>: 分析散文的写作风格。</li>
+<li><code>analyze_prose_json</code>: 以 JSON 格式输出散文分析结果。</li>
+<li><code>analyze_prose_pinker</code>: 基于 Pinker 风格的散文分析。</li>
+<li><code>analyze_risk</code>: 风险评估分析。</li>
+<li><code>analyze_sales_call</code>: 分析销售通话记录。</li>
+<li><code>analyze_spiritual_text</code>: 分析宗教或精神类文本。</li>
+<li><code>analyze_tech_impact</code>: 分析技术对社会的影响。</li>
+<li><code>analyze_terraform_plan</code>: <strong>DevOps必备</strong>，分析 Terraform 执行计划。</li>
+<li><code>analyze_threat_report</code>: 分析安全威胁报告。</li>
+<li><code>analyze_threat_report_cmds</code>: 提取威胁报告中的命令。</li>
+<li><code>analyze_threat_report_trends</code>: 分析威胁趋势。</li>
+</ul>
+<h3 id="Create（创作与生成类）"><a href="#Create（创作与生成类）" class="headerlink" title="Create（创作与生成类）"></a>Create（创作与生成类）</h3><p>用于生成各种格式的文档、代码、可视化图表或创意内容。</p>
+<ul>
+<li><code>create_5_sentence_summary</code>: 生成五句式摘要。</li>
+<li><code>create_academic_paper</code>: 生成学术论文草稿。</li>
+<li><code>create_ai_jobs_analysis</code>: 生成 AI 就业分析报告。</li>
+<li><code>create_aphorisms</code>: 生成格言或警句。</li>
+<li><code>create_art_prompt</code>: 生成 AI 绘画提示词。</li>
+<li><code>create_better_frame</code>: 重构问题框架。</li>
+<li><code>create_coding_feature</code>: 生成代码功能实现思路。</li>
+<li><code>create_coding_project</code>: 生成代码项目结构。</li>
+<li><code>create_command</code>: 生成命令行指令。</li>
+<li><code>create_conceptmap</code>: 生成概念图。</li>
+<li><code>create_cyber_summary</code>: 生成网络安全摘要。</li>
+<li><code>create_design_document</code>: <strong>开发必备</strong>，生成软件设计文档。</li>
+<li><code>create_diy</code>: 生成 DIY 指南。</li>
+<li><code>create_excalidraw_visualization</code>: 生成 Excalidraw 可视化数据。</li>
+<li><code>create_flash_cards</code>: 生成学习闪卡。</li>
+<li><code>create_formal_email</code>: 生成正式邮件。</li>
+<li><code>create_git_diff_commit</code>: 基于 git diff 生成 Commit 信息。</li>
+<li><code>create_graph_from_input</code>: 从输入生成图表数据。</li>
+<li><code>create_hormozi_offer</code>: 生成类似 Alex Hormozi 风格的商业报价。</li>
+<li><code>create_idea_compass</code>: 生成创意指南针。</li>
+<li><code>create_investigation_visualization</code>: 生成调查可视化。</li>
+<li><code>create_keynote</code>: 生成 Keynote 演讲大纲。</li>
+<li><code>create_loe_document</code>: 生成工作量估算（LOE）文档。</li>
+<li><code>create_logo</code>: 生成 Logo 设计灵感。</li>
+<li><code>create_markmap_visualization</code>: 生成思维导图（Markmap）。</li>
+<li><code>create_mermaid_visualization</code>: 生成 Mermaid 图表代码。</li>
+<li><code>create_mermaid_visualization_for_github</code>: 专为 GitHub 优化的 Mermaid 图表。</li>
+<li><code>create_micro_summary</code>: 生成微型摘要。</li>
+<li><code>create_mnemonic_phrases</code>: 生成记忆口诀。</li>
+<li><code>create_network_threat_landscape</code>: 生成网络威胁态势图。</li>
+<li><code>create_newsletter_entry</code>: 生成通讯录条目。</li>
+<li><code>create_npc</code>: 生成游戏 NPC 设定。</li>
+<li><code>create_pattern</code>: <strong>元功能</strong>，用于创建新的 Fabric Pattern。</li>
+<li><code>create_prd</code>: <strong>产品经理必备</strong>，生成产品需求文档（PRD）。</li>
+<li><code>create_prediction_block</code>: 生成预测模块。</li>
+<li><code>create_quiz</code>: 生成测试题。</li>
+<li><code>create_reading_plan</code>: 生成阅读计划。</li>
+<li><code>create_recursive_outline</code>: 生成递归大纲。</li>
+<li><code>create_report_finding</code>: 生成报告发现。</li>
+<li><code>create_rpg_summary</code>: 生成 RPG 游戏摘要。</li>
+<li><code>create_security_update</code>: 生成安全更新通告。</li>
+<li><code>create_show_intro</code>: 生成节目介绍。</li>
+<li><code>create_sigma_rules</code>: 生成 Sigma 安全规则。</li>
+<li><code>create_story_about_people_interaction</code>: 生成人物互动故事。</li>
+<li><code>create_story_about_person</code>: 生成人物故事。</li>
+<li><code>create_story_explanation</code>: 生成故事解释。</li>
+<li><code>create_stride_threat_model</code>: 生成 STRIDE 威胁模型。</li>
+<li><code>create_summary</code>: 生成通用摘要。</li>
+<li><code>create_tags</code>: 自动生成标签。</li>
+<li><code>create_threat_scenarios</code>: 生成威胁场景。</li>
+<li><code>create_ttrc_graph</code>: 生成 TTRC 图表。</li>
+<li><code>create_ttrc_narrative</code>: 生成 TTRC 叙述。</li>
+<li><code>create_upgrade_pack</code>: 生成升级包说明。</li>
+<li><code>create_user_story</code>: 生成用户故事。</li>
+<li><code>create_video_chapters</code>: 生成视频章节划分。</li>
+<li><code>create_visualization</code>: 生成通用可视化描述。</li>
+</ul>
+<h3 id="Extract（提取类）"><a href="#Extract（提取类）" class="headerlink" title="Extract（提取类）"></a>Extract（提取类）</h3><p>用于从长文本或复杂内容中提炼关键信息。</p>
+<ul>
+<li><code>extract_algorithm_update_recommendations</code>: 提取算法更新建议。</li>
+<li><code>extract_alpha</code>: 提取高价值信息（Alpha）。</li>
+<li><code>extract_article_wisdom</code>: 提取文章智慧。</li>
+<li><code>extract_book_ideas</code>: 提取书籍核心创意。</li>
+<li><code>extract_book_recommendations</code>: 提取书籍推荐。</li>
+<li><code>extract_business_ideas</code>: 提取商业创意。</li>
+<li><code>extract_characters</code>: 提取人物角色。</li>
+<li><code>extract_controversial_ideas</code>: 提取有争议的观点。</li>
+<li><code>extract_core_message</code>: 提取核心信息。</li>
+<li><code>extract_ctf_writeup</code>: 提取 CTF 解题思路。</li>
+<li><code>extract_domains</code>: 提取域名信息。</li>
+<li><code>extract_extraordinary_claims</code>: 提取非凡的主张。</li>
+<li><code>extract_ideas</code>: 提取创意。</li>
+<li><code>extract_insights</code>: 提取洞察。</li>
+<li><code>extract_insights_dm</code>: Daniel Miessler 风格的洞察提取。</li>
+<li><code>extract_instructions</code>: 提取操作指令。</li>
+<li><code>extract_jokes</code>: 提取笑话。</li>
+<li><code>extract_latest_video</code>: 提取最新视频信息。</li>
+<li><code>extract_main_activities</code>: 提取主要活动。</li>
+<li><code>extract_main_idea</code>: 提取中心思想。</li>
+<li><code>extract_mcp_servers</code>: 提取 MCP 服务器配置。</li>
+<li><code>extract_most_redeeming_thing</code>: 提取最有价值的一点。</li>
+<li><code>extract_patterns</code>: 提取模式。</li>
+<li><code>extract_poc</code>: 提取概念验证（PoC）。</li>
+<li><code>extract_predictions</code>: 提取预测信息。</li>
+<li><code>extract_primary_problem</code>: 提取主要问题。</li>
+<li><code>extract_primary_solution</code>: 提取主要解决方案。</li>
+<li><code>extract_product_features</code>: 提取产品特性。</li>
+<li><code>extract_questions</code>: 提取问题。</li>
+<li><code>extract_recipe</code>: 提取食谱。</li>
+<li><code>extract_recommendations</code>: 提取推荐建议。</li>
+<li><code>extract_references</code>: 提取参考文献。</li>
+<li><code>extract_skills</code>: 提取技能点。</li>
+<li><code>extract_song_meaning</code>: 提取歌曲含义。</li>
+<li><code>extract_sponsors</code>: 提取赞助商信息。</li>
+<li><code>extract_videoid</code>: 提取视频 ID。</li>
+<li><code>extract_wisdom</code>: <strong>明星功能</strong>，提取核心智慧和洞见。</li>
+<li><code>extract_wisdom_agents</code>: 提取 Agent 相关的智慧。</li>
+<li><code>extract_wisdom_dm</code>: DM 风格的智慧提取。</li>
+<li><code>extract_wisdom_nometa</code>: 不包含元数据的智慧提取。</li>
+</ul>
+<h3 id="Summarize（摘要类）"><a href="#Summarize（摘要类）" class="headerlink" title="Summarize（摘要类）"></a>Summarize（摘要类）</h3><p>专注于不同场景下的文本摘要。</p>
+<ul>
+<li><code>summarize</code>: 通用摘要。</li>
+<li><code>summarize_board_meeting</code>: 董事会会议摘要。</li>
+<li><code>summarize_debate</code>: 辩论摘要。</li>
+<li><code>summarize_git_changes</code>: Git 变更摘要。</li>
+<li><code>summarize_git_diff</code>: Git Diff 摘要。</li>
+<li><code>summarize_lecture</code>: 讲座&#x2F;课程摘要。</li>
+<li><code>summarize_legislation</code>: 法律法规摘要。</li>
+<li><code>summarize_meeting</code>: 会议纪要摘要。</li>
+<li><code>summarize_micro</code>: 微型摘要。</li>
+<li><code>summarize_newsletter</code>: 通讯摘要。</li>
+<li><code>summarize_paper</code>: 论文摘要。</li>
+<li><code>summarize_prompt</code>: Prompt 摘要。</li>
+<li><code>summarize_pull-requests</code>: PR 摘要。</li>
+<li><code>summarize_rpg_session</code>: RPG 游戏进程摘要。</li>
+</ul>
+<h3 id="Coding-Technical（编程与技术类）"><a href="#Coding-Technical（编程与技术类）" class="headerlink" title="Coding &amp; Technical（编程与技术类）"></a>Coding &amp; Technical（编程与技术类）</h3><ul>
+<li><code>clean_text</code>: 清理文本格式。</li>
+<li><code>coding_master</code>: 编程专家模式。</li>
+<li><code>explain_code</code>: 解释代码逻辑。</li>
+<li><code>explain_docs</code>: 解释文档。</li>
+<li><code>explain_project</code>: 解释项目结构。</li>
+<li><code>export_data_as_csv</code>: 将数据导出为 CSV。</li>
+<li><code>fix_typos</code>: 修正拼写错误。</li>
+<li><code>generate_code_rules</code>: 生成代码规范。</li>
+<li><code>improve_prompt</code>: 优化 Prompt。</li>
+<li><code>review_code</code>: 代码审查。</li>
+<li><code>review_design</code>: 设计审查。</li>
+<li><code>sanitize_broken_html_to_markdown</code>: 修复并转换 HTML 为 Markdown。</li>
+<li><code>write_latex</code>: 编写 LaTeX。</li>
+<li><code>write_nuclei_template_rule</code>: 编写 Nuclei 扫描规则。</li>
+<li><code>write_pull-request</code>: 编写 PR 描述。</li>
+<li><code>write_semgrep_rule</code>: 编写 Semgrep 规则。</li>
+</ul>
+<h3 id="Others（其他实用工具）"><a href="#Others（其他实用工具）" class="headerlink" title="Others（其他实用工具）"></a>Others（其他实用工具）</h3><ul>
+<li><code>agility_story</code>: 敏捷故事编写。</li>
+<li><code>ai</code>: 通用 AI 对话。</li>
+<li><code>answer_interview_question</code>: 回答面试题。</li>
+<li><code>apply_ul_tags</code>: 添加无序列表标签。</li>
+<li><code>ask_secure_by_design_questions</code>: 询问”安全设计”相关问题。</li>
+<li><code>ask_uncle_duke</code>: 咨询 Uncle Duke（虚拟角色）。</li>
+<li><code>capture_thinkers_work</code>: 捕捉思想家的工作。</li>
+<li><code>check_agreement</code>: 检查协议。</li>
+<li><code>compare_and_contrast</code>: 比较与对比。</li>
+<li><code>concall_summary</code>: 电话会议摘要。</li>
+<li><code>convert_to_markdown</code>: 转换为 Markdown。</li>
+<li><code>dialog_with_socrates</code>: 与苏格拉底对话（苏格拉底式提问）。</li>
+<li><code>enrich_blog_post</code>: 丰富博客文章内容。</li>
+<li><code>explain_math</code>: 解释数学概念。</li>
+<li><code>explain_terms</code>: 解释术语。</li>
+<li><code>find_female_life_partner</code>: （趣味）寻找女性伴侣建议。</li>
+<li><code>find_hidden_message</code>: 寻找隐藏信息。</li>
+<li><code>find_logical_fallacies</code>: 寻找逻辑谬误。</li>
+<li><code>get_wow_per_minute</code>: 计算”惊叹时刻”频率。</li>
+<li><code>heal_person</code>: 疗愈对话。</li>
+<li><code>humanize</code>: 使文本更人性化。</li>
+<li><code>identify_dsrp_...</code>: DSRP 系统思维相关分析。</li>
+<li><code>identify_job_stories</code>: 识别 Job Stories。</li>
+<li><code>improve_academic_writing</code>: 优化学术写作。</li>
+<li><code>improve_report_finding</code>: 优化报告发现。</li>
+<li><code>improve_writing</code>: 优化通用写作。</li>
+<li><code>judge_output</code>: 评判输出质量。</li>
+<li><code>label_and_rate</code>: 标记并评分。</li>
+<li><code>md_callout</code>: Markdown 标注。</li>
+<li><code>model_as_sherlock_freud</code>: 扮演福尔摩斯或弗洛伊德。</li>
+<li><code>official_pattern_template</code>: 官方 Pattern 模板。</li>
+<li><code>predict_person_actions</code>: 预测人物行为。</li>
+<li><code>prepare_7s_strategy</code>: 准备 7S 战略分析。</li>
+<li><code>provide_guidance</code>: 提供指导。</li>
+<li><code>rate_ai_response</code>: 评分 AI 回答。</li>
+<li><code>rate_ai_result</code>: 评分 AI 结果。</li>
+<li><code>rate_content</code>: 内容评分。</li>
+<li><code>rate_value</code>: 价值评分。</li>
+<li><code>raw_query</code>: 原始查询。</li>
+<li><code>recommend_artists</code>: 推荐艺术家。</li>
+<li><code>recommend_pipeline_upgrades</code>: 推荐流水线升级。</li>
+<li><code>recommend_talkpanel_topics</code>: 推荐座谈会话题。</li>
+<li><code>recommend_yoga_practice</code>: 推荐瑜伽练习。</li>
+<li><code>refine_design_document</code>: 优化设计文档。</li>
+<li><code>suggest_pattern</code>: 建议 Pattern。</li>
+<li><code>t_...</code>: 一系列以 t_ 开头的思维工具（Thinkers）。</li>
+<li><code>to_flashcards</code>: 转换为闪卡。</li>
+<li><code>transcribe_minutes</code>: 记录会议纪要。</li>
+<li><code>translate</code>: 翻译。</li>
+<li><code>tweet</code>: 生成推文。</li>
+<li><code>write_essay</code>: 撰写文章。</li>
+<li><code>write_essay_pg</code>: Paul Graham 风格文章。</li>
+<li><code>write_hackerone_report</code>: 撰写 HackerOne 漏洞报告。</li>
+<li><code>write_micro_essay</code>: 撰写微型文章。</li>
+<li><code>youtube_summary</code>: YouTube 视频摘要。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Fabric 不仅仅是一个工具集合，它代表了一种将 AI 能力模块化、流程化的先进理念。通过使用 Fabric，我们可以：</p>
+<ol>
+<li><strong>复用优秀经验</strong>：直接使用专家打磨好的 Prompt (Pattern)。</li>
+<li><strong>提高效率</strong>：命令行接口让批量处理和自动化成为可能。</li>
+<li><strong>专注核心价值</strong>：从重复的 Prompt 编写中解放出来，专注于内容本身。</li>
+</ol>
+<p>如果你是开发者、安全研究员、内容创作者，或者任何希望通过 AI 提升效率的人，Fabric 都值得你立即尝试。</p>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/0ca62b9873a9.html">https://xhua.eu.org/posts/0ca62b9873a9.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/fabric/">Fabric</a><a class="post-meta__tags" href="/tags/ai/">AI</a><a class="post-meta__tags" href="/tags/prompt-engineering/">Prompt Engineering</a><a class="post-meta__tags" href="/tags/llm/">LLM</a><a class="post-meta__tags" href="/tags/tools/">Tools</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/fca19c00172ae18891f6df2829b0a8324a8af645d6f64c4736ed99df3d681c7f.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/577b82f4a03d.html" title="排障记录：删除Namespace olm一直Terminating的处理过程"><img class="cover" src="https://img.xhua.eu.org/313102666639d0ed454221b0f0221bf918d1f963106c8a3627d5057cd8e05719.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">排障记录：删除Namespace olm一直Terminating的处理过程</div></div><div class="info-2"><div class="info-item-1">引言在集群日常维护中，删除一个 Namespace 看起来是“删掉一堆资源”的简单动作，但如果控制面无法完成资源发现（discovery），或某些资源的 finalizers 无法被对应控制器清理，Namespace 就会长期卡在 Terminating。 本文记录一次删除 olm Namespace 失败的排障过程：先是 NamespaceDeletionDiscoveryFailure，解决后又卡在 ClusterServiceVersion（CSV）清理阶段，最终通过移除 CSV 的 finalizer 完成删除。文末附一套可复用的排查清单与风险提示。  警告：olm 相关资源通常属于 Operator Lifecycle Manager（OLM）核心组件。生产集群中不建议随意删除；本文的“强制移除 finalizer &#x2F; 删除 APIService”属于应急手段，务必理解影响范围后再执行。  现象：Namespace olm 一直 Terminating删除 olm 后一直停留在 Terminating，查看 Namespace 状态发现： 123456Disc...</div></div></div></a><a class="pagination-related" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆"><img class="cover" src="https://img.xhua.eu.org/9676ec1567acff651bae8eec0d36ef59abc5aea4cf2869a5d4044330e956e77a.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">15个实用开源AI项目汇总：从PPT生成到语音克隆</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的爆发，GitHub 上涌现了大量优秀的开源 AI 项目。这些项目不仅降低了 AI 技术的使用门槛，还切实解决了许多工作和生活中的痛点。 本文精选了 15 个 偏向实用的开源 AI 项目，涵盖 PPT 自动生成、本地 LLM 交互、应用开发、前端生成、AI 搜索、私有云相册、工作流增强、语音转文字、图像生成、知识库、声音克隆 以及 数据库管理 等领域。无论你是开发者、产品经理还是普通用户，都能从中找到提升效率的利器。 1. Presenton：AI 自动生成 PPTPresenton 是一个开源的 AI 演示文稿生成器，可以看作是 Gamma、Beautiful.ai 的开源替代品。它完全在本地运行，支持使用 OpenAI、Gemini 或本地 Ollama 模型来生成内容。  GitHub: https://github.com/presenton/presenton 主要功能: 多模型支持: 支持 OpenAI, Gemini, Ollama 等多种 LLM 后端。 隐私安全: 数据掌握在自己手中，支持本地运行。 所见即所得: 生成大纲后可进行编辑，再...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3ce7fb915f3c.html" title="LightRAG：轻量级检索增强生成系统详解"><img class="cover" src="https://img.xhua.eu.org/57deb8c28c2131d70e8ca4a62d8fbdf542a722f639d2faef875a761dc2efe28a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-13</div><div class="info-item-2">LightRAG：轻量级检索增强生成系统详解</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的快速发展，如何让AI系统能够访问和处理大量外部知识成为了一个关键挑战。检索增强生成（Retrieval-Augmented Generation，RAG）技术应运而生，而LightRAG作为一个轻量级且高效的RAG系统，通过结合知识图谱和向量检索技术，为企业级知识管理和智能问答提供了优秀的解决方案。 LightRAG 简介LightRAG是一个现代化的检索增强生成系统，专注于提供高质量的问答和知识管理功能。该系统最大的特点是将传统的向量检索与知识图谱技术相结合，实现了更精准和上下文相关的信息检索。 核心特性 轻量级设计：优化的架构设计，降低资源消耗 多模态支持：同时支持向量检索和图谱检索 多存储后端：兼容Neo4j、PostgreSQL、Faiss等多种存储系统 多模型支持：支持OpenAI、Hugging Face、Ollama等主流LLM 生产就绪：提供完整的API接口和Web UI界面 高并发处理：支持并发索引和查询操作  系统架构设计LightRAG采用分层模块化架构，确保了系统的可扩展性和维护性。 整体架构LightRAG的架构分为索引（Ind...</div></div></div></a><a class="pagination-related" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆"><img class="cover" src="https://img.xhua.eu.org/9676ec1567acff651bae8eec0d36ef59abc5aea4cf2869a5d4044330e956e77a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-08</div><div class="info-item-2">15个实用开源AI项目汇总：从PPT生成到语音克隆</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的爆发，GitHub 上涌现了大量优秀的开源 AI 项目。这些项目不仅降低了 AI 技术的使用门槛，还切实解决了许多工作和生活中的痛点。 本文精选了 15 个 偏向实用的开源 AI 项目，涵盖 PPT 自动生成、本地 LLM 交互、应用开发、前端生成、AI 搜索、私有云相册、工作流增强、语音转文字、图像生成、知识库、声音克隆 以及 数据库管理 等领域。无论你是开发者、产品经理还是普通用户，都能从中找到提升效率的利器。 1. Presenton：AI 自动生成 PPTPresenton 是一个开源的 AI 演示文稿生成器，可以看作是 Gamma、Beautiful.ai 的开源替代品。它完全在本地运行，支持使用 OpenAI、Gemini 或本地 Ollama 模型来生成内容。  GitHub: https://github.com/presenton/presenton 主要功能: 多模型支持: 支持 OpenAI, Gemini, Ollama 等多种 LLM 后端。 隐私安全: 数据掌握在自己手中，支持本地运行。 所见即所得: 生成大纲后可进行编辑，再...</div></div></div></a><a class="pagination-related" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用"><img class="cover" src="https://img.xhua.eu.org/68658d9962fcadac50f2aeada47d66c20bebfa94d25f209bcb103bdba65cb749.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-09</div><div class="info-item-2">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</div></div><div class="info-2"><div class="info-item-1">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用随着 Apple Silicon (M1&#x2F;M2&#x2F;M3&#x2F;M4) 芯片的普及，Mac 已经成为一个强大的 AI 开发工作站。凭借其统一内存架构 (Unified Memory Architecture)，Mac 能够处理比同等配置显卡更大的模型。本文将介绍如何在 Mac 上使用 MLX 框架高效微调大语言模型（如 Qwen、Llama、Mistral 等），并探讨微调在不同业务场景中的应用。 一、 核心概念解析在开始动手之前，我们需要理解几个关键的技术术语。 1. 什么是微调 (Fine-tuning)？微调是在预训练模型（Base Model）的基础上，使用特定领域的数据进行进一步训练。就像是一个已经读完大学的“通才”，通过学习法律卷宗，变成了一位“律师”。 2. SFT (监督微调)SFT (Supervised Fine-Tuning) 是最常用的微调方式。它通过 (Input, Output) 对来教导模型如何响应指令。  编程场景示例:  输入: “帮我写一个 Pyth...</div></div></div></a><a class="pagination-related" href="/posts/48e8b33bb2e1.html" title="LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理"><img class="cover" src="https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-30</div><div class="info-item-2">LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理</div></div><div class="info-2"><div class="info-item-1">背景与目标LiteLLM Proxy 是一个 OpenAI API 兼容的模型网关，支持将来自 OpenAI、Azure OpenAI、Bedrock、Vertex AI 以及本地&#x2F;自建的 OpenAI 兼容推理服务（如 vLLM）统一到一套接口之下，并提供虚拟 API Key、用量与预算、速率限制、缓存、日志&#x2F;指标、路由、负载均衡与回退等能力。本文将演示：  如何用 Docker 快速部署 LiteLLM Proxy（含最小可用与带数据库的完整模式） 如何把 vLLM 暴露的 OpenAI 兼容接口接入到 LiteLLM Proxy 进行统一代理 如何生成虚拟 Key、设置每分钟请求数（RPM）限速 如何查询模型列表等常用“免费”功能  参考与更多细节请见官方文档：  LiteLLM Proxy Docker 快速上手 vLLM Provider 文档  你将学到什么 用 Docker 启动 LiteLLM Proxy，并验证 /chat/completions 将本地 vLLM（OpenAI 兼容接口）纳入代理，统一用 OpenAI 协议调用 配置同名模型...</div></div></div></a><a class="pagination-related" href="/posts/475a94dfb51a.html" title="LangChain框架入门与实践：组件详解、使用场景与示例"><img class="cover" src="https://img.xhua.eu.org/9fc1cdf8c8977cbf80c76c219e1b45cd8838a4300c9634013138eac9dedeef93.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-09</div><div class="info-item-2">LangChain框架入门与实践：组件详解、使用场景与示例</div></div><div class="info-2"><div class="info-item-1">背景与目标读者LangChain 是一个面向大型语言模型（Large Language Models, LLM）应用开发的开源框架，由 Harrison Chase 于 2022 年发布，并在 2023 年成立公司后快速发展。它通过统一的抽象与模块化组件，帮助开发者高效构建复杂的 AI 应用，如聊天机器人、文档问答（RAG）、智能代理（Agent）与自动摘要等。 本文面向有一定 Python 基础、希望系统了解并快速上手 LangChain 的工程师与技术爱好者，覆盖核心组件、常见应用场景与可运行示例代码。  LangChain 是什么，为什么需要它？ 统一接口：屏蔽不同模型与服务的差异（如 OpenAI、Hugging Face、本地模型等），提供一致的调用方式。 组件化设计：围绕模型、提示（Prompt）、链（Chain）、代理（Agent）、记忆（Memory）、索引（Indexes&#x2F;Retriever）等模块化组合，便于扩展与维护。 工程化能力：提供可观测（Callbacks）、持久化（Checkpointers&#x2F;Message History）、工具...</div></div></div></a><a class="pagination-related" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？"><img class="cover" src="https://img.xhua.eu.org/176e234d6c59bc9e31fdec2fc747174523a9b90c4328abc4f9a4279a1e540a7f.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-26</div><div class="info-item-2">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</div></div><div class="info-2"><div class="info-item-1">一、为什么要搞懂大模型的各种「版本」？近年来，各种大模型名字后面越来越“花”：  Base &#x2F; Instruct &#x2F; Chat MoE（Mixture of Experts） AWQ &#x2F; GPTQ &#x2F; INT4 &#x2F; FP8 量化 Thinking &#x2F; DeepThink &#x2F; Step &#x2F; Reasoning  如果不了解这些后缀的含义，我们就很难：  正确选择模型：是用 Base 还是 Instruct？是要 MoE 还是稠密模型？ 合理评估效果：为什么同一家模型，Instruct 版本比 Base 用起来舒服很多？ 看懂论文与技术文档：里面充满了 dense、MoE、SFT、RLHF、quantization 等术语。  这篇文章的目标是：  用通俗语言 + 对比表格，解释常见大模型版本名背后的含义、原理与适用场景 帮助你在选型、部署与使用大模型时，做到：心中有数，不再迷茫   二、从「Base 模型」到「Instruct 模型」2.1 Base 模型：会“说话”，但不一定听得懂你**Base 模型...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Fabric%EF%BC%9F"><span class="toc-text">什么是 Fabric？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%97%9B%E7%82%B9"><span class="toc-text">核心痛点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="toc-text">核心特性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="toc-text">安装与配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AE%89%E8%A3%85-Fabric"><span class="toc-text">1. 安装 Fabric</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E9%85%8D%E7%BD%AE"><span class="toc-text">2. 配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD%E4%B8%8E%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-text">常用功能与使用示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%94%A8%E6%B3%95"><span class="toc-text">基础用法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%E4%B8%80%EF%BC%9A%E6%80%BB%E7%BB%93%E6%96%87%E7%AB%A0%E5%86%85%E5%AE%B9"><span class="toc-text">场景一：总结文章内容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%E4%BA%8C%EF%BC%9AYouTube-%E8%A7%86%E9%A2%91%E6%99%BA%E6%85%A7%E6%8F%90%E5%8F%96"><span class="toc-text">场景二：YouTube 视频智慧提取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%E4%B8%89%EF%BC%9A%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90%E4%B8%8E%E8%A7%A3%E9%87%8A"><span class="toc-text">场景三：代码分析与解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%E5%9B%9B%EF%BC%9A%E5%8D%B3%E6%97%B6%E6%B5%81%E5%BC%8F%E8%BE%93%E5%87%BA"><span class="toc-text">场景四：即时流式输出</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E6%A0%B8%E5%BF%83%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3"><span class="toc-text">常用核心命令详解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Fabric-Patterns-%E5%A4%A7%E5%85%A8"><span class="toc-text">Fabric Patterns 大全</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Analyze%EF%BC%88%E5%88%86%E6%9E%90%E7%B1%BB%EF%BC%89"><span class="toc-text">Analyze（分析类）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Create%EF%BC%88%E5%88%9B%E4%BD%9C%E4%B8%8E%E7%94%9F%E6%88%90%E7%B1%BB%EF%BC%89"><span class="toc-text">Create（创作与生成类）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Extract%EF%BC%88%E6%8F%90%E5%8F%96%E7%B1%BB%EF%BC%89"><span class="toc-text">Extract（提取类）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Summarize%EF%BC%88%E6%91%98%E8%A6%81%E7%B1%BB%EF%BC%89"><span class="toc-text">Summarize（摘要类）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Coding-Technical%EF%BC%88%E7%BC%96%E7%A8%8B%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%B1%BB%EF%BC%89"><span class="toc-text">Coding &amp; Technical（编程与技术类）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Others%EF%BC%88%E5%85%B6%E4%BB%96%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7%EF%BC%89"><span class="toc-text">Others（其他实用工具）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

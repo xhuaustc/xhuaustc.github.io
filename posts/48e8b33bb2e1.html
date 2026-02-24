@@ -1,0 +1,470 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="背景与目标LiteLLM Proxy 是一个 OpenAI API 兼容的模型网关，支持将来自 OpenAI、Azure OpenAI、Bedrock、Vertex AI 以及本地&#x2F;自建的 OpenAI 兼容推理服务（如 vLLM）统一到一套接口之下，并提供虚拟 API Key、用量与预算、速率限制、缓存、日志&#x2F;指标、路由、负载均衡与回退等能力。本文将演示：  如何用 Dock">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理">
+<meta property="og:url" content="https://xhua.eu.org/posts/48e8b33bb2e1.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="背景与目标LiteLLM Proxy 是一个 OpenAI API 兼容的模型网关，支持将来自 OpenAI、Azure OpenAI、Bedrock、Vertex AI 以及本地&#x2F;自建的 OpenAI 兼容推理服务（如 vLLM）统一到一套接口之下，并提供虚拟 API Key、用量与预算、速率限制、缓存、日志&#x2F;指标、路由、负载均衡与回退等能力。本文将演示：  如何用 Dock">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg">
+<meta property="article:published_time" content="2025-09-30T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.627Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="LLM Proxy">
+<meta property="article:tag" content="LiteLLM">
+<meta property="article:tag" content="vLLM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理",
+  "url": "https://xhua.eu.org/posts/48e8b33bb2e1.html",
+  "image": "https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg",
+  "datePublished": "2025-09-30T02:00:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.627Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/48e8b33bb2e1.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">LiteLLM Proxy 使用指南：Docker 部署、vLLM 代理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-09-30T02:00:00.000Z" title="发表于 2025-09-30 10:00:00">2025-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.627Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="背景与目标"><a href="#背景与目标" class="headerlink" title="背景与目标"></a>背景与目标</h2><p>LiteLLM Proxy 是一个 OpenAI API 兼容的模型网关，支持将来自 OpenAI、Azure OpenAI、Bedrock、Vertex AI 以及本地&#x2F;自建的 OpenAI 兼容推理服务（如 vLLM）统一到一套接口之下，并提供虚拟 API Key、用量与预算、速率限制、缓存、日志&#x2F;指标、路由、负载均衡与回退等能力。本文将演示：</p>
+<ul>
+<li>如何用 Docker 快速部署 LiteLLM Proxy（含最小可用与带数据库的完整模式）</li>
+<li>如何把 vLLM 暴露的 OpenAI 兼容接口接入到 LiteLLM Proxy 进行统一代理</li>
+<li>如何生成虚拟 Key、设置每分钟请求数（RPM）限速</li>
+<li>如何查询模型列表等常用“免费”功能</li>
+</ul>
+<p>参考与更多细节请见官方文档：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/docker_quick_start">LiteLLM Proxy Docker 快速上手</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/providers/vllm">vLLM Provider 文档</a></li>
+</ul>
+<h2 id="你将学到什么"><a href="#你将学到什么" class="headerlink" title="你将学到什么"></a>你将学到什么</h2><ul>
+<li>用 Docker 启动 LiteLLM Proxy，并验证 <code>/chat/completions</code></li>
+<li>将本地 vLLM（OpenAI 兼容接口）纳入代理，统一用 OpenAI 协议调用</li>
+<li>配置同名模型多后端负载均衡，实现流量分发与高可用</li>
+<li>在不接数据库的前提下，如何给”不同团队”分发可控的 Key（网关方案）</li>
+<li>接入数据库后，如何生成”虚拟 Key”、设置限速并进行用量治理</li>
+<li>查询模型列表、排错以及生产级监控与高可用实践</li>
+</ul>
+<h2 id="核心功能速览"><a href="#核心功能速览" class="headerlink" title="核心功能速览"></a>核心功能速览</h2><ul>
+<li><strong>OpenAI 兼容</strong>：统一 <code>/chat/completions</code>、<code>/embeddings</code> 等接口</li>
+<li><strong>多模型路由</strong>：一个代理前面挂多家模型与自建 vLLM</li>
+<li><strong>负载均衡</strong>：同名模型多后端分发，支持 simple-shuffle、usage-based-routing、latency-based-routing 等策略</li>
+<li><strong>密钥治理</strong>：<ul>
+<li>无数据库：用网关做静态 Key 白名单 + 限速 + 审计</li>
+<li>带数据库：原生虚拟 Key、预算&#x2F;配额、团队&#x2F;用户可视化管理</li>
+</ul>
+</li>
+<li><strong>可观测性</strong>：日志、指标、追踪，支持缓存与回退策略</li>
+</ul>
+<h2 id="如何阅读这篇文章"><a href="#如何阅读这篇文章" class="headerlink" title="如何阅读这篇文章"></a>如何阅读这篇文章</h2><ul>
+<li>想快速跑通：直接看”快速开始”和”对接 vLLM”。</li>
+<li>需要负载均衡：看”负载均衡：同名模型多后端分发”。</li>
+<li>无数据库就要分发团队 Key：看”无数据库的密钥治理（最简部署）”。</li>
+<li>需要 RPM&#x2F;预算&#x2F;面板：看”使用 Docker Compose（Proxy + Postgres）”与”生成虚拟 Key 并设置限速（RPM）”。</li>
+<li>线上实践：看”生产部署实践（监控与高可用）”。</li>
+</ul>
+<h2 id="快速开始（最小可用）"><a href="#快速开始（最小可用）" class="headerlink" title="快速开始（最小可用）"></a>快速开始（最小可用）</h2><p>你可以直接拉取官方镜像并用一份 <code>config.yaml</code> 启动 Proxy。下面示例展示最小可用部署（未接数据库、仅用于功能验证）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Pull image</span></span><br><span class="line">docker pull ghcr.io/berriai/litellm:main-latest</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start proxy with your config (created in next section)</span></span><br><span class="line">docker run \</span><br><span class="line">  -v $(<span class="built_in">pwd</span>)/litellm_config.yaml:/app/config.yaml \</span><br><span class="line">  -e AZURE_API_KEY=demo \</span><br><span class="line">  -e AZURE_API_BASE=https://example.openai.azure.com/ \</span><br><span class="line">  -p 4000:4000 \</span><br><span class="line">  ghcr.io/berriai/litellm:main-latest \</span><br><span class="line">  --config /app/config.yaml --detailed_debug</span><br><span class="line"><span class="comment"># Proxy up at http://0.0.0.0:4000</span></span><br></pre></td></tr></table></figure>
+
+<p>最简单的 <code>litellm_config.yaml</code>（示例使用 Azure OpenAI，仅用于快速跑通 Proxy）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">gpt-4o</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">azure/my_azure_deployment</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">os.environ/AZURE_API_BASE</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">os.environ/AZURE_API_KEY</span></span><br><span class="line">      <span class="attr">api_version:</span> <span class="string">&quot;2025-01-01-preview&quot;</span> <span class="comment"># optional</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>提示：启动后可用 <code>POST /chat/completions</code> 进行测试，详见下文调用示例。</p>
+</blockquote>
+<h2 id="使用-Docker-Compose（Proxy-Postgres）"><a href="#使用-Docker-Compose（Proxy-Postgres）" class="headerlink" title="使用 Docker Compose（Proxy + Postgres）"></a>使用 Docker Compose（Proxy + Postgres）</h2><p>如果需要启用虚拟 Key、用户&#x2F;团队管理、预算与用量统计等高级功能，建议配合 Postgres 使用。官方提供了现成的 <code>docker-compose.yml</code> 与 <code>.env</code> 用法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Get the compose file</span></span><br><span class="line">curl -O https://raw.githubusercontent.com/BerriAI/litellm/main/docker-compose.yml</span><br><span class="line"></span><br><span class="line"><span class="comment"># Set master key (admin) and salt key (for encrypting provider keys)</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;LITELLM_MASTER_KEY=&quot;sk-1234&quot;&#x27;</span> &gt; .<span class="built_in">env</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;LITELLM_SALT_KEY=&quot;sk-1234&quot;&#x27;</span> &gt;&gt; .<span class="built_in">env</span></span><br><span class="line"><span class="built_in">source</span> .<span class="built_in">env</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Start services</span></span><br><span class="line">docker-compose up</span><br></pre></td></tr></table></figure>
+
+<p>将数据库接入到 <code>config.yaml</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">gpt-4o</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">azure/my_azure_deployment</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">os.environ/AZURE_API_BASE</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">os.environ/AZURE_API_KEY</span></span><br><span class="line">      <span class="attr">api_version:</span> <span class="string">&quot;2025-01-01-preview&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">general_settings:</span></span><br><span class="line">  <span class="attr">master_key:</span> <span class="string">sk-1234</span></span><br><span class="line">  <span class="attr">database_url:</span> <span class="string">&quot;postgresql://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;dbname&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>启用 Admin UI</strong>：Admin UI（管理界面）<strong>必须</strong>连接 Postgres 数据库才能工作。你需要同时配置 <code>master_key</code> 和 <code>database_url</code>。配置完成后，访问 <code>/ui</code> 路径并使用 <code>master_key</code> 登录。</p>
+</blockquote>
+<p><img src="https://img.xhua.eu.org/f19054cd5a30c001351101907ad7e93623a3f950f9809518f1b795b6a80d9212.jpg" alt="UI">  </p>
+<h2 id="对接-vLLM：把自建模型纳入统一代理"><a href="#对接-vLLM：把自建模型纳入统一代理" class="headerlink" title="对接 vLLM：把自建模型纳入统一代理"></a>对接 vLLM：把自建模型纳入统一代理</h2><p>vLLM 可以以 OpenAI 兼容方式暴露推理服务（<code>/v1</code> 路径）。我们先启动 vLLM，再在 LiteLLM 里将其注册为一个“模型”。</p>
+<h3 id="1-启动-vLLM（OpenAI-兼容-API）"><a href="#1-启动-vLLM（OpenAI-兼容-API）" class="headerlink" title="1) 启动 vLLM（OpenAI 兼容 API）"></a>1) 启动 vLLM（OpenAI 兼容 API）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Example: start vLLM OpenAI-compatible server</span></span><br><span class="line">python -m vllm.entrypoints.openai.api_server \</span><br><span class="line">  --model meta-llama/Llama-3.1-8B-Instruct \</span><br><span class="line">  --host 0.0.0.0 \</span><br><span class="line">  --port 8000</span><br><span class="line"><span class="comment"># vLLM OpenAI API at http://&lt;host&gt;:8000/v1</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如果使用容器化 vLLM，请确保 LiteLLM Proxy 容器能够访问到 vLLM 的 <code>http://&lt;host&gt;:8000/v1</code>（可用 <code>host.docker.internal</code> 或桥接网络）。</p>
+</blockquote>
+<h3 id="2-在-LiteLLM-中注册-vLLM-模型"><a href="#2-在-LiteLLM-中注册-vLLM-模型" class="headerlink" title="2) 在 LiteLLM 中注册 vLLM 模型"></a>2) 在 LiteLLM 中注册 vLLM 模型</h3><p>LiteLLM 对“OpenAI 兼容端点”的使用建议前缀为 <code>hosted_vllm/</code>。将 <code>litellm_params.model</code> 设为 <code>hosted_vllm/&lt;model-identifier&gt;</code>，并把 <code>api_base</code> 指向你 vLLM 的 <code>/v1</code> 即可。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># file: litellm_config.yaml</span></span><br><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">llama-3.1-8b-instruct</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">hosted_vllm/llama-3.1-8b-instruct</span>  <span class="comment"># route to OpenAI-compatible vLLM</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">os.environ/HOSTED_VLLM_API_BASE</span> <span class="comment"># e.g. http://host.docker.internal:8000/v1</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">os.environ/HOSTED_VLLM_API_KEY</span>   <span class="comment"># optional if your vLLM server doesn&#x27;t require it</span></span><br><span class="line"></span><br><span class="line"><span class="attr">general_settings:</span></span><br><span class="line">  <span class="attr">master_key:</span> <span class="string">sk-1234</span>                           <span class="comment"># required if you want admin/virtual keys</span></span><br></pre></td></tr></table></figure>
+
+<p>然后启动 LiteLLM Proxy：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">docker run \</span><br><span class="line">  -v $(<span class="built_in">pwd</span>)/litellm_config.yaml:/app/config.yaml \</span><br><span class="line">  -e HOSTED_VLLM_API_BASE=http://host.docker.internal:8000/v1 \</span><br><span class="line">  -e HOSTED_VLLM_API_KEY=EMPTY \</span><br><span class="line">  -p 4000:4000 \</span><br><span class="line">  ghcr.io/berriai/litellm:main-latest \</span><br><span class="line">  --config /app/config.yaml --detailed_debug</span><br></pre></td></tr></table></figure>
+
+<p>现在，Proxy 会以 <code>model: &quot;llama-3.1-8b-instruct&quot;</code> 的名义，将请求转发到你本地&#x2F;私有的 vLLM 服务上。</p>
+<h3 id="3-通过-Admin-UI-添加-vLLM-模型（可选）"><a href="#3-通过-Admin-UI-添加-vLLM-模型（可选）" class="headerlink" title="3) 通过 Admin UI 添加 vLLM 模型（可选）"></a>3) 通过 Admin UI 添加 vLLM 模型（可选）</h3><p>如果你启用了 Admin UI（配置了数据库与 <code>master_key</code>），也可以通过图形界面添加模型：</p>
+<ol>
+<li>访问 <code>/ui</code> 并使用 <code>master_key</code> 登录。</li>
+<li>进入 <strong>Models</strong> 页面，点击 <strong>“Add Model”</strong>。</li>
+<li>在配置表单中填写关键信息：<ul>
+<li><strong>Public Model Name</strong>: 对外暴露的模型名称（客户端请求时使用的名字，如 <code>llama-3.1-8b-instruct</code>）。</li>
+<li><strong>LiteLLM Model Name(s)</strong>: <strong>重要！</strong> 这里必须添加 <code>hosted_vllm/</code> 前缀，例如 <code>hosted_vllm/llama-3.1-8b-instruct</code>。这是告诉 LiteLLM 使用 vLLM 适配器进行转发的关键。</li>
+<li><strong>API Base</strong>: vLLM 的 API 地址（如 <code>http://host.docker.internal:8000/v1</code>）。</li>
+<li><strong>API Key</strong>: 根据 vLLM 配置填写（如无鉴权可填 <code>EMPTY</code> 或任意字符）。</li>
+</ul>
+</li>
+</ol>
+<h4 id="常见坑速查（vLLM-对接）"><a href="#常见坑速查（vLLM-对接）" class="headerlink" title="常见坑速查（vLLM 对接）"></a>常见坑速查（vLLM 对接）</h4><ul>
+<li><code>404/connection error</code>：<code>api_base</code> 必须指向 vLLM 的 <code>/v1</code> 根，如 <code>http://host:8000/v1</code>。</li>
+<li>容器网络：Proxy 与 vLLM 不在同一网络时，使用 <code>host.docker.internal</code> 或配置自定义 bridge 网络。</li>
+<li>鉴权：若 vLLM 无鉴权，<code>api_key</code> 可留空；若自定义鉴权，请按 vLLM 的要求设置。</li>
+<li>模型名不一致：<code>model_name</code>（对外名）可以自定义，但 <code>litellm_params.model</code> 需符合前缀与路由规则（<code>hosted_vllm/&lt;name&gt;</code>）。</li>
+</ul>
+<h2 id="负载均衡：同名模型多后端分发"><a href="#负载均衡：同名模型多后端分发" class="headerlink" title="负载均衡：同名模型多后端分发"></a>负载均衡：同名模型多后端分发</h2><p>在 <code>model_list</code> 中设置同名的 <code>model_name</code>，可实现流量负载到不同的后端。这种情况下 <code>master_key</code> 是必须的。同时路由策略默认为：<code>simple-shuffle</code>，其它策略可在 <a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/load_balancing">LiteLLM 负载均衡文档</a> 中查看。</p>
+<h3 id="负载均衡配置示例"><a href="#负载均衡配置示例" class="headerlink" title="负载均衡配置示例"></a>负载均衡配置示例</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># file: litellm_config.yaml</span></span><br><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="comment"># 第一个后端实例</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">llama-3.1-8b-instruct</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">hosted_vllm/llama-3.1-8b-instruct</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">http://vllm-backend-1:8000/v1</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># 第二个后端实例（同名模型）</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">llama-3.1-8b-instruct</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">hosted_vllm/llama-3.1-8b-instruct</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">http://vllm-backend-2:8000/v1</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment"># 第三个后端实例（同名模型）</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">llama-3.1-8b-instruct</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">hosted_vllm/llama-3.1-8b-instruct</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">http://vllm-backend-3:8000/v1</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">general_settings:</span></span><br><span class="line">  <span class="attr">master_key:</span> <span class="string">sk-1234</span>  <span class="comment"># 负载均衡功能需要 master_key</span></span><br><span class="line"><span class="attr">router_settings:</span></span><br><span class="line">  <span class="attr">routing_strategy:</span> <span class="string">simple-shuffle</span>  <span class="comment"># 默认策略，可选：usage-based-routing, latency-based-routing</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="负载均衡测试"><a href="#负载均衡测试" class="headerlink" title="负载均衡测试"></a>负载均衡测试</h3><p>启动多个 vLLM 后端实例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动第一个 vLLM 实例</span></span><br><span class="line">python -m vllm.entrypoints.openai.api_server \</span><br><span class="line">  --model meta-llama/Llama-3.1-8B-Instruct \</span><br><span class="line">  --host 0.0.0.0 \</span><br><span class="line">  --port 8001</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动第二个 vLLM 实例</span></span><br><span class="line">python -m vllm.entrypoints.openai.api_server \</span><br><span class="line">  --model meta-llama/Llama-3.1-8B-Instruct \</span><br><span class="line">  --host 0.0.0.0 \</span><br><span class="line">  --port 8002</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动第三个 vLLM 实例</span></span><br><span class="line">python -m vllm.entrypoints.openai.api_server \</span><br><span class="line">  --model meta-llama/Llama-3.1-8B-Instruct \</span><br><span class="line">  --host 0.0.0.0 \</span><br><span class="line">  --port 8003</span><br></pre></td></tr></table></figure>
+
+<p>启动 LiteLLM Proxy：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run \</span><br><span class="line">  -v $(<span class="built_in">pwd</span>)/litellm_config.yaml:/app/config.yaml \</span><br><span class="line">  -p 4000:4000 \</span><br><span class="line">  ghcr.io/berriai/litellm:main-latest \</span><br><span class="line">  --config /app/config.yaml --detailed_debug</span><br></pre></td></tr></table></figure>
+
+<h3 id="验证负载均衡效果"><a href="#验证负载均衡效果" class="headerlink" title="验证负载均衡效果"></a>验证负载均衡效果</h3><p>发送多个请求，观察流量分发：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 发送 10 个请求，观察负载分发</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> &#123;1..10&#125;; <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">echo</span> <span class="string">&quot;Request <span class="variable">$i</span>:&quot;</span></span><br><span class="line">  curl -X POST <span class="string">&#x27;http://0.0.0.0:4000/chat/completions&#x27;</span> \</span><br><span class="line">    -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">    -H <span class="string">&#x27;Authorization: Bearer sk-1234&#x27;</span> \</span><br><span class="line">    -d <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">      &quot;model&quot;: &quot;llama-3.1-8b-instruct&quot;,</span></span><br><span class="line"><span class="string">      &quot;messages&quot;: [</span></span><br><span class="line"><span class="string">        &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello, which backend am I talking to?&quot;&#125;</span></span><br><span class="line"><span class="string">      ],</span></span><br><span class="line"><span class="string">      &quot;max_tokens&quot;: 50</span></span><br><span class="line"><span class="string">    &#125;&#x27;</span> | jq <span class="string">&#x27;.choices[0].message.content&#x27;</span></span><br><span class="line">  <span class="built_in">echo</span> <span class="string">&quot;---&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="其他路由策略"><a href="#其他路由策略" class="headerlink" title="其他路由策略"></a>其他路由策略</h3><p>除了默认的 <code>simple-shuffle</code>，还可以使用以下策略：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">general_settings:</span></span><br><span class="line">  <span class="attr">master_key:</span> <span class="string">sk-1234</span></span><br><span class="line">  <span class="attr">routing_strategy:</span> <span class="string">usage-based-routing</span>  <span class="comment"># 基于使用量的路由</span></span><br><span class="line">  <span class="comment"># 或者</span></span><br><span class="line">  <span class="attr">routing_strategy:</span> <span class="string">latency-based-routing</span>  <span class="comment"># 基于延迟的路由</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：负载均衡功能需要 <code>master_key</code> 支持，确保在 <code>general_settings</code> 中正确配置。</p>
+</blockquote>
+<h2 id="通过-Proxy-发起聊天请求"><a href="#通过-Proxy-发起聊天请求" class="headerlink" title="通过 Proxy 发起聊天请求"></a>通过 Proxy 发起聊天请求</h2><p>LiteLLM Proxy 兼容 OpenAI SDK&#x2F;接口。以下用 <code>curl</code> 演示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">curl -X POST <span class="string">&#x27;http://0.0.0.0:4000/chat/completions&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-1234&#x27;</span> \</span><br><span class="line">  -d <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;llama-3.1-8b-instruct&quot;,</span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;You are a helpful assistant.&quot;&#125;,</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is LiteLLM Proxy?&quot;&#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如果未使用数据库，你也可以把 <code>Authorization</code> 设置为你在 <code>general_settings.master_key</code> 中配置的主密钥；若启用了虚拟 Key（见下一节），则推荐使用虚拟 Key 访问。</p>
+</blockquote>
+<h2 id="生成虚拟-Key-并设置限速（RPM）"><a href="#生成虚拟-Key-并设置限速（RPM）" class="headerlink" title="生成虚拟 Key 并设置限速（RPM）"></a>生成虚拟 Key 并设置限速（RPM）</h2><p>启用了数据库后，可使用主密钥（<code>master_key</code>）来创建受控的虚拟 Key。例如限制每分钟 1 次请求：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -L -X POST <span class="string">&#x27;http://0.0.0.0:4000/key/generate&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-1234&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">  -d <span class="string">&#x27;&#123;&quot;rpm_limit&quot;: 1&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>成功将返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span> <span class="attr">&quot;key&quot;</span><span class="punctuation">:</span> <span class="string">&quot;sk-12...&quot;</span> <span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>使用该虚拟 Key 调用模型：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1st call - should succeed</span></span><br><span class="line">curl -X POST <span class="string">&#x27;http://0.0.0.0:4000/chat/completions&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-12...&#x27;</span> \</span><br><span class="line">  -d <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;llama-3.1-8b-instruct&quot;,</span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;You are a helpful math tutor.&quot;&#125;,</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;How to solve 8x + 7 = -23?&quot;&#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2nd call (within one minute) - should fail with 429</span></span><br><span class="line">curl -X POST <span class="string">&#x27;http://0.0.0.0:4000/chat/completions&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-12...&#x27;</span> \</span><br><span class="line">  -d <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;llama-3.1-8b-instruct&quot;,</span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;You are a helpful math tutor.&quot;&#125;,</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;How to solve 8x + 7 = -23?&quot;&#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="查询模型列表（-models）"><a href="#查询模型列表（-models）" class="headerlink" title="查询模型列表（&#x2F;models）"></a>查询模型列表（&#x2F;models）</h2><p>LiteLLM Proxy 暴露 OpenAI 兼容的模型列表接口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -s <span class="string">&#x27;http://0.0.0.0:4000/models&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-1234&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>返回的列表中将包含你在 <code>model_list</code> 中注册的模型（例如 <code>llama-3.1-8b-instruct</code>）。</p>
+<h2 id="常见问题与故障排除"><a href="#常见问题与故障排除" class="headerlink" title="常见问题与故障排除"></a>常见问题与故障排除</h2><ul>
+<li><p>SSL 校验失败 &#x2F; 连接错误：可在 <code>config.yaml</code> 中关闭 SSL 校验（仅在受信环境调试时使用）。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">litellm_settings:</span></span><br><span class="line">  <span class="attr">ssl_verify:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>数据库连接失败 &#x2F; 权限不足：确认数据库用户有建库&#x2F;建表权限。必要时在数据库中执行授权（云厂商如 CloudSQL 语法略有差异）。</p>
+</li>
+<li><p>非 root 场景：官方提供了非 root 镜像使用说明，按需选择。</p>
+</li>
+<li><p>vLLM 访问不到：检查容器网络连通性，<code>api_base</code> 是否指向了可达的 <code>http://&lt;host&gt;:8000/v1</code>，以及是否通过 <code>host.docker.internal</code> 或自定义 bridge 网络打通。</p>
+</li>
+</ul>
+<h2 id="安全与最佳实践"><a href="#安全与最佳实践" class="headerlink" title="安全与最佳实践"></a>安全与最佳实践</h2><ul>
+<li>生产环境务必使用强随机的 <code>LITELLM_SALT_KEY</code> 与 <code>master_key</code>，切勿在版本库中明文提交。</li>
+<li>对外暴露的 Proxy 建议置于零信任&#x2F;网关之后，搭配 WAF&#x2F;速率限制&#x2F;鉴权策略。</li>
+<li>针对不同团队与应用使用不同的虚拟 Key，并配置预算、RPM&#x2F;TPM、可访问模型白名单。</li>
+<li>定期审计访问日志与开销，启用缓存与模型路由策略以优化成本与稳定性。</li>
+</ul>
+<h2 id="生产部署实践（监控与高可用）"><a href="#生产部署实践（监控与高可用）" class="headerlink" title="生产部署实践（监控与高可用）"></a>生产部署实践（监控与高可用）</h2><h3 id="架构与高可用"><a href="#架构与高可用" class="headerlink" title="架构与高可用"></a>架构与高可用</h3><ul>
+<li><strong>多副本部署</strong>：将 LiteLLM Proxy 以无状态方式水平扩展，多副本 + 负载均衡（Nginx&#x2F;Ingress&#x2F;Gateway）。</li>
+<li><strong>数据库高可用</strong>：Postgres 采用主从&#x2F;托管服务（如 RDS&#x2F;CloudSQL&#x2F;Aurora），开启自动备份与只读副本；连接池建议使用 PgBouncer。</li>
+<li><strong>缓存层</strong>：开启 Proxy 的缓存能力，或引入 Redis 作为响应缓存（对热门提示&#x2F;嵌入有效）。</li>
+<li><strong>故障回退</strong>：在 <code>model_list</code> 中配置路由回退与多提供商冗余，优先同类开源模型或公有云模型作为备份。</li>
+<li><strong>弹性伸缩</strong>：以 QPS&#x2F;RPM、CPU、延迟 P95&#x2F;P99 为指标触发 HPA（K8s 水平自动扩缩容）。</li>
+</ul>
+<h3 id="监控与日志"><a href="#监控与日志" class="headerlink" title="监控与日志"></a>监控与日志</h3><ul>
+<li><strong>核心指标（Proxy）</strong>：<ul>
+<li>请求量：<code>requests_total</code>（按模型、调用方、状态码分维度）</li>
+<li>成功率：<code>success_rate</code>（2xx 比例）</li>
+<li>延迟：<code>latency_ms_p50/p95/p99</code></li>
+<li>速率限制触发：<code>rate_limit_hits</code></li>
+<li>Token&#x2F;成本：<code>input_tokens_total</code>、<code>output_tokens_total</code>、<code>cost_total</code></li>
+</ul>
+</li>
+<li><strong>核心指标（vLLM）</strong>：<ul>
+<li>并发&#x2F;排队：<code>requests_in_flight</code>、<code>queue_depth</code></li>
+<li>显存与负载：<code>gpu_memory_used</code>、<code>gpu_utilization</code>、<code>cpu_utilization</code></li>
+<li>拒绝&#x2F;超时：<code>backend_errors</code>、<code>timeout_errors</code></li>
+</ul>
+</li>
+<li><strong>日志与追踪</strong>：<ul>
+<li>结构化访问日志（含 <code>request_id</code>、调用方、模型、用量、耗时、状态码）</li>
+<li>结合 OpenTelemetry &#x2F; Jaeger 进行链路追踪，串联网关→Proxy→vLLM→存储</li>
+</ul>
+</li>
+<li><strong>可观测性栈</strong>：Prometheus + Grafana（Dashboard：Proxy 指标 + vLLM&#x2F;GPU 指标），Loki&#x2F;ELK 做日志聚合。</li>
+</ul>
+<h4 id="与-Prometheus-集成：暴露-metrics"><a href="#与-Prometheus-集成：暴露-metrics" class="headerlink" title="与 Prometheus 集成：暴露 /metrics"></a>与 Prometheus 集成：暴露 <code>/metrics</code></h4><p>LiteLLM Proxy 内置 Prometheus 集成能力，只需启用 <code>prometheus</code> 回调即可在 <code>/metrics</code> 暴露关键指标（如请求量、失败率、延迟、Token 用量、预算等），便于被 Prometheus 抓取，再用 Grafana 做可视化（参考：<a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/prometheus">Prometheus metrics 官方文档</a>）。如果你使用官方 Docker 镜像，所需的 <code>prometheus_client</code> 已经内置。</p>
+<p>最小配置示例（放入 <code>config.yaml</code>）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">gpt-4o</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">gpt-4o</span></span><br><span class="line"></span><br><span class="line"><span class="attr">litellm_settings:</span></span><br><span class="line">  <span class="attr">callbacks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">prometheus</span></span><br></pre></td></tr></table></figure>
+
+<p>按本文前文方式启动 Proxy 后，即可在浏览器或 Prometheus 中访问：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:4000/metrics</span><br><span class="line"><span class="comment"># or open in browser: http://localhost:4000/metrics</span></span><br></pre></td></tr></table></figure>
+
+<p>在 Prometheus 的 <code>scrape_configs</code> 中将 <code>http://&lt;proxy-host&gt;:4000/metrics</code> 作为抓取目标，即可采集合适的请求与 Token 相关指标，然后结合 Grafana 使用官方维护的 Dashboard 模板或自定义仪表盘。</p>
+<h4 id="与-Langfuse-集成：OpenTelemetry-追踪"><a href="#与-Langfuse-集成：OpenTelemetry-追踪" class="headerlink" title="与 Langfuse 集成：OpenTelemetry 追踪"></a>与 Langfuse 集成：OpenTelemetry 追踪</h4><p>在生产环境中，如果你希望对每次 Prompt &#x2F; Completion 进行更细粒度的链路追踪、提示调优与质量分析，可以通过 LiteLLM Proxy 将调用数据推送到 Langfuse。Langfuse 提供了基于 OpenTelemetry 的接入方式，只需设置环境变量并启用 <code>langfuse_otel</code> 回调即可。</p>
+<p>导出 Langfuse 凭据与 OTEL 端点（以 US 云服务区为例）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> LANGFUSE_PUBLIC_KEY=<span class="string">&quot;pk-lf-...&quot;</span>          <span class="comment"># your Langfuse public key</span></span><br><span class="line"><span class="built_in">export</span> LANGFUSE_SECRET_KEY=<span class="string">&quot;sk-lf-...&quot;</span>          <span class="comment"># your Langfuse secret key</span></span><br><span class="line"><span class="built_in">export</span> LANGFUSE_OTEL_HOST=<span class="string">&quot;https://us.cloud.langfuse.com&quot;</span>  <span class="comment"># default US region</span></span><br><span class="line"><span class="comment"># export LANGFUSE_OTEL_HOST=&quot;https://otel.my-langfuse.company.com&quot;  # custom OTEL endpoint</span></span><br></pre></td></tr></table></figure>
+
+<p>在 <code>config.yaml</code> 中启用 Langfuse OTEL 回调：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># config.yaml</span></span><br><span class="line"><span class="attr">litellm_settings:</span></span><br><span class="line">  <span class="attr">callbacks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">langfuse_otel</span></span><br></pre></td></tr></table></figure>
+
+<p>随后按常规方式运行 Proxy 即可（Docker 或本地 CLI 均可）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">litellm --config /path/to/config.yaml</span><br></pre></td></tr></table></figure>
+
+<p>一旦集成成功，你可以在 Langfuse 的 Web 控制台中查看通过 LiteLLM Proxy 发出的请求轨迹、提示&#x2F;回复内容、Token 用量与延迟分布等信息，并结合项目中的其它 OTEL 数据进行统一分析与调优。</p>
+<h4 id="告警阈值示例"><a href="#告警阈值示例" class="headerlink" title="告警阈值示例"></a>告警阈值示例</h4><ul>
+<li>成功率低于 98%（5 分钟窗口）</li>
+<li>P95 延迟高于 2s（连续 10 分钟）</li>
+<li>429 速率限制命中率 &gt; 5%（提示需要扩容或调参）</li>
+<li>vLLM <code>queue_depth</code> &gt; 100 且持续 5 分钟（推理拥塞）</li>
+<li>GPU 显存利用率 &gt; 95% 且持续 10 分钟（需要缩短 max tokens&#x2F;增加副本）</li>
+</ul>
+<h3 id="安全与密钥治理"><a href="#安全与密钥治理" class="headerlink" title="安全与密钥治理"></a>安全与密钥治理</h3><ul>
+<li><strong>密钥管理</strong>：<code>LITELLM_SALT_KEY</code> 与 <code>master_key</code> 存放于 KMS&#x2F;Secret Manager；定期轮换，最小权限访问。</li>
+<li><strong>虚拟 Key 策略</strong>：为每个应用&#x2F;团队单独发放虚拟 Key，设置 <code>RPM/TPM/并发</code>、预算与模型白名单，超限自动告警。</li>
+<li><strong>网络与访问控制</strong>：将 Proxy 置于私有网络内，通过 API 网关暴露；开启 WAF 与 IP 访问控制；对外只暴露必要端口。</li>
+<li><strong>数据与合规</strong>：记录审计日志，敏感数据脱敏；对模型消息体避免长期持久化，仅保留元数据。</li>
+</ul>
+<h3 id="灰度与流量治理"><a href="#灰度与流量治理" class="headerlink" title="灰度与流量治理"></a>灰度与流量治理</h3><ul>
+<li><strong>版本灰度</strong>：新模型&#x2F;新参数走 1%-5% 灰度；监控指标稳定后逐步扩大权重。</li>
+<li><strong>路由策略</strong>：按租户&#x2F;区域&#x2F;延迟&#x2F;成本做智能路由与回退；对低优先级任务使用更低成本模型。</li>
+<li><strong>缓存与重放</strong>：对可缓存请求开启缓存；对失败请求采用指数退避与幂等重试（结合 <code>request_id</code>）。</li>
+</ul>
+<h2 id="无数据库的密钥治理（最简部署）"><a href="#无数据库的密钥治理（最简部署）" class="headerlink" title="无数据库的密钥治理（最简部署）"></a>无数据库的密钥治理（最简部署）</h2><blockquote>
+<p><strong>前提说明</strong>：官方 E2E 教程中，虚拟 Key（<code>/key/generate</code>）功能需要接入 Postgres 数据库方可启用与持久化管理（参考：<a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/docker_quick_start">LiteLLM Proxy Docker 快速上手</a> 的“Generate a virtual key”章节）。在“最简部署（无数据库）”下，内建的虚拟 Key、预算、配额面板不可用。以下提供两种在无数据库前提下的可操作密钥治理方案。</p>
+</blockquote>
+<h3 id="方案-A：API-网关静态-Key-白名单（推荐）"><a href="#方案-A：API-网关静态-Key-白名单（推荐）" class="headerlink" title="方案 A：API 网关静态 Key 白名单（推荐）"></a>方案 A：API 网关静态 Key 白名单（推荐）</h3><p>思路：</p>
+<ul>
+<li>为每个团队生成一个“外发 Key”（例如 <code>sk-teamA-...</code>、<code>sk-teamB-...</code>），仅对团队公开。</li>
+<li>在 API 网关（Nginx&#x2F;Kong&#x2F;Traefik 等）校验来访 Key；校验通过后，将请求头 <code>Authorization</code> 改写为 LiteLLM 的 <code>master_key</code>，并注入 <code>X-Team</code> 头标识团队，LiteLLM Proxy 端只需维护 <code>master_key</code> 即可。</li>
+<li>限速与访问控制在网关实现（按团队维度），日志也在网关聚合，LiteLLM 只做推理转发。</li>
+</ul>
+<p>操作步骤：</p>
+<ol>
+<li><p>配置 LiteLLM 最简 <code>config.yaml</code>（仅 <code>master_key</code>）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">model_list:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">model_name:</span> <span class="string">llama-3.1-8b-instruct</span></span><br><span class="line">    <span class="attr">litellm_params:</span></span><br><span class="line">      <span class="attr">model:</span> <span class="string">hosted_vllm/llama-3.1-8b-instruct</span></span><br><span class="line">      <span class="attr">api_base:</span> <span class="string">http://vllm:8000/v1</span></span><br><span class="line">      <span class="attr">api_key:</span> <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="attr">general_settings:</span></span><br><span class="line">  <span class="attr">master_key:</span> <span class="string">sk-master-very-strong</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>启动 LiteLLM Proxy（略，见前文）。</p>
+</li>
+<li><p>在 Nginx 上实现静态 Key 白名单 + 改写：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 假设放在 stream 或 http 反向代理前置，以下为 http 片段示例</span></span><br><span class="line"><span class="attribute">map</span> <span class="variable">$http_authorization</span> <span class="variable">$team_name</span> &#123;</span><br><span class="line">  <span class="attribute">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">  &quot;<span class="attribute">Bearer</span> sk-teamA-<span class="number">123</span><span class="string">&quot; teamA;</span></span><br><span class="line"><span class="string">  &quot;</span>Bearer sk-teamB-<span class="number">456</span><span class="string">&quot; teamB;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">map <span class="variable">$http_authorization</span> <span class="variable">$is_valid_key</span> &#123;</span></span><br><span class="line"><span class="string">  default 0;</span></span><br><span class="line"><span class="string">  &quot;</span>Bearer sk-teamA-<span class="number">123</span><span class="string">&quot; 1;</span></span><br><span class="line"><span class="string">  &quot;</span>Bearer sk-teamB-<span class="number">456</span><span class="string">&quot; 1;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 可选：每团队限速桶，1 分钟 60 次</span></span><br><span class="line"><span class="string">limit_req_zone <span class="variable">$team_name</span> zone=per_team:10m rate=60r/m;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">server &#123;</span></span><br><span class="line"><span class="string">  listen 80;</span></span><br><span class="line"><span class="string">  server_name litellm.example.com;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  location / &#123;</span></span><br><span class="line"><span class="string">    if (<span class="variable">$is_valid_key</span> = 0) &#123; return 401; &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    # 限速（命中返回 429）</span></span><br><span class="line"><span class="string">    limit_req zone=per_team burst=30 nodelay;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    # 注入团队头，改写为 master_key 转发到 LiteLLM Proxy</span></span><br><span class="line"><span class="string">    proxy_set_header Authorization &quot;</span>Bearer sk-master-very-strong<span class="string">&quot;;</span></span><br><span class="line"><span class="string">    proxy_set_header X-Team <span class="variable">$team_name</span>;</span></span><br><span class="line"><span class="string">    proxy_pass http://litellm-proxy:4000;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>团队使用各自外发 Key 调用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Team A</span></span><br><span class="line">curl -X POST <span class="string">&#x27;https://litellm.example.com/chat/completions&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Content-Type: application/json&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer sk-teamA-123&#x27;</span> \</span><br><span class="line">  -d <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;model&quot;: &quot;llama-3.1-8b-instruct&quot;,</span></span><br><span class="line"><span class="string">    &quot;messages&quot;: [</span></span><br><span class="line"><span class="string">      &#123;&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;hi&quot;&#125;</span></span><br><span class="line"><span class="string">    ]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>优点：</p>
+<ul>
+<li>无需数据库即可做到“多团队 Key、限速、隔离与审计”。</li>
+<li>Key 轮换在网关层进行，LiteLLM 无感。</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>外发 Key 白名单应存放于 Secret 管理，启用审计与告警；网关日志中保留 <code>X-Team</code> 以便统计。</li>
+<li>若需更精细的模型白名单、预算、用量统计面板，请切换到“带数据库”模式，使用虚拟 Key 原生能力。</li>
+</ul>
+<h3 id="方案-B：多实例多主密钥（隔离更强）"><a href="#方案-B：多实例多主密钥（隔离更强）" class="headerlink" title="方案 B：多实例多主密钥（隔离更强）"></a>方案 B：多实例多主密钥（隔离更强）</h3><p>思路：</p>
+<ul>
+<li>为每个团队部署一个 LiteLLM Proxy 实例，分别设置不同的 <code>master_key</code> 与域名（如 <code>teamA-llm.example.com</code>）。</li>
+<li>通过上游 LB&#x2F;Ingress 做域名或路径路由，实例间资源独立，便于限速与版本隔离。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>实例层面的强隔离，团队级资源&#x2F;风控策略互不影响。</li>
+</ul>
+<p>成本：</p>
+<ul>
+<li>需要多实例运维与配置同步（可用 IaC&#x2F;Helm 统一下发）。</li>
+</ul>
+<h3 id="无数据库下的常见诉求替代"><a href="#无数据库下的常见诉求替代" class="headerlink" title="无数据库下的常见诉求替代"></a>无数据库下的常见诉求替代</h3><ul>
+<li><strong>限速</strong>：用网关 <code>limit_req</code>（Nginx）或 API 网关内置策略按团队维度限速。</li>
+<li><strong>预算&#x2F;用量</strong>：解析网关日志与 LiteLLM 访问日志，按 <code>X-Team</code> 汇总请求数与 token 用量（可在边车或日志管道中解析响应 <code>usage</code> 字段）。</li>
+<li><strong>模型白名单</strong>：按路由规则控制允许访问的路径和模型名（例如基于 <code>model</code> 字段的 WAF&#x2F;自定义网关插件）。</li>
+</ul>
+<blockquote>
+<p>若后续需要虚拟 Key、预算、速率限制、团队&#x2F;用户&#x2F;密钥可视化管理，建议切换带数据库的部署方式；参考前文与官方教程：<a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/docker_quick_start">LiteLLM Proxy Docker 快速上手</a>。</p>
+</blockquote>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>官方教程：<code>LiteLLM Proxy</code> E2E 与 Docker 快速启动（包含虚拟 Key、速率限制、数据库接入等）<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/proxy/docker_quick_start">https://docs.litellm.ai/docs/proxy/docker_quick_start</a></li>
+</ul>
+</li>
+<li>vLLM Provider 集成说明（如何让 LiteLLM 代理 vLLM 暴露的 OpenAI 兼容服务）<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.litellm.ai/docs/providers/vllm">https://docs.litellm.ai/docs/providers/vllm</a></li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/48e8b33bb2e1.html">https://xhua.eu.org/posts/48e8b33bb2e1.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ai/">AI</a><a class="post-meta__tags" href="/tags/litellm/">LiteLLM</a><a class="post-meta__tags" href="/tags/vllm/">vLLM</a><a class="post-meta__tags" href="/tags/llm-proxy/">LLM Proxy</a><a class="post-meta__tags" href="/tags/docker/">Docker</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/48dd231882a51333c98c4f74930be9150976bfd432f67e16827749bb8e563df2.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/6aa04c23d95b.html" title="Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）"><img class="cover" src="https://img.xhua.eu.org/3a88efdb111c25406764e92ed6c24cd336f55fc51639b28732096a26f4efae9e.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Python包开发与发布：使用 build 与 twine（含 project.scripts 示例）</div></div><div class="info-2"><div class="info-item-1">本文面向有一定 Python 基础、希望将代码规范化为可安装包并发布到 PyPI 的工程师。你将学会：  如何创建标准的 Python 包工程骨架（src 布局） 在 pyproject.toml 中使用 PEP 621 声明元数据与 project.scripts 生成命令行脚本 使用 build 本地构建分发产物（sdist&#x2F;wheel） 使用 twine 校验并上传到 TestPyPI 与 PyPI 常见问题与排错要点  参考标准：PEP 517&#x2F;518（构建系统），PEP 621（项目元数据）。 适用环境 Python ≥ 3.8（推荐 3.10+） macOS&#x2F;Linux&#x2F;Windows 包管理：pip 或 pipx   一、项目骨架（src 布局）推荐使用「src 布局」以避免导入歧义，目录结构如下： 1234567891011mycli/├─ pyproject.toml├─ README.md├─ LICENSE├─ src/│  └─ mycli/│     ├─ __init__.py│     ├─ __main__....</div></div></div></a><a class="pagination-related" href="/posts/3ce7fb915f3c.html" title="LightRAG：轻量级检索增强生成系统详解"><img class="cover" src="https://img.xhua.eu.org/57deb8c28c2131d70e8ca4a62d8fbdf542a722f639d2faef875a761dc2efe28a.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">LightRAG：轻量级检索增强生成系统详解</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的快速发展，如何让AI系统能够访问和处理大量外部知识成为了一个关键挑战。检索增强生成（Retrieval-Augmented Generation，RAG）技术应运而生，而LightRAG作为一个轻量级且高效的RAG系统，通过结合知识图谱和向量检索技术，为企业级知识管理和智能问答提供了优秀的解决方案。 LightRAG 简介LightRAG是一个现代化的检索增强生成系统，专注于提供高质量的问答和知识管理功能。该系统最大的特点是将传统的向量检索与知识图谱技术相结合，实现了更精准和上下文相关的信息检索。 核心特性 轻量级设计：优化的架构设计，降低资源消耗 多模态支持：同时支持向量检索和图谱检索 多存储后端：兼容Neo4j、PostgreSQL、Faiss等多种存储系统 多模型支持：支持OpenAI、Hugging Face、Ollama等主流LLM 生产就绪：提供完整的API接口和Web UI界面 高并发处理：支持并发索引和查询操作  系统架构设计LightRAG采用分层模块化架构，确保了系统的可扩展性和维护性。 整体架构LightRAG的架构分为索引（Ind...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b165687e5798.html" title="大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？"><img class="cover" src="https://img.xhua.eu.org/176e234d6c59bc9e31fdec2fc747174523a9b90c4328abc4f9a4279a1e540a7f.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-26</div><div class="info-item-2">大语言模型各类版本详解：Base、Instruct、MoE、量化、Thinking 等到底是什么意思？</div></div><div class="info-2"><div class="info-item-1">一、为什么要搞懂大模型的各种「版本」？近年来，各种大模型名字后面越来越“花”：  Base &#x2F; Instruct &#x2F; Chat MoE（Mixture of Experts） AWQ &#x2F; GPTQ &#x2F; INT4 &#x2F; FP8 量化 Thinking &#x2F; DeepThink &#x2F; Step &#x2F; Reasoning  如果不了解这些后缀的含义，我们就很难：  正确选择模型：是用 Base 还是 Instruct？是要 MoE 还是稠密模型？ 合理评估效果：为什么同一家模型，Instruct 版本比 Base 用起来舒服很多？ 看懂论文与技术文档：里面充满了 dense、MoE、SFT、RLHF、quantization 等术语。  这篇文章的目标是：  用通俗语言 + 对比表格，解释常见大模型版本名背后的含义、原理与适用场景 帮助你在选型、部署与使用大模型时，做到：心中有数，不再迷茫   二、从「Base 模型」到「Instruct 模型」2.1 Base 模型：会“说话”，但不一定听得懂你**Base 模型...</div></div></div></a><a class="pagination-related" href="/posts/05696bb73c9b.html" title="从零构建RAG文档问答系统：技术栈与实现方案详解"><img class="cover" src="https://img.xhua.eu.org/9c3e0a3e1e6b76eb0b4376ad2609349f0aa2b06b15f0ae7881c4431cc3c253e6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-11</div><div class="info-item-2">从零构建RAG文档问答系统：技术栈与实现方案详解</div></div><div class="info-2"><div class="info-item-1">从零构建RAG文档问答系统：技术栈与实现方案详解引言在人工智能快速发展的今天，如何让AI模型基于特定文档内容进行准确回答，成为了一个重要的技术挑战。传统的问答系统往往存在”幻觉”问题，即模型会生成看似合理但实际不准确的信息。为了解决这个问题，我们构建了一个基于RAG（Retrieval-Augmented Generation）技术的文档问答系统。 本文将详细介绍这个项目的技术栈选择、架构设计、实现方案以及开发过程中的关键决策。 项目概述项目源代码: https://github.com/xhuaustc/rag-qa-system    我们的RAG文档问答系统具有以下核心特性：  🔍 多格式文档支持: PDF、DOCX、Markdown、TXT等 🤖 多LLM后端: Ollama、OpenAI、Azure OpenAI 📝 智能文档分块: 支持中英文混合文本的智能分块 🔗 向量检索: 基于ChromaDB的高效向量检索 💬 智能问答: 基于文档内容的智能问答 ⚙️ 灵活配置: 支持环境变量和代码配置 🛠️ 模块化设计: 清晰的模块分离和扩展性  技术栈选择核心框架...</div></div></div></a><a class="pagination-related" href="/posts/7dcd88b03636.html" title="Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用"><img class="cover" src="https://img.xhua.eu.org/68658d9962fcadac50f2aeada47d66c20bebfa94d25f209bcb103bdba65cb749.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-09</div><div class="info-item-2">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用</div></div><div class="info-2"><div class="info-item-1">Mac Apple Silicon LLM 微调实战指南：从原理到多场景应用随着 Apple Silicon (M1&#x2F;M2&#x2F;M3&#x2F;M4) 芯片的普及，Mac 已经成为一个强大的 AI 开发工作站。凭借其统一内存架构 (Unified Memory Architecture)，Mac 能够处理比同等配置显卡更大的模型。本文将介绍如何在 Mac 上使用 MLX 框架高效微调大语言模型（如 Qwen、Llama、Mistral 等），并探讨微调在不同业务场景中的应用。 一、 核心概念解析在开始动手之前，我们需要理解几个关键的技术术语。 1. 什么是微调 (Fine-tuning)？微调是在预训练模型（Base Model）的基础上，使用特定领域的数据进行进一步训练。就像是一个已经读完大学的“通才”，通过学习法律卷宗，变成了一位“律师”。 2. SFT (监督微调)SFT (Supervised Fine-Tuning) 是最常用的微调方式。它通过 (Input, Output) 对来教导模型如何响应指令。  编程场景示例:  输入: “帮我写一个 Pyth...</div></div></div></a><a class="pagination-related" href="/posts/2c6cec23da85.html" title="使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南"><img class="cover" src="https://img.xhua.eu.org/daaca0b411fbe28fb31f728aff34d87083919fff6300004fea34ff5fce7ad91b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-11-24</div><div class="info-item-2">使用vLLM部署Qwen3-Next-80B-A3B-Instruct大模型完整指南</div></div><div class="info-2"><div class="info-item-1">在大模型时代，如何高效部署和运维一个80B级别的大语言模型服务是许多AI工程师面临的挑战。本文将详细介绍使用vLLM部署Qwen3-Next-80B-A3B-Instruct模型的完整流程，包括模型查找、参数配置、显存估算、下载部署、监控管理、性能压测以及推理追踪等关键环节。通过本文，您将能够快速搭建一个生产级别的大模型推理服务。 目标读者本文适合以下读者：  AI&#x2F;ML工程师，需要部署大规模语言模型服务 DevOps工程师，负责管理和运维大模型推理平台 技术架构师，评估大模型部署方案 研究人员，需要高性能推理环境  一、模型查找与选择1.1 Qwen3-Next-80B-A3B-Instruct模型介绍Qwen3-Next-80B-A3B-Instruct是阿里云通义千问团队推出的最新一代大语言模型，采用先进的MoE（Mixture of Experts）架构，具有以下特点：  模型架构：MoE混合专家模型，总参数80B，激活参数仅3B 性能优势：以3B的计算成本获得接近80B Dense模型的性能 上下文长度：支持最长256K tokens的上下文（推理时建议8K-...</div></div></div></a><a class="pagination-related" href="/posts/b7a7608ae340.html" title="15个实用开源AI项目汇总：从PPT生成到语音克隆"><img class="cover" src="https://img.xhua.eu.org/9676ec1567acff651bae8eec0d36ef59abc5aea4cf2869a5d4044330e956e77a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-08</div><div class="info-item-2">15个实用开源AI项目汇总：从PPT生成到语音克隆</div></div><div class="info-2"><div class="info-item-1">随着大语言模型（LLM）的爆发，GitHub 上涌现了大量优秀的开源 AI 项目。这些项目不仅降低了 AI 技术的使用门槛，还切实解决了许多工作和生活中的痛点。 本文精选了 15 个 偏向实用的开源 AI 项目，涵盖 PPT 自动生成、本地 LLM 交互、应用开发、前端生成、AI 搜索、私有云相册、工作流增强、语音转文字、图像生成、知识库、声音克隆 以及 数据库管理 等领域。无论你是开发者、产品经理还是普通用户，都能从中找到提升效率的利器。 1. Presenton：AI 自动生成 PPTPresenton 是一个开源的 AI 演示文稿生成器，可以看作是 Gamma、Beautiful.ai 的开源替代品。它完全在本地运行，支持使用 OpenAI、Gemini 或本地 Ollama 模型来生成内容。  GitHub: https://github.com/presenton/presenton 主要功能: 多模型支持: 支持 OpenAI, Gemini, Ollama 等多种 LLM 后端。 隐私安全: 数据掌握在自己手中，支持本地运行。 所见即所得: 生成大纲后可进行编辑，再...</div></div></div></a><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-05</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF%E4%B8%8E%E7%9B%AE%E6%A0%87"><span class="toc-text">背景与目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%A0%E5%B0%86%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88"><span class="toc-text">你将学到什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD%E9%80%9F%E8%A7%88"><span class="toc-text">核心功能速览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E9%98%85%E8%AF%BB%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0"><span class="toc-text">如何阅读这篇文章</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B%EF%BC%88%E6%9C%80%E5%B0%8F%E5%8F%AF%E7%94%A8%EF%BC%89"><span class="toc-text">快速开始（最小可用）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Docker-Compose%EF%BC%88Proxy-Postgres%EF%BC%89"><span class="toc-text">使用 Docker Compose（Proxy + Postgres）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%8E%A5-vLLM%EF%BC%9A%E6%8A%8A%E8%87%AA%E5%BB%BA%E6%A8%A1%E5%9E%8B%E7%BA%B3%E5%85%A5%E7%BB%9F%E4%B8%80%E4%BB%A3%E7%90%86"><span class="toc-text">对接 vLLM：把自建模型纳入统一代理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%90%AF%E5%8A%A8-vLLM%EF%BC%88OpenAI-%E5%85%BC%E5%AE%B9-API%EF%BC%89"><span class="toc-text">1) 启动 vLLM（OpenAI 兼容 API）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%9C%A8-LiteLLM-%E4%B8%AD%E6%B3%A8%E5%86%8C-vLLM-%E6%A8%A1%E5%9E%8B"><span class="toc-text">2) 在 LiteLLM 中注册 vLLM 模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%80%9A%E8%BF%87-Admin-UI-%E6%B7%BB%E5%8A%A0-vLLM-%E6%A8%A1%E5%9E%8B%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="toc-text">3) 通过 Admin UI 添加 vLLM 模型（可选）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91%E9%80%9F%E6%9F%A5%EF%BC%88vLLM-%E5%AF%B9%E6%8E%A5%EF%BC%89"><span class="toc-text">常见坑速查（vLLM 对接）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%EF%BC%9A%E5%90%8C%E5%90%8D%E6%A8%A1%E5%9E%8B%E5%A4%9A%E5%90%8E%E7%AB%AF%E5%88%86%E5%8F%91"><span class="toc-text">负载均衡：同名模型多后端分发</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B"><span class="toc-text">负载均衡配置示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%B5%8B%E8%AF%95"><span class="toc-text">负载均衡测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%95%88%E6%9E%9C"><span class="toc-text">验证负载均衡效果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E8%B7%AF%E7%94%B1%E7%AD%96%E7%95%A5"><span class="toc-text">其他路由策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E8%BF%87-Proxy-%E5%8F%91%E8%B5%B7%E8%81%8A%E5%A4%A9%E8%AF%B7%E6%B1%82"><span class="toc-text">通过 Proxy 发起聊天请求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E8%99%9A%E6%8B%9F-Key-%E5%B9%B6%E8%AE%BE%E7%BD%AE%E9%99%90%E9%80%9F%EF%BC%88RPM%EF%BC%89"><span class="toc-text">生成虚拟 Key 并设置限速（RPM）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E6%A8%A1%E5%9E%8B%E5%88%97%E8%A1%A8%EF%BC%88-models%EF%BC%89"><span class="toc-text">查询模型列表（&#x2F;models）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4"><span class="toc-text">常见问题与故障排除</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">安全与最佳实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E9%83%A8%E7%BD%B2%E5%AE%9E%E8%B7%B5%EF%BC%88%E7%9B%91%E6%8E%A7%E4%B8%8E%E9%AB%98%E5%8F%AF%E7%94%A8%EF%BC%89"><span class="toc-text">生产部署实践（监控与高可用）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E4%B8%8E%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-text">架构与高可用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%91%E6%8E%A7%E4%B8%8E%E6%97%A5%E5%BF%97"><span class="toc-text">监控与日志</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8E-Prometheus-%E9%9B%86%E6%88%90%EF%BC%9A%E6%9A%B4%E9%9C%B2-metrics"><span class="toc-text">与 Prometheus 集成：暴露 &#x2F;metrics</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8E-Langfuse-%E9%9B%86%E6%88%90%EF%BC%9AOpenTelemetry-%E8%BF%BD%E8%B8%AA"><span class="toc-text">与 Langfuse 集成：OpenTelemetry 追踪</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6%E9%98%88%E5%80%BC%E7%A4%BA%E4%BE%8B"><span class="toc-text">告警阈值示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E4%B8%8E%E5%AF%86%E9%92%A5%E6%B2%BB%E7%90%86"><span class="toc-text">安全与密钥治理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%81%B0%E5%BA%A6%E4%B8%8E%E6%B5%81%E9%87%8F%E6%B2%BB%E7%90%86"><span class="toc-text">灰度与流量治理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%AF%86%E9%92%A5%E6%B2%BB%E7%90%86%EF%BC%88%E6%9C%80%E7%AE%80%E9%83%A8%E7%BD%B2%EF%BC%89"><span class="toc-text">无数据库的密钥治理（最简部署）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88-A%EF%BC%9AAPI-%E7%BD%91%E5%85%B3%E9%9D%99%E6%80%81-Key-%E7%99%BD%E5%90%8D%E5%8D%95%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">方案 A：API 网关静态 Key 白名单（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88-B%EF%BC%9A%E5%A4%9A%E5%AE%9E%E4%BE%8B%E5%A4%9A%E4%B8%BB%E5%AF%86%E9%92%A5%EF%BC%88%E9%9A%94%E7%A6%BB%E6%9B%B4%E5%BC%BA%EF%BC%89"><span class="toc-text">方案 B：多实例多主密钥（隔离更强）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%8B%E7%9A%84%E5%B8%B8%E8%A7%81%E8%AF%89%E6%B1%82%E6%9B%BF%E4%BB%A3"><span class="toc-text">无数据库下的常见诉求替代</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

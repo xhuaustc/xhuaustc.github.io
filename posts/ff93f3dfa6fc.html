@@ -1,0 +1,530 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift集群全环境备份 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift集群全环境备份">
+<meta property="og:url" content="https://xhua.eu.org/posts/ff93f3dfa6fc.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.642Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift集群全环境备份",
+  "url": "https://xhua.eu.org/posts/ff93f3dfa6fc.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.642Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/ff93f3dfa6fc.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift集群全环境备份',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift集群全环境备份</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift集群全环境备份</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.642Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-081408b72aaadaa8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="与内容无关"></p>
+<p>创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。</p>
+<p>在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：</p>
+<ul>
+<li><p>集群数据文件</p>
+</li>
+<li><p>etcd数据库</p>
+</li>
+<li><p>Openshift对象配置</p>
+</li>
+<li><p>私有镜像仓库存储</p>
+</li>
+<li><p>持久化卷</p>
+</li>
+</ul>
+<p>我们要定期对集群作备份，以防止数据的丢失。</p>
+<p><code>集群全环境备份并不是万能的，应用自己的数据我们应该保证有单独的备份。</code></p>
+<h3 id="创建Master节点备份"><a href="#创建Master节点备份" class="headerlink" title="创建Master节点备份"></a>创建Master节点备份</h3><p>在系统基础架构进行更改，都需要对节点做备份。比如说，系统升级，集群升级或者任何重大更新。通过定期备份数据，当集群出现故障时，我们就能使用备份恢复集群。</p>
+<p>Master主机上运行着非常重要的服务：API、Controllers。&#x2F;etc&#x2F;origin&#x2F;master目录下存放着许多重要的文件。</p>
+<ul>
+<li><p>API、Controllers服务等的配置文件</p>
+</li>
+<li><p>安装生成的证书</p>
+</li>
+<li><p>云提供商提供的配置文件</p>
+</li>
+<li><p>密钥和其它身份认证文件</p>
+</li>
+</ul>
+<p>另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#x2F;etc&#x2F;sysconfig&#x2F;目录下。</p>
+<p>Master节点同时也是计算节点，所以备份&#x2F;etc&#x2F;origin整个目录。</p>
+<h4 id="备份过程"><a href="#备份过程" class="headerlink" title="备份过程"></a>备份过程</h4><p>需要在每台Master节点上都运行备份操作</p>
+<ol>
+<li><p>主机配置文件备份</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/origin <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/sysconfig/ <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig/</span></span><br></pre></td></tr></table></figure>
+
+<p><code>注意:</code> &#x2F;etc&#x2F;origin&#x2F;master&#x2F;ca.serial.txt文件只在会安装的ansible inventory hosts中的第一台master主机上创建，如果弃用该台主机时，需要将该文件拷贝到其它的Master主机上。</p>
+</li>
+<li><p>备份其它重要的文件</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&#x2F;etc&#x2F;cni&#x2F;*</td>
+<td>CNI配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;iptables</td>
+<td><code>iptables </code>防火墙配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-storage-setup</td>
+<td><code>container-storage-setup</code> 命令调用</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker</td>
+<td><code>docker</code> 应用配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-network</td>
+<td><code>docker</code> 网络配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-storage</td>
+<td><code>docker</code> 容器存储配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;dnsmasq.conf</td>
+<td><code>dnsmasq</code> 的配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;dnsmasq.d&#x2F;*</td>
+<td><code>dnsmasq</code> 的额外配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;flanneld</td>
+<td><code>flannel</code> 配置文件</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;pki&#x2F;ca-trust&#x2F;source&#x2F;anchors&#x2F;</td>
+<td>系统信任的证书</td>
+</tr>
+</tbody></table>
+<p>备份以上文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/pki/ca-trust/source/anchors</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/sysconfig/&#123;iptables,docker-*,flanneld&#125; \</span></span><br><span class="line"><span class="language-bash">    <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/dnsmasq* /etc/cni <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/pki/ca-trust/source/anchors/* \</span></span><br><span class="line"><span class="language-bash">    <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/pki/ca-trust/source/anchors/</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果安装在系统中的应用包被意外删除，也会影响到集群的运行，所以需要备份系统中安装的rpm包列表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rpm -qa | <span class="built_in">sort</span> | sudo <span class="built_in">tee</span> <span class="variable">$MYBACKUPDIR</span>/packages.txt</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行了上面的操作后，备份目录中会有如下文件列表，可将它们压缩在一个文件中进行保存</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo find <span class="variable">$&#123;MYBACKUPDIR&#125;</span> -mindepth 1 -<span class="built_in">type</span> f -<span class="built_in">printf</span> <span class="string">&#x27;%P\n&#x27;</span></span></span><br><span class="line">etc/sysconfig/flanneld</span><br><span class="line">etc/sysconfig/iptables</span><br><span class="line">etc/sysconfig/docker-network</span><br><span class="line">etc/sysconfig/docker-storage</span><br><span class="line">etc/sysconfig/docker-storage-setup</span><br><span class="line">etc/sysconfig/docker-storage-setup.rpmnew</span><br><span class="line">etc/origin/master/ca.crt</span><br><span class="line">etc/origin/master/ca.key</span><br><span class="line">etc/origin/master/ca.serial.txt</span><br><span class="line">etc/origin/master/ca-bundle.crt</span><br><span class="line">etc/origin/master/master.proxy-client.crt</span><br><span class="line">etc/origin/master/master.proxy-client.key</span><br><span class="line">etc/origin/master/service-signer.crt</span><br><span class="line">etc/origin/master/service-signer.key</span><br><span class="line">etc/origin/master/serviceaccounts.private.key</span><br><span class="line">etc/origin/master/serviceaccounts.public.key</span><br><span class="line">etc/origin/master/openshift-master.crt</span><br><span class="line">etc/origin/master/openshift-master.key</span><br><span class="line">etc/origin/master/openshift-master.kubeconfig</span><br><span class="line">etc/origin/master/master.server.crt</span><br><span class="line">etc/origin/master/master.server.key</span><br><span class="line">etc/origin/master/master.kubelet-client.crt</span><br><span class="line">etc/origin/master/master.kubelet-client.key</span><br><span class="line">etc/origin/master/admin.crt</span><br><span class="line">etc/origin/master/admin.key</span><br><span class="line">etc/origin/master/admin.kubeconfig</span><br><span class="line">etc/origin/master/etcd.server.crt</span><br><span class="line">etc/origin/master/etcd.server.key</span><br><span class="line">etc/origin/master/master.etcd-client.key</span><br><span class="line">etc/origin/master/master.etcd-client.csr</span><br><span class="line">etc/origin/master/master.etcd-client.crt</span><br><span class="line">etc/origin/master/master.etcd-ca.crt</span><br><span class="line">etc/origin/master/policy.json</span><br><span class="line">etc/origin/master/scheduler.json</span><br><span class="line">etc/origin/master/htpasswd</span><br><span class="line">etc/origin/master/session-secrets.yaml</span><br><span class="line">etc/origin/master/openshift-router.crt</span><br><span class="line">etc/origin/master/openshift-router.key</span><br><span class="line">etc/origin/master/registry.crt</span><br><span class="line">etc/origin/master/registry.key</span><br><span class="line">etc/origin/master/master-config.yaml</span><br><span class="line">etc/origin/generated-configs/master-master-1.example.com/master.server.crt</span><br><span class="line">...[OUTPUT OMITTED]...</span><br><span class="line">etc/origin/cloudprovider/openstack.conf</span><br><span class="line">etc/origin/node/system:node:master-0.example.com.crt</span><br><span class="line">etc/origin/node/system:node:master-0.example.com.key</span><br><span class="line">etc/origin/node/ca.crt</span><br><span class="line">etc/origin/node/system:node:master-0.example.com.kubeconfig</span><br><span class="line">etc/origin/node/server.crt</span><br><span class="line">etc/origin/node/server.key</span><br><span class="line">etc/origin/node/node-dnsmasq.conf</span><br><span class="line">etc/origin/node/resolv.conf</span><br><span class="line">etc/origin/node/node-config.yaml</span><br><span class="line">etc/origin/node/flannel.etcd-client.key</span><br><span class="line">etc/origin/node/flannel.etcd-client.csr</span><br><span class="line">etc/origin/node/flannel.etcd-client.crt</span><br><span class="line">etc/origin/node/flannel.etcd-ca.crt</span><br><span class="line">etc/pki/ca-trust/source/anchors/openshift-ca.crt</span><br><span class="line">etc/pki/ca-trust/source/anchors/registry-ca.crt</span><br><span class="line">etc/dnsmasq.conf</span><br><span class="line">etc/dnsmasq.d/origin-dns.conf</span><br><span class="line">etc/dnsmasq.d/origin-upstream-dns.conf</span><br><span class="line">etc/dnsmasq.d/node-dnsmasq.conf</span><br><span class="line">packages.txt</span><br></pre></td></tr></table></figure>
+
+<p>将备份的文件进行压缩</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo tar -zcvf /backup/$(hostname)-$(<span class="built_in">date</span> +%Y%m%d).tar.gz <span class="variable">$MYBACKUPDIR</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">rm</span> -Rf <span class="variable">$&#123;MYBACKUPDIR&#125;</span></span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><em>Openshift 已经在openshift-ansible-contrib这个项目中提供了备份脚本backup_master_node.sh</em></p>
+<p>将该脚本代码存放在master主机上，并执行，将会自动运行上面的步骤，对master主机进行备份</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> ~/git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ~/git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/openshift/openshift-ansible-contrib.git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> openshift-ansible-contrib/reference-architecture/day2ops/scripts</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./backup_master_node.sh -h</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="创建计算节点备份"><a href="#创建计算节点备份" class="headerlink" title="创建计算节点备份"></a>创建计算节点备份</h3><p>创建计算节点的备份与Master节点的备份不一样，Master节点上有很多非常重要的文件，所以备份Master节点非常有必要。但是计算节点上一般并不保存运行集群的必要数据，即使计算节点出现了故障，其它节点也能代替它的功能，而不受影响。所以一般不需要备份计算节点，如果有一些特殊的配置必须要备份计算节点，则备份计算节点。</p>
+<p>如果计算节点需要备份，那跟Master节点一样，在系统升级，集群升级或者集群有重要变更时都需要对节点做备份，同时也需要定期备份。</p>
+<p>计算节点的主要配置文件存放在&#x2F;etc&#x2F;origin&#x2F;和&#x2F;etc&#x2F;origin&#x2F;node目录中。</p>
+<ul>
+<li><p>计算节点服务的配置</p>
+</li>
+<li><p>安装时生成的证书</p>
+</li>
+<li><p>云提供商提供的配置文件</p>
+</li>
+<li><p>密钥和其它身份认证文件</p>
+</li>
+</ul>
+<p>另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#x2F;etc&#x2F;sysconfig&#x2F;目录下。</p>
+<h4 id="备份过程-1"><a href="#备份过程-1" class="headerlink" title="备份过程"></a>备份过程</h4><ol>
+<li>对计算节点服务的配置作备份</li>
+</ol>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/origin <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/sysconfig/origin-node <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig/</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>备份其它重要的文件</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&#x2F;etc&#x2F;cni&#x2F;*</td>
+<td>CNI配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;iptables</td>
+<td><code>iptables </code>防火墙配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-storage-setup</td>
+<td><code>container-storage-setup</code> 命令调用</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker</td>
+<td><code>docker</code> 应用配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-network</td>
+<td><code>docker</code> 网络配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;docker-storage</td>
+<td><code>docker</code> 容器存储配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;dnsmasq.conf</td>
+<td><code>dnsmasq</code> 的配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;dnsmasq.d&#x2F;*</td>
+<td><code>dnsmasq</code> 的额外配置</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;sysconfig&#x2F;flanneld</td>
+<td><code>flannel</code> 配置文件</td>
+</tr>
+<tr>
+<td>&#x2F;etc&#x2F;pki&#x2F;ca-trust&#x2F;source&#x2F;anchors&#x2F;</td>
+<td>系统信任的证书</td>
+</tr>
+</tbody></table>
+<p>备份以上文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/pki/ca-trust/source/anchors</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/sysconfig/&#123;iptables,docker-*,flanneld&#125; \</span></span><br><span class="line"><span class="language-bash">    <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/sysconfig/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/dnsmasq* /etc/cni <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">cp</span> -aR /etc/pki/ca-trust/source/anchors/* \</span></span><br><span class="line"><span class="language-bash">    <span class="variable">$&#123;MYBACKUPDIR&#125;</span>/etc/pki/ca-trust/source/anchors/</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果安装在系统中的应用包被意外删除，也会影响到集群的运行，所以需要备份系统中安装的rpm包列表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">mkdir</span> -p <span class="variable">$&#123;MYBACKUPDIR&#125;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rpm -qa | <span class="built_in">sort</span> | sudo <span class="built_in">tee</span> <span class="variable">$MYBACKUPDIR</span>/packages.txt</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行了上面的操作后，备份目录中会有如下文件列表，可将它们压缩在一个文件中进行保存</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo find <span class="variable">$&#123;MYBACKUPDIR&#125;</span> -mindepth 1 -<span class="built_in">type</span> f -<span class="built_in">printf</span> <span class="string">&#x27;%P\n&#x27;</span></span></span><br><span class="line">etc/sysconfig/origin-node</span><br><span class="line">etc/sysconfig/flanneld</span><br><span class="line">etc/sysconfig/iptables</span><br><span class="line">etc/sysconfig/docker-network</span><br><span class="line">etc/sysconfig/docker-storage</span><br><span class="line">etc/sysconfig/docker-storage-setup</span><br><span class="line">etc/sysconfig/docker-storage-setup.rpmnew</span><br><span class="line">etc/origin/node/system:node:app-node-0.example.com.crt</span><br><span class="line">etc/origin/node/system:node:app-node-0.example.com.key</span><br><span class="line">etc/origin/node/ca.crt</span><br><span class="line">etc/origin/node/system:node:app-node-0.example.com.kubeconfig</span><br><span class="line">etc/origin/node/server.crt</span><br><span class="line">etc/origin/node/server.key</span><br><span class="line">etc/origin/node/node-dnsmasq.conf</span><br><span class="line">etc/origin/node/resolv.conf</span><br><span class="line">etc/origin/node/node-config.yaml</span><br><span class="line">etc/origin/node/flannel.etcd-client.key</span><br><span class="line">etc/origin/node/flannel.etcd-client.csr</span><br><span class="line">etc/origin/node/flannel.etcd-client.crt</span><br><span class="line">etc/origin/node/flannel.etcd-ca.crt</span><br><span class="line">etc/origin/cloudprovider/openstack.conf</span><br><span class="line">etc/pki/ca-trust/source/anchors/openshift-ca.crt</span><br><span class="line">etc/pki/ca-trust/source/anchors/registry-ca.crt</span><br><span class="line">etc/dnsmasq.conf</span><br><span class="line">etc/dnsmasq.d/origin-dns.conf</span><br><span class="line">etc/dnsmasq.d/origin-upstream-dns.conf</span><br><span class="line">etc/dnsmasq.d/node-dnsmasq.conf</span><br><span class="line">packages.txt</span><br></pre></td></tr></table></figure>
+
+<p>将备份的文件进行压缩</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">MYBACKUPDIR=/backup/$(hostname)/$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo tar -zcvf /backup/$(hostname)-$(<span class="built_in">date</span> +%Y%m%d).tar.gz <span class="variable">$MYBACKUPDIR</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">sudo <span class="built_in">rm</span> -Rf <span class="variable">$&#123;MYBACKUPDIR&#125;</span></span></span><br></pre></td></tr></table></figure>
+
+<h6 id="Openshift-已经在openshift-ansible-contrib这个项目中提供了备份脚本backup-master-node-sh"><a href="#Openshift-已经在openshift-ansible-contrib这个项目中提供了备份脚本backup-master-node-sh" class="headerlink" title="Openshift 已经在openshift-ansible-contrib这个项目中提供了备份脚本backup_master_node.sh"></a>Openshift 已经在openshift-ansible-contrib这个项目中提供了备份脚本backup_master_node.sh</h6><p>将该脚本代码存放在master主机上，并执行，将会自动运行上面的步骤，对master主机进行备份</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> ~/git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ~/git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/openshift/openshift-ansible-contrib.git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> openshift-ansible-contrib/reference-architecture/day2ops/scripts</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./backup_master_node.sh -h</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="备份私服镜像仓库证书"><a href="#备份私服镜像仓库证书" class="headerlink" title="备份私服镜像仓库证书"></a>备份私服镜像仓库证书</h3><p>如果使用了外部私有镜像仓库，就必须备份所有的外部镜像仓库的证书。</p>
+<h4 id="备份过程-2"><a href="#备份过程-2" class="headerlink" title="备份过程"></a>备份过程</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> /etc/docker/certs.d/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tar cf /tmp/docker-registry-certs-$(hostname).tar *</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="备份相关安装文件"><a href="#备份相关安装文件" class="headerlink" title="备份相关安装文件"></a>备份相关安装文件</h3><p>还原过程集群过程需要完全重新安装，所以需要保存所有相关的文件。包括</p>
+<ul>
+<li>ansible playbooks和inventory hosts完整内容</li>
+<li>yum源文件</li>
+</ul>
+<h3 id="备份应用数据"><a href="#备份应用数据" class="headerlink" title="备份应用数据"></a>备份应用数据</h3><p>大部分情况下，可以使用<code>oc rsync</code> 命令来对应用数据做备份。这个是通用的备份方案。</p>
+<p>不同的存储方案，比如说NFS等，也可以根据存储的不同，使用更方便的备份方案。</p>
+<p>同时备份的目录，也根据应用程序的不同而不同。</p>
+<p>以下是一个备份jenkins应用的例子。</p>
+<h4 id="备份过程-3"><a href="#备份过程-3" class="headerlink" title="备份过程"></a>备份过程</h4><ol>
+<li><p>获得jenkins应用数据挂载目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get dc/jenkins -o jsonpath=<span class="string">&#x27;&#123; .spec.template.spec.containers[?(@.name==&quot;jenkins&quot;)].volumeMounts[?(@.name==&quot;jenkins-data&quot;)].mountPath &#125;&#x27;</span></span></span><br><span class="line">/var/lib/jenkins</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>获取当前运行的应用的pod名字</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get pod --selector=deploymentconfig=jenkins -o jsonpath=<span class="string">&#x27;&#123; .metadata.name &#125;&#x27;</span></span></span><br><span class="line">jenkins-1-37nux</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>oc rsync</code>对数据进行备份</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc rsync jenkins-1-37nux:/var/lib/jenkins /tmp/</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="备份etcd数据库"><a href="#备份etcd数据库" class="headerlink" title="备份etcd数据库"></a>备份etcd数据库</h3><p>备份etcd分布式数据库，需要备份etcd的配置文件及数据。备份时既可以使用etcd v2版本也可以使用etcd v3版本API来备份etcd数据</p>
+<h4 id="备份过程-4"><a href="#备份过程-4" class="headerlink" title="备份过程"></a>备份过程</h4><ul>
+<li>备份etcd配置文件</li>
+</ul>
+<p>etcd的配置文件在&#x2F;etc&#x2F;etcd目录中，其中包括etcd.conf配置文件，及集群通信所需的证书。这些文件都是在用ansible安装时生成的。</p>
+<p>对每个etcd节点备份相关配置文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ssh master-0</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /backup/etcd-config-$(<span class="built_in">date</span> +%Y%m%d)/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> -R /etc/etcd/ /backup/etcd-config-$(<span class="built_in">date</span> +%Y%m%d)/</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>备份etcd数据</li>
+</ul>
+<p>openshift容器平台为了方便调用etcdctl不同版本，创建了两个别名，etcdctl2和etcdctl3。但是，etcdctl3别名不会向etcdctl命令提供完整的端点列表，因此您必须指定–endpoints选项并列出所有端点。</p>
+<p>在做etcd数据备份前，需要先做如下处理。</p>
+<ul>
+<li><p>etcdctl可执行文件必须可用，容器化安装时容器etcd必须可用</p>
+</li>
+<li><p>确保openshit容器平台的api服务正常运行</p>
+</li>
+<li><p>确保与etcd集群的2379端口TCP通信正常</p>
+</li>
+<li><p>确保有etcd集群的请求证书</p>
+</li>
+</ul>
+<ol>
+<li><p>检查etcd集群的健康状态，可以使用etcdctl2或者etcdctl3</p>
+<ul>
+<li><p>使用etcd v2 api</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl2 --cert-file=/etc/etcd/peer.crt \</span></span><br><span class="line"><span class="language-bash">          --key-file=/etc/etcd/peer.key \</span></span><br><span class="line"><span class="language-bash">          --ca-file=/etc/etcd/ca.crt \</span></span><br><span class="line"><span class="language-bash">          --endpoints=<span class="string">&quot;https://master-0.example.com:2379,\</span></span></span><br><span class="line"><span class="string"><span class="language-bash">          https://master-1.example.com:2379,\</span></span></span><br><span class="line"><span class="string"><span class="language-bash">          https://master-2.example.com:2379&quot;</span>\</span></span><br><span class="line"><span class="language-bash">          cluster-health</span></span><br><span class="line">member 5ee217d19001 is healthy: got healthy result from https://192.168.55.12:2379</span><br><span class="line">member 2a529ba1840722c0 is healthy: got healthy result from https://192.168.55.8:2379</span><br><span class="line">member ed4f0efd277d7599 is healthy: got healthy result from https://192.168.55.13:2379</span><br><span class="line">cluster is healthy</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用etcd v3 api</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl3 --cert=<span class="string">&quot;/etc/etcd/peer.crt&quot;</span> \</span></span><br><span class="line"><span class="language-bash">          --key=/etc/etcd/peer.key \</span></span><br><span class="line"><span class="language-bash">          --cacert=<span class="string">&quot;/etc/etcd/ca.crt&quot;</span> \</span></span><br><span class="line"><span class="language-bash">          --endpoints=<span class="string">&quot;https://master-0.example.com:2379,\</span></span></span><br><span class="line"><span class="string"><span class="language-bash">            https://master-1.example.com:2379,\</span></span></span><br><span class="line"><span class="string"><span class="language-bash">            https://master-2.example.com:2379&quot;</span></span></span><br><span class="line">            endpoint health</span><br><span class="line">https://master-0.example.com:2379 is healthy: successfully committed proposal: took = 5.011358ms</span><br><span class="line">https://master-1.example.com:2379 is healthy: successfully committed proposal: took = 1.305173ms</span><br><span class="line">https://master-2.example.com:2379 is healthy: successfully committed proposal: took = 1.388772ms</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>查看member列表</p>
+<ul>
+<li><p>使用etcd v2 api</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">etcdctl2 member list</span></span><br><span class="line">2a371dd20f21ca8d: name=master-1.example.com peerURLs=https://192.168.55.12:2380 clientURLs=https://192.168.55.12:2379 isLeader=false</span><br><span class="line">40bef1f6c79b3163: name=master-0.example.com peerURLs=https://192.168.55.8:2380 clientURLs=https://192.168.55.8:2379 isLeader=false</span><br><span class="line">95dc17ffcce8ee29: name=master-2.example.com peerURLs=https://192.168.55.13:2380 clientURLs=https://192.168.55.13:2379 isLeader=true</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用etcd v3 api</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">etcdctl3 member list</span></span><br><span class="line">2a371dd20f21ca8d, started, master-1.example.com, https://192.168.55.12:2380, https://192.168.55.12:2379</span><br><span class="line">40bef1f6c79b3163, started, master-0.example.com, https://192.168.55.8:2380, https://192.168.55.8:2379</span><br><span class="line">95dc17ffcce8ee29, started, master-2.example.com, https://192.168.55.13:2380, https://192.168.55.13:2379</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>开始备份etcd数据</p>
+<p>  v2版本有<code>etcdctl backup</code>命令，用这个命令可以对etcd集群数据做备份。但是etcdctl v3没有这个命令，但是v3版本有<code>etcdctl snapshot save</code>命令或者直接复制member&#x2F;snap&#x2F;db文件。</p>
+<p>  <code>etcdctl backup</code>命令会重写备份中包含的一些元数据，特别是节点ID和集群ID，这意味着在备份中，节点将丢失其以前的标识。 要从备份重新创建群集，需要创建新的单节点群集，然后将其余节点添加到群集。 重写元数据以防止新节点加入现有集群。</p>
+<ul>
+<li><p>如果etcd部署在独立的主机上，使用etcd v2 api备份</p>
+<ol>
+<li><p>通过删除etcd pod yaml文件，停止etcd服务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /etc/origin/node/pods-stopped</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/pods/* /etc/origin/node/pods-stopped/</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建etcd数据备份文件夹，复制etcd db文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl2 backup \</span></span><br><span class="line"><span class="language-bash">    --data-dir /var/lib/etcd \</span></span><br><span class="line"><span class="language-bash">    --backup-dir /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /var/lib/etcd/member/snap/db /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重启主机</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">reboot</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>如果etcd部署在独立的主机上，使用etcd v3 api</p>
+<ol>
+<li><p>在etcd节点上创建快照snapshot</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl show etcd --property=ActiveState,SubState</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl3 snapshot save /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)/db</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>通过删除etcd pod yaml文件，停止etcd服务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> -p /etc/origin/node/pods-stopped</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mv</span> /etc/origin/node/pods/* /etc/origin/node/pods-stopped/</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建etcd数据备份文件夹，复制etcd db文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">etcdctl2 backup \</span></span><br><span class="line"><span class="language-bash">    --data-dir /var/lib/etcd \</span></span><br><span class="line"><span class="language-bash">    --backup-dir /backup/etcd-$(<span class="built_in">date</span> +%Y%m%d)</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重启主机</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">reboot</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>如果部署etcd使用的是容器安装，使用etcd v3 api</p>
+<ol>
+<li><p>从etcd pod的配置文件中获取etcd endpoint IP</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">export</span> ETCD_POD_MANIFEST=<span class="string">&quot;/etc/origin/node/pods/etcd.yaml&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">export</span> ETCD_EP=$(grep https <span class="variable">$&#123;ETCD_POD_MANIFEST&#125;</span> | <span class="built_in">cut</span> -d <span class="string">&#x27;/&#x27;</span> -f3)</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>获得etcd pod名</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc login -u system:admin</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">export</span> ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 <span class="string">&#x27;\S*etcd\S*&#x27;</span>)</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建快照snapshot，并将它保存到本地</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc project kube-system</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc <span class="built_in">exec</span> <span class="variable">$&#123;ETCD_POD&#125;</span> -c etcd -- /bin/bash -c <span class="string">&quot;ETCDCTL_API=3 etcdctl \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">    --cert /etc/etcd/peer.crt \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">    --key /etc/etcd/peer.key \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">    --cacert /etc/etcd/ca.crt \</span></span></span><br><span class="line"><span class="string"><span class="language-bash">    --endpoints &lt;ETCD_EP&gt; \ </span></span></span><br><span class="line">    snapshot save /var/lib/etcd/snapshot.db&quot;</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="备份项目project"><a href="#备份项目project" class="headerlink" title="备份项目project"></a>备份项目project</h3><p>项目的备份，涉及导出所有相关的对象，最终使用备份的文件恢复到新的项目中。</p>
+<h4 id="备份过程-5"><a href="#备份过程-5" class="headerlink" title="备份过程"></a>备份过程</h4><ol>
+<li><p>列出需要备份的所有对象</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get all</span></span><br><span class="line">NAME         TYPE      FROM      LATEST</span><br><span class="line">bc/ruby-ex   Source    Git       1</span><br><span class="line"></span><br><span class="line">NAME               TYPE      FROM          STATUS     STARTED         DURATION</span><br><span class="line">builds/ruby-ex-1   Source    Git@c457001   Complete   2 minutes ago   35s</span><br><span class="line"></span><br><span class="line">NAME                 DOCKER REPO                                     TAGS      UPDATED</span><br><span class="line">is/guestbook         10.111.255.221:5000/myproject/guestbook         latest    2 minutes ago</span><br><span class="line">is/hello-openshift   10.111.255.221:5000/myproject/hello-openshift   latest    2 minutes ago</span><br><span class="line">is/ruby-22-centos7   10.111.255.221:5000/myproject/ruby-22-centos7   latest    2 minutes ago</span><br><span class="line">is/ruby-ex           10.111.255.221:5000/myproject/ruby-ex           latest    2 minutes ago</span><br><span class="line"></span><br><span class="line">NAME                 REVISION   DESIRED   CURRENT   TRIGGERED BY</span><br><span class="line">dc/guestbook         1          1         1         config,image(guestbook:latest)</span><br><span class="line">dc/hello-openshift   1          1         1         config,image(hello-openshift:latest)</span><br><span class="line">dc/ruby-ex           1          1         1         config,image(ruby-ex:latest)</span><br><span class="line"></span><br><span class="line">NAME                   DESIRED   CURRENT   READY     AGE</span><br><span class="line">rc/guestbook-1         1         1         1         2m</span><br><span class="line">rc/hello-openshift-1   1         1         1         2m</span><br><span class="line">rc/ruby-ex-1           1         1         1         2m</span><br><span class="line"></span><br><span class="line">NAME                  CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE</span><br><span class="line">svc/guestbook         10.111.105.84    &lt;none&gt;        3000/TCP            2m</span><br><span class="line">svc/hello-openshift   10.111.230.24    &lt;none&gt;        8080/TCP,8888/TCP   2m</span><br><span class="line">svc/ruby-ex           10.111.232.117   &lt;none&gt;        8080/TCP            2m</span><br><span class="line"></span><br><span class="line">NAME                         READY     STATUS      RESTARTS   AGE</span><br><span class="line">po/guestbook-1-c010g         1/1       Running     0          2m</span><br><span class="line">po/hello-openshift-1-4zw2q   1/1       Running     0          2m</span><br><span class="line">po/ruby-ex-1-build           0/1       Completed   0          2m</span><br><span class="line">po/ruby-ex-1-rxc74           1/1       Running     0          2m</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将对象配置导出为yaml文件或者json文件</p>
+<ul>
+<li><p>导出为yaml文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get -o yaml --<span class="built_in">export</span> all &gt; project.yaml</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>导出为json文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get -o json --<span class="built_in">export</span> all &gt; project.json</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>将 <code>role bindings</code>, <code>secrets</code>, <code>service accounts</code>和 <code>persistent volume claims</code>等导出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="keyword">for</span> object <span class="keyword">in</span> rolebindings serviceaccounts secrets imagestreamtags podpreset cms egressnetworkpolicies rolebindingrestrictions limitranges resourcequotas pvcs templates cronjobs statefulsets hpas deployments replicasets poddisruptionbudget endpoints</span></span><br><span class="line">do</span><br><span class="line">  oc get -o yaml --export $object &gt; $object.yaml</span><br><span class="line">done</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><code>说明</code></p>
+<ul>
+<li><p>列出所有的对象种类</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc api-resources --namespaced=<span class="literal">true</span> -o name</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>有些对象的参数中依赖于元数据，或者带有唯一的认证标识。这些对象在恢复时将会受到影响。比如说deploymentconfig中的image指向imagestream时，image将会指向镜像的一个sha256值，在恢复时将无法找到镜像，而导致恢复失败。</p>
+</li>
+</ul>
+<h3 id="备份持久化卷"><a href="#备份持久化卷" class="headerlink" title="备份持久化卷"></a>备份持久化卷</h3><p>将持久化卷挂载到pod上，再使用<code>oc rsync</code>命令将数据备份到服务器</p>
+<h4 id="备份过程-6"><a href="#备份过程-6" class="headerlink" title="备份过程"></a>备份过程</h4><ol>
+<li><p>查看pod</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc get pods</span></span><br><span class="line">NAME           READY     STATUS      RESTARTS   AGE</span><br><span class="line">demo-1-build   0/1       Completed   0          2h</span><br><span class="line">demo-2-fxx6d   1/1       Running     0          1h</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看pod将pvc挂载到的目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc describe pod demo-2-fxx6d</span></span><br><span class="line">Name:			demo-2-fxx6d</span><br><span class="line">Namespace:		test</span><br><span class="line">Security Policy:	restricted</span><br><span class="line">Node:			ip-10-20-6-20.ec2.internal/10.20.6.20</span><br><span class="line">Start Time:		Tue, 05 Dec 2017 12:54:34 -0500</span><br><span class="line">Labels:			app=demo</span><br><span class="line">			deployment=demo-2</span><br><span class="line">			deploymentconfig=demo</span><br><span class="line">Status:			Running</span><br><span class="line">IP:			172.16.12.5</span><br><span class="line">Controllers:		ReplicationController/demo-2</span><br><span class="line">Containers:</span><br><span class="line">  demo:</span><br><span class="line">    Container ID:	docker://201f3e55b373641eb36945d723e1e212ecab847311109b5cee1fd0109424217a</span><br><span class="line">    Image:		docker-registry.default.svc:5000/test/demo@sha256:0a9f2487a0d95d51511e49d20dc9ff6f350436f935968b0c83fcb98a7a8c381a</span><br><span class="line">    Image ID:		docker-pullable://docker-registry.default.svc:5000/test/demo@sha256:0a9f2487a0d95d51511e49d20dc9ff6f350436f935968b0c83fcb98a7a8c381a</span><br><span class="line">    Port:		8080/TCP</span><br><span class="line">    State:		Running</span><br><span class="line">      Started:		Tue, 05 Dec 2017 12:54:52 -0500</span><br><span class="line">    Ready:		True</span><br><span class="line">    Restart Count:	0</span><br><span class="line">    Volume Mounts:</span><br><span class="line">      */opt/app-root/src/uploaded from persistent-volume (rw)*</span><br><span class="line">      /var/run/secrets/kubernetes.io/serviceaccount from default-token-8mmrk (ro)</span><br><span class="line">    Environment Variables:	&lt;none&gt;</span><br><span class="line">...omitted...</span><br></pre></td></tr></table></figure>
+
+<p>可以看到将pvc对应在pod中的目录为<code>/opt/app-root/src/uploaded from persistent-volume</code></p>
+</li>
+<li><p><code>oc rsync</code>备份数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">oc rsync demo-2-fxx6d:/opt/app-root/src/uploaded ./demo-app</span></span><br><span class="line">receiving incremental file list</span><br><span class="line">uploaded/</span><br><span class="line">uploaded/ocp_sop.txt</span><br><span class="line">uploaded/lost+found/</span><br><span class="line"></span><br><span class="line">sent 38 bytes  received 190 bytes  152.00 bytes/sec</span><br><span class="line">total size is 32  speedup is 0.14</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="一键备份etcd数据脚本"><a href="#一键备份etcd数据脚本" class="headerlink" title="一键备份etcd数据脚本"></a>一键备份etcd数据脚本</h2><p>一键备份etcd</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@master01 ~]# cat backup_etcd.sh</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line">export ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;</span><br><span class="line">export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)</span><br><span class="line">oc login -u system:admin</span><br><span class="line">export ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)</span><br><span class="line">oc project kube-system</span><br><span class="line">oc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key --cacert /etc/etcd/ca.crt --endpoints $ETCD_EP snapshot save /var/lib/etcd/snapshot.db&quot;</span><br><span class="line"></span><br><span class="line">today_date=$(date +%Y%m%d)</span><br><span class="line">mkdir -p /backup/$&#123;today_date&#125;/etcd</span><br><span class="line">mv /var/lib/etcd/snapshot.db /backup/$&#123;today_date&#125;/etcd/snapshot.db</span><br><span class="line"></span><br><span class="line">ls /backup/$&#123;today_date&#125;/etcd/</span><br><span class="line">echo &quot;success backup etcd&quot;</span><br></pre></td></tr></table></figure>
+<p>参考文章<br><a target="_blank" rel="noopener" href="https://docs.openshift.com/container-platform/3.11/day_two_guide/environment_backup.html#day_two_environment_backup">Openshift官方文档之集群备份</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/ff93f3dfa6fc.html">https://xhua.eu.org/posts/ff93f3dfa6fc.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/558c019ddfc3.html" title="Openshift集群全环境恢复"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift集群全环境恢复</div></div><div class="info-2"><div class="info-item-1"> 阅读前说明 按照官网提供的文档操作能够恢复etcd数据，但是由于证书的问题，恢复的集群并不能正常使用，需要单独对集群的token进行清理。 官方文档中没有明确恢复etcd集群的部署，经过多次验证，确认了恢复etcd集群需要以下三步：1. 部署1台节点的etcd；2. 在当前1台etcd节点上恢复数据；3. 使用ansible扩容的方式，将etcd节点扩展到3台。 可以更新&#x2F;etc&#x2F;etcd&#x2F;etcd.conf文件更改etcd name，进而解决etcd客户端访问服务器端证书不匹配的问题。 文章最后附上了经过测试认证的根据备份一键恢复etcd集群的脚本。  Openshift集群平台能够使用备份完整恢复集群。Openshift集群全环境备份 在恢复集群之前，请确保对集群做过完成的备份，并重新安装Openshift集群。 恢复Master节点创建Master主机文件的备份后，如果它们被损坏或意外删除，就可以通过这些文件复制回Master主机来恢复文件，然后重新启动受影响的服务。 恢复过程 恢复/etc/origin/master/master-conf...</div></div></div></a><a class="pagination-related" href="/posts/e66a2c56ece7.html" title="Openshift集群3-9升级到3-10"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift集群3-9升级到3-10</div></div><div class="info-2"><div class="info-item-1"> 更新方法与策略：自动升级方法 下载openshift-ansible的脚本代码   12git clone https://github.com/openshift/openshift-ansible.git git checkout  release-3.10 将master上的&#x2F;etc&#x2F;origin&#x2F;master&#x2F;htpasswd备份到&#x2F;root&#x2F;htpasswd  1scp master1:/etc/origin/master/htpasswd /root/htpasswd  openshift_master_identity_providers中的filename去掉  123# /etc/ansible/hostsopenshift_master_identity_providers=[&#123;&#x27;name&#x27;: &#x27;htpasswd_auth&#x27;, &#x27;login&#x27;:&#x27;true&#x27;,&#x27;challenge&#x27;: &#x2...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/7f967ecf9c2f.html" title="Openshift的网络策略networkpolicy"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift的网络策略networkpolicy</div></div><div class="info-2"><div class="info-item-1">开启networkpolicy 创建新集群时，在ansible的hosts的参数列表中添加os_sdn_network_plugin_name配置  12[OSEv3:vars]os_sdn_network_plugin_name=&#x27;redhat/openshift-ovs-networkpolicy  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换 ovs-networkpolicy网络策略下，pod也支持qos网络流量控制。详情请阅读：Openshift Network QoS——Pod网络控制  说明：在Openshift容器平台只支持部分k8s networkpolicy v1版本特性，所以egress协议类型，IPBlock和podSelector与namespaceSelector的组合都不支持。 NetworkPolicy配置规则样例： 12345678910111213141516171819202122apiVersion: networking.k8s.io/v1kind: NetworkPolicymetadata:  n...</div></div></div></a><a class="pagination-related" href="/posts/0bd399c36cb8.html" title="OpenShift-Router配置重新加载机制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router配置重新加载机制</div></div><div class="info-2"><div class="info-item-1"> OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证集群的路由信息是最新的。重载配置是否会对当前在线业务产生影响，这是系统管理员担心的问题。 一、 Haproxy配置重载的过程Haproxy在重新加载配置过程分两步。  生成最新的配置 重启Haproxy进程  Haproxy生成最新的配置OpenShift上以下三种资源的改变会触发Haproxy配置的更新  Routes改变 Pod IP&#x2F;Endpoint 改变 证书改变  OpenShift Route有一个配置模板文件，最终的配置会根据这个模板文件来创建。该模板文件，默认路径为/var/lib/haproxy/conf/haproxy-config.template，也可以...</div></div></div></a><a class="pagination-related" href="/posts/c641acf49761.html" title="网络相关工具简单汇总"><img class="cover" src="https://img.xhua.eu.org/4fd807ce8f1b1ee40a0878c42f81a791d0ab68115d9747b84b0402cc88b8bb4a.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">网络相关工具简单汇总</div></div><div class="info-2"><div class="info-item-1">lscpi查看Mac地址和网卡带宽12[root@localhost] $ yum install pciutils -y[root@localhost] $ lspci -vvv 里面的mac地址格式：46-8d-80-6d-06-07 ip a查看Mac地址与IP12[root@localhost] $ yum install iproute[root@localhost] $ ip a 里面的mac地址格式：46:8d:80:6d:06:07 iperf 对集群进行网络流量测试启动服务端 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -s 客户端进行测试 12[root@localhost] $ yum install iperf3 -y[root@localhost] $ iperf3 -c 10.2.2.2 -P 5 以上默认为作TCP测试，如果要UDP测试，服务端启动与客户端测试都需要加上-u 1234## 服务端iperf3 -s -u## 客户端iperf3 -c 10.2....</div></div></div></a><a class="pagination-related" href="/posts/67d0da6a2d75.html" title="OpenShift使用HostPath挂载本地目录无权限"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用HostPath挂载本地目录无权限</div></div><div class="info-2"><div class="info-item-1">123456789101112131415161718192021222324252627282930313233apiVersion: v1kind: DeploymentConfigmetadata:  name: centos  namespace: monitorspec:  replicas: 1  template:    metadata:      labels:        busybox: &#x27;true&#x27;    spec:      containers:        - args:          image: &#x27;centos:v2&#x27;          imagePullPolicy: IfNotPresent          name: busybox          securityContext:            runAsUser: 1000            runAsGroup: 2000  #该特性在k8s 1.10之后才支持，本环境未支持，参见Support for RunAsGrou...</div></div></div></a><a class="pagination-related" href="/posts/3c19c6380d6c.html" title="一条命令解决Kubernetes更改默认的namespace"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">一条命令解决Kubernetes更改默认的namespace</div></div><div class="info-2"><div class="info-item-1"> K8S默认是在default的namespace下，但是很多时候我们是在一个新的namespace下部署应用，每个操作都需要指定namespace，非常不方便。那么有没有办法切换namespce呢？如果可以切换的话，那有没有更简单的办法。 最简单的方式切换namespace，赠送一个方便的脚本可以将它alias到一个新的命令”kubectl ns” 12$  alias kubectl=&#x27;_kubectl_custom()&#123; if [[ &quot;$1&quot; == &quot;project&quot; &amp;&amp; &quot;$2&quot; != &quot;&quot; ]]; then ccontext=`kubectl config current-context`; kubectl config set-context $ccontext --namespace=$2; elif [[ &quot;$1&quot; == &quot;projects&quot; &amp;&amp; &quot;$2&quot; == &quo...</div></div></div></a><a class="pagination-related" href="/posts/bfe4fac12931.html" title="Openshift-Network-QoS——Pod网络控制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Network-QoS——Pod网络控制</div></div><div class="info-2"><div class="info-item-1"> Pod网络（速）控制的必要性高速公路上，当流量大时，如果汽车仍然不限制速度的话，将会很容易发生车祸，我们都会自觉地减速缓慢通过，只有减速才能安全行驶。在平台的集群中也是一样，一台主机上会有大量容器运行，容器相当于高速速上的汽车，对外的网络通信都使用主机出口这条高速路，如果某（几）个容器突然访问流量大增，而且没有作任何网络限速，会占用了主机的网络，严重影响其它容器的网络，进而影响其它业务。 前提 Openshift打开多租户网络模式修改&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml将networkPluginName设置为redhat/openshift-ovs-multitenant  12345...  hostSubnetLength: 9  networkPluginName: redhat/openshift-ovs-multitenant  serviceNetworkCIDR: 172.30.0.0/16...  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换  为Pod添...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAMaster%E8%8A%82%E7%82%B9%E5%A4%87%E4%BB%BD"><span class="toc-text">创建Master节点备份</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%AE%A1%E7%AE%97%E8%8A%82%E7%82%B9%E5%A4%87%E4%BB%BD"><span class="toc-text">创建计算节点备份</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-1"><span class="toc-text">备份过程</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Openshift-%E5%B7%B2%E7%BB%8F%E5%9C%A8openshift-ansible-contrib%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%8F%90%E4%BE%9B%E4%BA%86%E5%A4%87%E4%BB%BD%E8%84%9A%E6%9C%ACbackup-master-node-sh"><span class="toc-text">Openshift 已经在openshift-ansible-contrib这个项目中提供了备份脚本backup_master_node.sh</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E7%A7%81%E6%9C%8D%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93%E8%AF%81%E4%B9%A6"><span class="toc-text">备份私服镜像仓库证书</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-2"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E7%9B%B8%E5%85%B3%E5%AE%89%E8%A3%85%E6%96%87%E4%BB%B6"><span class="toc-text">备份相关安装文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E5%BA%94%E7%94%A8%E6%95%B0%E6%8D%AE"><span class="toc-text">备份应用数据</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-3"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BDetcd%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="toc-text">备份etcd数据库</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-4"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E9%A1%B9%E7%9B%AEproject"><span class="toc-text">备份项目project</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-5"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E6%8C%81%E4%B9%85%E5%8C%96%E5%8D%B7"><span class="toc-text">备份持久化卷</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E8%BF%87%E7%A8%8B-6"><span class="toc-text">备份过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E9%94%AE%E5%A4%87%E4%BB%BDetcd%E6%95%B0%E6%8D%AE%E8%84%9A%E6%9C%AC"><span class="toc-text">一键备份etcd数据脚本</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

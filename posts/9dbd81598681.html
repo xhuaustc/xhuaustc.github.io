@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Airflow简单介绍及测试安装 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https:&#x2F;&#x2F;github.com&#x2F;apache&#x2F;airf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Airflow简单介绍及测试安装">
+<meta property="og:url" content="https://xhua.eu.org/posts/9dbd81598681.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="Airflow 是什么 Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。 Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。 官方地址：https:&#x2F;&#x2F;github.com&#x2F;apache&#x2F;airf">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-02-24T07:27:54.629Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Airflow简单介绍及测试安装",
+  "url": "https://xhua.eu.org/posts/9dbd81598681.html",
+  "image": "https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-02-24T07:27:54.629Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/9dbd81598681.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Airflow简单介绍及测试安装',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">264</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">121</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Airflow简单介绍及测试安装</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Airflow简单介绍及测试安装</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-24T07:27:54.629Z" title="更新于 2026-02-24 15:27:54">2026-02-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="Airflow-是什么"><a href="#Airflow-是什么" class="headerlink" title="Airflow 是什么"></a>Airflow 是什么</h2><ul>
+<li>Airflow 是 Airbnb 开发的用于工作流管理的开源项目，自带 web UI 和调度。它支持编程方式创建工作流，同时在平台上管理和监控工作流程的状态。</li>
+<li>Airflow 于 2016 年 3 月加入了 Apache Software Foundation 的孵化计划，所以它未来的持续维护性有保障。</li>
+<li>官方地址：<a target="_blank" rel="noopener" href="https://github.com/apache/airflow%EF%BC%8C%E7%8E%B0%E6%9C%8911318%E4%B8%AAstar%EF%BC%8C732%E4%B8%AA%E8%B4%A1%E7%8C%AE%E8%80%85%EF%BC%8C%E6%98%AF%E4%B8%80%E4%B8%AA%E7%83%AD%E9%97%A8%E7%9A%84%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E3%80%82">https://github.com/apache/airflow，现有11318个star，732个贡献者，是一个热门的开源项目。</a></li>
+<li>先看下这篇介绍 ：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/e878bbc9ead2">浅谈调度工具——Airflow
+</a></li>
+</ul>
+<h2 id="为什么使用-Airflow"><a href="#为什么使用-Airflow" class="headerlink" title="为什么使用 Airflow"></a>为什么使用 Airflow</h2><ul>
+<li>智能调度</li>
+<li>图形化展示任务关系</li>
+<li>程序化流水线定义</li>
+<li>流水线间数据交互</li>
+<li>扩展性强</li>
+<li>分布式，可靠性高</li>
+<li>执行方式多样化，除了定时执行还可手动触发，api 触发等</li>
+</ul>
+<h2 id="Airflow-常用的场景"><a href="#Airflow-常用的场景" class="headerlink" title="Airflow 常用的场景"></a>Airflow 常用的场景</h2><p>Airflow 主要用于执行预定的批处理作业。它能够很好地管理不同的批量作业的关系，并给将复杂的关系图形化展示。</p>
+<ul>
+<li>系统或运用的日常维护任务，批量作业</li>
+<li>CD 部署任务，灰度发布，蓝绿部署等</li>
+<li>数据分析，数据流管道管理</li>
+</ul>
+<p>一句话：任何批量任务或者需要手动去触发执行的任务都可以考虑一下 Airflow</p>
+<h2 id="Airflow-安装"><a href="#Airflow-安装" class="headerlink" title="Airflow 安装"></a>Airflow 安装</h2><p><strong>airlow 使用 ansible role 方式安装 <a target="_blank" rel="noopener" href="https://github.com/idealista/airflow-role">https://github.com/idealista/airflow-role</a></strong> 0. 安装准备软件 ansible、gcc、python-devel</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install ansible gcc python-devel -y</span></span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>创建文件<code>requirements.yml </code></li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- src: idealista.airflow-role</span><br><span class="line">  version: 1.0.0</span><br><span class="line">  name: airflow</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>下载 airflow role</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ansible-galaxy install -p roles -r requirements.yml -f</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>更改 role 中的 install.yml<br>将 roles&#x2F;airflow&#x2F;tasks&#x2F;install.yml 中的<code>apt</code>模块改成<code>package</code>模块<br>将 roles&#x2F;airflow&#x2F;tasks&#x2F;install.yml 中的 Copy Daemon scripts 中的 when 条件去掉</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> roles/airflow/tasks/install.yml</span></span><br><span class="line">...</span><br><span class="line">- name: Airflow | Installing dependencies</span><br><span class="line">  package:</span><br><span class="line">    name: &quot;&#123;&#123; item &#125;&#125;&quot;</span><br><span class="line">    state: present</span><br><span class="line">  with_items: &quot;&#123;&#123; airflow_required_libs &#125;&#125;&quot;</span><br><span class="line">...</span><br><span class="line">- name: Airflow | Copy Daemon scripts</span><br><span class="line">  template:</span><br><span class="line">    src: &quot;&#123;&#123; item.key &#125;&#125;.service.j2&quot;</span><br><span class="line">    dest: /lib/systemd/system/&#123;&#123; item.key &#125;&#125;.service</span><br><span class="line">    mode: 0644</span><br><span class="line">  notify: restart &#123;&#123; item.key &#125;&#125;</span><br><span class="line">  with_dict: &quot;&#123;&#123; airflow_services &#125;&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<p>更改 role 下的 config.yml 及 templates&#x2F;airflow-***.service.j2 文件<br>将<code>/usr/local/bin/airflow</code>改为<code>/usr/bin/airflow</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> roles/airflow/tasks/config.yml</span></span><br><span class="line">...</span><br><span class="line">- name: Airflow | Initializing DB</span><br><span class="line">  shell: AIRFLOW_HOME=&#123;&#123; airflow_home &#125;&#125; airflow initdb</span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> roles/airflow/templates/airflow-webserver.service.j2</span></span><br><span class="line">...</span><br><span class="line">ExecStart=/usr/bin/airflow webserver --pid /run/airflow/webserver.pid</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>目的该 role 使用 pkg 只能在 Debian  或 Ubuntu 环境下安装，更改后，可以在 centos 环境下安装 4. 更新 ansible 的 hosts 文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> /etc/ansible/hosts</span></span><br><span class="line">127.0.0.1 ansible_connection=local</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>创建部署 airflow 的 ansible yaml</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> airflow.yml</span></span><br><span class="line">---</span><br><span class="line">- hosts: all</span><br><span class="line">  roles:</span><br><span class="line">  - &#123; role: airflow &#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="6">
+<li>安装 airflow</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ansible-playbook airflow.yml</span></span><br></pre></td></tr></table></figure>
+
+<p>执行完以上操作后本机就安装好了 airflow，同时也配置好了 service 等。 7. 手动初始化 db</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">HOME=/etc/airflow; airflow initdb</span></span><br></pre></td></tr></table></figure>
+
+<ol start="8">
+<li>更新配置&#x2F;etc&#x2F;airflow&#x2F;airflow.cfg</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> /etc/airflow/airflow.cfg</span></span><br><span class="line">...</span><br><span class="line">max_threads = 1</span><br><span class="line">dagbag_import_timeout = 30</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<ol start="9">
+<li>启动 airflow-worker</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl restart airflow-worker</span></span><br></pre></td></tr></table></figure>
+
+<p>安装好后展示</p>
+<p><img src="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" alt="Airflow主页"></p>
+<h2 id="问题记录"><a href="#问题记录" class="headerlink" title="问题记录"></a>问题记录</h2><ul>
+<li>如果使用 CeleryExecutor，可以安装 Celery 管理器 flower。，默认会安装 tornado 最新版本，需要限定 tornado 版本需限制在 4.2.0。安装完成后运行<code>AIRFLOW_HOME=/etc/airflow airflow flower</code></li>
+<li>使用 Mysql 作为后台数据库时，安装 mysql 扩展请安装 mysql-python。<br>同时 broker_url 设置为<code>broker_url =  mysql://airflow:airflow@localhost:3306/airflow</code></li>
+<li>测试 Airflow 中的 DAG 时，需要在界面上将它先把状态改为 On 后，再点击运行。</li>
+</ul>
+<h2 id="相关文章"><a href="#相关文章" class="headerlink" title="相关文章"></a>相关文章</h2><p><a target="_blank" rel="noopener" href="https://airflow.apachecn.org/">Airflow 中文文档</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/825629ffe3a7">任务调度神器 airflow 之初体验</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/9bed1e3ab93b">airflow 安装，部署，填坑</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/bddacfd66c1f">airflow 配置 CeleryExecutor</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/e878bbc9ead2">浅谈调度工具——Airflow</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2ecef979c606">如何部署一个健壮的 apache-airflow 调度系统</a><br><a target="_blank" rel="noopener" href="http://pylyria.com/2018/08/25/Airflow%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F%E5%8F%8A%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF/">Airflow 工作模式及适用场景</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/e878bbc9ead2">浅谈调度工具——Airflow
+</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/9dbd81598681.html">https://xhua.eu.org/posts/9dbd81598681.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/e4e2b676dcb154cc30f8afcdb7f446c83c7c78e81d2ec1388410d89a20a8166a.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/24bf32e1f396.html" title="Ansible常用模块"><img class="cover" src="https://img.xhua.eu.org/1c31fa609828dfc4c190f1c047fc4971eef3ed919e017f8737afb6f176a1401f.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Ansible常用模块</div></div><div class="info-2"><div class="info-item-1">lookup 函数在 playbooks 中可以使用一个名为 lookup()的函数，该函数用于 ansible 从外部资源访问数据，根据第一个参数的不同，该函数具有不同的功能，典型的就是读取外部文件内容。lookup()只在本地执行，而不是在远程主机上执行。例子： 123456debug: msg=&quot;&#123;&#123; lookup(&#x27;file&#x27;, &#x27;/etc/foo.txt&#x27;) &#125;&#125;&quot;debug: msg=&quot;password - &#123;&#123; lookup(&#x27;password&#x27;, &#x27;/tmp/random_pass.txt length=10&#x27;) &#125;&#125;&quot;debug: msg=&quot;&#123;&#123; lookup(&#x27;env&#x27;,&#x27;HOME&#x27;) &#125;&#125; is an environment variable&quot;debug: msg...</div></div></div></a><a class="pagination-related" href="/posts/f8319a6131a9.html" title="Kubefwd——Openshift-K8S-本地开发的福音"><img class="cover" src="https://img.xhua.eu.org/e549af1b07aeef5e395071a40fc456e6b239f231b85bf373f558ab69032c99d8.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Kubefwd——Openshift-K8S-本地开发的福音</div></div><div class="info-2"><div class="info-item-1">小志：“kubefwd 本地开发的福音啊，本地环境直接连接 svc。”当小志推荐这个工具的时候，我正在 Kubecon 大会的现场，听着 Kubernetes 近一年的各种成就和各种新特性。我无法看到微信另一头小志的表情，也许平静，也许跟我现在一样激动。kubefwd，这是第一次听到这个工具，“本地环境直接连接 svc”，openshift 的 port-fowrward 命令就能做到，没什么也不起的吧。我回复道：“openshift 的 port-forward，再加个自动更新本地 hosts 文件”。小志发来了 kubefwd 请求流向图。  服务 api 与服务 auth 提供的都是 80 端口，但是它们能够同时被本地访问，这是 port-forward 无法做到的！我意识到这个工具很不简单，刚才的想法太草率了。我马上回复：“我刚才理解得不对，它可以做到一个 port 对应多个 service！”此刻的心情其实已经非常激动了，因为意识到 kubefwd 这个工具也许解决了困扰我多天的问题。  近一周一直在脑中徘徊的是徐磊老师介绍微软的 TFS 时的演示：开发人员本地修改代码...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/27114569557b.html" title="WSL2-+-microK8s-+-K8s"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">WSL2-+-microK8s-+-K8s</div></div><div class="info-2"><div class="info-item-1"> Windowns 10 (WSL2) + Ubuntu 20.04   enable systemd snapd microk8s  启动systemd，并使用snap安装   123$  sudo apt install daemonize$ sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target$ sudo nsenter -t $(pidof systemd) -a su - $LOGNAME  安装microk8s  12$ snap info microk8s$ sudo snap install microk8s --classic   使用microk8s  123$ microk8s status$ sudo usermod -a -G microk8s mpan$ sudo chown -f -R mpan ~/.kube   添加节点  1$ microk8s add-node   注意 每次使用micr...</div></div></div></a><a class="pagination-related" href="/posts/99938be39f4b.html" title="gogs创建用户"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">gogs创建用户</div></div><div class="info-2"><div class="info-item-1">&#x2F;opt&#x2F;gogs&#x2F;gogs admin create-user –name&#x3D;root –password&#x3D;123456 –admin&#x3D;true --email&#x3D;abc@123.com –config&#x3D;&#x2F;etc&#x2F;gogs&#x2F;conf&#x2F;app.ini 123oc project cicd &amp;&amp;gogspodname=$(oc get pod | grep gogs | grep -v postgresql| awk &#x27;&#123;print $1&#125;&#x27;)oc rsh $gogspodname /opt/gogs/gogs admin create-user --name=root --password=123456 --admin=true --email=abc@123.com --config=/etc/gogs/conf/app.ini </div></div></div></a><a class="pagination-related" href="/posts/6c2c2ce8b77c.html" title="Vagrant常用操作"><img class="cover" src="https://img.xhua.eu.org/dbdae12659719bbc8950b11f32a73f7e3b19c5b6ea04569b246faa257db88a96.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Vagrant常用操作</div></div><div class="info-2"><div class="info-item-1">查看安装的插件列表1$ vagrant plugin list 安装vagrant插件1$ vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest 查看box列表1$ vagrant box list 添加一个新的box1$ vagrant box add centos-76 centos-76.box 将一个虚拟机导出为box1$ vagrant package --output  centos-7.6.box 删除一个box1$ vagrant box remove centos-76 </div></div></div></a><a class="pagination-related" href="/posts/d5f034c0aad2.html" title="使用NSSM将程序注册为Windows服务"><img class="cover" src="https://img.xhua.eu.org/88ad7211da4e3599c4a8dae59a774a98a9a1c63b082aaa4b58e781f29ad00f7e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-03-24</div><div class="info-item-2">使用NSSM将程序注册为Windows服务</div></div><div class="info-2"><div class="info-item-1">NSSM (Non-Sucking Service Manager) 是一个非常实用的Windows服务管理工具，它可以将任何应用程序注册为Windows服务，支持开机自启动、失败自动重启等功能，本文将介绍如何使用NSSM，并以Nginx为例进行实践。 NSSM简介NSSM的主要特点：  可以将任何可执行程序注册为Windows服务 支持服务失败自动重启 支持开机自动启动 可以捕获程序的标准输出和错误输出到日志文件 提供图形界面和命令行两种操作方式 完全免费开源  安装NSSM 下载NSSM访问 NSSM官网 下载最新版本或使用 Chocolatey 包管理器安装：  1choco install nssm   解压下载的zip文件（如果是手动下载）将win64目录下的nssm.exe复制到一个固定目录，比如：C:\Program Files\nssm  添加环境变量（可选）将nssm.exe所在目录添加到系统PATH环境变量中   使用NSSM注册Nginx服务图形界面方式 打开命令提示符，输入：  1nssm install nginx   在弹出的图形界面中配置：   Pa...</div></div></div></a><a class="pagination-related" href="/posts/39ef65c75107.html" title="为啥新环境的Kafka性能这么差？"><img class="cover" src="https://img.xhua.eu.org/aeefa33fd6df20a8b31e714fbdcd97ce3e20dfafaceb580d8a9c3eb6537e5833.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">为啥新环境的Kafka性能这么差？</div></div><div class="info-2"><div class="info-item-1">本故事纯属虚构，如有雷同，纯属巧合，一笑了之。公司分配给了A和B一个任务，测试容器化Kafka集群的性能。之前B在老机器上已经测试过一个版本，并写了完整的报告，算是有经验的老鸟了。现在到了一批新机器，需要在它们上面重新测试一下Kafka的性能，A主动承担这个该任务，要知道新机器不管从cpu核数还是内存大小都是老机器的两倍，而且新机器用的是SSD盘，而老机器用的是机械盘。A信心满满，认认真真地按照之前B写的文档操作。可测试结果让他大吃一惊，新机器的性能竟然不到老机器的一半。  网络问题？  A：这个Kafka集群压测数据怎么这么差？会不会是网络问题呢？B：之前我们用的是万M网卡，你这个是多少？A：网卡速度怎么看？B：用ethtool命令，后面加对应的网络接口名，看Speed值，就能知道是万M还是千M网卡了。 123456$ ethtool eth0Settings for em0:Supported ports: [ TP ]...Speed: 1000Mb/s... A：这是千M网卡，怪不得性能会这么差呢。B：你确定是网卡的问题吗？你压测的时候用nload命令查看一下网络的带宽有...</div></div></div></a><a class="pagination-related" href="/posts/b4bb0e80ace4.html" title="Jenkins-Pipeline语法实例"><img class="cover" src="https://img.xhua.eu.org/65a7b96870c08bac993faf2fae2f8975faf58a4260edd90c0817d6d0f8398fa5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jenkins-Pipeline语法实例</div></div><div class="info-2"><div class="info-item-1">Jenkins Pipeline支持的指令   指令名 说明 作用域    agent 定义执行任务的代理 stage 或pipeline   environment 设置环境变量 stage或pipeline   tools 自动下载并安装指定的工具，并将其加入到PATH变量中 stage或pipeline   input 暂停pipeline,提示输入内容 stage   options 配置Jenkins pipeline本身，如options{retry(3}},指pipeline失败时再重试2次 stage 或 pipeline   parallel 并行执行多个step stage   parameters 执行pipeline前传入一些参数 pipeline   triggers 定义执行pipeline的触发器 pipeline   when 定义阶段执行的条件 stage   build 触发其他的job steps   options Jenkins Pipeline配置参数   参数名 说明 例子    buildDiscarder 保留最近历史构建记录的数...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Airflow-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">Airflow 是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8-Airflow"><span class="toc-text">为什么使用 Airflow</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Airflow-%E5%B8%B8%E7%94%A8%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="toc-text">Airflow 常用的场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Airflow-%E5%AE%89%E8%A3%85"><span class="toc-text">Airflow 安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95"><span class="toc-text">问题记录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E6%96%87%E7%AB%A0"><span class="toc-text">相关文章</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
