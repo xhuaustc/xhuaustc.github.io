@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM 并行部署可视化: TP / PP / EP / DP</title>
+    <style>
+      :root {
+        --bg: #09111f;
+        --bg-soft: #0f1d33;
+        --panel: rgba(14, 26, 45, 0.78);
+        --line: rgba(160, 192, 255, 0.18);
+        --text: #eaf1ff;
+        --muted: #a7b8d6;
+        --tp: #53d8fb;
+        --pp: #f8c65b;
+        --ep: #ff7b72;
+        --dp: #7ff2a8;
+        --accent: #8ba8ff;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(83, 216, 251, 0.12), transparent 28%),
+          radial-gradient(circle at 80% 20%, rgba(248, 198, 91, 0.16), transparent 30%),
+          radial-gradient(circle at 50% 80%, rgba(255, 123, 114, 0.12), transparent 32%),
+          linear-gradient(180deg, #08101d 0%, #0c1630 52%, #08111f 100%);
+        color: var(--text);
+        font-family: "SF Pro Display", "PingFang SC", "Segoe UI", sans-serif;
+      }
+
+      body {
+        padding: 32px;
+      }
+
+      .page {
+        max-width: 1420px;
+        margin: 0 auto;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .hero-copy {
+        padding: 34px 34px 28px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(139, 168, 255, 0.14);
+        color: #cdd8ff;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(32px, 4.1vw, 52px);
+        line-height: 1.06;
+        letter-spacing: -0.04em;
+        max-width: 12ch;
+      }
+
+      h1 .subline {
+        display: block;
+        margin-top: 10px;
+        font-size: 0.86em;
+        letter-spacing: -0.03em;
+        color: #dfe7fb;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+        max-width: 60ch;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .hero-side {
+        position: relative;
+        overflow: hidden;
+        min-height: 340px;
+      }
+
+      .hero-side canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 22px;
+      }
+
+      .control {
+        padding: 20px;
+      }
+
+      .control label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .control input[type="range"] {
+        width: 100%;
+      }
+
+      .metric {
+        font-size: 30px;
+        font-weight: 700;
+        margin-top: 10px;
+      }
+
+      .explain {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 26px 0 16px;
+      }
+
+      .tab {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        padding: 12px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+      }
+
+      .tab:hover,
+      .tab.active {
+        transform: translateY(-1px);
+        background: rgba(139, 168, 255, 0.12);
+        border-color: rgba(139, 168, 255, 0.3);
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+      }
+
+      .visual {
+        padding: 20px;
+      }
+
+      .visual canvas {
+        width: 100%;
+        height: 560px;
+        display: block;
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 24%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .sidebar {
+        padding: 26px;
+      }
+
+      h2,
+      h3 {
+        margin: 0 0 12px;
+      }
+
+      .section {
+        margin-bottom: 22px;
+      }
+
+      .section p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .mini {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .mini strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .mini p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .scenario {
+        margin-top: 26px;
+        padding: 20px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(139, 168, 255, 0.12), rgba(255, 255, 255, 0.03));
+        border: 1px solid rgba(139, 168, 255, 0.18);
+      }
+
+      .scenario p {
+        margin: 0;
+        color: #d8e2ff;
+        line-height: 1.8;
+      }
+
+      .bottom {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 22px;
+      }
+
+      .bottom .card {
+        padding: 20px;
+      }
+
+      .bottom p {
+        color: var(--muted);
+        line-height: 1.7;
+        margin: 8px 0 0;
+      }
+
+      code {
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        font-family: "SF Mono", "Consolas", monospace;
+      }
+
+      @media (max-width: 1120px) {
+        .hero,
+        .main-grid,
+        .bottom,
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          max-width: none;
+        }
+      }
+
+      @media (max-width: 680px) {
+        body {
+          padding: 18px;
+        }
+
+        .hero-copy,
+        .sidebar,
+        .control,
+        .visual,
+        .bottom .card {
+          padding: 18px;
+        }
+
+        .visual canvas {
+          height: 420px;
+        }
+
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <div class="card hero-copy">
+          <div class="eyebrow">Interactive LLM Systems Map</div>
+          <h1>模型部署里的并行方式<span class="subline">TP / PP / EP / DP</span></h1>
+          <p class="lead">
+            这不是一组抽象缩写，而是把超大模型部署到多张卡、多台机器时常见的几种并行手段。你会看到模型是按层切、按张量切、按专家切，还是按数据批次切到多个完整副本上，通信压力又是如何随之变化。
+          </p>
+          <div class="legend">
+            <span class="pill"><span class="dot" style="background: var(--tp)"></span>TP Tensor Parallel</span>
+            <span class="pill"><span class="dot" style="background: var(--pp)"></span>PP Pipeline Parallel</span>
+            <span class="pill"><span class="dot" style="background: var(--ep)"></span>EP Expert Parallel</span>
+            <span class="pill"><span class="dot" style="background: var(--dp)"></span>DP Data Parallel</span>
+          </div>
+        </div>
+        <div class="card hero-side">
+          <canvas id="heroCanvas"></canvas>
+        </div>
+      </section>
+
+      <section class="controls">
+        <div class="card control">
+          <label for="gpuCount">GPU 数量</label>
+          <input id="gpuCount" type="range" min="4" max="32" step="4" value="32" />
+          <div class="metric"><span id="gpuCountValue">32</span> GPUs</div>
+          <div class="explain">观察不同切分方式如何占用同一批 GPU 资源。</div>
+        </div>
+        <div class="card control">
+          <label for="modelLayers">模型层数</label>
+          <input id="modelLayers" type="range" min="24" max="128" step="8" value="80" />
+          <div class="metric"><span id="modelLayersValue">80</span> Layers</div>
+          <div class="explain">PP 按层切段时，stage 的职责会随着层数变化。</div>
+        </div>
+        <div class="card control">
+          <label for="tokenCount">输入 Token</label>
+          <input id="tokenCount" type="range" min="32" max="1024" step="32" value="128" />
+          <div class="metric"><span id="tokenCountValue">128</span> Tokens</div>
+          <div class="explain">输入越长，prefill 阶段传输的 activation 越大。</div>
+        </div>
+        <div class="card control">
+          <label for="outputCount">输出 Token</label>
+          <input id="outputCount" type="range" min="16" max="512" step="16" value="128" />
+          <div class="metric"><span id="outputCountValue">128</span> Tokens</div>
+          <div class="explain">输出越长，decode 阶段的小消息同步轮数越多。</div>
+        </div>
+      </section>
+
+      <div class="tabs">
+        <button class="tab active" data-mode="tp">TP: 同层切矩阵</button>
+        <button class="tab" data-mode="pp">PP: 按层切模型</button>
+        <button class="tab" data-mode="ep">EP: 按专家切 MoE</button>
+        <button class="tab" data-mode="dp">DP: 按数据批次切分</button>
+        <button class="tab" data-mode="combo">组合模式</button>
+      </div>
+
+      <section class="main-grid">
+        <div class="card visual">
+          <canvas id="mainCanvas"></canvas>
+        </div>
+        <aside class="card sidebar">
+          <div class="section">
+            <h2 id="modeTitle">TP: 同一层由多卡协同计算</h2>
+            <p id="modeSummary"></p>
+          </div>
+
+          <div class="section">
+            <h3>工作原理</h3>
+            <p id="modeTheory"></p>
+          </div>
+
+          <div class="grid-2">
+            <div class="mini">
+              <strong>优点</strong>
+              <p id="modePros"></p>
+            </div>
+            <div class="mini">
+              <strong>代价</strong>
+              <p id="modeCons"></p>
+            </div>
+          </div>
+
+          <div class="section" style="margin-top: 18px">
+            <h3>通信画像</h3>
+            <p id="modeTraffic"></p>
+          </div>
+
+          <div class="scenario">
+            <h3 style="margin-bottom: 10px">当前参数下的估算</h3>
+            <p id="scenarioText"></p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="bottom">
+        <div class="card">
+          <h3>TP 适合什么</h3>
+          <p>单机内多卡互联强，想让同一层的大矩阵分摊到多张 GPU。典型是 <code>TP=8</code> 放在一台 8 卡机器内。</p>
+        </div>
+        <div class="card">
+          <h3>PP 适合什么</h3>
+          <p>模型太大，单机放不下，按层切到多台机器。跨机只传 hidden states，通常比跨机 TP/EP 更稳。</p>
+        </div>
+        <div class="card">
+          <h3>EP 适合什么</h3>
+          <p>MoE 模型里 expert 很多，把不同 expert 摊到不同 GPU。吞吐潜力高，但非常依赖网络质量和 all-to-all 实现。</p>
+        </div>
+        <div class="card">
+          <h3>DP 适合什么</h3>
+          <p>单份模型已经能装下，但想用多个完整副本并行处理同一批数据或同一轮调度里的多个样本。它提升整体吞吐，不直接解决单份模型装不下的问题。</p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        mode: "tp",
+        gpuCount: 32,
+        modelLayers: 80,
+        tokenCount: 128,
+        outputCount: 128,
+      };
+
+      const modeContent = {
+        tp: {
+          title: "TP: 同一层由多卡协同计算",
+          summary:
+            "Tensor Parallel 的核心不是把模型前半段给一张卡、后半段给另一张卡，而是把同一层里的大张量按某个维度切分。每张 GPU 只保存其中一部分，所有卡一起完成这一层前向。",
+          theory:
+            "如果某一层的线性层是 Y = XW，TP 会把 W 切成多个 shard，分别放在不同 GPU 上。每张卡算出自己的局部结果，再通过 all-reduce、all-gather 或 reduce-scatter 把结果合并。于是每层都伴随同步。",
+          pros:
+            "单层显存压力下降，层内矩阵变薄，单机内 NVLink/NVSwitch 条件下效率通常很好。",
+          cons:
+            "通信频率极高，几乎每层都要同步。把 TP 跨主机会很快暴露网络时延和抖动问题。",
+          traffic:
+            "高频、小到中等消息、每层同步。更怕时延，也怕尾延迟。",
+          accent: "#53d8fb",
+        },
+        pp: {
+          title: "PP: 模型按层切成多个 Stage",
+          summary:
+            "Pipeline Parallel 是把一整个模型纵向切段。前几层放到 stage0，中间层放到 stage1，最后层放到 stageN。数据像接力棒一样，一段一段往前传。",
+          theory:
+            "一批 token 先经过 stage0 的若干层，得到 hidden states，然后把这块 activation 传给 stage1。stage1 再算自己的层段，再传给下一段。它减少的是每张卡要承受的层数。",
+          pros:
+            "对超大模型很有效，尤其适合把模型跨机器装下。跨节点通信集中在 stage 边界。",
+          cons:
+            "会出现 pipeline bubble。decode 阶段每生成一个 token 都要再次穿越多个 stage，延迟会被放大。",
+          traffic:
+            "中频、中等消息。prefill 更偏带宽型，decode 更偏延迟型。",
+          accent: "#f8c65b",
+        },
+        ep: {
+          title: "EP: 把 MoE 的专家分散到不同 GPU",
+          summary:
+            "Expert Parallel 只对 MoE 模型成立。模型不会对每个 token 都激活全部参数，而是让 router 选择少量 expert。EP 就是把这些 expert 分配到不同卡上。",
+          theory:
+            "Token 先在 router 处决定去哪个 expert，然后被分发到对应 GPU。expert 算完后，再把结果送回聚合。真正重的是 token dispatch 和 combine，常见通信形态是 all-to-all。",
+          pros:
+            "可以把庞大的 expert 权重摊开，MoE 大模型扩展性强，吞吐潜力高。",
+          cons:
+            "最怕跨机网络差。all-to-all 对带宽、时延、抖动都很敏感，网络不好会立刻拖垮收益。",
+          traffic:
+            "极重的 all-to-all，大量 token 重排。既怕带宽不足，也怕延迟和负载不均。",
+          accent: "#ff7b72",
+        },
+        dp: {
+          title: "DP: 多个完整副本并行处理数据分片",
+          summary:
+            "Data Parallel 不切模型结构，而是复制多个完整副本。和多副本部署不同，DP 强调的是把同一份逻辑 batch 或同一轮统一调度的数据分片交给不同副本并行处理。",
+          theory:
+            "在推理里，常见做法是把一个大 batch 或连续到达的一组样本切成多个 shard，每个副本各算自己的那一份，最后再把结果汇总给上层调度器。它不降低单份模型显存，只是把数据维度的工作并行展开。",
+          pros:
+            "实现相对直接，扩吞吐很有效，尤其适合 batch 足够大、单份模型已经能稳定放下的时候。",
+          cons:
+            "显存开销高，因为每个副本都要保存完整模型；batch 太小或负载不均时，额外副本可能吃不满。",
+          traffic:
+            "推理时模型内同步远少于训练 DP。主要是 batch 切分、结果汇总，以及必要时的调度与状态对齐。",
+          accent: "#7ff2a8",
+        },
+        combo: {
+          title: "组合模式: 真实部署通常是 TP + PP + DP，有时再叠 EP",
+          summary:
+            "生产部署很少只用一种并行。典型组合是机内 TP，跨机 PP，外层再加 DP 扩批处理吞吐。MoE 模型则可能在其中嵌入 EP。",
+          theory:
+            "例如 4 台 8 卡服务器部署超大模型，可以让每台机器内部 TP=8，4 台机器组成 PP=4。若还想扩 batch 吞吐，就再复制若干份同样的 TP×PP 组形成 DP。MoE 模型若启用 EP，就在某些层中再按 expert 分流。",
+          pros:
+            "能在显存、吞吐、通信代价之间做现实折中，适合真正的工程部署。",
+          cons:
+            "配置复杂度最高。切分不合理会把最重的通信路径放到最差的网络上，性能和稳定性都会受损。",
+          traffic:
+            "不同维度叠加后，网络画像会混合出现。最关键的是把高频同步尽量留在单机内。",
+          accent: "#8ba8ff",
+        },
+      };
+
+      const inputs = {
+        gpuCount: document.getElementById("gpuCount"),
+        modelLayers: document.getElementById("modelLayers"),
+        tokenCount: document.getElementById("tokenCount"),
+        outputCount: document.getElementById("outputCount"),
+      };
+
+      const outputs = {
+        gpuCount: document.getElementById("gpuCountValue"),
+        modelLayers: document.getElementById("modelLayersValue"),
+        tokenCount: document.getElementById("tokenCountValue"),
+        outputCount: document.getElementById("outputCountValue"),
+        modeTitle: document.getElementById("modeTitle"),
+        modeSummary: document.getElementById("modeSummary"),
+        modeTheory: document.getElementById("modeTheory"),
+        modePros: document.getElementById("modePros"),
+        modeCons: document.getElementById("modeCons"),
+        modeTraffic: document.getElementById("modeTraffic"),
+        scenarioText: document.getElementById("scenarioText"),
+      };
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function resizeCanvas(canvas) {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+      }
+
+      function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.stroke();
+        }
+      }
+
+      function drawArrow(ctx, x1, y1, x2, y2, color, width, glow) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const angle = Math.atan2(dy, dx);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        if (glow) {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = glow;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 12 * Math.cos(angle - Math.PI / 6), y2 - 12 * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - 12 * Math.cos(angle + Math.PI / 6), y2 - 12 * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPulse(ctx, path, progress, color) {
+        const p = path[Math.floor(progress * (path.length - 1))];
+        if (!p) return;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function interpolatePath(points, steps = 120) {
+        const result = [];
+        for (let i = 0; i < points.length - 1; i += 1) {
+          const a = points[i];
+          const b = points[i + 1];
+          const segmentSteps = Math.max(2, Math.floor(steps / (points.length - 1)));
+          for (let s = 0; s < segmentSteps; s += 1) {
+            const t = s / segmentSteps;
+            result.push({
+              x: a.x + (b.x - a.x) * t,
+              y: a.y + (b.y - a.y) * t,
+            });
+          }
+        }
+        result.push(points[points.length - 1]);
+        return result;
+      }
+
+      function estimateScenario() {
+        const gpus = state.gpuCount;
+        const layers = state.modelLayers;
+        const input = state.tokenCount;
+        const output = state.outputCount;
+        const hidden = 8192;
+        const bytes = 2;
+        if (state.mode === "tp") {
+          const tp = clamp(Math.min(8, gpus), 2, 8);
+          const layerSyncs = layers * 2;
+          return `假设单机内使用 TP=${tp}。每层至少会经历一次或多次 collective，同一轮请求的同步轮数约是 ${layerSyncs} 级别。输入 ${input} token 和输出 ${output} token 时，总通信更像“高频层内同步”，关键指标不是总传输量，而是每层同步时的时延与抖动。`;
+        }
+        if (state.mode === "pp") {
+          const pp = clamp(Math.min(4, Math.floor(gpus / 4)), 2, 4);
+          const boundaries = pp - 1;
+          const prefillMB = ((input * hidden * bytes * boundaries) / (1024 * 1024)).toFixed(1);
+          const decodeMB = ((output * hidden * bytes * boundaries) / (1024 * 1024)).toFixed(1);
+          const roundTrips = output * boundaries;
+          return `假设部署为 PP=${pp}。prefill 阶段会跨越 ${boundaries} 个 stage 边界，约传输 ${prefillMB} MB activation；decode 阶段每生成一个 token 都要再次穿越这些边界，总计约 ${roundTrips} 次小消息跨 stage 传递，累计数据约 ${decodeMB} MB。这里更怕的是 ${roundTrips} 次同步带来的延迟放大。`;
+        }
+        if (state.mode === "ep") {
+          const experts = clamp(Math.floor(gpus / 2), 4, 16);
+          const active = 2;
+          const routed = Math.round(input * 0.7 + output * 0.3);
+          return `假设有 ${experts} 个 expert，每个 token 激活 top-${active}。这批请求大致会把 ${routed} 个 token 表示分发到不同 expert，再聚合回来。all-to-all 的问题不是只有“传多少”，而是 token 分布不均时，慢 expert 或慢节点会拖住所有人。`;
+        }
+        if (state.mode === "dp") {
+          const replicas = clamp(Math.floor(gpus / 8), 1, 8);
+          return `假设每 ${Math.max(1, Math.floor(gpus / replicas))} 张卡构成一个完整模型副本，则大约可以形成 ${replicas} 个 DP shard。上层会把同一份逻辑 batch 切给这些副本并行处理，再汇总结果；单个样本的推理路径不变，但整批吞吐更高。`;
+        }
+        const tp = clamp(Math.min(8, Math.floor(gpus / 4)), 2, 8);
+        const pp = clamp(Math.min(4, Math.floor(gpus / tp)), 2, 4);
+        const dp = Math.max(1, Math.floor(gpus / (tp * pp)));
+        return `一个典型组合是机内 TP=${tp}，跨机 PP=${pp}，外层再叠 DP=${dp}。它的原则很简单: 把最频繁的层内同步留在单机，把跨机通信控制在 stage 边界，再把大 batch 切给多个完整副本并行处理。`;
+      }
+
+      function updateText() {
+        const content = modeContent[state.mode];
+        outputs.modeTitle.textContent = content.title;
+        outputs.modeSummary.textContent = content.summary;
+        outputs.modeTheory.textContent = content.theory;
+        outputs.modePros.textContent = content.pros;
+        outputs.modeCons.textContent = content.cons;
+        outputs.modeTraffic.textContent = content.traffic;
+        outputs.scenarioText.textContent = estimateScenario();
+      }
+
+      function drawHero(ctx, time) {
+        const canvas = ctx.canvas;
+        const width = canvas.width / (window.devicePixelRatio || 1);
+        const height = canvas.height / (window.devicePixelRatio || 1);
+        ctx.clearRect(0, 0, width, height);
+
+        const serverCount = 4;
+        const gpuPerServer = 8;
+        const serverW = width * 0.19;
+        const serverH = height * 0.68;
+        const gap = width * 0.04;
+        const startX = (width - serverCount * serverW - (serverCount - 1) * gap) / 2;
+        const startY = height * 0.16;
+
+        for (let i = 0; i < serverCount; i += 1) {
+          const x = startX + i * (serverW + gap);
+          const y = startY;
+          drawRoundedRect(ctx, x, y, serverW, serverH, 24, "rgba(255,255,255,0.04)", "rgba(255,255,255,0.10)");
+          ctx.fillStyle = "#dce6ff";
+          ctx.font = "600 14px sans-serif";
+          ctx.fillText(`Server ${i + 1}`, x + 16, y + 22);
+
+          for (let g = 0; g < gpuPerServer; g += 1) {
+            const row = Math.floor(g / 2);
+            const col = g % 2;
+            const gx = x + 18 + col * (serverW * 0.42);
+            const gy = y + 42 + row * 58;
+            const color = g < 2 ? "rgba(83,216,251,0.85)" : g < 4 ? "rgba(248,198,91,0.85)" : g < 6 ? "rgba(255,123,114,0.85)" : "rgba(127,242,168,0.85)";
+            drawRoundedRect(ctx, gx, gy, serverW * 0.32, 36, 10, color, null);
+          }
+        }
+
+        const yMid = startY + serverH * 0.48;
+        for (let i = 0; i < serverCount - 1; i += 1) {
+          const x1 = startX + serverW + i * (serverW + gap);
+          const x2 = startX + (i + 1) * (serverW + gap);
+          drawArrow(ctx, x1 + 6, yMid, x2 - 6, yMid, "rgba(248,198,91,0.55)", 3, 8);
+          const path = interpolatePath([{ x: x1 + 6, y: yMid }, { x: x2 - 6, y: yMid }], 60);
+          drawPulse(ctx, path, (time * 0.00014 + i * 0.18) % 1, "#f8c65b");
+        }
+
+        ctx.fillStyle = "rgba(234,241,255,0.82)";
+        ctx.font = "500 13px sans-serif";
+        ctx.fillText("机内高频同步适合 TP，跨机边界更适合 PP", 22, height - 26);
+      }
+
+      function drawTP(ctx, time, width, height) {
+        const shards = clamp(Math.min(state.gpuCount, 8), 4, 8);
+        const margin = 36;
+        const gap = shards >= 7 ? 12 : 16;
+        const cardW = (width - margin * 2 - gap * (shards - 1)) / shards;
+        const cardH = 190;
+        const baseY = 108;
+        const showLead = cardW >= 118;
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 20px sans-serif";
+        ctx.fillText("一层大矩阵被切成多个 shard", margin, 42);
+        ctx.font = "500 13px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.72)";
+        ctx.fillText(
+          `每张 GPU 只保存同一层的一部分权重（TP=${shards}），再做 collective 合并结果`,
+          margin,
+          66
+        );
+
+        const centers = [];
+        for (let i = 0; i < shards; i += 1) {
+          const x = margin + i * (cardW + gap);
+          const y = baseY;
+          drawRoundedRect(ctx, x, y, cardW, cardH, 18, "rgba(83,216,251,0.12)", "rgba(83,216,251,0.34)");
+
+          const pad = Math.max(10, Math.min(16, cardW * 0.12));
+          ctx.fillStyle = "#53d8fb";
+          ctx.font = "700 15px sans-serif";
+          ctx.fillText(`GPU ${i}`, x + pad, y + 26);
+          ctx.fillStyle = "rgba(234,241,255,0.85)";
+          ctx.font = "600 13px sans-serif";
+          ctx.fillText(`Shard W${i}`, x + pad, y + 52);
+
+          let slabTop = y + 72;
+          if (showLead) {
+            ctx.fillStyle = "rgba(220,230,255,0.64)";
+            ctx.font = "500 12px sans-serif";
+            ctx.fillText("本卡只算一块局部结果", x + pad, y + 74);
+            slabTop = y + 94;
+          }
+
+          const slabH = y + cardH - slabTop - pad;
+          const stripes = 4;
+          const stripeGap = 6;
+          const stripeH = (slabH - stripeGap * (stripes - 1)) / stripes;
+          for (let s = 0; s < stripes; s += 1) {
+            drawRoundedRect(
+              ctx,
+              x + pad,
+              slabTop + s * (stripeH + stripeGap),
+              cardW - pad * 2,
+              stripeH,
+              8,
+              `rgba(83,216,251,${0.16 + s * 0.06})`,
+              null
+            );
+          }
+
+          centers.push({ x: x + cardW / 2, y: y + cardH });
+        }
+
+        const hubCenterY = baseY + cardH + 96;
+        const hub = { x: width * 0.5, y: hubCenterY };
+        const tpHubTitle = "All-Reduce / All-Gather";
+        const tpHubSubtitle = "层内同步几乎每层都要发生";
+        ctx.font = "700 16px sans-serif";
+        const tpHubTitleWidth = ctx.measureText(tpHubTitle).width;
+        ctx.font = "500 12px sans-serif";
+        const tpHubSubtitleWidth = ctx.measureText(tpHubSubtitle).width;
+        const tpHubW = Math.max(240, tpHubTitleWidth + 48, tpHubSubtitleWidth + 48);
+        const tpHubH = 76;
+        const tpHubX = hub.x - tpHubW / 2;
+        const tpHubY = hub.y - tpHubH / 2;
+
+        drawRoundedRect(ctx, tpHubX, tpHubY, tpHubW, tpHubH, 18, "rgba(83,216,251,0.10)", "rgba(83,216,251,0.35)");
+        ctx.fillStyle = "#eaf1ff";
+        ctx.font = "700 16px sans-serif";
+        ctx.fillText(tpHubTitle, hub.x - tpHubTitleWidth / 2, hub.y - 4);
+        ctx.font = "500 12px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.66)";
+        ctx.fillText(tpHubSubtitle, hub.x - tpHubSubtitleWidth / 2, hub.y + 18);
+
+        centers.forEach((c, i) => {
+          const startY = c.y + 6;
+          const endY = tpHubY - 4;
+          drawArrow(ctx, c.x, startY, hub.x, endY, "rgba(83,216,251,0.34)", 2, 4);
+          const path = interpolatePath([{ x: c.x, y: startY }, { x: hub.x, y: endY }], 72);
+          drawPulse(ctx, path, (time * 0.00022 + i * 0.11) % 1, "#53d8fb");
+        });
+      }
+
+      function drawPP(ctx, time, width, height) {
+        const stages = clamp(Math.min(4, Math.floor(state.gpuCount / 4)), 2, 4);
+        const layers = state.modelLayers;
+        const perStage = Math.ceil(layers / stages);
+        const margin = 40;
+        const gap = 20;
+        const stageW = (width - margin * 2 - gap * (stages - 1)) / stages;
+        const stageH = 360;
+        const y = 110;
+        const centers = [];
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 20px sans-serif";
+        ctx.fillText("模型按层切成多个 Stage", margin, 42);
+        ctx.font = "500 13px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.72)";
+        ctx.fillText("同一批 token 的 hidden states 会依次穿过这些 stage", margin, 66);
+
+        for (let i = 0; i < stages; i += 1) {
+          const x = margin + i * (stageW + gap);
+          drawRoundedRect(ctx, x, y, stageW, stageH, 22, "rgba(248,198,91,0.10)", "rgba(248,198,91,0.34)");
+          ctx.fillStyle = "#f8c65b";
+          ctx.font = "700 16px sans-serif";
+          ctx.fillText(`Stage ${i}`, x + 18, y + 28);
+          ctx.fillStyle = "rgba(234,241,255,0.84)";
+          ctx.font = "600 13px sans-serif";
+          const start = i * perStage + 1;
+          const end = Math.min(layers, (i + 1) * perStage);
+          ctx.fillText(`Layers ${start}-${end}`, x + 18, y + 52);
+
+          for (let b = 0; b < 5; b += 1) {
+            drawRoundedRect(
+              ctx,
+              x + 18,
+              y + 84 + b * 48,
+              stageW - 36,
+              30,
+              9,
+              `rgba(248,198,91,${0.14 + b * 0.04})`,
+              null
+            );
+          }
+
+          ctx.fillStyle = "rgba(220,230,255,0.66)";
+          ctx.font = "500 12px sans-serif";
+          ctx.fillText("本 stage 只负责一段层", x + 18, y + stageH - 22);
+          centers.push({ x: x + stageW / 2, y: y + stageH / 2 });
+        }
+
+        for (let i = 0; i < centers.length - 1; i += 1) {
+          const left = centers[i];
+          const right = centers[i + 1];
+          drawArrow(ctx, left.x + stageW / 2 - 12, left.y, right.x - stageW / 2 + 12, right.y, "rgba(248,198,91,0.55)", 3, 10);
+          const path = interpolatePath(
+            [
+              { x: left.x + stageW / 2 - 12, y: left.y },
+              { x: right.x - stageW / 2 + 12, y: right.y },
+            ],
+            90
+          );
+          drawPulse(ctx, path, (time * 0.00018 + i * 0.16) % 1, "#f8c65b");
+        }
+
+        ctx.fillStyle = "rgba(220,230,255,0.74)";
+        ctx.font = "600 13px sans-serif";
+        ctx.fillText(`Prefill 更像少量大消息；Decode 更像 ${state.outputCount * (stages - 1)} 次小消息边界同步`, margin, height - 32);
+      }
+
+      function drawEP(ctx, time, width, height) {
+        const experts = clamp(Math.floor(state.gpuCount / 2), 4, 12);
+        const margin = 42;
+        const expertW = 112;
+        const expertH = 54;
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 20px sans-serif";
+        ctx.fillText("Token 被路由到不同 Expert", margin, 42);
+        ctx.font = "500 13px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.72)";
+        ctx.fillText("这是 MoE 的典型流向: router 选 expert，token 分发，expert 计算，再聚合", margin, 66);
+
+        const routerBoxW = 208;
+        const routerBoxH = 58;
+        const routerBoxX = width / 2 - routerBoxW / 2;
+        const routerBoxY = 86;
+        drawRoundedRect(ctx, routerBoxX, routerBoxY, routerBoxW, routerBoxH, 18, "rgba(255,123,114,0.10)", "rgba(255,123,114,0.34)");
+        ctx.fillStyle = "#ff7b72";
+        ctx.font = "700 16px sans-serif";
+        const routerLabel = "Router";
+        const routerLabelW = ctx.measureText(routerLabel).width;
+        ctx.fillText(routerLabel, width / 2 - routerLabelW / 2, routerBoxY + routerBoxH / 2 + 6);
+
+        const combineBoxW = 208;
+        const combineBoxH = 58;
+        const combineBoxY = height - combineBoxH - 28;
+        const combineBoxX = width / 2 - combineBoxW / 2;
+
+        const areaTop = routerBoxY + routerBoxH + 32;
+        const areaBottom = combineBoxY - 32;
+        const areaCenterY = (areaTop + areaBottom) / 2;
+        const areaHeight = areaBottom - areaTop;
+
+        const ry = Math.max(60, Math.min((areaHeight - expertH) / 2, areaHeight * 0.46));
+        const rx = Math.max(
+          expertW,
+          Math.min((width - margin * 2 - expertW) / 2, width * 0.36)
+        );
+
+        const expertCenters = [];
+        for (let i = 0; i < experts; i += 1) {
+          const angle = -Math.PI / 2 + (i / experts) * Math.PI * 2;
+          const cx = width / 2 + Math.cos(angle) * rx;
+          const cy = areaCenterY + Math.sin(angle) * ry;
+          expertCenters.push({ x: cx, y: cy });
+        }
+
+        const routerAnchor = { x: width / 2, y: routerBoxY + routerBoxH };
+        const combineAnchor = { x: width / 2, y: combineBoxY };
+
+        expertCenters.forEach((e, i) => {
+          const dxIn = e.x - routerAnchor.x;
+          const dyIn = e.y - routerAnchor.y;
+          const lenIn = Math.max(1, Math.hypot(dxIn, dyIn));
+          const attachInX = e.x - (dxIn / lenIn) * (expertW / 2 + 2);
+          const attachInY = e.y - (dyIn / lenIn) * (expertH / 2 + 2);
+          drawArrow(ctx, routerAnchor.x, routerAnchor.y, attachInX, attachInY, "rgba(255,123,114,0.28)", 2, 3);
+          const go = interpolatePath([
+            { x: routerAnchor.x, y: routerAnchor.y },
+            { x: attachInX, y: attachInY },
+          ], 72);
+          drawPulse(ctx, go, (time * 0.0002 + i * 0.08) % 1, "#ff7b72");
+
+          const dxOut = combineAnchor.x - e.x;
+          const dyOut = combineAnchor.y - e.y;
+          const lenOut = Math.max(1, Math.hypot(dxOut, dyOut));
+          const attachOutX = e.x + (dxOut / lenOut) * (expertW / 2 + 2);
+          const attachOutY = e.y + (dyOut / lenOut) * (expertH / 2 + 2);
+          drawArrow(ctx, attachOutX, attachOutY, combineAnchor.x, combineAnchor.y, "rgba(255,123,114,0.18)", 1.6, 1);
+          const back = interpolatePath([
+            { x: attachOutX, y: attachOutY },
+            { x: combineAnchor.x, y: combineAnchor.y },
+          ], 72);
+          drawPulse(ctx, back, (time * 0.00017 + 0.35 + i * 0.08) % 1, "#ffb2ab");
+        });
+
+        expertCenters.forEach((e, i) => {
+          drawRoundedRect(ctx, e.x - expertW / 2, e.y - expertH / 2, expertW, expertH, 16, "rgba(255,123,114,0.12)", "rgba(255,123,114,0.30)");
+          ctx.fillStyle = "#ffd4cf";
+          ctx.font = "700 14px sans-serif";
+          const label = `Expert ${i}`;
+          const labelW = ctx.measureText(label).width;
+          ctx.fillText(label, e.x - labelW / 2, e.y + 5);
+        });
+
+        drawRoundedRect(ctx, combineBoxX, combineBoxY, combineBoxW, combineBoxH, 18, "rgba(255,123,114,0.08)", "rgba(255,123,114,0.25)");
+        ctx.fillStyle = "#eaf1ff";
+        ctx.font = "700 16px sans-serif";
+        const combineLabel = "Combine";
+        const combineLabelW = ctx.measureText(combineLabel).width;
+        ctx.fillText(combineLabel, width / 2 - combineLabelW / 2, combineBoxY + combineBoxH / 2 + 6);
+      }
+
+      function drawDP(ctx, time, width, height) {
+        const replicas = clamp(Math.floor(state.gpuCount / 8), 2, 4);
+        const margin = 42;
+        const gap = 22;
+        const boxW = (width - margin * 2 - gap * (replicas - 1)) / replicas;
+        const titleY = 40;
+        const subtitleY = 66;
+        const schedulerY = 90;
+        const schedulerH = 48;
+        const boxY = schedulerY + schedulerH + 52;
+        const mergeBoxH = 48;
+        const mergeBoxY = height - mergeBoxH - 22;
+        const boxBottom = mergeBoxY - 32;
+        const boxH = Math.max(220, boxBottom - boxY);
+        const laneCount = 5;
+        const laneTop = 56;
+        const laneBottom = boxH - 16;
+        const laneHeight = Math.max(20, (laneBottom - laneTop - 8 * (laneCount - 1)) / laneCount);
+        const laneStride = laneHeight + 8;
+        const clusterCenterX = margin + (width - margin * 2) / 2;
+        const schedulerLabel = "Batch Dispatcher";
+        const mergeLabel = "Gather / Merge Outputs";
+        const topAnchorY = schedulerY + schedulerH;
+        const bottomAnchorY = mergeBoxY;
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 20px sans-serif";
+        ctx.fillText("同一份逻辑 batch 被切到多个完整副本上", margin, titleY);
+        ctx.font = "500 13px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.72)";
+        ctx.fillText("这里展示的是推理里的 Data Parallel: 统一调度、分片执行、最终汇总，而不是彼此独立的多副本部署。", margin, subtitleY);
+
+        ctx.font = "700 15px sans-serif";
+        const schedulerBoxW = Math.max(220, ctx.measureText(schedulerLabel).width + 72);
+        const schedulerBoxX = clusterCenterX - schedulerBoxW / 2;
+        drawRoundedRect(ctx, schedulerBoxX, schedulerY, schedulerBoxW, schedulerH, 16, "rgba(127,242,168,0.10)", "rgba(127,242,168,0.30)");
+        ctx.fillStyle = "#eaf1ff";
+        ctx.font = "700 15px sans-serif";
+        ctx.fillText(schedulerLabel, clusterCenterX - ctx.measureText(schedulerLabel).width / 2, schedulerY + schedulerH / 2 + 6);
+
+        for (let i = 0; i < replicas; i += 1) {
+          const x = margin + i * (boxW + gap);
+          const y = boxY;
+          drawRoundedRect(ctx, x, y, boxW, boxH, 22, "rgba(127,242,168,0.10)", "rgba(127,242,168,0.34)");
+          ctx.fillStyle = "#7ff2a8";
+          ctx.font = "700 16px sans-serif";
+          ctx.fillText(`DP Replica ${i}`, x + 18, y + 28);
+
+          for (let l = 0; l < laneCount; l += 1) {
+            drawRoundedRect(
+              ctx,
+              x + 18,
+              y + laneTop + l * laneStride,
+              boxW - 36,
+              laneHeight,
+              8,
+              `rgba(127,242,168,${0.11 + l * 0.03})`,
+              null
+            );
+          }
+
+          const replicaTopX = x + boxW / 2;
+          const replicaTopY = y - 10;
+          drawArrow(ctx, clusterCenterX, topAnchorY, replicaTopX, replicaTopY, "rgba(127,242,168,0.34)", 2, 3);
+          const downPath = interpolatePath(
+            [
+              { x: clusterCenterX, y: topAnchorY },
+              { x: replicaTopX, y: replicaTopY },
+            ],
+            72
+          );
+          drawPulse(ctx, downPath, (time * 0.00018 + i * 0.16) % 1, "#7ff2a8");
+
+          const replicaBottomX = x + boxW / 2;
+          const replicaBottomY = y + boxH + 8;
+          drawArrow(ctx, replicaBottomX, replicaBottomY, clusterCenterX, bottomAnchorY, "rgba(127,242,168,0.24)", 1.8, 3);
+          const upPath = interpolatePath(
+            [
+              { x: replicaBottomX, y: replicaBottomY },
+              { x: clusterCenterX, y: bottomAnchorY },
+            ],
+            72
+          );
+          drawPulse(ctx, upPath, (time * 0.00014 + 0.4 + i * 0.16) % 1, "#a7f4c1");
+        }
+
+        ctx.font = "700 14px sans-serif";
+        const mergeBoxW = Math.max(208, ctx.measureText(mergeLabel).width + 64);
+        const mergeBoxX = clusterCenterX - mergeBoxW / 2;
+        drawRoundedRect(ctx, mergeBoxX, mergeBoxY, mergeBoxW, mergeBoxH, 14, "rgba(127,242,168,0.08)", "rgba(127,242,168,0.26)");
+        ctx.fillStyle = "#dff7e7";
+        ctx.font = "700 14px sans-serif";
+        ctx.fillText(mergeLabel, clusterCenterX - ctx.measureText(mergeLabel).width / 2, mergeBoxY + mergeBoxH / 2 + 5);
+      }
+
+      function drawCombo(ctx, time, width, height) {
+        const pp = 4;
+        const tp = clamp(Math.min(8, Math.floor(state.gpuCount / 4)), 2, 8);
+        const margin = 32;
+        const stageGap = 16;
+        const stageW = (width - margin * 2 - stageGap * (pp - 1)) / pp;
+        const stageY = 120;
+        const footerH = 70;
+        const stageH = height - footerH - stageY - 34;
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 20px sans-serif";
+        ctx.fillText("生产环境常见组合: 机内 TP, 跨机 PP, 外层 DP", margin, 42);
+        ctx.font = "500 13px sans-serif";
+        ctx.fillStyle = "rgba(220,230,255,0.72)";
+        ctx.fillText("把最重的层内同步留在单机，把跨机通信约束为 stage 边界，再用 DP 把大 batch 切给多个完整副本", margin, 66);
+
+        const stageCenters = [];
+        for (let s = 0; s < pp; s += 1) {
+          const x = margin + s * (stageW + stageGap);
+          drawRoundedRect(ctx, x, stageY, stageW, stageH, 22, "rgba(255,255,255,0.04)", "rgba(255,255,255,0.10)");
+          ctx.fillStyle = "#f8c65b";
+          ctx.font = "700 15px sans-serif";
+          ctx.fillText(`PP Stage ${s}`, x + 16, stageY + 28);
+          ctx.fillStyle = "rgba(220,230,255,0.76)";
+          ctx.font = "500 12px sans-serif";
+          ctx.fillText(`内部 TP=${tp}`, x + 16, stageY + 48);
+
+          const innerCount = Math.min(tp, 8);
+          const rows = Math.ceil(innerCount / 2);
+          const innerPad = 16;
+          const innerGap = 10;
+          const innerTop = stageY + 66;
+          const innerBottom = stageY + stageH - 18;
+          const rowStride = Math.max(32, Math.min(44, (innerBottom - innerTop - innerGap * (rows - 1)) / rows));
+          const cellW = (stageW - innerPad * 2 - innerGap) / 2;
+
+          for (let g = 0; g < innerCount; g += 1) {
+            const col = g % 2;
+            const row = Math.floor(g / 2);
+            const gx = x + innerPad + col * (cellW + innerGap);
+            const gy = innerTop + row * (rowStride + innerGap);
+            drawRoundedRect(ctx, gx, gy, cellW, rowStride, 8, "rgba(83,216,251,0.16)", "rgba(83,216,251,0.24)");
+          }
+
+          stageCenters.push({
+            leftX: x,
+            rightX: x + stageW,
+            centerY: stageY + stageH / 2,
+          });
+        }
+
+        for (let s = 0; s < pp - 1; s += 1) {
+          const from = stageCenters[s];
+          const to = stageCenters[s + 1];
+          const y = from.centerY;
+          drawArrow(ctx, from.rightX + 2, y, to.leftX - 2, y, "rgba(248,198,91,0.55)", 3, 8);
+          const path = interpolatePath(
+            [
+              { x: from.rightX + 2, y },
+              { x: to.leftX - 2, y },
+            ],
+            60
+          );
+          drawPulse(ctx, path, (time * 0.00025 + s * 0.22) % 1, "#f8c65b");
+        }
+
+        ctx.font = "700 16px sans-serif";
+        const comboLabel = "最常见工程原则: 高频同步留单机";
+        const comboLabelW = ctx.measureText(comboLabel).width;
+        const footerW = Math.max(260, comboLabelW + 56);
+        const footerY = height - footerH - 16;
+        drawRoundedRect(
+          ctx,
+          width / 2 - footerW / 2,
+          footerY,
+          footerW,
+          footerH,
+          18,
+          "rgba(127,242,168,0.10)",
+          "rgba(127,242,168,0.32)"
+        );
+        ctx.fillStyle = "#eaf1ff";
+        ctx.font = "700 16px sans-serif";
+        ctx.fillText(comboLabel, width / 2 - comboLabelW / 2, footerY + footerH / 2 + 6);
+      }
+
+      function drawMain(ctx, time) {
+        const canvas = ctx.canvas;
+        const width = canvas.width / (window.devicePixelRatio || 1);
+        const height = canvas.height / (window.devicePixelRatio || 1);
+        ctx.clearRect(0, 0, width, height);
+
+        if (state.mode === "tp") drawTP(ctx, time, width, height);
+        if (state.mode === "pp") drawPP(ctx, time, width, height);
+        if (state.mode === "ep") drawEP(ctx, time, width, height);
+        if (state.mode === "dp") drawDP(ctx, time, width, height);
+        if (state.mode === "combo") drawCombo(ctx, time, width, height);
+      }
+
+      function updateControls() {
+        outputs.gpuCount.textContent = state.gpuCount;
+        outputs.modelLayers.textContent = state.modelLayers;
+        outputs.tokenCount.textContent = state.tokenCount;
+        outputs.outputCount.textContent = state.outputCount;
+      }
+
+      Object.entries(inputs).forEach(([key, input]) => {
+        input.addEventListener("input", () => {
+          state[key] = Number(input.value);
+          updateControls();
+          updateText();
+        });
+      });
+
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.mode = button.dataset.mode;
+          document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+          updateText();
+        });
+      });
+
+      const heroCanvas = document.getElementById("heroCanvas");
+      const mainCanvas = document.getElementById("mainCanvas");
+      let heroCtx = resizeCanvas(heroCanvas);
+      let mainCtx = resizeCanvas(mainCanvas);
+
+      window.addEventListener("resize", () => {
+        heroCtx = resizeCanvas(heroCanvas);
+        mainCtx = resizeCanvas(mainCanvas);
+      });
+
+      updateControls();
+      updateText();
+
+      function frame(time) {
+        drawHero(heroCtx, time);
+        drawMain(mainCtx, time);
+        requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
