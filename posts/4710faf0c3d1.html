@@ -1,0 +1,387 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent 工具工程化方法 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani&#x2F;agent-skills 是 Addy Osmani 开源的一套面向 AI coding age">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 工具工程化方法">
+<meta property="og:url" content="https://xhua.eu.org/posts/4710faf0c3d1.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani&#x2F;agent-skills 是 Addy Osmani 开源的一套面向 AI coding age">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg">
+<meta property="article:published_time" content="2026-04-26T12:27:01.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.691Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Agent Skills">
+<meta property="article:tag" content="Context Engineering">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="工程方法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent 工具工程化方法",
+  "url": "https://xhua.eu.org/posts/4710faf0c3d1.html",
+  "image": "https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg",
+  "datePublished": "2026-04-26T12:27:01.000Z",
+  "dateModified": "2026-09-21T08:31:54.691Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/4710faf0c3d1.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent 工具工程化方法',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent 工具工程化方法</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent 工具工程化方法</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-04-26T12:27:01.000Z" title="发表于 2026-04-26 20:27:01">2026-04-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.691Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/addyosmani/agent-skills"><code>addyosmani/agent-skills</code></a> 是 Addy Osmani 开源的一套面向 AI coding agent 的工程技能库。项目把软件研发过程拆成 <code>DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP</code> 等阶段，并提供 20 个左右的 Skill、多个专家 Persona、slash command、检查清单和会话 Hook，用来约束 Agent 在需求澄清、任务拆解、增量实现、测试验证、代码审查和发布前检查中的行为。</p>
+<p>这个项目给了一个更工程化的答案：<strong>把复杂任务拆成可触发、可执行、可验证、可复用的 Agent Skill</strong>。它不是知识库，也不是提示词合集，而是一套面向 AI coding agent 的工作流系统：用 Skill 描述“怎么做”，用 Command 触发“什么时候做”，用 Persona 提供“由谁从哪个视角做”，再用 Reference、Script、Hook 和验证清单控制上下文成本与执行质量。</p>
+<p>本文会基于对该项目的分析，总结一套可复用的方法。读完后，你应该能把自己的复杂任务，比如发布前检查、日志排障、技术博客翻译、PR 审查、运维变更评审，构建成一个真正可用的 Agent 工具。</p>
+<h2 id="先明确：Agent-工具不是提示词，而是工程系统"><a href="#先明确：Agent-工具不是提示词，而是工程系统" class="headerlink" title="先明确：Agent 工具不是提示词，而是工程系统"></a>先明确：Agent 工具不是提示词，而是工程系统</h2><p>Anthropic 的 Agent Skills 文档把 Skill 定义为一种模块化能力：一个目录里包含 <code>SKILL.md</code>、元数据、可选脚本和资源，Claude 会在相关任务出现时自动加载。它的关键是 <strong>progressive disclosure</strong>，也就是分层加载：</p>
+<ol>
+<li><strong>Metadata</strong>：启动时只加载 <code>name</code> 和 <code>description</code>，用于发现 Skill。</li>
+<li><strong>Instructions</strong>：任务匹配时再加载 <code>SKILL.md</code> 正文。</li>
+<li><strong>Resources &#x2F; Scripts</strong>：只有被指令引用时才读取参考资料或执行脚本。</li>
+</ol>
+<p>Cursor 的 Agent Skills 文档也采用类似结构：Skill 是可移植、可版本化、可包含脚本和模板的能力包，可以放在项目级或用户级目录中。MCP 则从另一侧解决“外部系统能力”问题：服务器暴露工具，客户端通过 <code>tools/list</code> 发现工具，再通过 <code>tools/call</code> 调用，并且官方文档强调敏感操作应保留 human-in-the-loop。</p>
+<p>这意味着一个可靠的 Agent 工具至少要回答四个问题：</p>
+<ul>
+<li><strong>什么时候触发</strong>：哪些用户意图、文件类型、工作阶段应该启用它？</li>
+<li><strong>如何执行</strong>：步骤是什么？哪些步骤不能跳？</li>
+<li><strong>如何取上下文</strong>：哪些内容常驻，哪些按需加载，哪些交给脚本或 MCP？</li>
+<li><strong>如何证明完成</strong>：用什么输出、测试、检查清单或运行结果作为证据？</li>
+</ul>
+<p><code>agent-skills</code> 项目之所以值得学习，是因为它把这些问题都变成了文件结构和工作流约束。</p>
+<h2 id="从-agent-skills-项目抽象出的三层模型"><a href="#从-agent-skills-项目抽象出的三层模型" class="headerlink" title="从 agent-skills 项目抽象出的三层模型"></a>从 agent-skills 项目抽象出的三层模型</h2><p>分析这个项目时，最有价值的不是某一个 Skill 的内容，而是它的分层方式。</p>
+<h3 id="第一层：Skill-负责“怎么做”"><a href="#第一层：Skill-负责“怎么做”" class="headerlink" title="第一层：Skill 负责“怎么做”"></a>第一层：Skill 负责“怎么做”</h3><p>项目里的每个 Skill 都是一个独立目录，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">skills/</span><br><span class="line">  spec-driven-development/</span><br><span class="line">    SKILL.md</span><br><span class="line">  planning-and-task-breakdown/</span><br><span class="line">    SKILL.md</span><br><span class="line">  test-driven-development/</span><br><span class="line">    SKILL.md</span><br><span class="line">  shipping-and-launch/</span><br><span class="line">    SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p><code>docs/skill-anatomy.md</code> 给出的标准结构很清楚：<code>SKILL.md</code> 需要包含 frontmatter、触发条件、工作流、常见借口、红旗信号和验证清单。这里的重点是 <strong>Process over knowledge</strong>：Skill 不是百科资料，而是 Agent 必须照着执行的 SOP。</p>
+<p>一个好的 Skill 描述应该类似这样：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">name:</span> <span class="string">pre-ship-guardian</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">Guides</span> <span class="string">agents</span> <span class="string">through</span> <span class="string">production</span> <span class="string">launch</span> <span class="string">readiness</span> <span class="string">checks.</span> <span class="string">Use</span> <span class="string">when</span> <span class="string">the</span> <span class="string">user</span> <span class="string">asks</span> <span class="string">to</span> <span class="string">ship,</span> <span class="string">release,</span> <span class="string">deploy,</span> <span class="string">or</span> <span class="string">validate</span> <span class="string">a</span> <span class="string">change</span> <span class="string">before</span> <span class="string">production.</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p><code>description</code> 里必须同时写清楚“做什么”和“什么时候用”。如果把完整流程塞进 description，Agent 可能只读摘要就开始执行，反而绕过 <code>SKILL.md</code> 正文。</p>
+<h3 id="第二层：Command-负责“什么时候启动一组流程”"><a href="#第二层：Command-负责“什么时候启动一组流程”" class="headerlink" title="第二层：Command 负责“什么时候启动一组流程”"></a>第二层：Command 负责“什么时候启动一组流程”</h3><p><code>agent-skills</code> 项目把软件研发生命周期拆成 <code>DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP</code>，并提供 <code>/spec</code>、<code>/plan</code>、<code>/build</code>、<code>/test</code>、<code>/review</code>、<code>/ship</code> 等命令。命令本身不是复杂逻辑，而是一个薄入口，用来告诉 Agent：现在进入哪个阶段，应调用哪个 Skill 或哪些 Persona。</p>
+<p>例如 <code>/ship</code> 的思路是：发布前不是让一个 Agent 从头看到尾，而是并行启动多个专家视角：</p>
+<ul>
+<li><code>code-reviewer</code> 检查正确性、可读性、架构、安全、性能。</li>
+<li><code>security-auditor</code> 检查 OWASP、密钥、鉴权、依赖风险。</li>
+<li><code>test-engineer</code> 检查测试覆盖、边界场景、并发和错误路径。</li>
+</ul>
+<p>主 Agent 最后只做合并，输出 <code>GO</code> 或 <code>NO-GO</code> 决策和 rollback plan。</p>
+<h3 id="第三层：Persona-负责“由谁看”"><a href="#第三层：Persona-负责“由谁看”" class="headerlink" title="第三层：Persona 负责“由谁看”"></a>第三层：Persona 负责“由谁看”</h3><p>Persona 不是流程本身，而是审查视角。<code>agent-skills</code> 的 <code>agents/</code> 目录里有 <code>code-reviewer</code>、<code>test-engineer</code>、<code>security-auditor</code> 等角色。它们适合做同一个产物的不同视角评估。</p>
+<p>这里有一个关键约束：<strong>Persona 不要互相调用</strong>。如果让 <code>code-reviewer</code> 再去调用 <code>security-auditor</code>，就会引入多次摘要、上下文丢失和成本不透明。更好的做法是由用户或命令做编排，多个 Persona 独立产出报告，主 Agent 负责合并。</p>
+<h2 id="一套可复用的工程方法"><a href="#一套可复用的工程方法" class="headerlink" title="一套可复用的工程方法"></a>一套可复用的工程方法</h2><p>把复杂任务做成 Agent 工具，可以按下面六步走。</p>
+<h3 id="第一步：定义任务边界"><a href="#第一步：定义任务边界" class="headerlink" title="第一步：定义任务边界"></a>第一步：定义任务边界</h3><p>先不要写 <code>SKILL.md</code>。先写清楚这个任务的边界：</p>
+<ul>
+<li>输入是什么：代码 diff、日志文件、网页 URL、需求文档、会议记录，还是自然语言目标？</li>
+<li>输出是什么：报告、补丁、部署决策、翻译稿、命令执行结果，还是结构化 JSON？</li>
+<li>什么时候应该触发：用户说了哪些关键词，或当前处于哪个工作阶段？</li>
+<li>什么时候不应该触发：任务太小、信息不足、需要人工决策、涉及高风险操作？</li>
+<li>完成证据是什么：测试通过、报告字段完整、截图、日志、CI 状态，还是人工确认？</li>
+</ul>
+<p>这一步决定 Agent 工具是否可控。没有边界的 Agent 工具，会变成“什么都想做，什么都做不稳”。</p>
+<h3 id="第二步：把流程拆成阶段，而不是堆成长提示词"><a href="#第二步：把流程拆成阶段，而不是堆成长提示词" class="headerlink" title="第二步：把流程拆成阶段，而不是堆成长提示词"></a>第二步：把流程拆成阶段，而不是堆成长提示词</h3><p>复杂任务通常不是一个 prompt 能解决的，而是一个有依赖关系的流程。<code>agent-skills</code> 用生命周期拆分工程任务，我们也可以用类似方式拆自己的任务：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Clarify -&gt; Collect Context -&gt; Execute -&gt; Verify -&gt; Report -&gt; Next Action</span><br></pre></td></tr></table></figure>
+
+<p>以发布前检查为例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Identify change -&gt; Collect diff -&gt; Run focused checks -&gt; Merge findings -&gt; Decide GO/NO-GO -&gt; Produce rollback plan</span><br></pre></td></tr></table></figure>
+
+<p>如果步骤之间存在依赖，就保留顺序流程；如果步骤彼此独立，就考虑并行 fan-out。不要为了“自动化”强行让一个总控 Agent 从头代理所有阶段，因为每多一次摘要，都会增加信息丢失和误判风险。</p>
+<h3 id="第三步：设计上下文加载策略"><a href="#第三步：设计上下文加载策略" class="headerlink" title="第三步：设计上下文加载策略"></a>第三步：设计上下文加载策略</h3><p>上下文窗口不是仓库，也不是网盘，它是预算。生产级 Agent 工具要主动控制什么进入上下文：</p>
+<ul>
+<li><strong>常驻内容</strong>：只放触发条件、核心规则和必须执行的步骤。</li>
+<li><strong>按需资料</strong>：长检查清单、模板、规范放到 <code>references/</code>。</li>
+<li><strong>确定性逻辑</strong>：文件扫描、格式校验、报告生成放到 <code>scripts/</code>。</li>
+<li><strong>外部系统</strong>：数据库、CI、工单、监控平台通过 MCP 或已有工具连接。</li>
+</ul>
+<p>这就是 context engineering 的核心：让 Agent 在正确时间看到正确信息，而不是把所有材料一次性塞给模型。</p>
+<h3 id="第四步：把脚本当作“确定性执行层”"><a href="#第四步：把脚本当作“确定性执行层”" class="headerlink" title="第四步：把脚本当作“确定性执行层”"></a>第四步：把脚本当作“确定性执行层”</h3><p>Agent 擅长理解意图、做判断和组织输出，但不适合反复执行机械且可验证的逻辑。以下内容更适合放脚本：</p>
+<ul>
+<li>收集 git diff、最近 commit、变更文件列表。</li>
+<li>校验 Markdown frontmatter、JSON schema、YAML 格式。</li>
+<li>生成报告骨架。</li>
+<li>调用内部 API 并输出结构化 JSON。</li>
+<li>检查文件大小、依赖版本、敏感关键字。</li>
+</ul>
+<p>脚本的原则是：输入输出清晰、副作用可预期、结果机器可读。脚本越可靠，Agent 就越少靠猜。</p>
+<h3 id="第五步：把验证写进-Skill，而不是写进愿望"><a href="#第五步：把验证写进-Skill，而不是写进愿望" class="headerlink" title="第五步：把验证写进 Skill，而不是写进愿望"></a>第五步：把验证写进 Skill，而不是写进愿望</h3><p><code>agent-skills</code> 里一个很重要的模式是 <code>Verification</code> 和 <code>Common Rationalizations</code>。这不是装饰，而是在对抗 Agent 常见的跳步行为。</p>
+<p>比如不要只写：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Make sure the release is safe.</span><br></pre></td></tr></table></figure>
+
+<p>而要写成：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## Verification</span></span><br><span class="line">Before producing a GO decision, confirm:</span><br><span class="line"><span class="bullet">-</span> [ ] The change summary was collected from git, not inferred from memory.</span><br><span class="line"><span class="bullet">-</span> [ ] Test status is included, even if no tests were run.</span><br><span class="line"><span class="bullet">-</span> [ ] Security-sensitive files are explicitly called out.</span><br><span class="line"><span class="bullet">-</span> [ ] Rollback steps are concrete enough for another engineer to execute.</span><br></pre></td></tr></table></figure>
+
+<p>如果结果不能被验证，就不要宣称完成。</p>
+<h3 id="第六步：选择正确的编排模式"><a href="#第六步：选择正确的编排模式" class="headerlink" title="第六步：选择正确的编排模式"></a>第六步：选择正确的编排模式</h3><p><code>references/orchestration-patterns.md</code> 里最值得借鉴的是编排选择。可以简化成四种常用模式：</p>
+<ol>
+<li><strong>直接调用</strong>：一个任务、一个视角、一个产物。成本最低。</li>
+<li><strong>单 Skill &#x2F; 单命令封装</strong>：同一个流程反复出现，就封装成 Skill 或 slash command。</li>
+<li><strong>并行 fan-out + merge</strong>：多个独立视角同时分析同一输入，主 Agent 合并结果。</li>
+<li><strong>用户驱动的顺序流水线</strong>：步骤之间有依赖，且每一步都需要人工判断。</li>
+</ol>
+<p>判断是否需要并行 fan-out，可以问四个问题：</p>
+<ul>
+<li>子任务是否真正独立？</li>
+<li>每个视角是否能产生不同类型的发现？</li>
+<li>合并结果是否足够小，能放回主上下文？</li>
+<li>节省的等待时间或提升的质量，是否值得额外成本？</li>
+</ul>
+<p>如果答案不明确，就从单 Skill 开始，不要一上来设计“Agent 团队”。</p>
+<h2 id="具体例子：构建一个发布前检查-Agent-工具"><a href="#具体例子：构建一个发布前检查-Agent-工具" class="headerlink" title="具体例子：构建一个发布前检查 Agent 工具"></a>具体例子：构建一个发布前检查 Agent 工具</h2><p>下面用一个完整例子演示如何把复杂任务做成 Agent 工具。场景是：每次准备发布前，让 Agent 自动收集变更信息、执行发布前检查、输出 <code>GO / NO-GO</code> 决策和 rollback plan。</p>
+<p>这个例子可以放在支持 Agent Skills 的工具中，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.cursor/skills/pre-ship-guardian/</span><br><span class="line">  SKILL.md</span><br><span class="line">  references/</span><br><span class="line">    launch-checklist.md</span><br><span class="line">  scripts/</span><br><span class="line">    collect_change_summary.py</span><br></pre></td></tr></table></figure>
+
+<p>如果你使用 Claude Code，也可以放到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/pre-ship-guardian/</span><br><span class="line">  SKILL.md</span><br><span class="line">  references/</span><br><span class="line">    launch-checklist.md</span><br><span class="line">  scripts/</span><br><span class="line">    collect_change_summary.py</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-编写-SKILL-md"><a href="#1-编写-SKILL-md" class="headerlink" title="1. 编写 SKILL.md"></a>1. 编写 SKILL.md</h3><p><code>SKILL.md</code> 是 Agent 工具的入口。它不要写成“发布知识百科”，而要写成一个可执行流程。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: pre-ship-guardian</span><br><span class="line"><span class="section">description: Guides agents through production launch readiness checks. Use when the user asks to ship, release, deploy, publish, or validate a change before production.</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># Pre-Ship Guardian</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Overview</span></span><br><span class="line"></span><br><span class="line">Run a production launch readiness check and produce a GO or NO-GO decision with evidence and rollback steps.</span><br><span class="line"></span><br><span class="line"><span class="section">## When to Use</span></span><br><span class="line"></span><br><span class="line">Use this skill when:</span><br><span class="line"><span class="bullet">-</span> The user asks whether a change is ready to ship.</span><br><span class="line"><span class="bullet">-</span> The user mentions release, deploy, production, publish, or launch.</span><br><span class="line"><span class="bullet">-</span> A PR or branch needs final validation before merge.</span><br><span class="line"></span><br><span class="line">Do not use this skill when:</span><br><span class="line"><span class="bullet">-</span> The user only wants a local code review.</span><br><span class="line"><span class="bullet">-</span> There is no concrete change artifact to inspect.</span><br><span class="line"><span class="bullet">-</span> The user is still defining requirements.</span><br><span class="line"></span><br><span class="line"><span class="section">## Required Inputs</span></span><br><span class="line"></span><br><span class="line">Before starting, identify:</span><br><span class="line"><span class="bullet">-</span> Repository path</span><br><span class="line"><span class="bullet">-</span> Target branch or commit range</span><br><span class="line"><span class="bullet">-</span> Release environment</span><br><span class="line"><span class="bullet">-</span> Known risk areas</span><br><span class="line"></span><br><span class="line">If any required input is missing, ask a clarifying question before running checks.</span><br><span class="line"></span><br><span class="line"><span class="section">## Workflow</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Collect the change summary by running <span class="code">`scripts/collect_change_summary.py`</span>.</span><br><span class="line"><span class="bullet">2.</span> Read <span class="code">`references/launch-checklist.md`</span>.</span><br><span class="line"><span class="bullet">3.</span> Inspect changed files and classify risk:</span><br><span class="line"><span class="bullet">   -</span> Auth or authorization</span><br><span class="line"><span class="bullet">   -</span> Data migration</span><br><span class="line"><span class="bullet">   -</span> Configuration or secrets</span><br><span class="line"><span class="bullet">   -</span> Payment or billing</span><br><span class="line"><span class="bullet">   -</span> Infrastructure</span><br><span class="line"><span class="bullet">   -</span> User-facing UI</span><br><span class="line"><span class="bullet">4.</span> Check test evidence:</span><br><span class="line"><span class="bullet">   -</span> Unit tests</span><br><span class="line"><span class="bullet">   -</span> Integration tests</span><br><span class="line"><span class="bullet">   -</span> E2E tests</span><br><span class="line"><span class="bullet">   -</span> Manual verification</span><br><span class="line"><span class="bullet">5.</span> Check operational readiness:</span><br><span class="line"><span class="bullet">   -</span> Feature flag</span><br><span class="line"><span class="bullet">   -</span> Metrics</span><br><span class="line"><span class="bullet">   -</span> Logs</span><br><span class="line"><span class="bullet">   -</span> Alerts</span><br><span class="line"><span class="bullet">   -</span> Rollback command</span><br><span class="line"><span class="bullet">6.</span> Produce the final decision.</span><br><span class="line"></span><br><span class="line"><span class="section">## Output Format</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Ship Decision: GO | NO-GO</span></span><br><span class="line"></span><br><span class="line"><span class="section">### Evidence</span></span><br><span class="line"><span class="bullet">-</span> Change summary:</span><br><span class="line"><span class="bullet">-</span> Tests:</span><br><span class="line"><span class="bullet">-</span> Security:</span><br><span class="line"><span class="bullet">-</span> Operations:</span><br><span class="line"></span><br><span class="line"><span class="section">### Blockers</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">blocking</span> <span class="attr">issue</span> <span class="attr">or</span> &quot;<span class="attr">None</span>&quot;&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Recommended Fixes</span></span><br><span class="line"><span class="bullet">-</span> <span class="language-xml"><span class="tag">&lt;<span class="name">non-blocking</span> <span class="attr">issue</span> <span class="attr">or</span> &quot;<span class="attr">None</span>&quot;&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section">### Rollback Plan</span></span><br><span class="line"><span class="bullet">-</span> Trigger:</span><br><span class="line"><span class="bullet">-</span> Command:</span><br><span class="line"><span class="bullet">-</span> Owner:</span><br><span class="line"><span class="bullet">-</span> Expected recovery time:</span><br><span class="line"></span><br><span class="line"><span class="section">### Confidence</span></span><br><span class="line"><span class="bullet">-</span> High | Medium | Low</span><br><span class="line"></span><br><span class="line"><span class="section">## Common Rationalizations</span></span><br><span class="line"></span><br><span class="line">| Rationalization | Reality |</span><br><span class="line">|---|---|</span><br><span class="line">| &quot;The diff is small, so we can skip checks.&quot; | Small config or auth changes can still break production. |</span><br><span class="line">| &quot;Tests probably passed earlier.&quot; | Use explicit evidence, not memory. |</span><br><span class="line">| &quot;Rollback is obvious.&quot; | A rollback plan must be executable by another engineer. |</span><br><span class="line"></span><br><span class="line"><span class="section">## Verification</span></span><br><span class="line"></span><br><span class="line">Before returning a GO decision, confirm:</span><br><span class="line"><span class="bullet">-</span> [ ] Change summary came from the repository, not from memory.</span><br><span class="line"><span class="bullet">-</span> [ ] Test status is explicitly stated.</span><br><span class="line"><span class="bullet">-</span> [ ] Security-sensitive files are listed when present.</span><br><span class="line"><span class="bullet">-</span> [ ] Rollback plan has a concrete trigger and command.</span><br><span class="line"><span class="bullet">-</span> [ ] Any missing evidence lowers confidence or changes the decision to NO-GO.</span><br></pre></td></tr></table></figure>
+
+<p>这个 Skill 已经包含了触发条件、排除条件、工作流、输出格式、常见跳步借口和验证清单。Agent 看到这个文件后，不需要再猜“发布前检查应该做什么”。</p>
+<h3 id="2-把长检查清单放到-references"><a href="#2-把长检查清单放到-references" class="headerlink" title="2. 把长检查清单放到 references"></a>2. 把长检查清单放到 references</h3><p>发布检查清单可能很长，不适合全部放在 <code>SKILL.md</code>。可以放到 <code>references/launch-checklist.md</code>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Launch Checklist</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Code Quality</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> The change is scoped to the stated release goal.</span><br><span class="line"><span class="bullet">-</span> The implementation avoids unrelated refactoring.</span><br><span class="line"><span class="bullet">-</span> Error handling is explicit for external calls.</span><br><span class="line"></span><br><span class="line"><span class="section">## Security</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> No secrets are committed.</span><br><span class="line"><span class="bullet">-</span> User input is validated at trust boundaries.</span><br><span class="line"><span class="bullet">-</span> Authorization checks are covered by tests.</span><br><span class="line"><span class="bullet">-</span> Dependency changes are reviewed.</span><br><span class="line"></span><br><span class="line"><span class="section">## Data</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> Migrations are backward compatible.</span><br><span class="line"><span class="bullet">-</span> Rollback behavior is documented.</span><br><span class="line"><span class="bullet">-</span> Data deletion or mutation paths have safeguards.</span><br><span class="line"></span><br><span class="line"><span class="section">## Operations</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> Metrics exist for the changed path.</span><br><span class="line"><span class="bullet">-</span> Logs include enough context for debugging.</span><br><span class="line"><span class="bullet">-</span> Alerts cover critical failure modes.</span><br><span class="line"><span class="bullet">-</span> Feature flags have owners and cleanup plans.</span><br><span class="line"></span><br><span class="line"><span class="section">## Rollback</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> Rollback command is documented.</span><br><span class="line"><span class="bullet">-</span> Rollback trigger is measurable.</span><br><span class="line"><span class="bullet">-</span> Recovery time expectation is stated.</span><br></pre></td></tr></table></figure>
+
+<p>这样做的好处是：只有当发布检查 Skill 被触发时，Agent 才需要读取这份清单；平时不会占用上下文。</p>
+<h3 id="3-用脚本收集变更事实"><a href="#3-用脚本收集变更事实" class="headerlink" title="3. 用脚本收集变更事实"></a>3. 用脚本收集变更事实</h3><p>让模型“根据记忆总结 diff”是不可靠的。更好的方式是用脚本收集事实，并输出 JSON。</p>
+<p><code>scripts/collect_change_summary.py</code> 可以这样写：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python3</span></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">run</span>(<span class="params">command</span>):</span><br><span class="line">    result = subprocess.run(</span><br><span class="line">        command,</span><br><span class="line">        capture_output=<span class="literal">True</span>,</span><br><span class="line">        text=<span class="literal">True</span>,</span><br><span class="line">        check=<span class="literal">False</span>,</span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="string">&quot;command&quot;</span>: command,</span><br><span class="line">        <span class="string">&quot;exit_code&quot;</span>: result.returncode,</span><br><span class="line">        <span class="string">&quot;stdout&quot;</span>: result.stdout.strip(),</span><br><span class="line">        <span class="string">&quot;stderr&quot;</span>: result.stderr.strip(),</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">    root = Path.cwd()</span><br><span class="line">    payload = &#123;</span><br><span class="line">        <span class="string">&quot;repository&quot;</span>: <span class="built_in">str</span>(root),</span><br><span class="line">        <span class="string">&quot;status&quot;</span>: run([<span class="string">&quot;git&quot;</span>, <span class="string">&quot;status&quot;</span>, <span class="string">&quot;--short&quot;</span>]),</span><br><span class="line">        <span class="string">&quot;recent_commits&quot;</span>: run([<span class="string">&quot;git&quot;</span>, <span class="string">&quot;log&quot;</span>, <span class="string">&quot;--oneline&quot;</span>, <span class="string">&quot;-5&quot;</span>]),</span><br><span class="line">        <span class="string">&quot;changed_files&quot;</span>: run([<span class="string">&quot;git&quot;</span>, <span class="string">&quot;diff&quot;</span>, <span class="string">&quot;--name-only&quot;</span>, <span class="string">&quot;HEAD&quot;</span>]),</span><br><span class="line">        <span class="string">&quot;staged_files&quot;</span>: run([<span class="string">&quot;git&quot;</span>, <span class="string">&quot;diff&quot;</span>, <span class="string">&quot;--cached&quot;</span>, <span class="string">&quot;--name-only&quot;</span>]),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">print</span>(json.dumps(payload, ensure_ascii=<span class="literal">False</span>, indent=<span class="number">2</span>))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+
+<p>脚本只负责收集事实，不做复杂判断。判断交给 Agent，事实来源交给脚本，这就是清晰的职责边界。</p>
+<h3 id="4-触发方式"><a href="#4-触发方式" class="headerlink" title="4. 触发方式"></a>4. 触发方式</h3><p>在支持自动发现 Skill 的工具中，用户可以直接说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">请检查当前分支是否可以发布到生产环境。</span><br></pre></td></tr></table></figure>
+
+<p>或者显式指定：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">使用 pre-ship-guardian 检查当前变更，给出 GO/NO-GO 和 rollback plan。</span><br></pre></td></tr></table></figure>
+
+<p>如果你使用支持 slash command 的环境，也可以再做一个薄命令，把触发词固化下来。命令只负责入口，不要把所有检查逻辑复制进去：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Invoke the pre-ship-guardian skill.</span><br><span class="line"></span><br><span class="line">Run the production launch readiness workflow for the current repository.</span><br><span class="line">Return a GO or NO-GO decision with evidence, blockers, recommended fixes, and a rollback plan.</span><br></pre></td></tr></table></figure>
+
+<p>这和 <code>agent-skills</code> 项目里的 <code>/ship</code> 思路一致：命令是入口，Skill 是流程，Persona 或子 Agent 是独立视角。</p>
+<h3 id="5-什么时候升级成并行-fan-out"><a href="#5-什么时候升级成并行-fan-out" class="headerlink" title="5. 什么时候升级成并行 fan-out"></a>5. 什么时候升级成并行 fan-out</h3><p>上面的 <code>pre-ship-guardian</code> 是单 Skill。对于小团队或低风险项目，这已经够用。等你发现发布前检查经常需要多个独立视角，再升级成并行 fan-out：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                     -&gt; code-reviewer -&gt; code quality report</span><br><span class="line">pre-ship command  -&gt; -&gt; security-auditor -&gt; security report</span><br><span class="line">                     -&gt; test-engineer -&gt; test coverage report</span><br><span class="line">main agent merges reports -&gt; GO/NO-GO + rollback plan</span><br></pre></td></tr></table></figure>
+
+<p>升级前要确认三件事：</p>
+<ol>
+<li>三个视角能独立工作，不需要互相等待。</li>
+<li>每个视角的输出有明显差异，不是在重复同一份检查。</li>
+<li>主 Agent 能在剩余上下文里合并报告，而不是再次丢失细节。</li>
+</ol>
+<p>如果这些条件不满足，就继续使用单 Skill。Agent 工具的目标是稳定完成任务，不是展示复杂架构。</p>
+<h2 id="Skill、Script、MCP、Subagent-怎么选"><a href="#Skill、Script、MCP、Subagent-怎么选" class="headerlink" title="Skill、Script、MCP、Subagent 怎么选"></a>Skill、Script、MCP、Subagent 怎么选</h2><p>构建 Agent 工具时，经常会混淆这些能力。可以按职责区分：</p>
+<ul>
+<li><strong>Skill</strong>：封装流程、规则、触发条件和验证要求。</li>
+<li><strong>Reference</strong>：保存长文档、检查清单、领域规则、模板。</li>
+<li><strong>Script</strong>：执行确定性逻辑，输出结构化结果。</li>
+<li><strong>MCP Tool</strong>：连接外部系统，例如 CI、监控、工单、数据库。</li>
+<li><strong>Subagent &#x2F; Persona</strong>：提供独立上下文和独立视角。</li>
+</ul>
+<p>举例来说，发布前检查里：</p>
+<ul>
+<li>用 Skill 定义发布检查流程。</li>
+<li>用 Reference 保存发布清单和安全清单。</li>
+<li>用 Script 收集 git 事实和生成报告骨架。</li>
+<li>用 MCP 查询 CI、监控或工单状态。</li>
+<li>用 Subagent 并行做代码、安全、测试三类审查。</li>
+</ul>
+<p>不要把所有东西都塞进 Skill 正文。Skill 应该像一个任务说明书，告诉 Agent 什么时候读资料、什么时候运行脚本、什么时候调用外部工具、什么时候停止并要求人工确认。</p>
+<h2 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h2><h3 id="坑一：把-Skill-写成知识库"><a href="#坑一：把-Skill-写成知识库" class="headerlink" title="坑一：把 Skill 写成知识库"></a>坑一：把 Skill 写成知识库</h3><p>如果 <code>SKILL.md</code> 里充满背景知识，但没有明确步骤、输入输出和验证，Agent 读完也不知道该做什么。知识可以放到 <code>references/</code>，<code>SKILL.md</code> 应该保留可执行流程。</p>
+<h3 id="坑二：description-写得太像完整流程"><a href="#坑二：description-写得太像完整流程" class="headerlink" title="坑二：description 写得太像完整流程"></a>坑二：description 写得太像完整流程</h3><p><code>description</code> 是发现入口，不是执行说明。它应该简短说明“做什么”和“何时用”。如果把完整步骤写进去，Agent 可能不会再读取正文。</p>
+<h3 id="坑三：没有验证闭环"><a href="#坑三：没有验证闭环" class="headerlink" title="坑三：没有验证闭环"></a>坑三：没有验证闭环</h3><p>“检查完成”“看起来没问题”“应该可以发布”都不是证据。可靠的 Skill 必须要求可验证输出，例如测试结果、命令输出、报告字段、截图或人工确认。</p>
+<h3 id="坑四：脚本副作用不清晰"><a href="#坑四：脚本副作用不清晰" class="headerlink" title="坑四：脚本副作用不清晰"></a>坑四：脚本副作用不清晰</h3><p>脚本应该默认只读，除非 Skill 明确说明它会修改文件、提交代码或调用外部系统。涉及生产、密钥、网络请求、数据删除的脚本必须有人工确认。</p>
+<h3 id="坑五：过度编排"><a href="#坑五：过度编排" class="headerlink" title="坑五：过度编排"></a>坑五：过度编排</h3><p>不是所有任务都需要多个 Agent。单视角、单产物、低风险任务，直接调用一个 Skill 最便宜也最稳定。并行 fan-out 只适合子任务独立、视角差异明显、合并成本可控的场景。</p>
+<h3 id="坑六：把上下文窗口当存储"><a href="#坑六：把上下文窗口当存储" class="headerlink" title="坑六：把上下文窗口当存储"></a>坑六：把上下文窗口当存储</h3><p>长文档、完整日志、历史对话、工具 schema 全塞进去，会让模型注意力分散。更好的做法是分层加载、按需读取、脚本输出摘要、外部系统保留原始数据。</p>
+<h2 id="落地清单"><a href="#落地清单" class="headerlink" title="落地清单"></a>落地清单</h2><p>当你准备把一个具体任务做成 Agent 工具时，可以按这个清单执行：</p>
+<ol>
+<li>写一句话目标：这个工具帮助 Agent 完成什么任务？</li>
+<li>写触发条件：用户说什么、看到什么文件、处于什么阶段时启用？</li>
+<li>写排除条件：哪些情况不要用，必须先问人？</li>
+<li>定义输入输出：输入来自哪里，最终交付什么？</li>
+<li>拆流程：按阶段写成编号步骤。</li>
+<li>分配上下文：核心流程进 <code>SKILL.md</code>，长资料进 <code>references/</code>，确定性逻辑进 <code>scripts/</code>。</li>
+<li>写验证清单：没有证据时不能宣称完成。</li>
+<li>写常见借口：把 Agent 容易跳过的步骤提前拦住。</li>
+<li>先从单 Skill 运行，再根据重复性和独立性决定是否加入 Command、Persona 或并行 fan-out。</li>
+<li>像维护代码一样维护 Skill：版本管理、评审、测试、审计脚本。</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>从 <code>agent-skills</code> 项目可以提炼出一个核心原则：<strong>好的 Agent 工具不是更长的提示词，而是把人的工程流程转化为可执行、可验证、可组合的系统</strong>。</p>
+<p>真正可复用的方法包括：</p>
+<ul>
+<li>用 <code>description</code> 做精准触发，用 <code>SKILL.md</code> 写可执行流程。</li>
+<li>用 <code>references/</code> 和 <code>scripts/</code> 控制上下文成本。</li>
+<li>用验证清单和常见借口约束 Agent 不跳步。</li>
+<li>用 Command 和 Persona 做轻量编排，而不是堆叠多层代理。</li>
+<li>用 MCP 接外部系统，但保留安全边界和人工确认。</li>
+</ul>
+<p>如果你要为自己的团队构建 Agent 工具，建议先选一个高频、边界清晰、有明确交付物的任务开始。例如“发布前检查”“PR 审查”“日志排障”“技术文章翻译”。先做成一个单 Skill，跑通后再逐步加入脚本、参考资料、外部工具和并行审查。这样构建出来的 Agent 能力，才会从一次性的聊天技巧，变成团队可持续复用的工程资产。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cursor.com/docs/context/skills">Agent Skills | Cursor Docs</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/overview">Agent Skills | Anthropic Docs</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/claude-code/skills">Extend Claude with skills | Claude Code Docs</a></li>
+<li><a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/docs/concepts/tools/">Tools | Model Context Protocol</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/addyosmani/agent-skills">addyosmani&#x2F;agent-skills</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/4710faf0c3d1.html">https://xhua.eu.org/posts/4710faf0c3d1.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/agent-skills/">Agent Skills</a><a class="post-meta__tags" href="/tags/ai-agent/">AI Agent</a><a class="post-meta__tags" href="/tags/context-engineering/">Context Engineering</a><a class="post-meta__tags" href="/tags/mcp/">MCP</a><a class="post-meta__tags" href="/tags/%E5%B7%A5%E7%A8%8B%E6%96%B9%E6%B3%95/">工程方法</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）"><img class="cover" src="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</div></div><div class="info-2"><div class="info-item-1"> 原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，以及受控的推理路由。它是免费、开源的项目，目前仍处于 alpha &#x2F; early-access preview 阶段。 OpenClaw 曾经快速成长为现象级开源项目。它让开发者能够构建可以写代码、浏览网页、调用工具，并在较长时间内持续执行任务的自治 Agent。 但企业采用 OpenClaw 时面临一个直接问题：安全护栏不足。缺少沙箱、审计链路和强隔离能力时，一个被攻击或被提示注入诱导的 Agent，可能访问整个系统。 2026 年 3 月 16 日，NVIDIA 在 GTC 2026 发布 NemoClaw。它解决的正是这个问题：在 OpenClaw 之上增加企业级隐私和安...</div></div></div></a><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南"><img class="cover" src="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-01</div><div class="info-item-2">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</div></div><div class="info-2"><div class="info-item-1">当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败后恢复？  这些问题可以归纳为两个相互正交的架构维度：  打包（Packaging）：Skill 内部怎样组织，以及内容何时进入上下文。 编排（Orchestration）：任务怎样分阶段、拆分、并行和恢复。  生产级 Skill 往往是某种特定的“打包 × 编排”组合。本文给出一套可落地的模式语言和决策框架，帮助 Skill 作者从约束出发选择架构，而不是默认追求复杂设计。  核心原则：采用最简单的可行模式，只有明确约束出现时才升级复杂度。  一、先理解六类底层约束架构模式不是模板集合，而是对技术约束的不同解法。只有先理解约束，后面的优缺点才具有决策价值。 1. 上下文预算与渐进式披露...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a><a class="pagination-related" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test"><img class="cover" src="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-11</div><div class="info-item-2">Agent evaluation 入门：理解 dev、validation 与 held-out test</div></div><div class="info-2"><div class="info-item-1">你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同职责。本文围绕一个资料整理 Agent，解释 dev、validation 和 held-out test，并给出可以从小规模开始的评估流程。内容与具体框架、模型版本无关，不涉及模型训练代码。   先统一术语：本文的 dev 指什么本文约定：dev 用来调试和改进，validation 用来比较与选择版本，held-out test 用来检验最终版本在未参与开发的任务上的表现。 这个命名并不是统一标准。在一些机器学习和 NLP 文献中，development set（dev set）就是 validation set 的别名，常见划分是 train &#x2F; dev &#x2F; t...</div></div></div></a><a class="pagination-related" href="/posts/bc61d6a92d4e.html" title="Claude Code 使用最佳实践与技巧"><img class="cover" src="https://img.xhua.eu.org/bb14b5b573c1c0f04946a7c9feacb1f766f7b8511c03ab7f6d0c0d0505780296.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-28</div><div class="info-item-2">Claude Code 使用最佳实践与技巧</div></div><div class="info-2"><div class="info-item-1">在 AI 辅助编程工具快速发展的今天，开发者面临一个共同的挑战：如何从”能用”到”用好”？Claude Code 作为 Anthropic 推出的终端优先的自主 AI 编程代理，凭借其强大的推理能力和 200k+ token 的上下文窗口，已经成为处理复杂代码任务的利器。但工具再强大，也需要正确的使用方式才能发挥最大价值。 本文将系统性地介绍 Claude Code 的最佳实践与高级技巧，帮助你从基础使用提升到专家级别，真正释放 AI 辅助编程的生产力。 Claude Code 核心理解什么是 Claude CodeClaude Code 是 Anthropic 开发的自主编程代理（Agentic Coding Tool），而非传统的代码补全工具。它的核心特点包括：  终端优先：通过 claude 命令在终端中交互，也支持 Web、桌面应用、IDE 插件等多种形式 自主执行：能够独立规划任务、执行多文件操作、运行命令、验证结果 大上下文：支持 200k+ token 的上下文窗口，适合处理大型代码库 多模态能力：不仅限于编程，还能处理文档编写、构建运行、文件搜索、主题研究等任何可...</div></div></div></a><a class="pagination-related" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）"><img class="cover" src="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-11</div><div class="info-item-2">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</div></div><div class="info-2"><div class="info-item-1"> 原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，以及受控的推理路由。它是免费、开源的项目，目前仍处于 alpha &#x2F; early-access preview 阶段。 OpenClaw 曾经快速成长为现象级开源项目。它让开发者能够构建可以写代码、浏览网页、调用工具，并在较长时间内持续执行任务的自治 Agent。 但企业采用 OpenClaw 时面临一个直接问题：安全护栏不足。缺少沙箱、审计链路和强隔离能力时，一个被攻击或被提示注入诱导的 Agent，可能访问整个系统。 2026 年 3 月 16 日，NVIDIA 在 GTC 2026 发布 NemoClaw。它解决的正是这个问题：在 OpenClaw 之上增加企业级隐私和安...</div></div></div></a><a class="pagination-related" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造"><img class="cover" src="https://img.xhua.eu.org/b70b9d4ad2e90781cfe63ed68177b15f41381e6eab29534127bd121ff56c94fb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-25</div><div class="info-item-2">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</div></div><div class="info-2"><div class="info-item-1"> 本文是《AI Coding Assistant Best Practices：从提示词到工程闭环》的配套实操篇。前文解释原则，本文只做一件事：把一个普通仓库逐步变成 Agent 可以理解、修改、验证并交付的工程环境。  本文面向已经使用 Codex、Cursor、Claude Code 或 GitHub Copilot 的开发者。示例中的命令是模板，不代表适用于所有项目；执行前必须替换为仓库真实存在、已经人工确认过的命令。不要因为 Agent 能生成命令，就跳过读取 README、CI、构建文件和脚本。 完成本文后，目标仓库应具备一条可以重复运行的闭环： 1Bootstrap → Instruct → Equip → Isolate → Implement → Verify → Review  它不意味着 Agent 可以自动批准危险操作。Rules、Instructions 和 Skills 都不是安全边界；Sandbox、Allow&#x2F;Deny 策略、Hook、CI 和分支保护才分别承担访问限制、命令控制、确定性阻断、最终验收和合并保护职责。 1. 先定义完成状态把...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E6%98%8E%E7%A1%AE%EF%BC%9AAgent-%E5%B7%A5%E5%85%B7%E4%B8%8D%E6%98%AF%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%8C%E8%80%8C%E6%98%AF%E5%B7%A5%E7%A8%8B%E7%B3%BB%E7%BB%9F"><span class="toc-text">先明确：Agent 工具不是提示词，而是工程系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-agent-skills-%E9%A1%B9%E7%9B%AE%E6%8A%BD%E8%B1%A1%E5%87%BA%E7%9A%84%E4%B8%89%E5%B1%82%E6%A8%A1%E5%9E%8B"><span class="toc-text">从 agent-skills 项目抽象出的三层模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E5%B1%82%EF%BC%9ASkill-%E8%B4%9F%E8%B4%A3%E2%80%9C%E6%80%8E%E4%B9%88%E5%81%9A%E2%80%9D"><span class="toc-text">第一层：Skill 负责“怎么做”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E5%B1%82%EF%BC%9ACommand-%E8%B4%9F%E8%B4%A3%E2%80%9C%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%90%AF%E5%8A%A8%E4%B8%80%E7%BB%84%E6%B5%81%E7%A8%8B%E2%80%9D"><span class="toc-text">第二层：Command 负责“什么时候启动一组流程”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E5%B1%82%EF%BC%9APersona-%E8%B4%9F%E8%B4%A3%E2%80%9C%E7%94%B1%E8%B0%81%E7%9C%8B%E2%80%9D"><span class="toc-text">第三层：Persona 负责“由谁看”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%A5%97%E5%8F%AF%E5%A4%8D%E7%94%A8%E7%9A%84%E5%B7%A5%E7%A8%8B%E6%96%B9%E6%B3%95"><span class="toc-text">一套可复用的工程方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%AE%9A%E4%B9%89%E4%BB%BB%E5%8A%A1%E8%BE%B9%E7%95%8C"><span class="toc-text">第一步：定义任务边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E6%8A%8A%E6%B5%81%E7%A8%8B%E6%8B%86%E6%88%90%E9%98%B6%E6%AE%B5%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%A0%86%E6%88%90%E9%95%BF%E6%8F%90%E7%A4%BA%E8%AF%8D"><span class="toc-text">第二步：把流程拆成阶段，而不是堆成长提示词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8A%A0%E8%BD%BD%E7%AD%96%E7%95%A5"><span class="toc-text">第三步：设计上下文加载策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E6%8A%8A%E8%84%9A%E6%9C%AC%E5%BD%93%E4%BD%9C%E2%80%9C%E7%A1%AE%E5%AE%9A%E6%80%A7%E6%89%A7%E8%A1%8C%E5%B1%82%E2%80%9D"><span class="toc-text">第四步：把脚本当作“确定性执行层”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E6%8A%8A%E9%AA%8C%E8%AF%81%E5%86%99%E8%BF%9B-Skill%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%86%99%E8%BF%9B%E6%84%BF%E6%9C%9B"><span class="toc-text">第五步：把验证写进 Skill，而不是写进愿望</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E5%85%AD%E6%AD%A5%EF%BC%9A%E9%80%89%E6%8B%A9%E6%AD%A3%E7%A1%AE%E7%9A%84%E7%BC%96%E6%8E%92%E6%A8%A1%E5%BC%8F"><span class="toc-text">第六步：选择正确的编排模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B7%E4%BD%93%E4%BE%8B%E5%AD%90%EF%BC%9A%E6%9E%84%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8F%91%E5%B8%83%E5%89%8D%E6%A3%80%E6%9F%A5-Agent-%E5%B7%A5%E5%85%B7"><span class="toc-text">具体例子：构建一个发布前检查 Agent 工具</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%BC%96%E5%86%99-SKILL-md"><span class="toc-text">1. 编写 SKILL.md</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%8A%8A%E9%95%BF%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95%E6%94%BE%E5%88%B0-references"><span class="toc-text">2. 把长检查清单放到 references</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%94%A8%E8%84%9A%E6%9C%AC%E6%94%B6%E9%9B%86%E5%8F%98%E6%9B%B4%E4%BA%8B%E5%AE%9E"><span class="toc-text">3. 用脚本收集变更事实</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E8%A7%A6%E5%8F%91%E6%96%B9%E5%BC%8F"><span class="toc-text">4. 触发方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%8D%87%E7%BA%A7%E6%88%90%E5%B9%B6%E8%A1%8C-fan-out"><span class="toc-text">5. 什么时候升级成并行 fan-out</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill%E3%80%81Script%E3%80%81MCP%E3%80%81Subagent-%E6%80%8E%E4%B9%88%E9%80%89"><span class="toc-text">Skill、Script、MCP、Subagent 怎么选</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-text">常见坑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E4%B8%80%EF%BC%9A%E6%8A%8A-Skill-%E5%86%99%E6%88%90%E7%9F%A5%E8%AF%86%E5%BA%93"><span class="toc-text">坑一：把 Skill 写成知识库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E4%BA%8C%EF%BC%9Adescription-%E5%86%99%E5%BE%97%E5%A4%AA%E5%83%8F%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="toc-text">坑二：description 写得太像完整流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E4%B8%89%EF%BC%9A%E6%B2%A1%E6%9C%89%E9%AA%8C%E8%AF%81%E9%97%AD%E7%8E%AF"><span class="toc-text">坑三：没有验证闭环</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E5%9B%9B%EF%BC%9A%E8%84%9A%E6%9C%AC%E5%89%AF%E4%BD%9C%E7%94%A8%E4%B8%8D%E6%B8%85%E6%99%B0"><span class="toc-text">坑四：脚本副作用不清晰</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E4%BA%94%EF%BC%9A%E8%BF%87%E5%BA%A6%E7%BC%96%E6%8E%92"><span class="toc-text">坑五：过度编排</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%91%E5%85%AD%EF%BC%9A%E6%8A%8A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3%E5%BD%93%E5%AD%98%E5%82%A8"><span class="toc-text">坑六：把上下文窗口当存储</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%90%BD%E5%9C%B0%E6%B8%85%E5%8D%95"><span class="toc-text">落地清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

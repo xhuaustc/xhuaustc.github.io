@@ -1,0 +1,221 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift-Kubernetes中易理解错误的问题汇总 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="###1. readiness健康检查一直失败，Pod会不会重启？  不会，一直处于Running状态，但Not Ready。 2. Pod重启时，Pod的容器是重启，还是重新创建？ POD容器不动，应用容器是重新创建。POD IP保持不变，但应用容器中的临时文件会丢失。 ###3. 如果更改Deployment的配置后，马上将配置恢复回去，应用Pod是否会触发重新部署？不会，恢复回去后不会创建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift-Kubernetes中易理解错误的问题汇总">
+<meta property="og:url" content="https://xhua.eu.org/posts/74b7faefed79.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="###1. readiness健康检查一直失败，Pod会不会重启？  不会，一直处于Running状态，但Not Ready。 2. Pod重启时，Pod的容器是重启，还是重新创建？ POD容器不动，应用容器是重新创建。POD IP保持不变，但应用容器中的临时文件会丢失。 ###3. 如果更改Deployment的配置后，马上将配置恢复回去，应用Pod是否会触发重新部署？不会，恢复回去后不会创建">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.700Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift-Kubernetes中易理解错误的问题汇总",
+  "url": "https://xhua.eu.org/posts/74b7faefed79.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-09-21T08:31:54.700Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/74b7faefed79.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift-Kubernetes中易理解错误的问题汇总',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift-Kubernetes中易理解错误的问题汇总</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift-Kubernetes中易理解错误的问题汇总</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.700Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><img src="https://upload-images.jianshu.io/upload_images/5793257-5f7ab0c0543096c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="OpenShift&#x2F;Kubernetes中易理解错误的问题汇总"></p>
+<p>###1. readiness健康检查一直失败，Pod会不会重启？</p>
+<p> 不会，一直处于Running状态，但Not Ready。</p>
+<h3 id="2-Pod重启时，Pod的容器是重启，还是重新创建？"><a href="#2-Pod重启时，Pod的容器是重启，还是重新创建？" class="headerlink" title="2. Pod重启时，Pod的容器是重启，还是重新创建？"></a>2. Pod重启时，Pod的容器是重启，还是重新创建？</h3><p> POD容器不动，应用容器是重新创建。POD IP保持不变，但应用容器中的临时文件会丢失。</p>
+<p>###3. 如果更改Deployment的配置后，马上将配置恢复回去，应用Pod是否会触发重新部署？<br>不会，恢复回去后不会创建新的RS。</p>
+<h3 id="4-master-cluster-hostname与master-cluster-public-hostname的区别"><a href="#4-master-cluster-hostname与master-cluster-public-hostname的区别" class="headerlink" title="4. master_cluster_hostname与master_cluster_public_hostname的区别"></a>4. master_cluster_hostname与master_cluster_public_hostname的区别</h3><p>master_cluster_hostname是集群内部组件使用的域名<br>master_cluster_public_hostname是集群外部使用的域名<br>###5. 对于高可用集群中，3个master节点是完全相同的吗？<code>openshift</code></p>
+<p>不是，虽然它们的运行态是完全一致的，但是在OpenShift的运维脚本中是有区分的，如集群扩容时。有一台是主master（inventory中的第一台），它会单独保存集群的证书及一些配置。</p>
+<p>###6. 对于statefulset类型的工作负载，只能逐个启动吗？</p>
+<p>并不是，statefulset类型的workload默认确实是逐个启动，但是可以通过更改它的启动策略来实现并行启动。<br>spec.podManagementPolicy值默认为OrderedReady，如果设置为Parallel，将会并行启动和删除Pod。</p>
+<p>###7. statefulset类型的工作负载的多个副本，能共用一块共享存储吗？</p>
+<p>当然可以，在statefulset的编排中不使用volumeTemplate，而是与deployment资源一样设置共享存储就可以了。</p>
+<p>###8. 如果应用存活检查&#x2F;就绪检查未通过的情况下，是否能顺利地进行应用更新？</p>
+<p>不一定，这个取决于应用的升级策略：滚动升级，maxSurge与maxUnavailable的配置。如果应用是一个副本，maxSurge与maxUnavailable的值为默认值25%，将无法关闭旧版本应用。</p>
+<ul>
+<li>maxSurge：升级过程中最多可以比原先设置多出的POD数量。可以是具体个数，也可以百分比（进一法取整）</li>
+<li>maxUnavailable：升级过程中最多有多少个POD处于无法提供服务的状态。可以是具体个数，也可以百分比（去尾法取整）</li>
+</ul>
+<p>###9. 如果应用做了多副本，而且部署在不同的节点上，即使宿主机发生宕机，对业务也不会有影响，正确吗？</p>
+<p>这个结论并不正确。因为作为内部负载均衡的Service并不能马上感知应用的问题，所以不会马上主动剔除故障应用，同时Service一般使用（ocp）iptables作为代理方式，它没有使用失败则使用别的节点的机制，所以在一段时间内请求会被发送到问题节点。</p>
+<blockquote>
+<p>默认情况如下：</p>
+<ol>
+<li>40s检测后，流量会从负载均衡中剔除。</li>
+<li>5分钟之内完成重启，podname不变，pod的ip会更新。</li>
+<li>如果5分钟后node节点仍然没有恢复，集群会将问题pod重新调度。</li>
+</ol>
+</blockquote>
+<p>###10. NFS作为持久化卷挂载在应用中，如果NFS服务故障后恢复，容器是否会自动重新挂载存储服务？<br>是的。</p>
+<h3 id="11-在Docker的服务器上，关闭-重启iptables，上面的容器网络依然正常吗？"><a href="#11-在Docker的服务器上，关闭-重启iptables，上面的容器网络依然正常吗？" class="headerlink" title="11. 在Docker的服务器上，关闭&#x2F;重启iptables，上面的容器网络依然正常吗？"></a>11. 在Docker的服务器上，关闭&#x2F;重启iptables，上面的容器网络依然正常吗？</h3><p>异常。docker安装完成后，会自动接管iptables或者firewalld，在docker run的时候，会自动往iptables里加入规则；所以当iptables重启后会丢失，只有再重启docker就好了的原因。<br>在使用Systemd 时， firewalld 会在 Docker 之前启动，但是如果你在 Docker 启动之后再启动或者重启 firewalld ，就需要重启 Docker 进程了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/74b7faefed79.html">https://xhua.eu.org/posts/74b7faefed79.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/4b14c7672798.html" title="OpenShift-Kubernetes集群-Calico-BGP管理工具calicoctl配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-Kubernetes集群-Calico-BGP管理工具calicoctl配置</div></div><div class="info-2"><div class="info-item-1"> calico 是容器网络的一种解决方案，也是当前最流行的方案之一。它完全利用路由规则实现动态组网，通过BGP协议通告路由。Calico BGP没有像ovs那样需要封包解包，所以它的网络性能更好。管理calico网络免不了使用calicoctl工具，本篇介绍如何在OpenShift&#x2F;Kubernetes环境下，配置calicoctl来管理集群网络。 calico元数据支持两种存储类：etcd与kubernetes  安装calicoctl  12$ curl -O -L https://github.com/projectcalico/calicoctl/releases/download/v3.10.0/calicoctl$ chmod a+x calicoctl  确认Calico部署时使用的元数据存储类型，查看calico-config  1$ oc describe cm calico-config -n kube-system | grep datastore_type 可以为kubernetes、etcdv3。默认为etcdv3。设置为kubernetes时...</div></div></div></a><a class="pagination-related" href="/posts/ca6a355f0867.html" title="OpenShift-Kafka-Operator测试报告"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift-Kafka-Operator测试报告</div></div><div class="info-2"><div class="info-item-1">1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本次具体测试的功能点如下：    序号 测试项目 测试项 优先级    1 Kafka Operator部署 Kafka Operator部署 高     Kafka集群创建 高     Kafka监控部署 高   2 Kafka功能测试 Kafka创建Topic 高     Openshift集群内部Kafka producer与consumer测试 高     Openshift集群外部Kafka producer与consumer测试（NodePort方案） 高     Openshift集群外部Kafka producer与consumer测试（Router方案） 高   3 Ka...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/866b0c24d8f1.html" title="Openshift之服务网格Istio"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之服务网格Istio</div></div><div class="info-2"><div class="info-item-1"> 什么是服务网格？服务网络就是指构成应用程序的微服务网络以及应用之间的交互。随着规模和复杂性的增长，服务网格越来越难以理解和管理。它的需求包括服务发现、负载均衡、故障恢复、指标收集和监控以及通常更加复杂的运维需求，例如 A&#x2F;B 测试、金丝雀发布、限流、访问控制和端到端认证等。 Istio是什么？Istio 是一个用来连接、管理和保护微服务的开放平台。Istio 提供一种简单的方式来为已部署的服务建立网络，该网络具有负载均衡、服务间认证、监控等功能，而不需要对服务的代码做任何改动。想要让服务支持 Istio，只需要在您的环境中部署一个特殊的 sidecar，使用 Istio 控制平面功能配置和管理代理，拦截微服务之间的所有网络通信。 Istio能做什么？Istio 提供了一个完整的解决方案，通过为整个服务网格提供行为洞察和操作控制来满足微服务应用程序的多样化需求。它在服务网络中统一提供了许多关键功能：  流量管理。控制服务之间的流量和API调用的流向，使得调用更可靠，并使网络在恶劣情况下更加健壮。 服务身份和安全。为网格中的服务提供可验证身份，并提供保护服务流量的能力，使...</div></div></div></a><a class="pagination-related" href="/posts/ff93f3dfa6fc.html" title="Openshift集群全环境备份"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift集群全环境备份</div></div><div class="info-2"><div class="info-item-1"> 创建集群全环境备份非常有必要，特别是在生产过程中。当集群发生异常崩溃，数据丢失时，备份的数据就派上了用场，利用备份数据可以将之前的环境重新构建出来。 在Openshift平台，我们可以对集群的完整状态备份到外部存储。集群全环境包括：  集群数据文件  etcd数据库  Openshift对象配置  私有镜像仓库存储  持久化卷   我们要定期对集群作备份，以防止数据的丢失。 集群全环境备份并不是万能的，应用自己的数据我们应该保证有单独的备份。 创建Master节点备份在系统基础架构进行更改，都需要对节点做备份。比如说，系统升级，集群升级或者任何重大更新。通过定期备份数据，当集群出现故障时，我们就能使用备份恢复集群。 Master主机上运行着非常重要的服务：API、Controllers。&#x2F;etc&#x2F;origin&#x2F;master目录下存放着许多重要的文件。  API、Controllers服务等的配置文件  安装生成的证书  云提供商提供的配置文件  密钥和其它身份认证文件   另外如果有额外自定义的配置，比如更改日志级别，使用代理等。这些配置文件在&#...</div></div></div></a><a class="pagination-related" href="/posts/169c43378e6a.html" title="Openshift开启Calico-BGP-与-OVS性能PK"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift开启Calico-BGP-与-OVS性能PK</div></div><div class="info-2"><div class="info-item-1"> Openshift网络方案选择 大家都知道K8S在网络插件选择上有很多种，默认的是Flannel，但是它的性能一般，互联网中使用最多的是Calico BGP，因为它的性能非常好。 而对于Openshift，官方只支持ovs一种网络方案，同时RedHat也表示ovs在Openshift平台上运行是最合适的。但是ovs的网络性能怎样呢？因为ovs方案对数据需要进行加包，解包的过程，性能肯定是会受影响的。同时经过实测，在万兆网络中的损耗近50%，虽然在绝大部分场景下ovs已经够用了，但是但是跟几乎无损耗的Calico BGP比起来还是逊色不少。 很庆幸，Openshift虽然官方不作Calico网络方案的支持，但还是很体贴地把它加入到了Openshift的安装脚本中，从而让大家都能方便地使用Calico网络方案，包括IPIP及BGP方案。  安装步骤 在ansible hosts中设置关闭openshift默认的sdn方案，开启calico方案&#x2F;etc&#x2F;ansible&#x2F;hosts  1234[OSEv3:vars]os_sdn_network_plugi...</div></div></div></a><a class="pagination-related" href="/posts/ca6a355f0867.html" title="OpenShift-Kafka-Operator测试报告"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Kafka-Operator测试报告</div></div><div class="info-2"><div class="info-item-1">1. 测试环境物理机设备：集群（3 master 2 infra 3 node）  管理（1manager 部署LB+外部镜像仓库+DNS）物理机配置：40c 378GOpenshift：v3.11.0+1a90c5c-83Kubernetes：v1.11.0+d4cacc0Kafka Operator：amq-streams-1.1.0Kafka：2.1.1 2. 测试要求和内容根据测试要求，本次具体测试的功能点如下：    序号 测试项目 测试项 优先级    1 Kafka Operator部署 Kafka Operator部署 高     Kafka集群创建 高     Kafka监控部署 高   2 Kafka功能测试 Kafka创建Topic 高     Openshift集群内部Kafka producer与consumer测试 高     Openshift集群外部Kafka producer与consumer测试（NodePort方案） 高     Openshift集群外部Kafka producer与consumer测试（Router方案） 高   3 Ka...</div></div></div></a><a class="pagination-related" href="/posts/fa53403b8d6b.html" title="OpenShift通过EgressIP为Project设置对外的出口IP"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift通过EgressIP为Project设置对外的出口IP</div></div><div class="info-2"><div class="info-item-1">集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]&#125;&#x27; 支持指定特定的IP段 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressCIDRs&quot;: [&quot;192.168.1.0/24&quot;]&#125;&#x27;  为项目指定静态出口IP  1$ oc patch netnamespace &lt;project-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.100&quot;]&#125;&#x27;  OpenShift容器平...</div></div></div></a><a class="pagination-related" href="/posts/2412027f46e0.html" title="Openshfit上用ConfigMap来自定义Nginx配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshfit上用ConfigMap来自定义Nginx配置</div></div><div class="info-2"><div class="info-item-1">Nginx是最常用的代理软件，也是最常用的WebServer，怎样很方便地在openshift上部署呢？同时又能很方便地对它自定义进行配置？直接使用docker的nginx会有以下问题：   启动时权限问题。默认openshift的应用会使用类似10000100的user_id启用docker，但是官方nginx镜像会使用root启用；还有nginx默认会启用80端口这个也是需要root权限的。 无法动态更新nginx配置。nginx配置在镜像中设置，如果需要更新配置的话，需要重新编译镜像。 应用代码更新。如果用户的代码，如静态代码，版本更新，是否可以不更新镜像，而完成版本的升级？   在Openshift上部署一个nginx应用如何解决以上3个问题。   权限问题    解决办法: 制作专用nginx镜像，1. 更改特殊文件夹的权限为777；2.将默认端口设置为8080default.conf 123456789101112server&#123;    listen  8080;    server_name _;    location /&#123;      root ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Pod%E9%87%8D%E5%90%AF%E6%97%B6%EF%BC%8CPod%E7%9A%84%E5%AE%B9%E5%99%A8%E6%98%AF%E9%87%8D%E5%90%AF%EF%BC%8C%E8%BF%98%E6%98%AF%E9%87%8D%E6%96%B0%E5%88%9B%E5%BB%BA%EF%BC%9F"><span class="toc-text">2. Pod重启时，Pod的容器是重启，还是重新创建？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-master-cluster-hostname%E4%B8%8Emaster-cluster-public-hostname%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">4. master_cluster_hostname与master_cluster_public_hostname的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-%E5%9C%A8Docker%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8A%EF%BC%8C%E5%85%B3%E9%97%AD-%E9%87%8D%E5%90%AFiptables%EF%BC%8C%E4%B8%8A%E9%9D%A2%E7%9A%84%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E4%BE%9D%E7%84%B6%E6%AD%A3%E5%B8%B8%E5%90%97%EF%BC%9F"><span class="toc-text">11. 在Docker的服务器上，关闭&#x2F;重启iptables，上面的容器网络依然正常吗？</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,691 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">
+<meta property="og:url" content="https://xhua.eu.org/posts/08f5463789ff.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg">
+<meta property="article:published_time" content="2026-09-01T03:25:34.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.692Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Agent Skills">
+<meta property="article:tag" content="Context Engineering">
+<meta property="article:tag" content="Multi-Agent">
+<meta property="article:tag" content="架构设计">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南",
+  "url": "https://xhua.eu.org/posts/08f5463789ff.html",
+  "image": "https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg",
+  "datePublished": "2026-09-01T03:25:34.000Z",
+  "dateModified": "2026-09-21T08:31:54.692Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/08f5463789ff.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.692Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：</p>
+<ul>
+<li>哪些内容应该始终进入上下文，哪些内容只在需要时加载？</li>
+<li>连贯工作流应该拆成多个 Skill，还是保留一个统一入口？</li>
+<li>什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？</li>
+<li>长时间运行的任务怎样保存进度，并在失败后恢复？</li>
+</ul>
+<p>这些问题可以归纳为两个相互正交的架构维度：</p>
+<ol>
+<li><strong>打包（Packaging）</strong>：Skill 内部怎样组织，以及内容何时进入上下文。</li>
+<li><strong>编排（Orchestration）</strong>：任务怎样分阶段、拆分、并行和恢复。</li>
+</ol>
+<p>生产级 Skill 往往是某种特定的“打包 × 编排”组合。本文给出一套可落地的模式语言和决策框架，帮助 Skill 作者从约束出发选择架构，而不是默认追求复杂设计。</p>
+<blockquote>
+<p>核心原则：采用最简单的可行模式，只有明确约束出现时才升级复杂度。</p>
+</blockquote>
+<h2 id="一、先理解六类底层约束"><a href="#一、先理解六类底层约束" class="headerlink" title="一、先理解六类底层约束"></a>一、先理解六类底层约束</h2><p>架构模式不是模板集合，而是对技术约束的不同解法。只有先理解约束，后面的优缺点才具有决策价值。</p>
+<h3 id="1-上下文预算与渐进式披露"><a href="#1-上下文预算与渐进式披露" class="headerlink" title="1. 上下文预算与渐进式披露"></a>1. 上下文预算与渐进式披露</h3><p>Agent Skills 规范采用三层渐进式加载：</p>
+<ol>
+<li><strong>元数据层</strong>：所有已安装 Skill 的 <code>name</code> 和 <code>description</code> 在启动时进入上下文，用于发现和触发。</li>
+<li><strong>指令层</strong>：Skill 被触发后，完整的 <code>SKILL.md</code> 正文进入上下文。</li>
+<li><strong>资源层</strong>：<code>references/</code>、<code>scripts/</code> 和 <code>assets/</code> 等资源按需使用。</li>
+</ol>
+<p>官方最佳实践建议将 <code>SKILL.md</code> 正文控制在约 500 行以内，并把细节移到直接引用的文件中。这个数字不是硬性解析限制，而是上下文效率和可维护性的经验边界。</p>
+<p>因此，打包设计的本质不是“目录怎样摆放”，而是决定：</p>
+<blockquote>
+<p>什么内容，在什么时刻，以什么成本进入模型上下文？</p>
+</blockquote>
+<p>无关指令不只是浪费 Token，还会争夺模型注意力，增加误用规则和遗漏关键约束的概率。</p>
+<h3 id="2-确定性与推理能力"><a href="#2-确定性与推理能力" class="headerlink" title="2. 确定性与推理能力"></a>2. 确定性与推理能力</h3><p>模型推理适应性强，但具有非确定性，并且持续消耗 Token。脚本适合在上下文之外执行确定、可重复的操作，但面对未预期输入时往往更脆弱。</p>
+<p>一个实用分工是：</p>
+<ul>
+<li><strong>模型负责判断</strong>：需求理解、方案选择、例外分析、定性审查。</li>
+<li><strong>脚本负责机械工作</strong>：解析、转换、验证、批处理、格式归一化。</li>
+</ul>
+<p>如果 Agent 每次都在重新生成几乎相同的辅助代码，通常说明这段逻辑应该沉淀为脚本。</p>
+<h3 id="3-上下文共享与隔离"><a href="#3-上下文共享与隔离" class="headerlink" title="3. 上下文共享与隔离"></a>3. 上下文共享与隔离</h3><p>单 Agent 在同一窗口内共享全部状态，不存在交接损失，但随着任务增长可能出现上下文污染、重点稀释和早期错误持续传播。</p>
+<p>Sub-agent 则拥有独立、聚焦的上下文，可以选择不同模型和工具，并行处理相互独立的任务。不过隔离也有代价：</p>
+<ul>
+<li>Sub-agent 看不到父 Agent 的隐含上下文；</li>
+<li>提示必须自包含；</li>
+<li>返回父 Agent 的通常是压缩摘要，而不是完整过程；</li>
+<li>输入输出契约不清时，关键信息会在交接中丢失。</li>
+</ul>
+<p>隔离只有在减少污染或带来并行收益时才有价值。紧耦合任务拆开后，协调成本可能大于上下文收益。</p>
+<h3 id="4-短暂状态与持久状态"><a href="#4-短暂状态与持久状态" class="headerlink" title="4. 短暂状态与持久状态"></a>4. 短暂状态与持久状态</h3><p>对话上下文是短暂状态。上下文压缩、进程中断、工具失败或会话重启，都可能让长流程失去进度。</p>
+<p>高延迟或长时间运行的工作流，应把关键状态写入磁盘或外部存储，例如：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workflow_id:</span> <span class="string">skill-build-20260901</span></span><br><span class="line"><span class="attr">current_stage:</span> <span class="string">validation</span></span><br><span class="line"><span class="attr">completed_stages:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">requirements</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">design</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">implementation</span></span><br><span class="line"><span class="attr">artifacts:</span></span><br><span class="line">  <span class="attr">design:</span> <span class="string">artifacts/design.md</span></span><br><span class="line">  <span class="attr">implementation:</span> <span class="string">artifacts/skill/</span></span><br><span class="line"><span class="attr">checks:</span></span><br><span class="line">  <span class="attr">structure:</span> <span class="string">passed</span></span><br><span class="line">  <span class="attr">trigger_eval:</span> <span class="string">pending</span></span><br><span class="line"><span class="attr">last_error:</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure>
+
+<p>状态文件至少应回答：已经完成什么、产物在哪里、下一步是什么、哪些检查已通过、上次失败在哪里。</p>
+<h3 id="5-触发机制"><a href="#5-触发机制" class="headerlink" title="5. 触发机制"></a>5. 触发机制</h3><p>Skill 的 <code>description</code> 是发现和触发的关键入口。它需要同时说明：</p>
+<ul>
+<li>Skill <strong>做什么</strong>；</li>
+<li>Agent <strong>什么时候使用它</strong>。</li>
+</ul>
+<p>顶层 Skill 越多，语义重叠和错误路由的风险越高。相比之下，单个 Skill 内部的阶段文件和 references 由已经触发的父 Skill 显式加载，不需要再次参与全局竞争。</p>
+<h3 id="6-维护与复用"><a href="#6-维护与复用" class="headerlink" title="6. 维护与复用"></a>6. 维护与复用</h3><p>每增加一个文件、脚本、Agent、状态 schema 或交接协议，都会扩大：</p>
+<ul>
+<li>测试范围；</li>
+<li>版本一致性成本；</li>
+<li>故障排查范围；</li>
+<li>文档和示例的同步成本。</li>
+</ul>
+<p>架构拆分是一项持续成本，而不只是首次开发成本。没有独立复用价值的抽象，通常不值得存在。</p>
+<h2 id="二、打包模式：内容怎样组织和加载"><a href="#二、打包模式：内容怎样组织和加载" class="headerlink" title="二、打包模式：内容怎样组织和加载"></a>二、打包模式：内容怎样组织和加载</h2><p>打包模式描述单个 Skill 的内部结构。它们可以组合使用，并且独立于编排模式。</p>
+<h2 id="P1：内联-Skill（Inline-Skill）"><a href="#P1：内联-Skill（Inline-Skill）" class="headerlink" title="P1：内联 Skill（Inline Skill）"></a>P1：内联 Skill（Inline Skill）</h2><p>所有指令都放在 <code>SKILL.md</code> 中，不包含外部资源。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">skill-name/</span><br><span class="line">└── SKILL.md</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>架构开销最低；</li>
+<li>逻辑集中，阅读和调试路径短；</li>
+<li>触发后无需再次判断该加载哪些文件。</li>
+</ul>
+<h3 id="局限"><a href="#局限" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>每次触发都会加载全部正文；</li>
+<li>机械步骤仍依赖模型重复推理；</li>
+<li>内容增长后容易突破合理的上下文预算。</li>
+</ul>
+<h3 id="适用条件"><a href="#适用条件" class="headerlink" title="适用条件"></a>适用条件</h3><p>能力范围窄、自包含、流程较短，不依赖大型知识库，也没有需要严格复现的转换逻辑。</p>
+<h3 id="反模式"><a href="#反模式" class="headerlink" title="反模式"></a>反模式</h3><p>复杂 schema、多领域规范、海量示例或要求严格一致的输出，不适合长期保留在 P1。</p>
+<h2 id="P2：Skill-References"><a href="#P2：Skill-References" class="headerlink" title="P2：Skill + References"></a>P2：Skill + References</h2><p>保持 <code>SKILL.md</code> 精简，将专业资料按主题放入 <code>references/</code>，由主文件写明加载条件。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">skill-name/</span><br><span class="line">├── SKILL.md</span><br><span class="line">└── references/</span><br><span class="line">    ├── api-spec.md</span><br><span class="line">    ├── examples.md</span><br><span class="line">    └── edge-cases.md</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>大型知识库不会一次性占满上下文；</li>
+<li>只为当前任务需要的资料支付 Token；</li>
+<li>新增知识时可以增量扩展。</li>
+</ul>
+<h3 id="局限-1"><a href="#局限-1" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>Agent 可能少读而遗漏关键约束；</li>
+<li>也可能多读，重新制造上下文膨胀；</li>
+<li>分散文件容易出现术语、规则和版本不一致。</li>
+</ul>
+<h3 id="设计建议"><a href="#设计建议" class="headerlink" title="设计建议"></a>设计建议</h3><p>不要写“读取所有 references”，而应把触发条件直接写进主文件：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> For API parameter questions, read <span class="code">`references/api-spec.md`</span>.</span><br><span class="line"><span class="bullet">-</span> For validation failures, read <span class="code">`references/error-guide.md`</span>.</span><br><span class="line"><span class="bullet">-</span> For unusual input formats, read <span class="code">`references/edge-cases.md`</span>.</span><br></pre></td></tr></table></figure>
+
+<p>引用应尽量保持在 <code>SKILL.md</code> 的下一层，避免 <code>SKILL.md → A.md → B.md → C.md</code> 这样的深层链路。较长的参考文件还应提供目录，让 Agent 即使只预览部分内容，也能先看到完整信息结构。</p>
+<h2 id="P3：Skill-Scripts"><a href="#P3：Skill-Scripts" class="headerlink" title="P3：Skill + Scripts"></a>P3：Skill + Scripts</h2><p>为确定性操作捆绑可执行代码，让 Agent 调用脚本完成机械步骤。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">skill-name/</span><br><span class="line">├── SKILL.md</span><br><span class="line">└── scripts/</span><br><span class="line">    ├── transform.py</span><br><span class="line">    └── validate.py</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>相同输入可以得到可重复输出；</li>
+<li>脚本源码无需进入模型上下文；</li>
+<li>解析和验证逻辑只实现一次。</li>
+</ul>
+<h3 id="局限-2"><a href="#局限-2" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>依赖运行时和环境配置；</li>
+<li>未覆盖的输入可能导致硬失败；</li>
+<li>把需要判断的步骤脚本化，会损失模型的适应能力。</li>
+</ul>
+<h3 id="适用条件-1"><a href="#适用条件-1" class="headerlink" title="适用条件"></a>适用条件</h3><p>重复转换、格式验证、批量文件操作、静态检查、可计算规则和输出规范化。</p>
+<h3 id="设计边界"><a href="#设计边界" class="headerlink" title="设计边界"></a>设计边界</h3><p>脚本应返回可操作的错误，而不是只返回非零退出码：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;valid&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;errors&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;frontmatter.description&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;code&quot;</span><span class="punctuation">:</span> <span class="string">&quot;MISSING_TRIGGER_CONDITION&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;message&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Description must explain when the skill should be used.&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>结构化错误能让 Agent 决定怎样修复；模糊错误只会触发新一轮猜测。</p>
+<h2 id="P4：Skill-Assets"><a href="#P4：Skill-Assets" class="headerlink" title="P4：Skill + Assets"></a>P4：Skill + Assets</h2><p>把模板、样板代码、schema、字体或品牌资源作为静态资产捆绑。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">skill-name/</span><br><span class="line">├── SKILL.md</span><br><span class="line">└── assets/</span><br><span class="line">    ├── report-template.docx</span><br><span class="line">    ├── schema.json</span><br><span class="line">    └── brand.css</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>提高固定格式和品牌输出的保真度；</li>
+<li>避免模型反复生成不变的样板；</li>
+<li>便于对输出骨架做版本管理。</li>
+</ul>
+<h3 id="局限-3"><a href="#局限-3" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>需求变化后，资产和指令必须同步升级；</li>
+<li>强模板可能限制创意任务；</li>
+<li>二进制资产不易审查和合并。</li>
+</ul>
+<h3 id="适用条件-2"><a href="#适用条件-2" class="headerlink" title="适用条件"></a>适用条件</h3><p>正式报告、演示文稿、项目脚手架、品牌页面，以及必须符合固定 schema 的交付物。</p>
+<h2 id="P5：变体路由器（Variant-Router）"><a href="#P5：变体路由器（Variant-Router）" class="headerlink" title="P5：变体路由器（Variant Router）"></a>P5：变体路由器（Variant Router）</h2><p>入口 Skill 先识别目标变体，再加载互斥分支。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cloud-deploy/</span><br><span class="line">├── SKILL.md</span><br><span class="line">└── references/</span><br><span class="line">    ├── aws.md</span><br><span class="line">    ├── azure.md</span><br><span class="line">    └── gcp.md</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-4"><a href="#优点-4" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>一组相关能力只暴露一个入口；</li>
+<li>不同变体不会同时污染上下文；</li>
+<li>新增后端时可以增量扩展。</li>
+</ul>
+<h3 id="局限-4"><a href="#局限-4" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>选错分支可能造成隐蔽而高成本的失败；</li>
+<li>共享逻辑较多时，各分支容易复制粘贴并逐渐漂移。</li>
+</ul>
+<h3 id="适用条件-3"><a href="#适用条件-3" class="headerlink" title="适用条件"></a>适用条件</h3><p>云厂商、语言、框架或部署目标彼此互斥，并且不同分支的实现差异足够大。</p>
+<p>如果大部分逻辑共享，仅有少数参数不同，在一个文件中使用条件规则通常更简单。</p>
+<h2 id="三、架构粒度：统一-Skill-还是同级-Skill"><a href="#三、架构粒度：统一-Skill-还是同级-Skill" class="headerlink" title="三、架构粒度：统一 Skill 还是同级 Skill"></a>三、架构粒度：统一 Skill 还是同级 Skill</h2><p>“Skill 越窄，触发越准确、上下文越小”只对真正解耦的逻辑成立。相互依赖的领域被强行拆开后，常见失败包括：</p>
+<table>
+<thead>
+<tr>
+<th>拆分假设</th>
+<th>实际风险</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>更窄的 description 只会加载正确 Skill</td>
+<td>语义重叠可能触发错误的同级 Skill</td>
+</tr>
+<tr>
+<td>Skill 间引用可以引导 Agent 跳转</td>
+<td>引用通常只是提示，不等于强制激活</td>
+</tr>
+<tr>
+<td>粒度越细，Token 一定越低</td>
+<td>统一 Skill 配合 P2 也能按需加载</td>
+</tr>
+<tr>
+<td>中央入口可保证组件完整</td>
+<td>缺少原子安装机制时，部分安装会静默损坏</td>
+</tr>
+<tr>
+<td>拆出模块即可跨工作流复用</td>
+<td>没有稳定输入输出契约的模块并不真正独立</td>
+</tr>
+</tbody></table>
+<p>过度合并同样有风险。把彼此独立的任务塞进一个厚重单体，会让无关规则争夺注意力。</p>
+<p>真正的判断单位不是“主题”，而是<strong>任务面（task surface）</strong>：</p>
+<blockquote>
+<p>如果多个子主题经常共同出现在一次真实执行中，它们属于同一个任务面；如果它们服务不同用户、按不同节奏运行，而且输入输出契约独立，才适合拆成同级 Skill。</p>
+</blockquote>
+<p>例如，一条视频分析流水线可能同时涉及解码、批处理、推理、跟踪、可视化和消息发送。这些虽然是不同技术主题，却共同构成一次端到端任务。按主题拆成六个同级 Skill，会让每次流水线修改都经过多次不可靠的触发和交接。</p>
+<p>相反，“导入模型”和“分析流水线性能”可能拥有独立入口、独立产物和不同执行节奏，因此可以拆分。</p>
+<h3 id="三种主要结构"><a href="#三种主要结构" class="headerlink" title="三种主要结构"></a>三种主要结构</h3><h4 id="厚单体（Thick-Monolith）"><a href="#厚单体（Thick-Monolith）" class="headerlink" title="厚单体（Thick Monolith）"></a>厚单体（Thick Monolith）</h4><p>大量规则和知识直接内联，导航延迟最低，但基础 Token 成本和干扰风险最高。</p>
+<h4 id="薄路由器（Thin-Router）"><a href="#薄路由器（Thin-Router）" class="headerlink" title="薄路由器（Thin Router）"></a>薄路由器（Thin Router）</h4><p><code>SKILL.md</code> 保留承重规则、通用流程和参考索引，细节通过 P2 按需加载。这通常是耦合领域的推荐默认结构。</p>
+<h4 id="拆分同级-Skill（Split-Siblings）"><a href="#拆分同级-Skill（Split-Siblings）" class="headerlink" title="拆分同级 Skill（Split Siblings）"></a>拆分同级 Skill（Split Siblings）</h4><p>多个 Skill 独立参与全局触发，只适合真正不重叠的任务面。</p>
+<p>薄路由器也不能过度“瘦身”。如果主文件只剩链接目录，Agent 在加载具体资料前就缺少判断依据，会产生<strong>上下文饥饿</strong>。安全约束、不可违反的规则、主流程和路由逻辑应始终留在 <code>SKILL.md</code> 中。</p>
+<h2 id="四、编排模式：任务怎样执行"><a href="#四、编排模式：任务怎样执行" class="headerlink" title="四、编排模式：任务怎样执行"></a>四、编排模式：任务怎样执行</h2><p>编排模式与打包方式相互独立。一个分阶段单 Agent 可以使用 references，一个多 Agent 编排器也可以为每个 worker 配置 scripts 和 assets。</p>
+<p>“父 Skill + 子 Skill”这个说法并不精确，因为“子 Skill”可能指：</p>
+<ol>
+<li>同一 Agent 在共享上下文中加载的阶段指令；</li>
+<li>父 Agent 创建的、拥有隔离上下文的 Sub-agent。</li>
+</ol>
+<p>前者属于 O2，后者属于 O4，二者成本和行为完全不同。</p>
+<h2 id="O1：单-Agent、单次执行"><a href="#O1：单-Agent、单次执行" class="headerlink" title="O1：单 Agent、单次执行"></a>O1：单 Agent、单次执行</h2><p>一个 Agent 在连续流程中端到端完成任务。</p>
+<h3 id="优点-5"><a href="#优点-5" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>协调开销最低；</li>
+<li>所有信息共享，不存在交接损失；</li>
+<li>最容易调试和复现。</li>
+</ul>
+<h3 id="局限-5"><a href="#局限-5" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>长任务会持续膨胀上下文；</li>
+<li>无法通过并行缩短等待时间；</li>
+<li>中途失败后通常缺少恢复点。</li>
+</ul>
+<h3 id="适用条件-4"><a href="#适用条件-4" class="headerlink" title="适用条件"></a>适用条件</h3><p>流程线性、规模可控，能够稳定放入一个上下文窗口。</p>
+<h2 id="O2：分阶段单-Agent"><a href="#O2：分阶段单-Agent" class="headerlink" title="O2：分阶段单 Agent"></a>O2：分阶段单 Agent</h2><p>一个 Agent 依次经过明确状态，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SETUP -&gt; REQUIREMENTS -&gt; DESIGN -&gt; PLAN -&gt; IMPLEMENT -&gt; VALIDATE -&gt; SUMMARY</span><br></pre></td></tr></table></figure>
+
+<p>每个阶段可以按需加载不同指令，但始终共享一个上下文。</p>
+<h3 id="优点-6"><a href="#优点-6" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>在不引入多 Agent 的前提下提供可预测结构；</li>
+<li>后续阶段可以完整看到先前决策；</li>
+<li>容易加入阶段检查点和用户确认。</li>
+</ul>
+<h3 id="局限-6"><a href="#局限-6" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>上下文仍会线性增长；</li>
+<li>早期错误会传播到后续阶段；</li>
+<li>阶段退出条件不清时，Agent 可能跳步或提前合并。</li>
+</ul>
+<h3 id="适用条件-5"><a href="#适用条件-5" class="headerlink" title="适用条件"></a>适用条件</h3><p>多步骤、严格顺序、需要状态连续性的工作流，例如需求访谈到方案交付、代码迁移或报告生产。</p>
+<p>许多看起来“复杂”的流程首先应该尝试 O2。只有出现明确的上下文、并行或隔离约束时，才需要升级到 Sub-agent。</p>
+<h2 id="O3：交互式或访谈式"><a href="#O3：交互式或访谈式" class="headerlink" title="O3：交互式或访谈式"></a>O3：交互式或访谈式</h2><p>O3 是 O2 的专门变体：流程在关键阶段暂停，通过用户回答获取隐性知识或确认高风险决策。</p>
+<h3 id="优点-7"><a href="#优点-7" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>能补齐文档中不存在的目标、偏好和业务约束；</li>
+<li>保持人在回路中，降低错误假设带来的返工。</li>
+</ul>
+<h3 id="局限-7"><a href="#局限-7" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>依赖用户响应，不能完全自治；</li>
+<li>过多、过散的问题会造成提问疲劳。</li>
+</ul>
+<h3 id="设计建议-1"><a href="#设计建议-1" class="headerlink" title="设计建议"></a>设计建议</h3><p>不要逐条追问所有细节。先读取现有上下文，再把真正影响架构的决策聚合成少量问题，并提供推荐默认值。</p>
+<h2 id="O4：编排器-Sub-agent"><a href="#O4：编排器-Sub-agent" class="headerlink" title="O4：编排器 + Sub-agent"></a>O4：编排器 + Sub-agent</h2><p>父 Agent 将任务拆成多个自包含子任务，交给隔离的 Sub-agent 并行执行，最后汇总结构化结果。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">                    ┌-&gt; Worker A - research  -┐</span><br><span class="line">Orchestrator ------├-&gt; Worker B - analysis  -├-&gt; Synthesis</span><br><span class="line">                    └-&gt; Worker C - validation -┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-8"><a href="#优点-8" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>独立上下文减少相互污染；</li>
+<li>可并行任务能够缩短实际等待时间；</li>
+<li>可以按角色选择模型、工具和权限；</li>
+<li>安全审查、事实核验等角色可以形成独立门禁。</li>
+</ul>
+<h3 id="局限-8"><a href="#局限-8" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>每个任务提示都必须自包含；</li>
+<li>父 Agent 接收的是压缩结果，存在信息损失；</li>
+<li>并行 worker 可能重复劳动或产生冲突结论；</li>
+<li>组件数量增加后，测试和故障定位更困难。</li>
+</ul>
+<h3 id="适用条件-6"><a href="#适用条件-6" class="headerlink" title="适用条件"></a>适用条件</h3><p>子任务确实独立，或者隔离、并行、角色专用模型和独立审查带来的收益明显超过协调成本。</p>
+<p>Anthropic 的多 Agent 研究系统采用 orchestrator-worker 模式：主 Agent 规划研究方向，多个 Sub-agent 在独立上下文中并行搜索并返回压缩结果。这个模式很适合广度优先研究，但不能直接推导为“所有复杂任务都应该多 Agent 化”。代码修改、连续迁移和强共享状态流程通常比研究任务更紧耦合。</p>
+<h2 id="O5：带恢复能力的门禁流水线"><a href="#O5：带恢复能力的门禁流水线" class="headerlink" title="O5：带恢复能力的门禁流水线"></a>O5：带恢复能力的门禁流水线</h2><p>O5 在多阶段流程中加入持久状态、质量门禁、重试和断点恢复。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Stage A -&gt; Gate A -&gt; Persist -&gt; Stage B -&gt; Gate B -&gt; Persist -&gt; Stage C</span><br><span class="line">                  \-&gt; Retry                  \-&gt; Resume</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点-9"><a href="#优点-9" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>进程中断后可从最近验证点继续；</li>
+<li>具有可审计的输入、产物和检查记录；</li>
+<li>硬性门禁能阻止低质量结果继续传播。</li>
+</ul>
+<h3 id="局限-9"><a href="#局限-9" class="headerlink" title="局限"></a>局限</h3><ul>
+<li>需要明确的状态 schema、幂等策略和迁移方案；</li>
+<li>编排器成为关键单点；</li>
+<li>重试策略不当可能形成高成本循环。</li>
+</ul>
+<h3 id="适用条件-7"><a href="#适用条件-7" class="headerlink" title="适用条件"></a>适用条件</h3><p>小时级或更长的自治任务、昂贵计算、多阶段数据处理，以及必须保留部分进度的生产流程。</p>
+<h3 id="最小可靠性要求"><a href="#最小可靠性要求" class="headerlink" title="最小可靠性要求"></a>最小可靠性要求</h3><p>采用 O5 前至少要定义：</p>
+<ul>
+<li>每个阶段的输入和输出；</li>
+<li>完成条件与失败条件；</li>
+<li>状态写入的原子性；</li>
+<li>阶段是否幂等；</li>
+<li>可重试错误与不可重试错误；</li>
+<li>最大重试次数和退出策略；</li>
+<li>恢复时需要重新验证的前置条件。</li>
+</ul>
+<p>短小、交互式任务不应使用 O5，因为重新运行的成本往往低于维护恢复系统的成本。</p>
+<h2 id="五、横切原则：可组合的单一职责能力"><a href="#五、横切原则：可组合的单一职责能力" class="headerlink" title="五、横切原则：可组合的单一职责能力"></a>五、横切原则：可组合的单一职责能力</h2><p>单一职责不是第六种编排模式，而是一项可以叠加在各种模式上的设计原则。</p>
+<p>格式化、验证、通知和静态检查等通用能力，适合做成具有稳定契约的原子组件。它们可以被不同工作流复用，也更容易单独测试。</p>
+<p>但“原子化”不等于把每一步都变成顶层 Skill。一个能力只有满足以下条件时才真正可组合：</p>
+<ul>
+<li>输入格式明确；</li>
+<li>输出格式稳定；</li>
+<li>不依赖调用方的隐含上下文；</li>
+<li>失败语义清晰；</li>
+<li>可以独立测试；</li>
+<li>在多个工作流中确实存在复用需求。</li>
+</ul>
+<p>如果多个步骤严格顺序执行并大量共享本地状态，保留为 O2 分阶段单 Agent 通常更简单。</p>
+<h2 id="六、打包与编排的组合矩阵"><a href="#六、打包与编排的组合矩阵" class="headerlink" title="六、打包与编排的组合矩阵"></a>六、打包与编排的组合矩阵</h2><p>两个维度应独立决策。例如，选择 O2 并不意味着必须使用 P2；选择 O4 也不意味着每个 Sub-agent 都要拥有复杂目录。</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐组合</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>简短、自包含的辅助能力</td>
+<td>P1 + O1</td>
+<td>最低架构成本</td>
+</tr>
+<tr>
+<td>知识密集型问答或开发助手</td>
+<td>P2 + O1</td>
+<td>按需加载专业资料</td>
+</tr>
+<tr>
+<td>连续的多阶段交付流程</td>
+<td>P2 + O2</td>
+<td>保持状态连续并控制每阶段上下文</td>
+</tr>
+<tr>
+<td>需要用户补充隐性需求</td>
+<td>P2 + O3</td>
+<td>先路由资料，再进行聚合式访谈</td>
+</tr>
+<tr>
+<td>大量独立研究方向</td>
+<td>P2 + O4</td>
+<td>独立上下文并行探索</td>
+</tr>
+<tr>
+<td>固定格式报告生产</td>
+<td>P2 + P3 + P4 + O2</td>
+<td>资料、验证脚本和模板共同保证质量</td>
+</tr>
+<tr>
+<td>长时自治生产流水线</td>
+<td>P2 + P3 + O5</td>
+<td>按需知识、确定性执行和可恢复状态</td>
+</tr>
+<tr>
+<td>多个互斥目标平台</td>
+<td>P5 + O1 或 O2</td>
+<td>先路由变体，再执行单次或分阶段流程</td>
+</tr>
+</tbody></table>
+<p>这张表只是起点，而不是硬性规定。真正的选择仍取决于任务耦合度、失败成本和运行时能力。</p>
+<h2 id="七、可执行的架构决策流程"><a href="#七、可执行的架构决策流程" class="headerlink" title="七、可执行的架构决策流程"></a>七、可执行的架构决策流程</h2><h3 id="第一步：确定任务面边界"><a href="#第一步：确定任务面边界" class="headerlink" title="第一步：确定任务面边界"></a>第一步：确定任务面边界</h3><p>先列出真实用户任务，而不是文档主题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Task A: Create a pipeline from source to sink</span><br><span class="line">Task B: Diagnose a pipeline configuration error</span><br><span class="line">Task C: Import a new model</span><br><span class="line">Task D: Profile runtime performance</span><br></pre></td></tr></table></figure>
+
+<p>然后记录任务共同使用的知识、产物和状态。如果多个任务经常共同出现，并共享大量前提，应优先放在统一 Skill 中，通过 P2 路由资料。</p>
+<p>只有受众、运行节奏、输入输出和触发语义都明显独立时，才拆成同级 Skill。</p>
+<h3 id="第二步：自上而下选择编排"><a href="#第二步：自上而下选择编排" class="headerlink" title="第二步：自上而下选择编排"></a>第二步：自上而下选择编排</h3><p>按以下顺序判断：</p>
+<ol>
+<li>能否在单个上下文中端到端完成？能则使用 O1。</li>
+<li>是否多步骤、顺序执行且要求共享状态？是则使用 O2。</li>
+<li>是否缺少只能由用户提供的隐性知识？是则加入 O3。</li>
+<li>是否存在真正独立、可并行的子任务，或必须隔离的角色？是则使用 O4。</li>
+<li>是否长时自治运行，并且失败后必须保留进度？是则使用 O5。</li>
+</ol>
+<p>不要因为“阶段很多”就直接选择 O4。阶段多只说明需要结构，通常首先指向 O2；只有独立性、隔离或并行要求才指向 O4。</p>
+<h3 id="第三步：独立选择打包"><a href="#第三步：独立选择打包" class="headerlink" title="第三步：独立选择打包"></a>第三步：独立选择打包</h3><ul>
+<li>内容短且总是需要：P1。</li>
+<li>大量知识只在部分场景需要：P2。</li>
+<li>可重复的机械计算：P3。</li>
+<li>固定模板或输出骨架：P4。</li>
+<li>互斥后端或技术变体：P5。</li>
+</ul>
+<h3 id="第四步：定义升级证据"><a href="#第四步：定义升级证据" class="headerlink" title="第四步：定义升级证据"></a>第四步：定义升级证据</h3><p>每次提高复杂度前，记录可观测理由：</p>
+<ul>
+<li><code>SKILL.md</code> 接近合理长度上限；</li>
+<li>任务中只有少量内容真正相关；</li>
+<li>相同转换逻辑被重复生成；</li>
+<li>单 Agent 因上下文污染出现可复现错误；</li>
+<li>独立任务可以并行并显著降低延迟；</li>
+<li>中途失败造成不可接受的重算成本。</li>
+</ul>
+<p>如果无法指出升级解决了哪个可测问题，就应保留更简单的架构。</p>
+<h2 id="八、案例一：DeepStream-开发-Skill-的粒度选择"><a href="#八、案例一：DeepStream-开发-Skill-的粒度选择" class="headerlink" title="八、案例一：DeepStream 开发 Skill 的粒度选择"></a>八、案例一：DeepStream 开发 Skill 的粒度选择</h2><p>NVIDIA DeepStream 公开仓库中的 <code>deepstream-dev</code> 是 reference-rich Skill，用于辅助编写和完善 <code>pyservicemaker</code> 或 GStreamer DeepStream 流水线。相关生态覆盖推理、跟踪、消息、容器和性能分析等多个方面。</p>
+<p>设想将统一开发 Skill 按解码、推理、跟踪、消息等主题拆成多个同级 Skill，表面上可以缩小每个 Skill 的范围，但真实任务很少只触及一个主题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Source -&gt; Mux -&gt; Infer -&gt; Track -&gt; OSD -&gt; Sink</span><br></pre></td></tr></table></figure>
+
+<p>即使只修改一个推理参数，也必须理解批处理、输入尺寸、元数据传播和下游组件的假设。按主题拆分会引入多次触发和交接，而单一入口配合 P2 references 已经可以获得近似的按需加载收益。</p>
+<p>更合理的边界是按任务面拆分：</p>
+<ul>
+<li>流水线开发与故障排查保持统一；</li>
+<li>模型导入作为独立任务面；</li>
+<li>性能分析作为独立任务面。</li>
+</ul>
+<p>NVIDIA 当前公开的 DeepStream Skills 也体现了类似划分，例如 <code>deepstream-dev</code>、<code>deepstream-import-vision-model</code> 和 <code>deepstream-profile-pipeline</code> 面向不同工作入口。</p>
+<blockquote>
+<p>某些实践材料报告，面向独立任务拆分后可获得约 24% 的准确率提升和约 30% 的 Token 降低。但公开资料不足以证明这是跨模型、跨执行环境的通用基准，因此更适合将它视为特定评测条件下的案例结果，而不是架构定律。</p>
+</blockquote>
+<p>对应原则是：<strong>按任务面拆分，而不是按主题拆分。</strong></p>
+<h2 id="九、案例二：DEFT-长时流程的单-Agent-与-Sub-agent-取舍"><a href="#九、案例二：DEFT-长时流程的单-Agent-与-Sub-agent-取舍" class="headerlink" title="九、案例二：DEFT 长时流程的单 Agent 与 Sub-agent 取舍"></a>九、案例二：DEFT 长时流程的单 Agent 与 Sub-agent 取舍</h2><p>DEFT 类 Agentic 微调和数据增强工作流可能持续数小时，并经过多个子模块。直觉上，把每个模块放到独立 Sub-agent 可以获得干净上下文，但如果运行环境不能可靠传播后台失败，隔离会制造新的问题：</p>
+<ul>
+<li>worker 静默失败；</li>
+<li>失败原因没有返回编排器；</li>
+<li>父 Agent 误判阶段已完成；</li>
+<li>恢复时缺少可用状态，只能从头运行。</li>
+</ul>
+<p>在这种基础设施条件下，一个工程化良好的单 Agent 可能更可靠：</p>
+<ol>
+<li>使用 O2 明确阶段状态；</li>
+<li>把进度和产物位置持久化；</li>
+<li>上下文压缩或恢复后重新读取状态与核心 Skill；</li>
+<li>用 P2 控制每个阶段加载的知识；</li>
+<li>在正式运行前执行 preflight；</li>
+<li>通过 smoke test 检查编排器与阶段指令是否冲突。</li>
+</ol>
+<p>关键判断不是“Sub-agent 是否先进”，而是：</p>
+<blockquote>
+<p>失败能否被可靠检测、传递、记录和恢复？</p>
+</blockquote>
+<p>如果答案是否定的，多 Agent 隔离并不会自动带来可靠性。随着运行时的后台任务监控、目标管理和失败传播能力成熟，O4 或 O5 才可能重新成为更好的选择。</p>
+<h2 id="十、常见反模式与修正方法"><a href="#十、常见反模式与修正方法" class="headerlink" title="十、常见反模式与修正方法"></a>十、常见反模式与修正方法</h2><h3 id="反模式-1：按文档目录拆-Skill"><a href="#反模式-1：按文档目录拆-Skill" class="headerlink" title="反模式 1：按文档目录拆 Skill"></a>反模式 1：按文档目录拆 Skill</h3><p><strong>问题</strong>：文档主题不等于用户任务边界。</p>
+<p><strong>修正</strong>：统计真实任务中哪些知识经常共同出现，按任务面决定边界。</p>
+<h3 id="反模式-2：依赖跨-Skill-引用"><a href="#反模式-2：依赖跨-Skill-引用" class="headerlink" title="反模式 2：依赖跨 Skill 引用"></a>反模式 2：依赖跨 Skill 引用</h3><p><strong>问题</strong>：一个 Skill 提到另一个 Skill，不保证后者会被激活。</p>
+<p><strong>修正</strong>：强依赖内容放入同一 Skill 的 references，或由显式编排器调用具有稳定契约的组件。</p>
+<h3 id="反模式-3：把薄路由器做成空路由器"><a href="#反模式-3：把薄路由器做成空路由器" class="headerlink" title="反模式 3：把薄路由器做成空路由器"></a>反模式 3：把薄路由器做成空路由器</h3><p><strong>问题</strong>：主文件缺少承重规则，Agent 尚未加载参考资料就已经做出错误判断。</p>
+<p><strong>修正</strong>：把安全约束、主流程、决策规则和文件索引保留在 <code>SKILL.md</code>。</p>
+<h3 id="反模式-4：脚本吞掉判断逻辑"><a href="#反模式-4：脚本吞掉判断逻辑" class="headerlink" title="反模式 4：脚本吞掉判断逻辑"></a>反模式 4：脚本吞掉判断逻辑</h3><p><strong>问题</strong>：高度变化的输入被强行放入确定性程序，导致脆弱分支快速膨胀。</p>
+<p><strong>修正</strong>：脚本只处理明确、可测试的机械步骤，把例外判断留给 Agent。</p>
+<h3 id="反模式-5：复杂任务默认多-Agent"><a href="#反模式-5：复杂任务默认多-Agent" class="headerlink" title="反模式 5：复杂任务默认多 Agent"></a>反模式 5：复杂任务默认多 Agent</h3><p><strong>问题</strong>：复杂度不等于可分离性。紧耦合任务会因摘要交接丢失信息。</p>
+<p><strong>修正</strong>：先使用 O2；只有并行、隔离、角色优化或独立门禁有明确收益时才升级 O4。</p>
+<h3 id="反模式-6：持久化了状态，却没有恢复协议"><a href="#反模式-6：持久化了状态，却没有恢复协议" class="headerlink" title="反模式 6：持久化了状态，却没有恢复协议"></a>反模式 6：持久化了状态，却没有恢复协议</h3><p><strong>问题</strong>：磁盘上虽然有文件，但 Agent 不知道哪个状态可信，也不知道从哪里继续。</p>
+<p><strong>修正</strong>：为状态增加 schema 版本、阶段完成条件、产物校验、最后错误和明确的 <code>next_action</code>。</p>
+<h2 id="十一、怎样评估-Skill-架构"><a href="#十一、怎样评估-Skill-架构" class="headerlink" title="十一、怎样评估 Skill 架构"></a>十一、怎样评估 Skill 架构</h2><p>不要只看 Skill 数量或文件大小。至少应测量以下指标：</p>
+<h3 id="1-触发质量"><a href="#1-触发质量" class="headerlink" title="1. 触发质量"></a>1. 触发质量</h3><ul>
+<li>应触发时的召回率；</li>
+<li>不应触发时的克制率；</li>
+<li>语义相近 Skill 之间的误路由率。</li>
+</ul>
+<h3 id="2-流程遵循"><a href="#2-流程遵循" class="headerlink" title="2. 流程遵循"></a>2. 流程遵循</h3><ul>
+<li>必需步骤完成率；</li>
+<li>禁止步骤违反率；</li>
+<li>references 的正确加载率；</li>
+<li>脚本和资产的正确使用率。</li>
+</ul>
+<h3 id="3-结果质量"><a href="#3-结果质量" class="headerlink" title="3. 结果质量"></a>3. 结果质量</h3><ul>
+<li>任务成功率；</li>
+<li>事实和配置准确率；</li>
+<li>输出格式合规率；</li>
+<li>人工返工次数。</li>
+</ul>
+<h3 id="4-成本与性能"><a href="#4-成本与性能" class="headerlink" title="4. 成本与性能"></a>4. 成本与性能</h3><ul>
+<li>每个成功任务的 Token；</li>
+<li>端到端延迟；</li>
+<li>Sub-agent 重复劳动比例；</li>
+<li>失败后的重算成本。</li>
+</ul>
+<h3 id="5-韧性"><a href="#5-韧性" class="headerlink" title="5. 韧性"></a>5. 韧性</h3><ul>
+<li>可检测失败比例；</li>
+<li>可恢复阶段比例；</li>
+<li>平均恢复时间；</li>
+<li>静默跳步次数。</li>
+</ul>
+<p>评价目标应是“每个真实任务成本下的成功率”，而不是“一个 Skill 塞入了多少能力”。</p>
+<h2 id="十二、生产落地检查清单"><a href="#十二、生产落地检查清单" class="headerlink" title="十二、生产落地检查清单"></a>十二、生产落地检查清单</h2><p>在发布 Skill 前，可以按以下清单审查。</p>
+<h3 id="边界"><a href="#边界" class="headerlink" title="边界"></a>边界</h3><ul>
+<li><input disabled="" type="checkbox"> Skill 边界依据真实任务面，而不是文档主题</li>
+<li><input disabled="" type="checkbox"> 同级 Skill 的 description 没有明显语义重叠</li>
+<li><input disabled="" type="checkbox"> 可复用组件具有明确输入输出契约</li>
+</ul>
+<h3 id="打包"><a href="#打包" class="headerlink" title="打包"></a>打包</h3><ul>
+<li><input disabled="" type="checkbox"> <code>SKILL.md</code> 保留主流程和不可违反的规则</li>
+<li><input disabled="" type="checkbox"> 可选知识通过 references 按需加载</li>
+<li><input disabled="" type="checkbox"> 文件引用直接、清晰，没有深层引用链</li>
+<li><input disabled="" type="checkbox"> 机械逻辑由经过测试的脚本处理</li>
+<li><input disabled="" type="checkbox"> 模板和 schema 作为版本化资产维护</li>
+</ul>
+<h3 id="编排"><a href="#编排" class="headerlink" title="编排"></a>编排</h3><ul>
+<li><input disabled="" type="checkbox"> 选择了满足约束的最简单模式</li>
+<li><input disabled="" type="checkbox"> O2 各阶段有明确进入和退出条件</li>
+<li><input disabled="" type="checkbox"> O4 子任务相互独立，提示可以自包含</li>
+<li><input disabled="" type="checkbox"> O5 定义了持久状态、幂等和重试边界</li>
+</ul>
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><ul>
+<li><input disabled="" type="checkbox"> 使用正例、负例和相似意图测试触发</li>
+<li><input disabled="" type="checkbox"> 测试 references 是否被正确加载</li>
+<li><input disabled="" type="checkbox"> 测试脚本异常输入和错误信息</li>
+<li><input disabled="" type="checkbox"> 测试阶段失败、超时和恢复路径</li>
+<li><input disabled="" type="checkbox"> 记录任务成功率、Token 和延迟，而不是只做主观评审</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Agent Skill 架构可以用“打包 × 编排”两个维度清晰描述：</p>
+<ul>
+<li>从 <strong>P1 + O1</strong> 开始，以最低成本验证能力；</li>
+<li>内容增长或知识具有条件性时，升级到 <strong>P2 References</strong>；</li>
+<li>把重复、机械、可验证的步骤交给 <strong>P3 Scripts</strong>；</li>
+<li>固定输出骨架使用 <strong>P4 Assets</strong>；</li>
+<li>互斥技术分支使用 <strong>P5 Variant Router</strong>；</li>
+<li>连贯多步骤任务优先使用 <strong>O2 分阶段单 Agent</strong>；</li>
+<li>只有并行、隔离、角色优化或独立门禁有明确收益时才使用 <strong>O4</strong>；</li>
+<li>只有长时自治任务确实需要断点恢复时才承担 <strong>O5</strong> 的工程成本。</li>
+</ul>
+<p>最重要的粒度原则是：<strong>按任务面拆分，而不是按主题拆分。</strong> 耦合子主题应保留统一入口，并通过 P2 渐进式披露控制上下文；只有真正自治的任务面才值得成为同级 Skill。</p>
+<p>每增加一层 reference、script、asset、Sub-agent 或持久状态，都应能回答一个具体问题：它解决了哪个可观测约束？如果没有明确答案，简单架构通常更可靠。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview">Agent Skills 概览（Anthropic）</a></li>
+<li><a target="_blank" rel="noopener" href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices">Skill authoring best practices（Anthropic）</a></li>
+<li><a target="_blank" rel="noopener" href="https://agentskills.io/specification">Agent Skills Specification</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents（Anthropic）</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/multi-agent-research-system">How we built our multi-agent research system（Anthropic）</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/NVIDIA/DeepStream/tree/main/skills">NVIDIA DeepStream Skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/NVIDIA/skills">NVIDIA Skills</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/08f5463789ff.html">https://xhua.eu.org/posts/08f5463789ff.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/agent-skills/">Agent Skills</a><a class="post-meta__tags" href="/tags/ai-agent/">AI Agent</a><a class="post-meta__tags" href="/tags/context-engineering/">Context Engineering</a><a class="post-meta__tags" href="/tags/multi-agent/">Multi-Agent</a><a class="post-meta__tags" href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/">架构设计</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test"><img class="cover" src="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Agent evaluation 入门：理解 dev、validation 与 held-out test</div></div><div class="info-2"><div class="info-item-1">你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同职责。本文围绕一个资料整理 Agent，解释 dev、validation 和 held-out test，并给出可以从小规模开始的评估流程。内容与具体框架、模型版本无关，不涉及模型训练代码。   先统一术语：本文的 dev 指什么本文约定：dev 用来调试和改进，validation 用来比较与选择版本，held-out test 用来检验最终版本在未参与开发的任务上的表现。 这个命名并不是统一标准。在一些机器学习和 NLP 文献中，development set（dev set）就是 validation set 的别名，常见划分是 train &#x2F; dev &#x2F; t...</div></div></div></a><a class="pagination-related" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造"><img class="cover" src="https://img.xhua.eu.org/b70b9d4ad2e90781cfe63ed68177b15f41381e6eab29534127bd121ff56c94fb.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</div></div><div class="info-2"><div class="info-item-1"> 本文是《AI Coding Assistant Best Practices：从提示词到工程闭环》的配套实操篇。前文解释原则，本文只做一件事：把一个普通仓库逐步变成 Agent 可以理解、修改、验证并交付的工程环境。  本文面向已经使用 Codex、Cursor、Claude Code 或 GitHub Copilot 的开发者。示例中的命令是模板，不代表适用于所有项目；执行前必须替换为仓库真实存在、已经人工确认过的命令。不要因为 Agent 能生成命令，就跳过读取 README、CI、构建文件和脚本。 完成本文后，目标仓库应具备一条可以重复运行的闭环： 1Bootstrap → Instruct → Equip → Isolate → Implement → Verify → Review  它不意味着 Agent 可以自动批准危险操作。Rules、Instructions 和 Skills 都不是安全边界；Sandbox、Allow&#x2F;Deny 策略、Hook、CI 和分支保护才分别承担访问限制、命令控制、确定性阻断、最终验收和合并保护职责。 1. 先定义完成状态把...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/4710faf0c3d1.html" title="Agent 工具工程化方法"><img class="cover" src="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-26</div><div class="info-item-2">Agent 工具工程化方法</div></div><div class="info-2"><div class="info-item-1">引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani/agent-skills 是 Addy Osmani 开源的一套面向 AI coding agent 的工程技能库。项目把软件研发过程拆成 DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP 等阶段，并提供 20 个左右的 Skill、多个专家 Persona、slash command、检查清单和会话 Hook，用来约束 Agent 在需求澄清、任务拆解、增量实现、测试验证、代码审查和发布前检查中的行为。 这个项目给了一个更工程化的答案：把复杂任务拆成可触发、可执行、可验证、可复用的 Agent Skill。它不是知识库，也不是提示词合集，而是一套面向 AI coding agent 的工作流系统：用 Skill 描述“怎么做”，用 Co...</div></div></div></a><a class="pagination-related" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test"><img class="cover" src="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-11</div><div class="info-item-2">Agent evaluation 入门：理解 dev、validation 与 held-out test</div></div><div class="info-2"><div class="info-item-1">你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同职责。本文围绕一个资料整理 Agent，解释 dev、validation 和 held-out test，并给出可以从小规模开始的评估流程。内容与具体框架、模型版本无关，不涉及模型训练代码。   先统一术语：本文的 dev 指什么本文约定：dev 用来调试和改进，validation 用来比较与选择版本，held-out test 用来检验最终版本在未参与开发的任务上的表现。 这个命名并不是统一标准。在一些机器学习和 NLP 文献中，development set（dev set）就是 validation set 的别名，常见划分是 train &#x2F; dev &#x2F; t...</div></div></div></a><a class="pagination-related" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造"><img class="cover" src="https://img.xhua.eu.org/b70b9d4ad2e90781cfe63ed68177b15f41381e6eab29534127bd121ff56c94fb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-25</div><div class="info-item-2">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</div></div><div class="info-2"><div class="info-item-1"> 本文是《AI Coding Assistant Best Practices：从提示词到工程闭环》的配套实操篇。前文解释原则，本文只做一件事：把一个普通仓库逐步变成 Agent 可以理解、修改、验证并交付的工程环境。  本文面向已经使用 Codex、Cursor、Claude Code 或 GitHub Copilot 的开发者。示例中的命令是模板，不代表适用于所有项目；执行前必须替换为仓库真实存在、已经人工确认过的命令。不要因为 Agent 能生成命令，就跳过读取 README、CI、构建文件和脚本。 完成本文后，目标仓库应具备一条可以重复运行的闭环： 1Bootstrap → Instruct → Equip → Isolate → Implement → Verify → Review  它不意味着 Agent 可以自动批准危险操作。Rules、Instructions 和 Skills 都不是安全边界；Sandbox、Allow&#x2F;Deny 策略、Hook、CI 和分支保护才分别承担访问限制、命令控制、确定性阻断、最终验收和合并保护职责。 1. 先定义完成状态把...</div></div></div></a><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-05</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a><a class="pagination-related" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）"><img class="cover" src="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-11</div><div class="info-item-2">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</div></div><div class="info-2"><div class="info-item-1"> 原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，以及受控的推理路由。它是免费、开源的项目，目前仍处于 alpha &#x2F; early-access preview 阶段。 OpenClaw 曾经快速成长为现象级开源项目。它让开发者能够构建可以写代码、浏览网页、调用工具，并在较长时间内持续执行任务的自治 Agent。 但企业采用 OpenClaw 时面临一个直接问题：安全护栏不足。缺少沙箱、审计链路和强隔离能力时，一个被攻击或被提示注入诱导的 Agent，可能访问整个系统。 2026 年 3 月 16 日，NVIDIA 在 GTC 2026 发布 NemoClaw。它解决的正是这个问题：在 OpenClaw 之上增加企业级隐私和安...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E7%90%86%E8%A7%A3%E5%85%AD%E7%B1%BB%E5%BA%95%E5%B1%82%E7%BA%A6%E6%9D%9F"><span class="toc-text">一、先理解六类底层约束</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%B8%8A%E4%B8%8B%E6%96%87%E9%A2%84%E7%AE%97%E4%B8%8E%E6%B8%90%E8%BF%9B%E5%BC%8F%E6%8A%AB%E9%9C%B2"><span class="toc-text">1. 上下文预算与渐进式披露</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%A1%AE%E5%AE%9A%E6%80%A7%E4%B8%8E%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B"><span class="toc-text">2. 确定性与推理能力</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%85%B1%E4%BA%AB%E4%B8%8E%E9%9A%94%E7%A6%BB"><span class="toc-text">3. 上下文共享与隔离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%9F%AD%E6%9A%82%E7%8A%B6%E6%80%81%E4%B8%8E%E6%8C%81%E4%B9%85%E7%8A%B6%E6%80%81"><span class="toc-text">4. 短暂状态与持久状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E8%A7%A6%E5%8F%91%E6%9C%BA%E5%88%B6"><span class="toc-text">5. 触发机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E7%BB%B4%E6%8A%A4%E4%B8%8E%E5%A4%8D%E7%94%A8"><span class="toc-text">6. 维护与复用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%89%93%E5%8C%85%E6%A8%A1%E5%BC%8F%EF%BC%9A%E5%86%85%E5%AE%B9%E6%80%8E%E6%A0%B7%E7%BB%84%E7%BB%87%E5%92%8C%E5%8A%A0%E8%BD%BD"><span class="toc-text">二、打包模式：内容怎样组织和加载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P1%EF%BC%9A%E5%86%85%E8%81%94-Skill%EF%BC%88Inline-Skill%EF%BC%89"><span class="toc-text">P1：内联 Skill（Inline Skill）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6"><span class="toc-text">适用条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">反模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P2%EF%BC%9ASkill-References"><span class="toc-text">P2：Skill + References</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-1"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-1"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE"><span class="toc-text">设计建议</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P3%EF%BC%9ASkill-Scripts"><span class="toc-text">P3：Skill + Scripts</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-2"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-2"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-1"><span class="toc-text">适用条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E8%BE%B9%E7%95%8C"><span class="toc-text">设计边界</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P4%EF%BC%9ASkill-Assets"><span class="toc-text">P4：Skill + Assets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-3"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-3"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-2"><span class="toc-text">适用条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P5%EF%BC%9A%E5%8F%98%E4%BD%93%E8%B7%AF%E7%94%B1%E5%99%A8%EF%BC%88Variant-Router%EF%BC%89"><span class="toc-text">P5：变体路由器（Variant Router）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-4"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-4"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-3"><span class="toc-text">适用条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9E%B6%E6%9E%84%E7%B2%92%E5%BA%A6%EF%BC%9A%E7%BB%9F%E4%B8%80-Skill-%E8%BF%98%E6%98%AF%E5%90%8C%E7%BA%A7-Skill"><span class="toc-text">三、架构粒度：统一 Skill 还是同级 Skill</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D%E4%B8%BB%E8%A6%81%E7%BB%93%E6%9E%84"><span class="toc-text">三种主要结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8E%9A%E5%8D%95%E4%BD%93%EF%BC%88Thick-Monolith%EF%BC%89"><span class="toc-text">厚单体（Thick Monolith）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%96%84%E8%B7%AF%E7%94%B1%E5%99%A8%EF%BC%88Thin-Router%EF%BC%89"><span class="toc-text">薄路由器（Thin Router）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8B%86%E5%88%86%E5%90%8C%E7%BA%A7-Skill%EF%BC%88Split-Siblings%EF%BC%89"><span class="toc-text">拆分同级 Skill（Split Siblings）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BC%96%E6%8E%92%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%BB%BB%E5%8A%A1%E6%80%8E%E6%A0%B7%E6%89%A7%E8%A1%8C"><span class="toc-text">四、编排模式：任务怎样执行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#O1%EF%BC%9A%E5%8D%95-Agent%E3%80%81%E5%8D%95%E6%AC%A1%E6%89%A7%E8%A1%8C"><span class="toc-text">O1：单 Agent、单次执行</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-5"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-5"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-4"><span class="toc-text">适用条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#O2%EF%BC%9A%E5%88%86%E9%98%B6%E6%AE%B5%E5%8D%95-Agent"><span class="toc-text">O2：分阶段单 Agent</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-6"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-6"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-5"><span class="toc-text">适用条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#O3%EF%BC%9A%E4%BA%A4%E4%BA%92%E5%BC%8F%E6%88%96%E8%AE%BF%E8%B0%88%E5%BC%8F"><span class="toc-text">O3：交互式或访谈式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-7"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-7"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E5%BB%BA%E8%AE%AE-1"><span class="toc-text">设计建议</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#O4%EF%BC%9A%E7%BC%96%E6%8E%92%E5%99%A8-Sub-agent"><span class="toc-text">O4：编排器 + Sub-agent</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-8"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-8"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-6"><span class="toc-text">适用条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#O5%EF%BC%9A%E5%B8%A6%E6%81%A2%E5%A4%8D%E8%83%BD%E5%8A%9B%E7%9A%84%E9%97%A8%E7%A6%81%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">O5：带恢复能力的门禁流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-9"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%80%E9%99%90-9"><span class="toc-text">局限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E6%9D%A1%E4%BB%B6-7"><span class="toc-text">适用条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%B0%8F%E5%8F%AF%E9%9D%A0%E6%80%A7%E8%A6%81%E6%B1%82"><span class="toc-text">最小可靠性要求</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%A8%AA%E5%88%87%E5%8E%9F%E5%88%99%EF%BC%9A%E5%8F%AF%E7%BB%84%E5%90%88%E7%9A%84%E5%8D%95%E4%B8%80%E8%81%8C%E8%B4%A3%E8%83%BD%E5%8A%9B"><span class="toc-text">五、横切原则：可组合的单一职责能力</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E6%89%93%E5%8C%85%E4%B8%8E%E7%BC%96%E6%8E%92%E7%9A%84%E7%BB%84%E5%90%88%E7%9F%A9%E9%98%B5"><span class="toc-text">六、打包与编排的组合矩阵</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%9A%84%E6%9E%B6%E6%9E%84%E5%86%B3%E7%AD%96%E6%B5%81%E7%A8%8B"><span class="toc-text">七、可执行的架构决策流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E7%A1%AE%E5%AE%9A%E4%BB%BB%E5%8A%A1%E9%9D%A2%E8%BE%B9%E7%95%8C"><span class="toc-text">第一步：确定任务面边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%87%AA%E4%B8%8A%E8%80%8C%E4%B8%8B%E9%80%89%E6%8B%A9%E7%BC%96%E6%8E%92"><span class="toc-text">第二步：自上而下选择编排</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%8B%AC%E7%AB%8B%E9%80%89%E6%8B%A9%E6%89%93%E5%8C%85"><span class="toc-text">第三步：独立选择打包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E5%AE%9A%E4%B9%89%E5%8D%87%E7%BA%A7%E8%AF%81%E6%8D%AE"><span class="toc-text">第四步：定义升级证据</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%A1%88%E4%BE%8B%E4%B8%80%EF%BC%9ADeepStream-%E5%BC%80%E5%8F%91-Skill-%E7%9A%84%E7%B2%92%E5%BA%A6%E9%80%89%E6%8B%A9"><span class="toc-text">八、案例一：DeepStream 开发 Skill 的粒度选择</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%A1%88%E4%BE%8B%E4%BA%8C%EF%BC%9ADEFT-%E9%95%BF%E6%97%B6%E6%B5%81%E7%A8%8B%E7%9A%84%E5%8D%95-Agent-%E4%B8%8E-Sub-agent-%E5%8F%96%E8%88%8D"><span class="toc-text">九、案例二：DEFT 长时流程的单 Agent 与 Sub-agent 取舍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E5%B8%B8%E8%A7%81%E5%8F%8D%E6%A8%A1%E5%BC%8F%E4%B8%8E%E4%BF%AE%E6%AD%A3%E6%96%B9%E6%B3%95"><span class="toc-text">十、常见反模式与修正方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-1%EF%BC%9A%E6%8C%89%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95%E6%8B%86-Skill"><span class="toc-text">反模式 1：按文档目录拆 Skill</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-2%EF%BC%9A%E4%BE%9D%E8%B5%96%E8%B7%A8-Skill-%E5%BC%95%E7%94%A8"><span class="toc-text">反模式 2：依赖跨 Skill 引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-3%EF%BC%9A%E6%8A%8A%E8%96%84%E8%B7%AF%E7%94%B1%E5%99%A8%E5%81%9A%E6%88%90%E7%A9%BA%E8%B7%AF%E7%94%B1%E5%99%A8"><span class="toc-text">反模式 3：把薄路由器做成空路由器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-4%EF%BC%9A%E8%84%9A%E6%9C%AC%E5%90%9E%E6%8E%89%E5%88%A4%E6%96%AD%E9%80%BB%E8%BE%91"><span class="toc-text">反模式 4：脚本吞掉判断逻辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-5%EF%BC%9A%E5%A4%8D%E6%9D%82%E4%BB%BB%E5%8A%A1%E9%BB%98%E8%AE%A4%E5%A4%9A-Agent"><span class="toc-text">反模式 5：复杂任务默认多 Agent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F-6%EF%BC%9A%E6%8C%81%E4%B9%85%E5%8C%96%E4%BA%86%E7%8A%B6%E6%80%81%EF%BC%8C%E5%8D%B4%E6%B2%A1%E6%9C%89%E6%81%A2%E5%A4%8D%E5%8D%8F%E8%AE%AE"><span class="toc-text">反模式 6：持久化了状态，却没有恢复协议</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%80%8E%E6%A0%B7%E8%AF%84%E4%BC%B0-Skill-%E6%9E%B6%E6%9E%84"><span class="toc-text">十一、怎样评估 Skill 架构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%A7%A6%E5%8F%91%E8%B4%A8%E9%87%8F"><span class="toc-text">1. 触发质量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%B5%81%E7%A8%8B%E9%81%B5%E5%BE%AA"><span class="toc-text">2. 流程遵循</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%BB%93%E6%9E%9C%E8%B4%A8%E9%87%8F"><span class="toc-text">3. 结果质量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%88%90%E6%9C%AC%E4%B8%8E%E6%80%A7%E8%83%BD"><span class="toc-text">4. 成本与性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E9%9F%A7%E6%80%A7"><span class="toc-text">5. 韧性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E7%94%9F%E4%BA%A7%E8%90%BD%E5%9C%B0%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">十二、生产落地检查清单</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%B9%E7%95%8C"><span class="toc-text">边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E5%8C%85"><span class="toc-text">打包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E6%8E%92"><span class="toc-text">编排</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81"><span class="toc-text">验证</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

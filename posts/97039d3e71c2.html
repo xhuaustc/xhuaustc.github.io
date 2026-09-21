@@ -1,0 +1,502 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>NVIDIA NemoClaw：工作原理、使用场景与特性（翻译） | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）">
+<meta property="og:url" content="https://xhua.eu.org/posts/97039d3e71c2.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg">
+<meta property="article:published_time" content="2026-05-11T02:07:39.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.693Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Agent安全">
+<meta property="article:tag" content="NVIDIA">
+<meta property="article:tag" content="NemoClaw">
+<meta property="article:tag" content="OpenClaw">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）",
+  "url": "https://xhua.eu.org/posts/97039d3e71c2.html",
+  "image": "https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg",
+  "datePublished": "2026-05-11T02:07:39.000Z",
+  "dateModified": "2026-09-21T08:31:54.693Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/97039d3e71c2.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-11T02:07:39.000Z" title="发表于 2026-05-11 10:07:39">2026-05-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.693Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
+<p>原文：<a target="_blank" rel="noopener" href="https://www.secondtalent.com/resources/nvidia-nemoclaw/">NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]</a><br>本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。</p>
+</blockquote>
+<h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，以及受控的推理路由。它是免费、开源的项目，目前仍处于 alpha &#x2F; early-access preview 阶段。</p>
+<p>OpenClaw 曾经快速成长为现象级开源项目。它让开发者能够构建可以写代码、浏览网页、调用工具，并在较长时间内持续执行任务的自治 Agent。</p>
+<p>但企业采用 OpenClaw 时面临一个直接问题：安全护栏不足。缺少沙箱、审计链路和强隔离能力时，一个被攻击或被提示注入诱导的 Agent，可能访问整个系统。</p>
+<p>2026 年 3 月 16 日，NVIDIA 在 GTC 2026 发布 NemoClaw。它解决的正是这个问题：在 OpenClaw 之上增加企业级隐私和安全控制。NemoClaw 不是 OpenClaw 的替代品，而是一个让自治 Agent 更适合生产环境的安全封装层。</p>
+<p>NVIDIA CEO Jensen Huang 曾表示：“OpenClaw opened the next frontier of AI to everyone.” 如果说 OpenClaw 打开了 AI Agent 的新边界，那么 NemoClaw 的目标就是让这个边界对企业更安全。</p>
+<blockquote>
+<p>译者注：NVIDIA 官方文档明确说明 NemoClaw 目前是 alpha 软件，预计后续版本会有破坏性变更，不建议直接用于生产环境。</p>
+</blockquote>
+<h2 id="NemoClaw-一览"><a href="#NemoClaw-一览" class="headerlink" title="NemoClaw 一览"></a>NemoClaw 一览</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>发布时间</td>
+<td>2026 年 3 月 16 日，GTC 2026</td>
+</tr>
+<tr>
+<td>许可证</td>
+<td>Apache 2.0，免费开源</td>
+</tr>
+<tr>
+<td>状态</td>
+<td>Alpha &#x2F; early-access preview</td>
+</tr>
+<tr>
+<td>默认模型</td>
+<td>Nemotron 3 Super 120B，12B active parameters</td>
+</tr>
+<tr>
+<td>安全能力</td>
+<td>四层隔离：网络、文件系统、进程、推理</td>
+</tr>
+<tr>
+<td>安装方式</td>
+<td>单命令安装</td>
+</tr>
+<tr>
+<td>最低硬件</td>
+<td>4+ vCPU，8 GB RAM</td>
+</tr>
+<tr>
+<td>操作系统</td>
+<td>Ubuntu 22.04 LTS 或更新版本</td>
+</tr>
+</tbody></table>
+<h2 id="什么是-NVIDIA-NemoClaw"><a href="#什么是-NVIDIA-NemoClaw" class="headerlink" title="什么是 NVIDIA NemoClaw"></a>什么是 NVIDIA NemoClaw</h2><p>NemoClaw 是构建在 OpenClaw 之上的开源软件栈。它为企业在生产环境部署自治 Agent 增加了必要的安全基础设施。</p>
+<p>可以把它类比成浏览器标签页隔离。每个标签页运行在自己的沙箱中，如果其中一个标签页被攻破，它不能直接影响其他标签页。NemoClaw 对 AI Agent 做了类似的事情。</p>
+<p>通过一条命令，NemoClaw 可以安装 NVIDIA Nemotron 模型和 NVIDIA OpenShell runtime，创建一个用于运行 “claws” 的沙箱环境。这里的 “claws” 是 OpenClaw 对自治 Agent 的称呼。</p>
+<p>OpenClaw 创建者 Peter Steinberger 曾表示：“We’re building the claws and guardrails that let anyone create powerful, secure AI assistants.” 也就是说，OpenClaw 提供 Agent 能力，而 NemoClaw 和 OpenShell 进一步提供安全边界。</p>
+<h3 id="OpenClaw-的简要历史"><a href="#OpenClaw-的简要历史" class="headerlink" title="OpenClaw 的简要历史"></a>OpenClaw 的简要历史</h3><p>理解 NemoClaw 之前，需要先理解 OpenClaw。原文称，奥地利开发者 Peter Steinberger 在 2025 年 11 月发布了最初项目，项目曾经历多次命名和快速传播，并在 2026 年初成为开发者社区关注的自治 Agent 项目。</p>
+<p>OpenClaw Agent 是一种持久运行、能够使用工具的程序。它们可以写代码、浏览网页、操作文件、调用 API，并把多个动作串联起来执行。它们可以运行数小时甚至数天而不需要人类持续输入。</p>
+<p>这种能力带来了效率，也带来了企业安全顾虑。NemoClaw 就是对这种顾虑的回应。</p>
+<h2 id="NemoClaw-如何工作"><a href="#NemoClaw-如何工作" class="headerlink" title="NemoClaw 如何工作"></a>NemoClaw 如何工作</h2><p>NemoClaw 主要由两个部分组成：一个 TypeScript plugin 和一个 Python blueprint。二者配合工作，但职责不同。</p>
+<h3 id="TypeScript-Plugin"><a href="#TypeScript-Plugin" class="headerlink" title="TypeScript Plugin"></a>TypeScript Plugin</h3><p>TypeScript plugin 是一个轻量级 CLI package。它集成到 OpenClaw CLI 中，并在 <code>openclaw nemoclaw</code> 命名空间下注册命令。它与 OpenClaw gateway 在同一进程中运行，负责面向用户的交互。</p>
+<p>常见命令包括：</p>
+<ul>
+<li><code>launch</code>：全新安装。</li>
+<li><code>connect</code>：进入交互式 shell。</li>
+<li><code>status</code>：查看状态报告。</li>
+<li><code>logs</code>：查看或流式输出日志。</li>
+<li><code>slash</code>：处理聊天中的 slash command。</li>
+</ul>
+<h3 id="Python-Blueprint"><a href="#Python-Blueprint" class="headerlink" title="Python Blueprint"></a>Python Blueprint</h3><p>真正的安全逻辑主要位于 Python blueprint 中。它是一个带版本的 artifact，包含创建沙箱、应用策略、配置推理路由等逻辑。TypeScript plugin 会解析、验证并以子进程方式执行 blueprint。</p>
+<p>这种分离设计很实用：plugin 可以保持稳定，而 blueprint 可以按照自己的发布节奏演进。安全补丁可以在不修改 CLI 的情况下发布。</p>
+<h3 id="Blueprint-生命周期"><a href="#Blueprint-生命周期" class="headerlink" title="Blueprint 生命周期"></a>Blueprint 生命周期</h3><p>每个 NemoClaw 部署通常经历五个阶段：</p>
+<ol>
+<li><strong>Resolve</strong>：定位 artifact，并根据 <code>blueprint.yaml</code> 中的版本约束进行校验。</li>
+<li><strong>Verify</strong>：确认 artifact digest。每个 artifact 都是不可变且经过 digest 校验的。</li>
+<li><strong>Plan</strong>：确定需要哪些 OpenShell 资源，例如 gateway、inference、sandbox 和 policy。</li>
+<li><strong>Apply</strong>：通过 <code>openshell</code> CLI 命令执行计划。</li>
+<li><strong>Status</strong>：报告当前部署状态。</li>
+</ol>
+<h3 id="推理路由"><a href="#推理路由" class="headerlink" title="推理路由"></a>推理路由</h3><p>Agent 请求不会直接离开沙箱。典型路径是：沙箱内 Agent 先访问 OpenShell gateway，再由 gateway 转发到 NVIDIA cloud，也就是 <code>build.nvidia.com</code>。这样可以让敏感数据留在受控边界内。</p>
+<p>NemoClaw 还包含 privacy router。它可以使用本地开源模型在设备上处理敏感上下文，只有在策略允许时才把请求路由到 Claude、GPT 等 frontier model。路由决策基于成本和隐私策略，而不是 Agent 自己的偏好。</p>
+<h2 id="四层安全隔离"><a href="#四层安全隔离" class="headerlink" title="四层安全隔离"></a>四层安全隔离</h2><p>这是 NemoClaw 与直接运行 OpenClaw 的关键区别。NemoClaw 通过四层隔离保护系统。</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>作用</th>
+<th>是否可在运行时修改</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Network</td>
+<td>阻止未授权的出站连接，使用 allowlist 控制访问</td>
+<td>是，支持 hot reload</td>
+</tr>
+<tr>
+<td>Filesystem</td>
+<td>限制 <code>/sandbox</code> 和 <code>/tmp</code> 之外的访问，系统路径只读</td>
+<td>否，创建后锁定</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>阻止权限提升和危险 syscall，使用 Landlock、seccomp 和 netns</td>
+<td>否，创建后锁定</td>
+</tr>
+<tr>
+<td>Inference</td>
+<td>将 API 调用重新路由到受控后端</td>
+<td>是，支持 hot reload</td>
+</tr>
+</tbody></table>
+<p>这些约束存在于运行环境本身，而不是 Agent 的应用逻辑中。即使 Agent 被攻破，它也不能覆盖这些限制。Agent 不控制自己的沙箱，operator 才控制沙箱。</p>
+<h2 id="核心特性"><a href="#核心特性" class="headerlink" title="核心特性"></a>核心特性</h2><h3 id="默认零权限"><a href="#默认零权限" class="headerlink" title="默认零权限"></a>默认零权限</h3><p>Agent 启动时没有任何权限。只有策略明确允许的能力才会被授予。这与许多工具的默认模型相反：很多系统让 Agent 一开始拥有较大权限，然后再尝试限制它。</p>
+<p>默认零权限的好处是风险更可控。没有写入权限、没有网络访问、没有凭据注入，就意味着 Agent 不能越过策略边界去执行危险动作。</p>
+<h3 id="Operator-Approval-TUI"><a href="#Operator-Approval-TUI" class="headerlink" title="Operator Approval TUI"></a>Operator Approval TUI</h3><p>当 Agent 尝试访问未列入 allowlist 的主机时，OpenShell 会阻止该请求，并在终端 UI 中展示给人工审批。operator 可以看到 Agent 想访问什么，然后决定批准或拒绝。</p>
+<p>这让网络访问从“隐式发生”变成“显式审批”，尤其适合金融、医疗、企业内网等对出站访问敏感的环境。</p>
+<h3 id="凭据管理"><a href="#凭据管理" class="headerlink" title="凭据管理"></a>凭据管理</h3><p>API key、token 和 service account 会在运行时以环境变量方式注入。它们不会泄漏到沙箱文件系统中。即使沙箱被攻破，凭据也不会以普通文件形式暴露。</p>
+<h3 id="完整审计链路"><a href="#完整审计链路" class="headerlink" title="完整审计链路"></a>完整审计链路</h3><p>每一次 allow &#x2F; deny 决策都会被记录。对金融、医疗等强合规行业来说，这不是锦上添花，而是上线前的基本要求。</p>
+<h3 id="GPU-Passthrough"><a href="#GPU-Passthrough" class="headerlink" title="GPU Passthrough"></a>GPU Passthrough</h3><p>OpenShell 可以把宿主机 GPU 透传到沙箱中。这样 Agent 可以在安全环境里运行本地推理或微调任务，而不必把数据发送到云端。</p>
+<h3 id="Policy-as-Code"><a href="#Policy-as-Code" class="headerlink" title="Policy as Code"></a>Policy as Code</h3><p>安全策略以声明式 YAML 编写，例如 <code>openclaw-sandbox.yaml</code>。这些策略可以被版本化、审查和审计。换句话说，安全策略可以像基础设施一样以代码方式管理。</p>
+<h3 id="进程外强制执行"><a href="#进程外强制执行" class="headerlink" title="进程外强制执行"></a>进程外强制执行</h3><p>这是最重要的设计点。安全约束存在于 Agent 进程之外。Agent 无法关闭自己的护栏。</p>
+<p>如果把权限控制放在应用层，Agent 可能被提示注入或恶意工具诱导，最终绕过限制。但在进程外强制执行模型下，Agent 没有什么可以“说服”的对象。隔离边界属于运行环境，不属于 Agent 自身。</p>
+<h2 id="NemoClaw、OpenClaw-与-NanoClaw-对比"><a href="#NemoClaw、OpenClaw-与-NanoClaw-对比" class="headerlink" title="NemoClaw、OpenClaw 与 NanoClaw 对比"></a>NemoClaw、OpenClaw 与 NanoClaw 对比</h2><p>现在同一类理念下存在三种不同形态，它们面向不同人群。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>OpenClaw</th>
+<th>NanoClaw</th>
+<th>NemoClaw</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>代码规模</td>
+<td>约 500K 行，70+ 依赖</td>
+<td>核心逻辑约 500 行</td>
+<td>OpenClaw 的企业级封装</td>
+</tr>
+<tr>
+<td>安全模型</td>
+<td>应用层安全，例如 API whitelist</td>
+<td>OS 层安全，例如 Docker &#x2F; Apple Container</td>
+<td>内核级沙箱和合规能力</td>
+</tr>
+<tr>
+<td>集成能力</td>
+<td>50+ 原生集成</td>
+<td>主要集成核心消息应用</td>
+<td>正在发展的企业集成套件</td>
+</tr>
+<tr>
+<td>LLM 支持</td>
+<td>多供应商，包括 OpenAI、Anthropic、本地模型</td>
+<td>针对 Claude 优化</td>
+<td>供应商灵活，针对 Nemotron 优化</td>
+</tr>
+<tr>
+<td>目标用户</td>
+<td>平台工程团队</td>
+<td>希望保持简单的开发者</td>
+<td>重视安全的企业</td>
+</tr>
+</tbody></table>
+<p>原文举了一个例子：某创业公司曾使用原始 OpenClaw 运行三个负责代码部署的自治 Agent，其中一个 Agent 意外在没有评审的情况下推送到生产环境。使用 NemoClaw 的默认零权限和审批 TUI 后，这类行为会被策略阻止。</p>
+<h2 id="Nemotron-3-Super-120B-模型"><a href="#Nemotron-3-Super-120B-模型" class="headerlink" title="Nemotron 3 Super 120B 模型"></a>Nemotron 3 Super 120B 模型</h2><p>NemoClaw 默认使用 Nemotron 3 Super 120B。它不是普通的大语言模型，而是面向 agentic workload 设计的模型。</p>
+<p>它采用混合架构：Mamba-Transformer MoE，也就是 Mixture of Experts。模型总参数量为 120B，但任意时刻只激活 12B 参数，因此在推理效率上更有优势。</p>
+<p>根据 NVIDIA 技术博客和模型说明，Nemotron 3 Super 120B 面向 agentic reasoning 场景，在 PinchBench 等评测中表现突出，支持最长 1M tokens 上下文窗口，并针对高吞吐推理做了优化。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>Nemotron 3 Super 120B</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PinchBench</td>
+<td>85.6%</td>
+<td>面向 Agent 推理的评测</td>
+</tr>
+<tr>
+<td>Terminal-Bench Hard</td>
+<td>29%</td>
+<td>复杂终端任务</td>
+</tr>
+<tr>
+<td>GDPval-AA ELO</td>
+<td>1,027</td>
+<td>真实世界 Agent 工作任务</td>
+</tr>
+<tr>
+<td>DeepResearch Bench</td>
+<td>No. 1</td>
+<td>大文档多步研究</td>
+</tr>
+<tr>
+<td>Tokens per second</td>
+<td>442</td>
+<td>面向 Agent workload 的高吞吐</td>
+</tr>
+<tr>
+<td>最大上下文窗口</td>
+<td>1M tokens</td>
+<td>在长上下文任务中具备优势</td>
+</tr>
+</tbody></table>
+<p>关键点在于 active parameter count。模型总量是 120B，但任意时刻只激活 12B 参数。这意味着企业在同时运行多个 Agent 时，可以在推理质量和计算成本之间取得更好的平衡。</p>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><h3 id="自治软件开发"><a href="#自治软件开发" class="headerlink" title="自治软件开发"></a>自治软件开发</h3><p>这是 NemoClaw 最核心的使用场景：让 Agent 编写、测试和部署代码，但在安全边界内执行。沙箱可以阻止 Agent 访问生产数据库，或在没有审批的情况下推送代码。</p>
+<p>原文提到，一个团队使用后端开发 Agent 生成 API endpoint。引入 NemoClaw 之前，他们必须手动审查 Agent 触碰的每个文件；之后，文件系统隔离可以自动限制 Agent 的可访问范围。</p>
+<h3 id="网络安全分诊"><a href="#网络安全分诊" class="headerlink" title="网络安全分诊"></a>网络安全分诊</h3><p>安全团队可以部署能够分析威胁并在护栏内自主响应的 Agent。Agent 可以调查问题，并在定义好的边界内采取行动，但不能自行提升权限。</p>
+<p>原文还提到 Cisco 已宣布将 OpenShell 与其 AI Defense 平台集成。这意味着企业可以把 Agent 安全策略接入现有安全基础设施，而不是另起一套。</p>
+<h3 id="企业工作流自动化"><a href="#企业工作流自动化" class="headerlink" title="企业工作流自动化"></a>企业工作流自动化</h3><p>Adobe、Salesforce、SAP、Cisco 这类公司在大规模部署 Agent 前，需要经过加固的框架。NemoClaw 提供了这类合规层：审计日志、策略执行和凭据隔离。</p>
+<p>这类能力的价值不在于让 Agent 做更多事，而在于让企业能够明确回答：“Agent 能做什么、不能做什么、做过什么、谁批准了什么。”</p>
+<h3 id="多-Agent-编排"><a href="#多-Agent-编排" class="headerlink" title="多 Agent 编排"></a>多 Agent 编排</h3><p>多个专业 Agent 可以分别运行在隔离环境中。每个 Agent 有自己的沙箱、策略和权限。一个 Agent 被攻破，不应该影响其他 Agent。</p>
+<p>这在多角色 Agent 系统中尤其重要。写代码的 Agent 不应该访问客户数据；数据分析 Agent 不应该推送生产代码。NemoClaw 让这些边界成为可执行约束，而不是 Agent 可以忽略的口头规则。</p>
+<h3 id="个人-AI-助手"><a href="#个人-AI-助手" class="headerlink" title="个人 AI 助手"></a>个人 AI 助手</h3><p>长期运行的个人 Agent 可能访问文件、应用和工作流。privacy router 可以让敏感数据留在本地，只把非敏感请求发送到云端模型。</p>
+<p>原文提到，一个越南开发团队为 SaaS 创始人构建个人助手 Agent，用于管理日历、邮件和 Slack。privacy router 让个人数据留在本地，只有一般知识类请求进入云端模型。</p>
+<h2 id="硬件要求"><a href="#硬件要求" class="headerlink" title="硬件要求"></a>硬件要求</h2><table>
+<thead>
+<tr>
+<th>要求</th>
+<th>最低配置</th>
+<th>推荐配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CPU</td>
+<td>4+ vCPU</td>
+<td>8+ vCPU</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>8 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>Disk</td>
+<td>20 GB</td>
+<td>40 GB</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Ubuntu 22.04 LTS</td>
+<td>Ubuntu 22.04 LTS 或更新版本</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td>Node.js 20+、npm 10+、Docker</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>Sandbox image</td>
+<td>约 2.4 GB compressed</td>
+<td>约 2.4 GB compressed</td>
+</tr>
+</tbody></table>
+<p>在专用硬件方面，原文称 Dell 是首个推出面向 NemoClaw 桌面设备的 OEM。Dell Pro Max with NVIDIA GB300 Grace Blackwell Ultra Desktop Superchip 提供 20 petaFLOPS FP4 性能和 748 GB coherent memory，但价格尚未公布。</p>
+<p>也可以通过 Brev 这类 NVIDIA 云开发环境快速试用 NemoClaw，而不必先配置本地环境。</p>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><p>NemoClaw 需要 Ubuntu 22.04 LTS 或更新版本、Node.js 20+、npm 10+ 和 Docker。最低硬件要求是 4 vCPU 和 8 GB RAM，推荐 16 GB RAM 和 40 GB 磁盘空间。</p>
+<p>安装命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -fsSL https://nvidia.com/nemoclaw.sh | bash</span><br></pre></td></tr></table></figure>
+
+<p>然后运行初始化向导：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nemoclaw onboard</span><br></pre></td></tr></table></figure>
+
+<p>完成设置后的常用命令包括：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">nemoclaw &lt;name&gt; connect</span><br><span class="line">nemoclaw &lt;name&gt; status</span><br><span class="line">nemoclaw &lt;name&gt; logs --follow</span><br><span class="line">openshell term</span><br></pre></td></tr></table></figure>
+
+<p>这些命令分别用于进入沙箱 shell、查看健康状态、流式查看日志，以及监控和审批访问请求。</p>
+<p>使用 NVIDIA 云端推理时，需要来自 <code>build.nvidia.com</code> 的 NVIDIA API key。沙箱镜像约为 2.4 GB compressed。</p>
+<blockquote>
+<p>译者注：由于 NemoClaw 仍处于 alpha 阶段，实际安装命令、依赖版本和 CLI 名称可能随版本变化。正式使用前应以 NVIDIA 官方文档为准。</p>
+</blockquote>
+<h2 id="NemoClaw-在-NVIDIA-生态中的位置"><a href="#NemoClaw-在-NVIDIA-生态中的位置" class="headerlink" title="NemoClaw 在 NVIDIA 生态中的位置"></a>NemoClaw 在 NVIDIA 生态中的位置</h2><p>NVIDIA 正在构建面向 agentic AI 的完整栈，NemoClaw 是其中一部分。</p>
+<ul>
+<li><strong>NVIDIA NeMo</strong>：模型训练和定制平台。</li>
+<li><strong>NVIDIA Nemotron</strong>：基础模型，也就是 Agent 的“脑”。</li>
+<li><strong>NVIDIA OpenShell</strong>：安全运行时，也就是隔离墙。</li>
+<li><strong>NVIDIA Agent Toolkit</strong>：面向 Agent 性能的优化工具。</li>
+<li><strong>NVIDIA AI-Q</strong>：推理 Agent 构建工具。</li>
+</ul>
+<p>NemoClaw 不强绑定硬件，但针对 NVIDIA GPU 做了优化。GeForce RTX、RTX PRO、DGX Spark 和 DGX Station 都能获得更好的集成体验。如果你使用 NVIDIA 硬件，NemoClaw 可以原生集成；如果不是，也可以运行，只是无法获得 GPU passthrough 等优化。</p>
+<h2 id="需要关注的问题"><a href="#需要关注的问题" class="headerlink" title="需要关注的问题"></a>需要关注的问题</h2><p>NemoClaw 仍处于 alpha 阶段。NVIDIA 官方文档也提示，后续版本可能出现破坏性变化。但方向已经很清楚：自治 Agent 需要安全基础设施，而不仅仅是应用层 guardrails。</p>
+<p>需要持续关注的点包括：</p>
+<ul>
+<li><strong>生产可用性</strong>：NemoClaw 需要从 alpha 走向稳定版，当前没有明确稳定版时间表。</li>
+<li><strong>NVIDIA 云端推理定价</strong>：通过 <code>build.nvidia.com</code> 使用 Nemotron API 的具体价格仍需关注。</li>
+<li><strong>Windows 和 macOS 支持</strong>：当前主要面向 Ubuntu，这会限制部分开发者采用。</li>
+<li><strong>社区增长</strong>：企业采用很大程度取决于开源社区和生态集成的持续发展。</li>
+</ul>
+<p>原文提到，一家新加坡 fintech 公司已经试点 NemoClaw 做自动化代码审查 Agent，审计链路是其合规团队批准试点的重要原因。</p>
+<h2 id="你应该使用-NemoClaw-吗"><a href="#你应该使用-NemoClaw-吗" class="headerlink" title="你应该使用 NemoClaw 吗"></a>你应该使用 NemoClaw 吗</h2><p>如果你已经在使用 OpenClaw，NemoClaw 是生产化路线中值得关注的下一步。它在不显著改变 Agent 工作方式的前提下，增加了安全边界。</p>
+<p>如果你第一次评估自治 Agent，也可以直接从 NemoClaw 开始，而不是经历“先给 Agent 无限权限，再想办法收紧权限”的阶段。</p>
+<p>如果你的行业受到合规约束，NemoClaw 的审计链路和 policy-as-code 模型会让合规沟通更容易。</p>
+<p>GTC 2026 的 “Build-a-Claw” 活动展示了上手流程：参与者定义 Agent 的人格特征、授予特定工具访问权限，并部署可通过消息应用访问的功能型助手。所有这些都运行在 NemoClaw 安全框架内。</p>
+<p>如果你的团队正在使用自治 Agent，或计划引入这类系统，NemoClaw 值得认真研究。Agent 能力与企业可接受风险之间的缺口，是 agentic AI 落地的主要瓶颈之一。NemoClaw 的目标就是缩小这个缺口。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/nemoclaw/latest/">NVIDIA NemoClaw Developer Guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/nemoclaw/latest/about/overview.html">NVIDIA NemoClaw Overview</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.nvidia.com/nemoclaw/latest/get-started/quickstart.html">NemoClaw Quickstart with OpenClaw</a></li>
+<li><a target="_blank" rel="noopener" href="https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw">NVIDIA Announces NemoClaw for the OpenClaw Community</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.nvidia.com/blog/introducing-nemotron-3-super-an-open-hybrid-mamba-transformer-moe-for-agentic-reasoning/">Introducing Nemotron 3 Super</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.secondtalent.com/resources/nvidia-nemoclaw/">原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/97039d3e71c2.html">https://xhua.eu.org/posts/97039d3e71c2.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ai-agent/">AI Agent</a><a class="post-meta__tags" href="/tags/nvidia/">NVIDIA</a><a class="post-meta__tags" href="/tags/nemoclaw/">NemoClaw</a><a class="post-meta__tags" href="/tags/openclaw/">OpenClaw</a><a class="post-meta__tags" href="/tags/agent%E5%AE%89%E5%85%A8/">Agent安全</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/0f93fc59cf48.html" title="AI Coding Assistant Best Practices：从提示词到可验证工程闭环"><img class="cover" src="https://img.xhua.eu.org/928ef0bff30551855a2dddc0575dd9add40f3efd495c93b089919134a13a21bc.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">AI Coding Assistant Best Practices：从提示词到可验证工程闭环</div></div><div class="info-2"><div class="info-item-1">1. 引言：可信交付，而不是生成速度AI Coding Assistant 的价值不在于一次输出多少行代码，而在于能否持续交付可理解、可测试、可回滚、可审查的变更。对于中高级开发者，真正昂贵的不是少写几十行代码，而是错误设计进入主干、验证不足导致缺陷逃逸，或者一个拥有过大权限的 Agent 修改了不该修改的系统。 因此，本文把 AI 编程助手放进软件工程的完整约束中：人负责目标、边界和风险判断，Agent 负责探索、实现和机械化执行，工具负责提供确定性的反馈，代码审查负责最终的责任确认。这个闭环适用于使用 Codex、Cursor、Claude Code 或 GitHub Copilot 的个人开发者，也适用于需要统一规范的工程团队。 本文的目标不是比较哪个产品“最强”，而是回答五个问题：  如何准备一个 Agent 真正能工作的仓库环境？ 如何把模糊需求变成可执行、可验收的任务？ 如何让每次修改都经过可重复的验证？ 如何管理上下文，让长期任务可以可靠交接？ 如何在提高效率的同时控制提示注入、权限和责任风险？  2. 心智模型：低上下文、高执行力2.1 Agent 不是读心者现代...</div></div></div></a><a class="pagination-related" href="/posts/4710faf0c3d1.html" title="Agent 工具工程化方法"><img class="cover" src="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Agent 工具工程化方法</div></div><div class="info-2"><div class="info-item-1">引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani/agent-skills 是 Addy Osmani 开源的一套面向 AI coding agent 的工程技能库。项目把软件研发过程拆成 DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP 等阶段，并提供 20 个左右的 Skill、多个专家 Persona、slash command、检查清单和会话 Hook，用来约束 Agent 在需求澄清、任务拆解、增量实现、测试验证、代码审查和发布前检查中的行为。 这个项目给了一个更工程化的答案：把复杂任务拆成可触发、可执行、可验证、可复用的 Agent Skill。它不是知识库，也不是提示词合集，而是一套面向 AI coding agent 的工作流系统：用 Skill 描述“怎么做”，用 Co...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-05</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a><a class="pagination-related" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test"><img class="cover" src="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-11</div><div class="info-item-2">Agent evaluation 入门：理解 dev、validation 与 held-out test</div></div><div class="info-2"><div class="info-item-1">你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同职责。本文围绕一个资料整理 Agent，解释 dev、validation 和 held-out test，并给出可以从小规模开始的评估流程。内容与具体框架、模型版本无关，不涉及模型训练代码。   先统一术语：本文的 dev 指什么本文约定：dev 用来调试和改进，validation 用来比较与选择版本，held-out test 用来检验最终版本在未参与开发的任务上的表现。 这个命名并不是统一标准。在一些机器学习和 NLP 文献中，development set（dev set）就是 validation set 的别名，常见划分是 train &#x2F; dev &#x2F; t...</div></div></div></a><a class="pagination-related" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南"><img class="cover" src="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-01</div><div class="info-item-2">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</div></div><div class="info-2"><div class="info-item-1">当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败后恢复？  这些问题可以归纳为两个相互正交的架构维度：  打包（Packaging）：Skill 内部怎样组织，以及内容何时进入上下文。 编排（Orchestration）：任务怎样分阶段、拆分、并行和恢复。  生产级 Skill 往往是某种特定的“打包 × 编排”组合。本文给出一套可落地的模式语言和决策框架，帮助 Skill 作者从约束出发选择架构，而不是默认追求复杂设计。  核心原则：采用最简单的可行模式，只有明确约束出现时才升级复杂度。  一、先理解六类底层约束架构模式不是模板集合，而是对技术约束的不同解法。只有先理解约束，后面的优缺点才具有决策价值。 1. 上下文预算与渐进式披露...</div></div></div></a><a class="pagination-related" href="/posts/4710faf0c3d1.html" title="Agent 工具工程化方法"><img class="cover" src="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-26</div><div class="info-item-2">Agent 工具工程化方法</div></div><div class="info-2"><div class="info-item-1">引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani/agent-skills 是 Addy Osmani 开源的一套面向 AI coding agent 的工程技能库。项目把软件研发过程拆成 DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP 等阶段，并提供 20 个左右的 Skill、多个专家 Persona、slash command、检查清单和会话 Hook，用来约束 Agent 在需求澄清、任务拆解、增量实现、测试验证、代码审查和发布前检查中的行为。 这个项目给了一个更工程化的答案：把复杂任务拆成可触发、可执行、可验证、可复用的 Agent Skill。它不是知识库，也不是提示词合集，而是一套面向 AI coding agent 的工作流系统：用 Skill 描述“怎么做”，用 Co...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text">摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NemoClaw-%E4%B8%80%E8%A7%88"><span class="toc-text">NemoClaw 一览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-NVIDIA-NemoClaw"><span class="toc-text">什么是 NVIDIA NemoClaw</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#OpenClaw-%E7%9A%84%E7%AE%80%E8%A6%81%E5%8E%86%E5%8F%B2"><span class="toc-text">OpenClaw 的简要历史</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NemoClaw-%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C"><span class="toc-text">NemoClaw 如何工作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TypeScript-Plugin"><span class="toc-text">TypeScript Plugin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Python-Blueprint"><span class="toc-text">Python Blueprint</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Blueprint-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">Blueprint 生命周期</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A8%E7%90%86%E8%B7%AF%E7%94%B1"><span class="toc-text">推理路由</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E5%B1%82%E5%AE%89%E5%85%A8%E9%9A%94%E7%A6%BB"><span class="toc-text">四层安全隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="toc-text">核心特性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E9%9B%B6%E6%9D%83%E9%99%90"><span class="toc-text">默认零权限</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Operator-Approval-TUI"><span class="toc-text">Operator Approval TUI</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%AD%E6%8D%AE%E7%AE%A1%E7%90%86"><span class="toc-text">凭据管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E5%AE%A1%E8%AE%A1%E9%93%BE%E8%B7%AF"><span class="toc-text">完整审计链路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GPU-Passthrough"><span class="toc-text">GPU Passthrough</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Policy-as-Code"><span class="toc-text">Policy as Code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E5%A4%96%E5%BC%BA%E5%88%B6%E6%89%A7%E8%A1%8C"><span class="toc-text">进程外强制执行</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NemoClaw%E3%80%81OpenClaw-%E4%B8%8E-NanoClaw-%E5%AF%B9%E6%AF%94"><span class="toc-text">NemoClaw、OpenClaw 与 NanoClaw 对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nemotron-3-Super-120B-%E6%A8%A1%E5%9E%8B"><span class="toc-text">Nemotron 3 Super 120B 模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">使用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E6%B2%BB%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91"><span class="toc-text">自治软件开发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%88%86%E8%AF%8A"><span class="toc-text">网络安全分诊</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%B7%A5%E4%BD%9C%E6%B5%81%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="toc-text">企业工作流自动化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A-Agent-%E7%BC%96%E6%8E%92"><span class="toc-text">多 Agent 编排</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%AA%E4%BA%BA-AI-%E5%8A%A9%E6%89%8B"><span class="toc-text">个人 AI 助手</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AC%E4%BB%B6%E8%A6%81%E6%B1%82"><span class="toc-text">硬件要求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B"><span class="toc-text">快速开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NemoClaw-%E5%9C%A8-NVIDIA-%E7%94%9F%E6%80%81%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="toc-text">NemoClaw 在 NVIDIA 生态中的位置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9C%80%E8%A6%81%E5%85%B3%E6%B3%A8%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">需要关注的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%A0%E5%BA%94%E8%AF%A5%E4%BD%BF%E7%94%A8-NemoClaw-%E5%90%97"><span class="toc-text">你应该使用 NemoClaw 吗</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

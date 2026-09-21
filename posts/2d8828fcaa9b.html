@@ -1,0 +1,364 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent evaluation 入门：理解 dev、validation 与 held-out test | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent evaluation 入门：理解 dev、validation 与 held-out test">
+<meta property="og:url" content="https://xhua.eu.org/posts/2d8828fcaa9b.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。 这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。 要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg">
+<meta property="article:published_time" content="2026-09-11T09:33:13.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.692Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Agent Skills">
+<meta property="article:tag" content="Evaluation">
+<meta property="article:tag" content="数据集划分">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent evaluation 入门：理解 dev、validation 与 held-out test",
+  "url": "https://xhua.eu.org/posts/2d8828fcaa9b.html",
+  "image": "https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg",
+  "datePublished": "2026-09-11T09:33:13.000Z",
+  "dateModified": "2026-09-21T08:31:54.692Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/2d8828fcaa9b.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent evaluation 入门：理解 dev、validation 与 held-out test',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent evaluation 入门：理解 dev、validation 与 held-out test</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent evaluation 入门：理解 dev、validation 与 held-out test</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.692Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>你写了一个资料整理 Agent：输入主题，它搜索资料、读取网页，最后生成一篇带引用的文章。第一次测试，它漏掉了来源；你补了一段提示词，再跑同一道题，结果好多了。</p>
+<p>这证明了你修复了这个例子，却还不能说明 Agent 对其他主题也更可靠。如果接下来的每次改动都围绕同一批题目展开，分数越来越高，可能只是系统越来越适应这批题。</p>
+<p>要区分“修好了见过的问题”和“提升了处理新任务的能力”，需要给评估数据分配不同职责。本文围绕一个资料整理 Agent，解释 dev、validation 和 held-out test，并给出可以从小规模开始的评估流程。内容与具体框架、模型版本无关，不涉及模型训练代码。</p>
+<span id="more"></span>
+
+<h2 id="先统一术语：本文的-dev-指什么"><a href="#先统一术语：本文的-dev-指什么" class="headerlink" title="先统一术语：本文的 dev 指什么"></a>先统一术语：本文的 dev 指什么</h2><p><strong>本文约定：dev 用来调试和改进，validation 用来比较与选择版本，held-out test 用来检验最终版本在未参与开发的任务上的表现。</strong></p>
+<p>这个命名并不是统一标准。在一些机器学习和 NLP 文献中，development set（dev set）就是 validation set 的别名，常见划分是 train &#x2F; dev &#x2F; test。阅读其他项目时，要先看数据实际用于什么决策，不能只凭目录名判断。</p>
+<p>这里单独设置 dev，是为了描述 Agent 工程中常见的开发活动：读失败日志、改提示词、调整工具、编写 Skill。即使没有更新模型权重，系统也已经根据这些题目的反馈发生了变化。</p>
+<p>传统机器学习中，validation 参与模型选择，test 留到最终评估；本文把这一隔离原则应用到整个 Agent 系统。相关基础可以参见 <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/cross_validation.html">scikit-learn 的交叉验证说明</a>。下文的具体权限和迭代流程是面向入门项目的建议约定，并非某个框架强制要求。</p>
+<h2 id="Agent-evaluation-到底评什么"><a href="#Agent-evaluation-到底评什么" class="headerlink" title="Agent evaluation 到底评什么"></a>Agent evaluation 到底评什么</h2><p>一次 Agent evaluation，需要把任务输入交给 Agent，记录它的执行过程和结果，再用预先定义的规则判断是否完成目标。</p>
+<p>几个常见术语可以这样理解：task 是一道任务；trial 是对这道任务的一次尝试；trace 是可记录的输出、工具调用和中间结果；grader 是评分器；outcome 是任务结束后的实际结果。Agent 说“已经保存文章”，与目标文件确实存在，是两种不同的证据。<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Anthropic 的 Agent 评估指南</a> 对这些概念作了系统介绍。</p>
+<p>对于资料整理 Agent，可以先写出这样的任务约定：</p>
+<blockquote>
+<p>根据给定的三份参考资料，面向初学者解释容器与虚拟机的区别，生成一篇中文文章。关键事实应有来源，资料不足时应说明不确定性。</p>
+</blockquote>
+<p>然后在运行前约定如何验收：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>检查什么</th>
+<th>可用证据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>任务完成</td>
+<td>是否生成文章，是否覆盖指定比较项</td>
+<td>产物文件、内容检查</td>
+</tr>
+<tr>
+<td>事实依据</td>
+<td>关键结论是否被引用资料支持</td>
+<td>结论与来源的逐项核对</td>
+</tr>
+<tr>
+<td>表达质量</td>
+<td>初学者能否理解，是否有未解释的术语</td>
+<td>明确的评分量表、人工复核</td>
+</tr>
+<tr>
+<td>行为边界</td>
+<td>是否访问了任务禁止访问的资源</td>
+<td>工具调用记录</td>
+</tr>
+<tr>
+<td>资源消耗</td>
+<td>完成任务花了多少时间和 token</td>
+<td>运行日志</td>
+</tr>
+</tbody></table>
+<p>写作任务没有唯一标准答案。可以接受不同的结构、措辞和合理的工具路径；必要的行为边界仍应检查。例如，任务要求只使用给定资料，就不能通过额外搜索获得答案。自动检查、模型评分与人工复核可以组合使用，模型评分应先与人工判断校准。<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents#how-to-evaluate-ai-agents">Anthropic：评分器设计</a></p>
+<p>三份数据都应遵循同一套验收定义。它们的主要区别是：评估反馈允许怎样影响后续开发。</p>
+<h2 id="三份数据，各自回答一个问题"><a href="#三份数据，各自回答一个问题" class="headerlink" title="三份数据，各自回答一个问题"></a>三份数据，各自回答一个问题</h2><table>
+<thead>
+<tr>
+<th>数据集</th>
+<th>回答的问题</th>
+<th>允许怎样使用反馈</th>
+<th>不能据此声称什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dev，开发集</td>
+<td>为什么失败，怎么修？</td>
+<td>查看任务、答案和 trace，反复调试，修改提示词、工具、Skill</td>
+<td>dev 高分不能证明新任务表现</td>
+</tr>
+<tr>
+<td>validation，验证集</td>
+<td>候选版本中，哪个更值得保留？</td>
+<td>在固定条件下比较候选版本，按事先约定的指标选择</td>
+<td>被反复用于选择的成绩，不是独立的最终测试成绩</td>
+</tr>
+<tr>
+<td>held-out test，独立保留测试集</td>
+<td>定版后，在未参与开发和选择的任务上表现如何？</td>
+<td>版本冻结后，按预先约定的协议评估和报告</td>
+<td>一个有限测试集不能保证所有真实场景都可靠</td>
+</tr>
+</tbody></table>
+<h3 id="dev：把失败转化为改动"><a href="#dev：把失败转化为改动" class="headerlink" title="dev：把失败转化为改动"></a>dev：把失败转化为改动</h3><p>在 dev 上，你应该主动查看失败原因。例如，Agent 引用的网页与结论无关，可能来自不同问题：搜索词过宽、没有读取正文，或者把推测写成了事实。</p>
+<p>一个合理的开发过程是：先读 trace 确认原因，再提出改动假设，比如“在写作前建立结论与来源的对应关系，可以减少无依据结论”，最后在 dev 上检查修复和回归。</p>
+<p>dev 可以加入新发现的失败案例，也可以反复执行。它承担的是开发职责，分数变化必须结合题目版本理解：如果今天比昨天多了十道难题，两个总分不能直接当作同条件比较。</p>
+<h3 id="validation：比较已经形成的候选方案"><a href="#validation：比较已经形成的候选方案" class="headerlink" title="validation：比较已经形成的候选方案"></a>validation：比较已经形成的候选方案</h3><p>当 dev 上出现改善，就把候选版本拿到 validation 上比较。例如，比较原版 A 与增加来源核对步骤的 B，看 B 是否在更多主题上改善，同时检查耗时和其他能力有没有退步。</p>
+<p>建议在一个比较周期内冻结题目、评分规则和运行条件。先确定比较哪些候选、依据什么选，再运行，避免看到结果后不断改指标。</p>
+<p>validation 本来就会通过版本选择影响开发，因此不必把它描述为“完全没有参与优化”。需要控制的是反馈的使用方式：优先用整体和分类结果选版本，把逐题反复修补留在 dev。</p>
+<p>如果你把某道 validation 的答案或失败 trace 直接用于改写提示词，这道题实际上已经承担开发职责。记录这次用途变化，将其纳入 dev，并在下一版验证集中补充未用于针对性开发的题目。即使只看总分，长期反复挑选也可能逐渐适应这份验证集。</p>
+<h3 id="held-out-test：冻结以后再检验"><a href="#held-out-test：冻结以后再检验" class="headerlink" title="held-out test：冻结以后再检验"></a>held-out test：冻结以后再检验</h3><p>held-out 的重点是“保留在开发与选择过程之外”。最终测试前，应冻结 Agent、提示词、工具、Skill、模型配置、评分器和预算。</p>
+<p>执行测试时，Agent 当然需要看到当前任务输入；需要隔离的是参考答案、隐藏检查，以及其他测试任务的结果。开发者和负责自动改进 Agent 的程序，也不能提前利用测试题来定制系统。</p>
+<p>如果最终结果不理想，可以继续修复产品。只是当这些失败已经用于开发后，原测试集就不能再为修复后的版本提供同样独立的证据。保留原报告，把已暴露的任务转作开发或回归用途，再准备新的独立测试任务。</p>
+<p>held-out test 不要求每道题只执行一次。可以事先约定重复试验来测稳定性；关键是测试期间保持版本和协议不变，完整报告结果，不根据中途成绩修改系统或只挑最好的一次。</p>
+<h2 id="数据泄漏：分了文件夹，也可能没分开信息"><a href="#数据泄漏：分了文件夹，也可能没分开信息" class="headerlink" title="数据泄漏：分了文件夹，也可能没分开信息"></a>数据泄漏：分了文件夹，也可能没分开信息</h2><p>数据泄漏会让评估得到过于乐观的结果。经典例子是把测试数据用于模型构建或预处理；Agent 系统还需要检查提示词、知识库、缓存、记忆与 Skill 中是否混入了测试信息。<a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/common_pitfalls.html#data-leakage">scikit-learn：数据泄漏</a></p>
+<p>下面是针对资料整理 Agent 的几个具体检查场景：</p>
+<ul>
+<li>同一篇资料衍生出三道相似题，分别放进三个集合。措辞不同，但 Agent 已在 dev 上学过对应内容和解法。</li>
+<li>把 held-out 的参考文章放进检索知识库，测试时直接检索到了答案。</li>
+<li>一次测试后，自动记忆保存了“此题最好这样回答”，后续 trial 读取了这条经验。</li>
+<li>开发者看到测试失败，把解决步骤写进 <code>SKILL.md</code>，然后仍把重测称为独立测试。</li>
+</ul>
+<p>处理相似题时，先确定希望检验的泛化范围，再按来源分组。例如，同一原始文档的改写题放在同一组；若目标是验证跨项目能力，就按项目隔离。按组划分能减少相关样本跨集合出现的问题。<a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation-iterators-for-grouped-data">scikit-learn：分组划分</a></p>
+<p>对资料整理任务，还要分清“允许使用的资料”和“隐藏答案”。给 Agent 提供任务所需的原始文档是正常输入；给它提供为这道题制作的参考成稿或评分答案，会改变测试含义。</p>
+<p>只读也不等于隔离：如果 Agent 能读取隐藏答案，即使不能修改文件，评估仍然受到了污染。</p>
+<h2 id="三组数据的数据量如何分配"><a href="#三组数据的数据量如何分配" class="headerlink" title="三组数据的数据量如何分配"></a>三组数据的数据量如何分配</h2><p>没有固定比例。对于本文这种通过提示词、工具和 Skill 改进 Agent 的方式，可以先按 <strong>dev &#x2F; validation &#x2F; held-out test &#x3D; 50% &#x2F; 25% &#x2F; 25%</strong> 规划，再根据任务覆盖和评估精度调整。这是本文给出的起步建议，不是行业标准，也不是官方规定。</p>
+<p>这里的 dev 并不用于训练基础模型，因此不必机械套用训练集占 80% 的划分方式。</p>
+<table>
+<thead>
+<tr>
+<th>独立任务总数</th>
+<th>dev</th>
+<th>validation</th>
+<th>held-out test</th>
+<th>用途与限制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>60</td>
+<td>30</td>
+<td>15</td>
+<td>15</td>
+<td>跑通流程、发现明显问题，分类结论很有限</td>
+</tr>
+<tr>
+<td>200</td>
+<td>100</td>
+<td>50</td>
+<td>50</td>
+<td>初步比较候选版本，仍需关注随机波动</td>
+</tr>
+<tr>
+<td>1,000</td>
+<td>500</td>
+<td>250</td>
+<td>250</td>
+<td>为整体与分类比较提供更多样本，不自动保证精度</td>
+</tr>
+</tbody></table>
+<p>表中的数量是预算示例，不是实测结果或统计充分性的保证。Anthropic 提到，20–50 个来自真实失败的简单任务就可以启动评估；这指的是起步规模，并非每份集合的标准数量。<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents#going-from-zero-to-one-a-roadmap-to-great-evals-for-agents">Anthropic：从零建立评估</a></p>
+<h3 id="先看覆盖、精度和成本，再决定比例"><a href="#先看覆盖、精度和成本，再决定比例" class="headerlink" title="先看覆盖、精度和成本，再决定比例"></a>先看覆盖、精度和成本，再决定比例</h3><p><strong>任务覆盖决定每份集合需要包含什么。</strong> 如果有 10 类任务，测试集只有 15 题，每类可能只有一两题，很难据此解释分类表现。先覆盖主要场景、边界情况和重要失败模式，再调整数量。按来源去重、分组后再划分，避免用大量近似题制造样本充足的错觉。稀有但重要的风险场景可以单独报告；若刻意提高其占比，应说明总体分数不直接代表真实流量中的成功率。</p>
+<p><strong>希望识别的改善幅度决定需要多少证据。</strong> 若每题只运行一次并按通过与否计分，15 道测试题多通过一道，总分就增加约 6.7 个百分点，无法据此稳妥判断“提升了 2 个百分点”。即使测试集有 50 道题，多通过一道恰好对应 2 个百分点，也不意味着这个差异足够可靠：还要考虑任务差异和运行波动。希望识别的改善越小，通常需要越多独立任务；候选成绩接近时，应结合不确定性分析，不能只凭总分排名下结论。</p>
+<p><strong>运行成本决定执行频率，不要求三份数据同样频繁地跑。</strong> dev 可以频繁执行相关子集，并定期检查完整开发集的回归；validation 在候选版本形成后执行；held-out test 留到定版后按预定协议执行。数据充足时，可以先根据覆盖与精度需要确定 validation 和 held-out 的绝对数量，剩余数据用于开发，不必始终维持 50% &#x2F; 25% &#x2F; 25%。</p>
+<h3 id="独立任务数量不等于运行次数"><a href="#独立任务数量不等于运行次数" class="headerlink" title="独立任务数量不等于运行次数"></a>独立任务数量不等于运行次数</h3><p>同一道题运行三次，仍然只是一道任务。重复运行主要帮助观察稳定性，增加不同任务主要帮助扩大覆盖，两者不能替代。例如，50 道题每题运行三次，应报告“50 道任务、150 次尝试”，不能把它当成 150 道独立任务。</p>
+<p>如果只是学习评估流程，可以使用表中的 <code>30 / 15 / 15</code>。如果准备开展实际版本比较，可以先以 <code>100 / 50 / 50</code> 为预算起点，检查场景覆盖后再调整。这些都不是最低门槛；数据不足时应缩小结论范围，结果接近时也不要为凑出胜者而反复查看 held-out、修改系统再重测。</p>
+<h2 id="一个从零开始的评估流程"><a href="#一个从零开始的评估流程" class="headerlink" title="一个从零开始的评估流程"></a>一个从零开始的评估流程</h2><p>下面用 60 道资料整理任务演示流程，按 dev 30、validation 15、held-out test 15 分配。<strong>这些数字仅用于演示，不是实际实验结果，也不足以支撑广泛的能力结论。</strong> 真实规模应结合上一节的覆盖、精度和成本要求确定。</p>
+<h3 id="第一步：先定义任务，再划分数据"><a href="#第一步：先定义任务，再划分数据" class="headerlink" title="第一步：先定义任务，再划分数据"></a>第一步：先定义任务，再划分数据</h3><p>收集不同主题和约束的任务，既包含资料充分的情况，也包含资料矛盾、资料不足的情况。明确哪些结果算通过，哪些只能给部分分，哪些属于必须单独报告的违规行为。</p>
+<p>先按原始资料或任务来源去重、分组，再划分三个集合。检查各集合是否覆盖预期的主要任务类型。保存任务 ID、分组关系和数据版本，避免每次运行重新随机划分。</p>
+<h3 id="第二步：在-dev-上开发候选版本"><a href="#第二步：在-dev-上开发候选版本" class="headerlink" title="第二步：在 dev 上开发候选版本"></a>第二步：在 dev 上开发候选版本</h3><p>保存基线 A 的失败证据，做出一个能解释的改动得到 B。先确认评分器没有误判，再判断 Agent 是否需要修复。</p>
+<p>如果这次研究的是 Skill 的作用，就只改变 Skill：例如从 <code>skill_version=none</code> 到 <code>skill_version=s0</code>，或从 <code>s0</code> 到基于 dev 失败改进的 <code>s1</code>。模型、基础提示词、工具、预算和加载方式保持相同，才能更清楚地判断改善来自哪里。</p>
+<p>在本文建议的流程里，Skill 的自动生成和改写只消费 dev 反馈；validation 与 held-out 的运行不会把新经验写回可复用的 Skill 或长期记忆。单次任务内的正常推理、计划调整仍然可以进行，每次 trial 都从约定的初始状态开始。</p>
+<h3 id="第三步：用-validation-选择版本"><a href="#第三步：用-validation-选择版本" class="headerlink" title="第三步：用 validation 选择版本"></a>第三步：用 validation 选择版本</h3><p>事先写下选择规则。例如，本项目可以约定：先检查是否出现禁止访问资源的行为，再比较有依据的任务完成率，同时报告耗时。具体门槛由应用需要决定，不能测试后为了某个候选改规则。</p>
+<p>对同一批任务，以相同预算运行 A 和 B。若 B 只有 dev 提升，validation 没有改善，应调查过拟合、任务差异或随机波动，不急于下结论。</p>
+<h3 id="第四步：冻结并执行-held-out-test"><a href="#第四步：冻结并执行-held-out-test" class="headerlink" title="第四步：冻结并执行 held-out test"></a>第四步：冻结并执行 held-out test</h3><p>选择候选后，把它与完整配置一起冻结，再执行预定的测试协议。记录至少包括：Agent 版本、Skill 版本、模型标识与采样配置、数据版本、评分器版本、工具和环境版本、时间与调用预算、重复次数、执行时间，以及每次结果和 trace 的位置。</p>
+<p>在这个教学例子中，可以预先约定每题运行三次，用来观察同一道题是否忽好忽坏。但三次并不能充分估计稳定性，15 道测试题也不足以支撑广泛结论。</p>
+<p>报告应同时给出题目数和尝试数。例如“15 道任务，每题三次，共 45 次尝试”，不能写成“45 道独立任务”。除整体通过情况外，还应报告分类表现、成本、违规情况、基础设施错误和未完成尝试；重试规则也应提前确定。</p>
+<h3 id="第五步：区分成功机会与稳定性"><a href="#第五步：区分成功机会与稳定性" class="headerlink" title="第五步：区分成功机会与稳定性"></a>第五步：区分成功机会与稳定性</h3><p><code>pass@1</code> 关注单次尝试成功的概率；<code>pass@k</code> 关注 k 次尝试中至少一次成功的概率；<code>pass^k</code> 关注 k 次尝试全部成功的概率。三者回答的问题不同。<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents#how-to-think-about-non-determinism-in-evaluations-for-agents">Anthropic：非确定性与评估指标</a></p>
+<p>如果一次任务三次尝试中只有一次通过，它对这组三次尝试的“至少成功一次”统计有贡献，但不能说明每次都可靠。对于用户通常只提交一次的写作请求，不能用多次尝试后的最好成绩代替单次成功率。即使产品允许重试，也要考虑系统能否识别正确结果，以及额外耗时和成本。</p>
+<h2 id="几个容易误解的问题"><a href="#几个容易误解的问题" class="headerlink" title="几个容易误解的问题"></a>几个容易误解的问题</h2><h3 id="held-out-是不是必须比-dev-更难？"><a href="#held-out-是不是必须比-dev-更难？" class="headerlink" title="held-out 是不是必须比 dev 更难？"></a>held-out 是不是必须比 dev 更难？</h3><p>不必须。如果目标是估计同类新任务的表现，应让测试集代表目标任务分布，同时避免重复和泄漏。若要检验跨领域或更高难度能力，可以另设测试组，但要单独说明范围，不能把不同分布的分数差简单归因于过拟合。</p>
+<h3 id="held-out-没用于本地开发，就能保证模型没见过吗？"><a href="#held-out-没用于本地开发，就能保证模型没见过吗？" class="headerlink" title="held-out 没用于本地开发，就能保证模型没见过吗？"></a>held-out 没用于本地开发，就能保证模型没见过吗？</h3><p>不能。你能控制的是自己项目的开发数据和信息流；对于基础模型的预训练内容，往往无法完全确认。公开题目尤其要保留这一限制，不应把“本项目未使用”写成“模型从未见过”。</p>
+<h3 id="题目很少，必须机械分成三份吗？"><a href="#题目很少，必须机械分成三份吗？" class="headerlink" title="题目很少，必须机械分成三份吗？"></a>题目很少，必须机械分成三份吗？</h3><p>不必为了目录完整把每份切得毫无代表性。可以先建立小型 dev 集明确任务与评分，再逐步积累独立验证和测试任务。暂时只有 dev 证据时，就报告开发集结果，保留尚未验证泛化能力的说明。</p>
+<h3 id="测试分数很好，就可以保证上线表现吗？"><a href="#测试分数很好，就可以保证上线表现吗？" class="headerlink" title="测试分数很好，就可以保证上线表现吗？"></a>测试分数很好，就可以保证上线表现吗？</h3><p>不能。评估结果受到任务覆盖、样本量、评分质量和环境的限制。小样本中没有出现失败，也不等于失败概率为零。上线后的输入分布和工具状态可能变化，还需要持续观察实际表现。</p>
+<p>开始第一个评估项目时，可以先写下三句话：“哪些反馈允许我改系统”“哪些结果允许我选版本”“哪些任务会留到最后”。再据此管理数据、日志、Skill 和记忆，三个集合才会承担各自的职责。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Anthropic：Demystifying evals for AI agents</a>，Agent 评估术语、评分方式与非确定性指标。</li>
+<li><a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/modules/cross_validation.html">scikit-learn：Cross-validation</a>，验证与最终测试的隔离，以及分组划分。</li>
+<li><a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/common_pitfalls.html">scikit-learn：Common pitfalls and recommended practices</a>，数据泄漏的原理和影响。</li>
+</ul>
+<p>本文资料于 2026-09-11 查阅。流程与任务数量为教学设计，未执行真实 Agent 实验，不代表任何模型或 Skill 的实测效果。</p>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/2d8828fcaa9b.html">https://xhua.eu.org/posts/2d8828fcaa9b.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/agent-skills/">Agent Skills</a><a class="post-meta__tags" href="/tags/ai-agent/">AI Agent</a><a class="post-meta__tags" href="/tags/evaluation/">Evaluation</a><a class="post-meta__tags" href="/tags/%E6%95%B0%E6%8D%AE%E9%9B%86%E5%88%92%E5%88%86/">数据集划分</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/c2042b3c0041fc5ece823f27e7aa2a1128a5b8ecb5c7c3485402d914490035f5.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南"><img class="cover" src="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</div></div><div class="info-2"><div class="info-item-1">当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败后恢复？  这些问题可以归纳为两个相互正交的架构维度：  打包（Packaging）：Skill 内部怎样组织，以及内容何时进入上下文。 编排（Orchestration）：任务怎样分阶段、拆分、并行和恢复。  生产级 Skill 往往是某种特定的“打包 × 编排”组合。本文给出一套可落地的模式语言和决策框架，帮助 Skill 作者从约束出发选择架构，而不是默认追求复杂设计。  核心原则：采用最简单的可行模式，只有明确约束出现时才升级复杂度。  一、先理解六类底层约束架构模式不是模板集合，而是对技术约束的不同解法。只有先理解约束，后面的优缺点才具有决策价值。 1. 上下文预算与渐进式披露...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/4710faf0c3d1.html" title="Agent 工具工程化方法"><img class="cover" src="https://img.xhua.eu.org/29440c5fcc18a32077ea54082693ca6b0a87427235b633b2cb2a084252468c44.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-26</div><div class="info-item-2">Agent 工具工程化方法</div></div><div class="info-2"><div class="info-item-1">引言很多人第一次写 Agent 工具时，会把它理解成“把一段提示词保存起来”。这当然有用，但很快会遇到三个问题：任务稍微复杂一点，提示词就变成长文；流程涉及脚本、检查清单、外部工具时，模型不知道什么时候该读取什么；最后即使 Agent 给出结果，也很难判断它是不是真的完成了任务。 addyosmani/agent-skills 是 Addy Osmani 开源的一套面向 AI coding agent 的工程技能库。项目把软件研发过程拆成 DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP 等阶段，并提供 20 个左右的 Skill、多个专家 Persona、slash command、检查清单和会话 Hook，用来约束 Agent 在需求澄清、任务拆解、增量实现、测试验证、代码审查和发布前检查中的行为。 这个项目给了一个更工程化的答案：把复杂任务拆成可触发、可执行、可验证、可复用的 Agent Skill。它不是知识库，也不是提示词合集，而是一套面向 AI coding agent 的工作流系统：用 Skill 描述“怎么做”，用 Co...</div></div></div></a><a class="pagination-related" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南"><img class="cover" src="https://img.xhua.eu.org/a607b979a7581d0d68bd946c034df18632869bf0c3742f98d11dafedc681fe20.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-09-01</div><div class="info-item-2">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</div></div><div class="info-2"><div class="info-item-1">当一个 Agent Skill 从几十行指令增长到数百行，并开始携带参考文档、脚本、模板和 Sub-agent 时，真正困难的问题不再是“怎样把提示词写得更长”，而是：  哪些内容应该始终进入上下文，哪些内容只在需要时加载？ 连贯工作流应该拆成多个 Skill，还是保留一个统一入口？ 什么时候单 Agent 已经足够，什么时候才值得引入 Sub-agent？ 长时间运行的任务怎样保存进度，并在失败后恢复？  这些问题可以归纳为两个相互正交的架构维度：  打包（Packaging）：Skill 内部怎样组织，以及内容何时进入上下文。 编排（Orchestration）：任务怎样分阶段、拆分、并行和恢复。  生产级 Skill 往往是某种特定的“打包 × 编排”组合。本文给出一套可落地的模式语言和决策框架，帮助 Skill 作者从约束出发选择架构，而不是默认追求复杂设计。  核心原则：采用最简单的可行模式，只有明确约束出现时才升级复杂度。  一、先理解六类底层约束架构模式不是模板集合，而是对技术约束的不同解法。只有先理解约束，后面的优缺点才具有决策价值。 1. 上下文预算与渐进式披露...</div></div></div></a><a class="pagination-related" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造"><img class="cover" src="https://img.xhua.eu.org/b70b9d4ad2e90781cfe63ed68177b15f41381e6eab29534127bd121ff56c94fb.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-25</div><div class="info-item-2">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</div></div><div class="info-2"><div class="info-item-1"> 本文是《AI Coding Assistant Best Practices：从提示词到工程闭环》的配套实操篇。前文解释原则，本文只做一件事：把一个普通仓库逐步变成 Agent 可以理解、修改、验证并交付的工程环境。  本文面向已经使用 Codex、Cursor、Claude Code 或 GitHub Copilot 的开发者。示例中的命令是模板，不代表适用于所有项目；执行前必须替换为仓库真实存在、已经人工确认过的命令。不要因为 Agent 能生成命令，就跳过读取 README、CI、构建文件和脚本。 完成本文后，目标仓库应具备一条可以重复运行的闭环： 1Bootstrap → Instruct → Equip → Isolate → Implement → Verify → Review  它不意味着 Agent 可以自动批准危险操作。Rules、Instructions 和 Skills 都不是安全边界；Sandbox、Allow&#x2F;Deny 策略、Hook、CI 和分支保护才分别承担访问限制、命令控制、确定性阻断、最终验收和合并保护职责。 1. 先定义完成状态把...</div></div></div></a><a class="pagination-related" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）"><img class="cover" src="https://img.xhua.eu.org/3eb21492650a4b5b13298945c6ac4e6b195abfa38335e0d298dfd4250a31da9b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-11</div><div class="info-item-2">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</div></div><div class="info-2"><div class="info-item-1"> 原文：NVIDIA NemoClaw: How It Works, Use Cases &amp; Features [2026]本文为中文翻译与技术整理，删除了原网页中的导航、招聘推广和页脚内容，并结合 NVIDIA 官方文档对关键概念做了少量译者注。  摘要NVIDIA NemoClaw 在 OpenClaw 之上增加了企业级安全能力：沙箱化 Agent、内核级隔离、默认零权限、可审计策略，以及受控的推理路由。它是免费、开源的项目，目前仍处于 alpha &#x2F; early-access preview 阶段。 OpenClaw 曾经快速成长为现象级开源项目。它让开发者能够构建可以写代码、浏览网页、调用工具，并在较长时间内持续执行任务的自治 Agent。 但企业采用 OpenClaw 时面临一个直接问题：安全护栏不足。缺少沙箱、审计链路和强隔离能力时，一个被攻击或被提示注入诱导的 Agent，可能访问整个系统。 2026 年 3 月 16 日，NVIDIA 在 GTC 2026 发布 NemoClaw。它解决的正是这个问题：在 OpenClaw 之上增加企业级隐私和安...</div></div></div></a><a class="pagination-related" href="/posts/7c7ed6b618d8.html" title="OpenClaw：开源AI代理与技能生态系统详解"><img class="cover" src="https://img.xhua.eu.org/b2fad97270372aa2a175bf8037378d5be3927e864a572eabc9df8d775f3f63ca.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-05</div><div class="info-item-2">OpenClaw：开源AI代理与技能生态系统详解</div></div><div class="info-2"><div class="info-item-1">引言在 2026 年初，一个名为 OpenClaw 的开源 AI 代理项目在全球范围内引发了广泛关注。这个项目经历了从 Clawdbot 到 Moltbot，再到 OpenClaw 的品牌演变，已经成为个人 AI 助手领域的重要参与者。 OpenClaw 的核心理念是通过 Gateway 网关架构，将各种聊天应用与 AI 智能体连接起来，让用户可以在任何平台上与 AI 助手交互。本文将深入介绍 OpenClaw 的核心功能、Gateway 架构，以及围绕它构建的庞大技能生态系统。 OpenClaw 是什么？OpenClaw 是一个适用于任何操作系统的 AI 智能体 Gateway（网关），它通过单个 Gateway 进程将聊天应用连接到 Pi 等编程智能体。OpenClaw 不仅仅是一个聊天机器人，而是一个真正能够自主执行任务的 AI 代理系统。 Gateway 架构OpenClaw 的核心是 Gateway 网关，它是会话、路由和渠道连接的唯一事实来源： 123聊天应用 + 插件 → Gateway → Pi 智能体                        ↓      ...</div></div></div></a><a class="pagination-related" href="/posts/76da86423267.html" title="Agent Skill：从使用到原理，一次讲清"><img class="cover" src="https://img.xhua.eu.org/237da05d681224b2bedc4d580f9fa3f9fec3212ff96170e4ed694523132bbedd.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-01-25</div><div class="info-item-2">Agent Skill：从使用到原理，一次讲清</div></div><div class="info-2"><div class="info-item-1">引言你可能遇到过这种情况：同一个任务（会议纪要、代码评审、发布流程、合规检查）每次都要把“长长的规则”再贴一遍；而当这些规则越来越复杂，又会把上下文挤爆、让模型抓不住重点。 这期视频把 Agent Skill 讲得很透：它不是“更强的提示词”，而是一种可复用的能力封装方式，并且通过 渐进式披露（progressive disclosure） 做到“只在需要时加载”。视频还强调了一个关键对比：Skill 和 MCP 能力有交集，但定位不同，很多场景应该组合使用。Agent Skill 从使用到原理，一次讲清 本文会基于视频主线，结合 Agent Skills 规范与主流工具文档，把“从使用到原理”讲清楚，并给你一套可直接复用的写 Skill 方法论。 Agent Skill 是什么用一句话概括：Agent Skill 是一个目录（folder），里面包含 SKILL.md 指令文件，以及可选的脚本、参考资料、资源文件；AI 工具会在合适的时机发现并加载它们。Agent Skills 概览 Skills explained 从规范角度看，一个最小 Skill 的目录结构如下：Agen...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E7%BB%9F%E4%B8%80%E6%9C%AF%E8%AF%AD%EF%BC%9A%E6%9C%AC%E6%96%87%E7%9A%84-dev-%E6%8C%87%E4%BB%80%E4%B9%88"><span class="toc-text">先统一术语：本文的 dev 指什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Agent-evaluation-%E5%88%B0%E5%BA%95%E8%AF%84%E4%BB%80%E4%B9%88"><span class="toc-text">Agent evaluation 到底评什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E4%BB%BD%E6%95%B0%E6%8D%AE%EF%BC%8C%E5%90%84%E8%87%AA%E5%9B%9E%E7%AD%94%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="toc-text">三份数据，各自回答一个问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#dev%EF%BC%9A%E6%8A%8A%E5%A4%B1%E8%B4%A5%E8%BD%AC%E5%8C%96%E4%B8%BA%E6%94%B9%E5%8A%A8"><span class="toc-text">dev：把失败转化为改动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#validation%EF%BC%9A%E6%AF%94%E8%BE%83%E5%B7%B2%E7%BB%8F%E5%BD%A2%E6%88%90%E7%9A%84%E5%80%99%E9%80%89%E6%96%B9%E6%A1%88"><span class="toc-text">validation：比较已经形成的候选方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#held-out-test%EF%BC%9A%E5%86%BB%E7%BB%93%E4%BB%A5%E5%90%8E%E5%86%8D%E6%A3%80%E9%AA%8C"><span class="toc-text">held-out test：冻结以后再检验</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%B3%84%E6%BC%8F%EF%BC%9A%E5%88%86%E4%BA%86%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8C%E4%B9%9F%E5%8F%AF%E8%83%BD%E6%B2%A1%E5%88%86%E5%BC%80%E4%BF%A1%E6%81%AF"><span class="toc-text">数据泄漏：分了文件夹，也可能没分开信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E7%BB%84%E6%95%B0%E6%8D%AE%E7%9A%84%E6%95%B0%E6%8D%AE%E9%87%8F%E5%A6%82%E4%BD%95%E5%88%86%E9%85%8D"><span class="toc-text">三组数据的数据量如何分配</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%88%E7%9C%8B%E8%A6%86%E7%9B%96%E3%80%81%E7%B2%BE%E5%BA%A6%E5%92%8C%E6%88%90%E6%9C%AC%EF%BC%8C%E5%86%8D%E5%86%B3%E5%AE%9A%E6%AF%94%E4%BE%8B"><span class="toc-text">先看覆盖、精度和成本，再决定比例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8B%AC%E7%AB%8B%E4%BB%BB%E5%8A%A1%E6%95%B0%E9%87%8F%E4%B8%8D%E7%AD%89%E4%BA%8E%E8%BF%90%E8%A1%8C%E6%AC%A1%E6%95%B0"><span class="toc-text">独立任务数量不等于运行次数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E7%9A%84%E8%AF%84%E4%BC%B0%E6%B5%81%E7%A8%8B"><span class="toc-text">一个从零开始的评估流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%85%88%E5%AE%9A%E4%B9%89%E4%BB%BB%E5%8A%A1%EF%BC%8C%E5%86%8D%E5%88%92%E5%88%86%E6%95%B0%E6%8D%AE"><span class="toc-text">第一步：先定义任务，再划分数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E5%9C%A8-dev-%E4%B8%8A%E5%BC%80%E5%8F%91%E5%80%99%E9%80%89%E7%89%88%E6%9C%AC"><span class="toc-text">第二步：在 dev 上开发候选版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E7%94%A8-validation-%E9%80%89%E6%8B%A9%E7%89%88%E6%9C%AC"><span class="toc-text">第三步：用 validation 选择版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E5%86%BB%E7%BB%93%E5%B9%B6%E6%89%A7%E8%A1%8C-held-out-test"><span class="toc-text">第四步：冻结并执行 held-out test</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%94%E6%AD%A5%EF%BC%9A%E5%8C%BA%E5%88%86%E6%88%90%E5%8A%9F%E6%9C%BA%E4%BC%9A%E4%B8%8E%E7%A8%B3%E5%AE%9A%E6%80%A7"><span class="toc-text">第五步：区分成功机会与稳定性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%A0%E4%B8%AA%E5%AE%B9%E6%98%93%E8%AF%AF%E8%A7%A3%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">几个容易误解的问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#held-out-%E6%98%AF%E4%B8%8D%E6%98%AF%E5%BF%85%E9%A1%BB%E6%AF%94-dev-%E6%9B%B4%E9%9A%BE%EF%BC%9F"><span class="toc-text">held-out 是不是必须比 dev 更难？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#held-out-%E6%B2%A1%E7%94%A8%E4%BA%8E%E6%9C%AC%E5%9C%B0%E5%BC%80%E5%8F%91%EF%BC%8C%E5%B0%B1%E8%83%BD%E4%BF%9D%E8%AF%81%E6%A8%A1%E5%9E%8B%E6%B2%A1%E8%A7%81%E8%BF%87%E5%90%97%EF%BC%9F"><span class="toc-text">held-out 没用于本地开发，就能保证模型没见过吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E5%BE%88%E5%B0%91%EF%BC%8C%E5%BF%85%E9%A1%BB%E6%9C%BA%E6%A2%B0%E5%88%86%E6%88%90%E4%B8%89%E4%BB%BD%E5%90%97%EF%BC%9F"><span class="toc-text">题目很少，必须机械分成三份吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%88%86%E6%95%B0%E5%BE%88%E5%A5%BD%EF%BC%8C%E5%B0%B1%E5%8F%AF%E4%BB%A5%E4%BF%9D%E8%AF%81%E4%B8%8A%E7%BA%BF%E8%A1%A8%E7%8E%B0%E5%90%97%EF%BC%9F"><span class="toc-text">测试分数很好，就可以保证上线表现吗？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

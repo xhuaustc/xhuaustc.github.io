@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Gitea访问使用KeyCloak作为用户管理 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一、安装keyCloak 二、配置KeyCloak，添加ClientsClients -&gt; createClient ID: devops-oidcEnabled: trueClient Protocol: openid-connectAccess Type: confidentialValid Redirect URIs: &#x2F;* 三、配置Gitea，添加Authenticatio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Gitea访问使用KeyCloak作为用户管理">
+<meta property="og:url" content="https://xhua.eu.org/posts/75da61c45e57.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="一、安装keyCloak 二、配置KeyCloak，添加ClientsClients -&gt; createClient ID: devops-oidcEnabled: trueClient Protocol: openid-connectAccess Type: confidentialValid Redirect URIs: &#x2F;* 三、配置Gitea，添加Authenticatio">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.695Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Gitea访问使用KeyCloak作为用户管理",
+  "url": "https://xhua.eu.org/posts/75da61c45e57.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-09-21T08:31:54.695Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/75da61c45e57.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Gitea访问使用KeyCloak作为用户管理',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Gitea访问使用KeyCloak作为用户管理</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Gitea访问使用KeyCloak作为用户管理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.695Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>一、安装keyCloak</p>
+<p>二、配置KeyCloak，添加Clients<br><code>Clients</code> -&gt; <code>create</code><br>Client ID: devops-oidc<br>Enabled: true<br>Client Protocol: openid-connect<br>Access Type: confidential<br>Valid Redirect URIs: <gitea url>&#x2F;*</p>
+<p>三、配置Gitea，添加Authentication Sources<br><code>Site Administration</code> -&gt; <code>Authentication Sources</code> -&gt; <code>Add Authentication Source</code><br>OAuth2 Provider: OpenID Connect<br>Client ID(key): devops-oidc<br>Client Secret: &lt;keycload 中 devops-oidc Credentials中查询&gt;<br>OpenID Connect Auto Discovery URL: http:&#x2F;&#x2F;<keycload url>&#x2F;auth&#x2F;realms&#x2F;master&#x2F;.well-known&#x2F;openid-configuration</p>
+<p>gitea app.ini<br>ALLOW_ONLY_EXTERNAL_REGISTRATION &#x3D; true</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/75da61c45e57.html">https://xhua.eu.org/posts/75da61c45e57.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/63c9fc8a8ef1.html" title="Jenkins-Pipeline触发机制"><img class="cover" src="https://img.xhua.eu.org/ec27cdf7bd52bf4f555e3692806c2f761b9905757f2c53ed0a6921b4c48867bc.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Jenkins-Pipeline触发机制</div></div><div class="info-2"><div class="info-item-1">设置好了功能强大的流水线后，接下来我们要做的就是去执行流水线，如果都靠手动去触发流水线，显然不符合带着自动化基因新一代工程师的风格，必须自动触发。那么Jenkins的Pipeline支持哪些触发机制呢。一起来看一下。 定时触发：croncron规则与crontab的规则是一样的 12345678910111213pipeline&#123;	agent any	triggers&#123;		cron(&#x27;0 0 * * *&#x27;)	&#125;	stages&#123;		stage(&#x27;半夜触发&#x27;)&#123;			steps&#123;				echo &quot;凌晨执行&quot;			&#125;		&#125;	&#125;&#125;  轮询代码仓库周期性检查代码，看代码是否有更新。这种方式需要使用 12345678910111213pipeline&#123;	agent any	triggers&#123;		pollSCM(&#x27;* * * * *&#x27;)	&#125;	stages&#123;		stage(&#...</div></div></div></a><a class="pagination-related" href="/posts/ef3675d1c305.html" title="Git-+-Jenkins-提交Git-触发Jenkins-Job"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Git-+-Jenkins-提交Git-触发Jenkins-Job</div></div><div class="info-2"><div class="info-item-1">利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!/bin/bashecho ====== trigger jenkins job: maglev-verify in 10s  =======(sleep 10 &amp;&amp; .git/hooks/post-push) &amp;  .git&#x2F;hooks&#x2F;post-push  123#!/bin/bashbranch=$(git rev-parse --abbrev-ref @&#123;upstream&#125;)curl -k --user $&#123;USER&#125;=$&#123;TOKEN&#125; http://$&#123;JENKINS_URL&#125;/job/$&#123;JOB_NAME&#125;/buildWithParameters --data-urlencode TAG=$branch</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/4639aac39f9a.html" title="持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第六章：构建与部署的脚本化</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 ##构建工具概览  Make Ant NAnt与MSBuild Maven Rake Buildr Psake  构建部署脚本化的原则与实践 为部署流水线的每个阶段创建脚本 使用恰当的技术部署应用程序 使用同样的脚本向所有环境部署 使用操作系统自带的包管理工具 确保部署流程是幂等的 部署系统的增量式演进  部署脚本化 多层的部署和测试   层 配置    应用／服务／组件 应用配置   中间件 中间件配置   操作系统 操作系统配置   硬件 硬件    测试环境配置 部署前对基础设施做标准冒烟测试，如果发现问题，就让环境配置流程快速失败，并给出测试结果 确认能从数据库中拿到一条记录 确认能连上网站 断言消息代理中的已注册的消息集合是正确的 透过防火墙发送ping，证明线路通畅    推荐策略 总是使用相对路径 消除手工步骤 从二进制包到版本控制库的内建可追溯性二进制包记录版本信息，如Java应用可以在MANIFEST中包含元数据，另外可以将构建流程生成的每个二进制包的MD5值及名字和版本标识符一起放在数据库中 不要把二进制包作为构建的...</div></div></div></a><a class="pagination-related" href="/posts/0b2e9fb9bf3f.html" title="selenium+Xvfb+ffmpeg实现服务器录屏"><img class="cover" src="https://img.xhua.eu.org/3699f0dc0039aa39a20cdf12a48352920020a72ece5829eadc646dc32f50f9e2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-28</div><div class="info-item-2">selenium+Xvfb+ffmpeg实现服务器录屏</div></div><div class="info-2"><div class="info-item-1">在现代软件开发中，自动化测试变得越来越重要，而录屏功能则为测试结果的验证提供了直观的方式。通过结合Selenium、Xvfb和FFmpeg这三个强大的工具，我们可以在服务器上实现无头(headless)的录屏环境，这对于没有图形界面的服务器尤其有用。 Selenium是一个自动化测试工具，它可以模拟用户对网页的操作，如点击、输入文本等。Xvfb（X虚拟帧缓冲）提供了一个虚拟的显示环境，使得我们可以在不需要实际显示器的情况下运行图形应用程序。FFmpeg是一个强大的多媒体框架，能够处理视频和音频的录制、转换和流式传输。 将这三个工具结合起来，我们可以创建一个自动化的录屏流程，这个流程可以在后台运行，录制Selenium驱动的浏览器会话。这样，无论是进行自动化测试验证，还是生成用户操作教程，都可以通过这种方式来实现。 例如，我们可以使用Selenium启动一个浏览器会话，然后用Xvfb创建一个虚拟的显示环境来捕获这个会话的屏幕。接着，使用FFmpeg开始录制屏幕内容，直到测试完成。这个过程完全自动化，可以集成到持续集成&#x2F;持续部署（CI&#x2F;CD）的流程中，提高开发效率...</div></div></div></a><a class="pagination-related" href="/posts/4ddf67db285d.html" title="持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（部署流水线）第十章：应用程序的部署与发布</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 引言发布到生产环境和部署到测试环境的差异应该被封装在一组配置文件中，遵循一样的部署过程。启动自动部署系统，将要部署的软件版本与环境名称告诉它，点击开始，后缀部署与发布使用相同的流程。我们需要有一个列表，其中包含能够部署到每个环境的所有构建，并且只要通过点击就可以选择一个软件版本向某个环境进行自动部署。同时这种方式是对环境修改的唯一途径（包括对操作系统和第三方软件配置的修改）。 创建发布策略（文档） 每个环境的部署由发布由谁负责 创建一个资产和配置管理策略 部署时所用的技术的描述。运维团队与开发团队应对其达成共识 实现部署流水线的计划 枚举所有的环境，包括用于验收测试、容量测试、集成测试、用户验收测试的环境，以及每个构建在这些环境中的移动过程 描述在测试和生产环境中部署时应该遵循的流程，比如一个变更申请，及申请授权等 对应用程序的监控需求，包括用于通知运维团队关于应用程序相关状态的API和服务 讨论部署时和运行时的配置方法如何管理，以及它们与自动化部署流程是如何关联在一起的 描述应用程序如何与所有外部系统集成 如何记录日志详情，以便运维人...</div></div></div></a><a class="pagination-related" href="/posts/27114569557b.html" title="WSL2-+-microK8s-+-K8s"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">WSL2-+-microK8s-+-K8s</div></div><div class="info-2"><div class="info-item-1"> Windowns 10 (WSL2) + Ubuntu 20.04   enable systemd snapd microk8s  启动systemd，并使用snap安装   123$  sudo apt install daemonize$ sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target$ sudo nsenter -t $(pidof systemd) -a su - $LOGNAME  安装microk8s  12$ snap info microk8s$ sudo snap install microk8s --classic   使用microk8s  123$ microk8s status$ sudo usermod -a -G microk8s mpan$ sudo chown -f -R mpan ~/.kube   添加节点  1$ microk8s add-node   注意 每次使用micr...</div></div></div></a><a class="pagination-related" href="/posts/0a0be0426bc4.html" title="将字符串进行压缩后保存该如何做？"><img class="cover" src="https://img.xhua.eu.org/37b41cc59593bad3ab63cc588e2e9f6f6fb38a69d305cca2847944ad099e63cc.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">将字符串进行压缩后保存该如何做？</div></div><div class="info-2"><div class="info-item-1">如何将zip文件挂载到容器Pod中呢？Prometheus operator中看到的一个特殊玩法。它将prometheus.yml进行压缩成.gz后再保存到secret中。可参考它来实现对数据的压缩与加密。具体的操作如下： 12$ echo &quot;abc&quot; | gzip | base64H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA 解密操作： 1$ echo &quot;H4sIAAAAAAAAA0tMSuYCAE6BiEcEAAAA&quot; | base64 -d | gunzip 大家可以尝试下。另外需要注意的是，将该数据挂载到POD的文件中，文件是压缩后的gz文件。 </div></div></div></a><a class="pagination-related" href="/posts/8d5496ec675f.html" title="测试工具汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">测试工具汇总</div></div><div class="info-2"><div class="info-item-1">压力测试JmeterJmeter简单介绍与搭配Jenkins实现自动化测试实践使用JMeter进行负载测试——终极指南 LocustLocust学习总结分享性能测试工具LocustLocust 系列教程 LoadRunnerUsing LoadRunner with Jenkins 接口测试Robot FrameworkRobot Framework 在 Jenkins 上的自动化测试 </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</a><time datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</a><time datetime="2026-08-25T07:08:47.000Z" title="发表于 2026-08-25 15:08:47">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0f93fc59cf48.html" title="AI Coding Assistant Best Practices：从提示词到可验证工程闭环">AI Coding Assistant Best Practices：从提示词到可验证工程闭环</a><time datetime="2026-08-25T06:33:35.000Z" title="发表于 2026-08-25 14:33:35">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</a><time datetime="2026-05-11T02:07:39.000Z" title="发表于 2026-05-11 10:07:39">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Calico-BGP集群外部与集群网络打通 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calico-BGP集群外部与集群网络打通">
+<meta property="og:url" content="https://xhua.eu.org/posts/724adf367d17.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="把这几个路由规则加入到路由器或者客户端机器上 123route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74route add -net 10.233.183.64 netmask 255.2">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.700Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Calico-BGP集群外部与集群网络打通",
+  "url": "https://xhua.eu.org/posts/724adf367d17.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-09-21T08:31:54.700Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/724adf367d17.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Calico-BGP集群外部与集群网络打通',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Calico-BGP集群外部与集群网络打通</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Calico-BGP集群外部与集群网络打通</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.700Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>把这几个路由规则加入到路由器或者客户端机器上</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.233.55.64 netmask 255.255.255.192 gw 10.21.21.76</span><br><span class="line">route add -net 10.233.119.0 netmask 255.255.255.192 gw 10.21.21.74</span><br><span class="line">route add -net 10.233.183.64 netmask 255.255.255.192 gw 10.21.21.75</span><br></pre></td></tr></table></figure>
+<p>Win10客户端机器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">route add -p 10.233.97.128 mask  255.255.255.192 192.168.1.225</span><br><span class="line">route add -p 10.233.75.0  mask  255.255.255.192 192.168.1.226</span><br><span class="line">route add -p 10.233.100.128 mask 255.255.255.192 192.168.1.227</span><br><span class="line">route add -p 10.233.90.0 mask 255.255.255.192 192.168.1.228</span><br><span class="line">route add -p 10.233.75.64 mask 255.255.255.192 192.168.1.42</span><br><span class="line">route add -p 10.233.71.0 mask 255.255.255.192 192.168.1.43</span><br><span class="line">route add -p 10.233.74.64 mask 255.255.255.192 192.168.1.44</span><br><span class="line">route add -p 10.233.102.128 mask 255.255.255.192 192.168.1.41</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/724adf367d17.html">https://xhua.eu.org/posts/724adf367d17.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/78dd6e98294c.html" title="CentOS上OpenLDAP-Server使用cn=config方式配置"><img class="cover" src="https://img.xhua.eu.org/981acb9f90eee67551a5c9aefaa8fa8299661e7c7d8df631e7275d81783ece51.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CentOS上OpenLDAP-Server使用cn=config方式配置</div></div><div class="info-2"><div class="info-item-1">翻译自How to Configure OpenLDAP server in Red Hat Enterprise Linux 7 using cn&#x3D;config method ?  环境 CentOS 7 openldap-2.4  问题 使用slapd工具在CentOS上安装与配置OpenLDAP Server 使用olc方式如何配置OpenLDAP Server  操作 安装openldap包  1yum install -y openldap openldap-clients openldap-servers LDAP默认的配置目录是&#x2F;etc&#x2F;openldap&#x2F;slapd.d 123456789101112[root@rhel7 ~]# cd /etc/openldap/slapd.d/[root@rhel7 slapd.d]# ls -ldrwxr-x---. 4 ldap ldap 4096 Aug  3 22:49 cn=config-rw-------. 1 ldap ldap  589 Aug  2 23:39 cn=co...</div></div></div></a><a class="pagination-related" href="/posts/558c69203e45.html" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/863aac1da72a.html" title="OpenShift-Route会话保持与负载均衡策略"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Route会话保持与负载均衡策略</div></div><div class="info-2"><div class="info-item-1">Route会话保持OpenShift Router是基于Haproxy反向代理实现的，客户端请求与后端应用POD通过cookie来实现会话保持。  默认是开启会话保持的，基于cookie的会话保持。 如果设置haproxy.router.openshift.io/disable_cookies为True，将会禁用基于cookie的会话保持，而使用balance的负载策略。  此过程分为两个阶段：第一次请求阶段、再次发起请求阶段 第一次请求阶段客户端发起第一次请求时，Router会给返回的数据中添加一条指定的cookie。  客户端请求到达Router节点。 Router节点通过默认的负载均衡策略选择后端应用POD。 后端应用POD返回数据到Router节点。 Router根据后端应用POD,给返回的数据包set-cookie: cookiename[HASH值]&#x3D;cookievalue(HASH值），有效期为SESSION(浏览器客户端关闭前有效)。  再次发起请求阶段客户端再次发起请求时，会带上第一次Router设置的cookie,Router根据该cookie值选择...</div></div></div></a><a class="pagination-related" href="/posts/6b1fc471637d.html" title="研发项目管理实践"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">研发项目管理实践</div></div><div class="info-2"><div class="info-item-1">项目的特征 唯一性、2. 存在风险、3. 临时的、4. 跨部门的团队、5. 渐渐明晰  项目的三约束（QBT）Q：质量、B：资金、T：时间     按时、在预算之内、满足性能指标、满足或超出客户的预期完成就是一个成功的项目。 优秀的项目经理在完成一个项目的过程中，让Boss、客户、团队成员都满足。 做项目时要时刻考虑到项目的目的。  项目的来源 合同驱动、2. 市场驱动、3. 变更Change  项目周期   与不同干系人的沟通干系人指的是对项目成败有利益，对项目有影响的人。  识别干系人。核心团队成员一起来识别。 分析干系人。 对不同的干系人采取不同的策略。     影响力来源  信誉、2. 互惠、3. 说服  项目进展 核心团队成员融入到项目里面，能够将项目说清楚 做计划。计划的过程很重要。做计划的过程是把核心团队消化项目的过程，也是责任转移的过程。项目经理要将项目分成模块，细节让负责部分的核心团队成员来做。  团队建设模型（Tuckman模型） 团队建设分为四个阶段：形成阶段、磨合阶段、规范阶段、贡献阶段 四个阶段中间不能跳过 保证核心成员的完整性  项目经理，二件事：管项...</div></div></div></a><a class="pagination-related" href="/posts/a40d5162aa40.html" title="OpenShift强大的oc-set命令详解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift强大的oc-set命令详解</div></div><div class="info-2"><div class="info-item-1"> OpenShift的client工具oc功能非常强大，几乎能实现所有的操作，它的每一个子命令都能实现非常多的功能。其中有个容易被忽视却很强大的子命令oc set可以实现对资源很多额外的配置，包括有环境变量、资源限制、持久化卷挂载、健康检查等等。下面是oc set的帮助详情。 1234567891011121314151617181920212223242526[root@master ~]# oc setConfigure application resourcesUsage:  oc set COMMAND [flags]Replication controllers, deployments, and daemon sets:  env             Update environment variables on a pod template  resources       Update resource requests/limits on objects with pod templates  volumes         Update volumes o...</div></div></div></a><a class="pagination-related" href="/posts/ed13f1158553.html" title="Openshift-F5集成（总结）——与Router方案对比"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-F5集成（总结）——与Router方案对比</div></div><div class="info-2"><div class="info-item-1">这篇文章来自9月份自己在F5年度会议上分享的PPT，感谢过程中帮忙一起联调的小伙伴。PPT也分享出来，地址如下：openshift与F5的联合解决方案Openshift-F5集成（南北流量走F5）Openshift-F5集成（续）——实现灰度发布 Openshift的基础概念Openshift简介红帽® OpenShift 是一款性能强大的开源企业级PaaS产品。不仅是企业级的Kubernetes，可以构建、部署与管理容器应用，还提供从开发到投入生产的整个应用生命周期内使用的完整解决方案，帮助客户享受快速创新带来的收益，同时保持企业级平台的稳定性、可靠性和安全性。Openshift支持多种环境下部署，无论是在企业内部，公共云，或是托管环境中。 Openshift Pod Pod是Openshift调度的最小单元 一个Pod包含一个或多个容器 Pod内的容器共享网络，IP不固定  实例： 12345678910111213apiVersion: v1kind: Podmetadata:  name: MyApp       labels:    app: MyApp    spec...</div></div></div></a><a class="pagination-related" href="/posts/7fa076a49782.html" title="Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-Service不仅仅能负载Pod，它还能负载VM等外部服务</div></div><div class="info-2"><div class="info-item-1"> Service是Openshift最核心的概念，它可以为一组具有相同功能的Pod提供一个统一的入口，并且将请求负载均衡分发到后端的各个Pod应用上。同时Service在集群下的IP是不变的，保证了请求的可靠性。 Service仅仅只能负载一组Pod吗？No。它还可以对接VM的服务，甚至是物理机的服务。 Service负载Pod    1234567891011121314apiVersion: v1kind: Servicemetadata:  name: nginxspec:  selector:    app: nginx  type: NodePort  ports:    - port: 8080      name: nginx      protocol: TCP      targetPort: 8080      nodePort: 38080  selector：Label选择器，将选择指定Label的Pod作为被负载Pod type：Service的类型，指定Service的访问方式，默认为ClusterIP。 ClusterIP：虚拟的服务IP地址，该IP...</div></div></div></a><a class="pagination-related" href="/posts/67c1601a81ee.html" title="OpenShift-如何设置使用Prometheus来监控Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-如何设置使用Prometheus来监控Router</div></div><div class="info-2"><div class="info-item-1">OpenShift集群中的Router服务作为几乎所有南北流量的入口非常重要，对它的监控有很大的意义，既能够查看流量的变化，及时发现业务的变化，也可以发现异常请求及时发现问题。 红帽对于Router服务其实已经开启了监控指标的服务，但是默认并没有与Prometheus服务对接，需要手动对接，具体对接的操作如下。  获取Router应用的访问用户名与密码  1234$ oc set env dc/router -n default --list  | grep STATSSTATS_PASSWORD=Oby3Y2FXs5STATS_PORT=1936STATS_USERNAME=admin  在prometheus项目下创建访问Router指标的密钥  1$ oc create secret generic router-auth --from-literal=user=admin --from-literal=password=Oby3Y2FXs5 -n openshift-monitoring  在openshift-monitoring项目下创建ServiceMonitor ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</a><time datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</a><time datetime="2026-08-25T07:08:47.000Z" title="发表于 2026-08-25 15:08:47">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0f93fc59cf48.html" title="AI Coding Assistant Best Practices：从提示词到可验证工程闭环">AI Coding Assistant Best Practices：从提示词到可验证工程闭环</a><time datetime="2026-08-25T06:33:35.000Z" title="发表于 2026-08-25 14:33:35">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</a><time datetime="2026-05-11T02:07:39.000Z" title="发表于 2026-05-11 10:07:39">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

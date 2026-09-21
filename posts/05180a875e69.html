@@ -1,0 +1,240 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>数据库写测试 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="先出结果数据库Mysql 5.7数据     NetApp Ceph NFS-SSD NFS-SAS HOST PATH    写(qtps) 33333 888 20000 3000    延时(us) 1029 40488 1184       NetApp   12345678910111213141516171819202018-06-27 17:56:45 &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库写测试">
+<meta property="og:url" content="https://xhua.eu.org/posts/05180a875e69.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="先出结果数据库Mysql 5.7数据     NetApp Ceph NFS-SSD NFS-SAS HOST PATH    写(qtps) 33333 888 20000 3000    延时(us) 1029 40488 1184       NetApp   12345678910111213141516171819202018-06-27 17:56:45 &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.708Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "数据库写测试",
+  "url": "https://xhua.eu.org/posts/05180a875e69.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-09-21T08:31:54.708Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/05180a875e69.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '数据库写测试',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">数据库写测试</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">数据库写测试</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.708Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>先出结果<br>数据库Mysql 5.7<br>数据</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>NetApp</th>
+<th>Ceph</th>
+<th>NFS-SSD</th>
+<th>NFS-SAS</th>
+<th>HOST PATH</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>写(qtps)</td>
+<td>33333</td>
+<td>888</td>
+<td>20000</td>
+<td>3000</td>
+<td></td>
+</tr>
+<tr>
+<td>延时(us)</td>
+<td>1029</td>
+<td>40488</td>
+<td>1184</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<blockquote>
+<ol>
+<li>NetApp</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">2018-06-27 17:56:45 ======================== mysql_test ========================</span><br><span class="line">2018-06-27 17:56:45 SQL01  exe=5000 fail=0 row=5000 ela=5180 ms avg=1036 us</span><br><span class="line">2018-06-27 17:56:45 SQL01    1 ms  exec=    2853, ela=      2530 ms, avg=     886 us, pct= 57, 57</span><br><span class="line">2018-06-27 17:56:45 SQL01    2 ms  exec=    2122, ela=      2443 ms, avg=    1151 us, pct= 42, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    3 ms  exec=      10, ela=        24 ms, avg=    2475 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    4 ms  exec=       1, ela=         3 ms, avg=    3044 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    5 ms  exec=       1, ela=         4 ms, avg=    4847 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    7 ms  exec=       1, ela=         6 ms, avg=    6115 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    8 ms  exec=       1, ela=         7 ms, avg=    7578 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01    9 ms  exec=       1, ela=         8 ms, avg=    8736 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   12 ms  exec=       1, ela=        11 ms, avg=   11764 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   13 ms  exec=       4, ela=        50 ms, avg=   12516 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   15 ms  exec=       1, ela=        14 ms, avg=   14704 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   18 ms  exec=       2, ela=        34 ms, avg=   17307 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   20 ms  exec=       1, ela=        19 ms, avg=   19099 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:56:45 SQL01   21 ms  exec=       1, ela=        20 ms, avg=   20897 us, pct=  0,100</span><br><span class="line">2018-06-27 17:56:45 Total  tran=5000=964/s, qtps=5000=964/s, ela=5181 ms, avg=1036 us</span><br><span class="line">Summary: SQL01 exec=200000, rows=200000=100/e, avg=1029 us</span><br><span class="line">Summary: exec=33333/s, qtps=33333/s</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<ol start="2">
+<li>Ceph</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">2018-06-27 17:45:33 ======================== mysql_test ========================</span><br><span class="line">2018-06-27 17:45:33 SQL01  exe=200 fail=0 row=200 ela=8263 ms avg=41318 us</span><br><span class="line">2018-06-27 17:45:33 SQL01   31 ms  exec=       1, ela=        30 ms, avg=   30480 us, pct=  0,  0</span><br><span class="line">2018-06-27 17:45:33 SQL01   33 ms  exec=       3, ela=        98 ms, avg=   32802 us, pct=  1,  2</span><br><span class="line">2018-06-27 17:45:33 SQL01   35 ms  exec=     129, ela=      4446 ms, avg=   34468 us, pct= 64, 66</span><br><span class="line">2018-06-27 17:45:33 SQL01   36 ms  exec=       1, ela=        35 ms, avg=   35763 us, pct=  0, 67</span><br><span class="line">2018-06-27 17:45:33 SQL01   37 ms  exec=       3, ela=       108 ms, avg=   36208 us, pct=  1, 68</span><br><span class="line">2018-06-27 17:45:33 SQL01   39 ms  exec=       2, ela=        76 ms, avg=   38462 us, pct=  1, 69</span><br><span class="line">2018-06-27 17:45:33 SQL01   40 ms  exec=       2, ela=        78 ms, avg=   39477 us, pct=  1, 70</span><br><span class="line">2018-06-27 17:45:33 SQL01   41 ms  exec=      27, ela=      1088 ms, avg=   40297 us, pct= 13, 84</span><br><span class="line">2018-06-27 17:45:33 SQL01   45 ms  exec=       1, ela=        44 ms, avg=   44629 us, pct=  0, 84</span><br><span class="line">2018-06-27 17:45:33 SQL01   46 ms  exec=       2, ela=        91 ms, avg=   45957 us, pct=  1, 85</span><br><span class="line">2018-06-27 17:45:33 SQL01   47 ms  exec=       1, ela=        46 ms, avg=   46364 us, pct=  0, 86</span><br><span class="line">2018-06-27 17:45:33 SQL01   52 ms  exec=       4, ela=       206 ms, avg=   51729 us, pct=  2, 88</span><br><span class="line">2018-06-27 17:45:33 SQL01   53 ms  exec=       2, ela=       104 ms, avg=   52335 us, pct=  1, 89</span><br><span class="line">2018-06-27 17:45:33 SQL01   54 ms  exec=       1, ela=        53 ms, avg=   53647 us, pct=  0, 89</span><br><span class="line">2018-06-27 17:45:33 SQL01   58 ms  exec=       1, ela=        57 ms, avg=   57284 us, pct=  0, 90</span><br><span class="line">2018-06-27 17:45:33 SQL01   60 ms  exec=       1, ela=        59 ms, avg=   59134 us, pct=  0, 90</span><br><span class="line">2018-06-27 17:45:33 SQL01   62 ms  exec=       1, ela=        61 ms, avg=   61386 us, pct=  0, 91</span><br><span class="line">2018-06-27 17:45:33 SQL01   64 ms  exec=       2, ela=       126 ms, avg=   63084 us, pct=  1, 92</span><br><span class="line">2018-06-27 17:45:33 SQL01   69 ms  exec=       3, ela=       206 ms, avg=   68766 us, pct=  1, 93</span><br><span class="line">2018-06-27 17:45:33 SQL01   75 ms  exec=       1, ela=        74 ms, avg=   74645 us, pct=  0, 94</span><br><span class="line">2018-06-27 17:45:33 SQL01   76 ms  exec=       1, ela=        75 ms, avg=   75024 us, pct=  0, 94</span><br><span class="line">2018-06-27 17:45:33 SQL01   77 ms  exec=       2, ela=       152 ms, avg=   76125 us, pct=  1, 95</span><br><span class="line">2018-06-27 17:45:33 SQL01   84 ms  exec=       1, ela=        83 ms, avg=   83939 us, pct=  0, 96</span><br><span class="line">2018-06-27 17:45:33 SQL01   87 ms  exec=       2, ela=       172 ms, avg=   86187 us, pct=  1, 97</span><br><span class="line">2018-06-27 17:45:33 SQL01   92 ms  exec=       1, ela=        91 ms, avg=   91817 us, pct=  0, 97</span><br><span class="line">2018-06-27 17:45:33 SQL01   98 ms  exec=       1, ela=        97 ms, avg=   97461 us, pct=  0, 98</span><br><span class="line">2018-06-27 17:45:33 SQL01  109 ms  exec=       1, ela=       108 ms, avg=  108786 us, pct=  0, 98</span><br><span class="line">2018-06-27 17:45:33 SQL01  110 ms  exec=       1, ela=       109 ms, avg=  109178 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:45:33 SQL01  115 ms  exec=       1, ela=       114 ms, avg=  114209 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:45:33 SQL01  163 ms  exec=       1, ela=       162 ms, avg=  162020 us, pct=  0,100</span><br><span class="line">2018-06-27 17:45:33 Total  tran=200=24/s, qtps=200=24/s, ela=8264 ms, avg=41320 us</span><br><span class="line">Summary: SQL01 exec=8000, rows=8000=100/e, avg=40488 us</span><br><span class="line">Summary: exec=888/s, qtps=888/s</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol start="3">
+<li>NFS</li>
+</ol>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">2018-06-27 17:49:03 ======================== mysql_test ========================</span><br><span class="line">2018-06-27 17:49:03 SQL01  exe=2000 fail=0 row=2000 ela=2389 ms avg=1194 us</span><br><span class="line">2018-06-27 17:49:03 SQL01    1 ms  exec=    1613, ela=      1267 ms, avg=     785 us, pct= 80, 80</span><br><span class="line">2018-06-27 17:49:03 SQL01    2 ms  exec=     380, ela=       434 ms, avg=    1144 us, pct= 19, 99</span><br><span class="line">2018-06-27 17:49:03 SQL01    3 ms  exec=       3, ela=         7 ms, avg=    2397 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:49:03 SQL01    5 ms  exec=       1, ela=         4 ms, avg=    4316 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:49:03 SQL01   13 ms  exec=       2, ela=        25 ms, avg=   12671 us, pct=  0, 99</span><br><span class="line">2018-06-27 17:49:03 SQL01  512 ms  exec=       1, ela=       650 ms, avg=  650205 us, pct=  0,100</span><br><span class="line">2018-06-27 17:49:03 Total  tran=2000=836/s, qtps=2000=836/s, ela=2389 ms, avg=1194 us</span><br><span class="line">Summary: SQL01 exec=80000, rows=80000=100/e, avg=1184 us</span><br><span class="line">Summary: exec=20000/s, qtps=20000/s</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/05180a875e69.html">https://xhua.eu.org/posts/05180a875e69.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/6b1fc471637d.html" title="研发项目管理实践"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">研发项目管理实践</div></div><div class="info-2"><div class="info-item-1">项目的特征 唯一性、2. 存在风险、3. 临时的、4. 跨部门的团队、5. 渐渐明晰  项目的三约束（QBT）Q：质量、B：资金、T：时间     按时、在预算之内、满足性能指标、满足或超出客户的预期完成就是一个成功的项目。 优秀的项目经理在完成一个项目的过程中，让Boss、客户、团队成员都满足。 做项目时要时刻考虑到项目的目的。  项目的来源 合同驱动、2. 市场驱动、3. 变更Change  项目周期   与不同干系人的沟通干系人指的是对项目成败有利益，对项目有影响的人。  识别干系人。核心团队成员一起来识别。 分析干系人。 对不同的干系人采取不同的策略。     影响力来源  信誉、2. 互惠、3. 说服  项目进展 核心团队成员融入到项目里面，能够将项目说清楚 做计划。计划的过程很重要。做计划的过程是把核心团队消化项目的过程，也是责任转移的过程。项目经理要将项目分成模块，细节让负责部分的核心团队成员来做。  团队建设模型（Tuckman模型） 团队建设分为四个阶段：形成阶段、磨合阶段、规范阶段、贡献阶段 四个阶段中间不能跳过 保证核心成员的完整性  项目经理，二件事：管项...</div></div></div></a><a class="pagination-related" href="/posts/2aca26a591ca.html" title="玩转Openshift中Pod调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">玩转Openshift中Pod调度</div></div><div class="info-2"><div class="info-item-1"> 大部分情况下，Openshift中的Pod只是容器的载体，通过Deployment、DaemonSet、RC、Job、Cronjob等对象来完成一组Pod的调度与自动控制功能。Pod调度也是由Scheduler组件完成的。      Deployment&#x2F;RC：全自动调度  Deployment&#x2F;RC主要是自动部署应用的多个副本，并持续监控，以维持副本的数量。默认是使用系统Master的Scheduler经过一系列算法计算来调度，用户无法干预调度过程与结果。 12345678910111213141516171819202122apiVersion: apps/v1kind: Deploymentmetadata:  name: nginx  labels:    app: nginxspec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      containers:      - name: nginx    ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/13ee717138f0.html" title="Openshfit-4-1部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshfit-4-1部署手册</div></div><div class="info-2"><div class="info-item-1">设备与网络准备 网络要求 能够访问OpenShift Infrastructure Providers以下载安装程序 能访问quay.io以获取安装群集所需的软件包 能访问Red Hat’s software as a service page以获取相关订阅   准备节点  1 bootstrap节点 RHCOS，引导计算机部署集群，在完成部署后该机器可被删除  3 master节点 RHCOS  2 compte节点 RHCOS or RHEL 7.6  部署前准备 外部负载均衡器 配置主机端口 配置DNS 确保网络连接   以下端口必须能被集群中的所有机器访问     端口 说明    2379-2380 etcd server, peer, and metrics ports   6443 Kubernetes API   9000-9999 Host level services, including the node exporter on ports 9100-9101 and the Cluster Version Operator on port 9099.   ...</div></div></div></a><a class="pagination-related" href="/posts/169c43378e6a.html" title="Openshift开启Calico-BGP-与-OVS性能PK"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift开启Calico-BGP-与-OVS性能PK</div></div><div class="info-2"><div class="info-item-1"> Openshift网络方案选择 大家都知道K8S在网络插件选择上有很多种，默认的是Flannel，但是它的性能一般，互联网中使用最多的是Calico BGP，因为它的性能非常好。 而对于Openshift，官方只支持ovs一种网络方案，同时RedHat也表示ovs在Openshift平台上运行是最合适的。但是ovs的网络性能怎样呢？因为ovs方案对数据需要进行加包，解包的过程，性能肯定是会受影响的。同时经过实测，在万兆网络中的损耗近50%，虽然在绝大部分场景下ovs已经够用了，但是但是跟几乎无损耗的Calico BGP比起来还是逊色不少。 很庆幸，Openshift虽然官方不作Calico网络方案的支持，但还是很体贴地把它加入到了Openshift的安装脚本中，从而让大家都能方便地使用Calico网络方案，包括IPIP及BGP方案。  安装步骤 在ansible hosts中设置关闭openshift默认的sdn方案，开启calico方案&#x2F;etc&#x2F;ansible&#x2F;hosts  1234[OSEv3:vars]os_sdn_network_plugi...</div></div></div></a><a class="pagination-related" href="/posts/370dfa8a122e.html" title="OpenShift使用MetalLB，打开了Service通向外界的大门"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift使用MetalLB，打开了Service通向外界的大门</div></div><div class="info-2"><div class="info-item-1"> #背景在K8S&#x2F;OpenShift中，如果要向集群外部暴露应用的服务，目前使用的方法有：NodePort、HostPort、Route、LoadBalancer、HostNetwork。  Route：为最常用的方法，但是一般只支持7层负载（默认），使用一个外部LB来负载多个Route实例，对外的访问的IP为该LB的IP。 NodePort：在私有集群中也常用来暴露服务，但是它必须使用30000以上的端口，数量有限，不便于管理，而且对于一些特殊的服务，如DNS，必须使用小端口号，那么使用NodePort则无法满足。 HostNetwork：对于集群中的一些特殊服务使用该方式，它将容器与宿主机的网络绑定，如OpenShift中的Router服务就是使用HostNetwork与Router节点绑定。它的缺点是pod必须与主机绑定，同时每个Node上只能运行一个Pod实例，因为端口无法被复用。 HostPort：与HostNetwork类似，将Pod指定的端口与Node对应的端口绑定。 LoadBalancer：一般只在公有云平台使用，可以使Service获得与主机同一平面...</div></div></div></a><a class="pagination-related" href="/posts/83a1dcc308fe.html" title="OpenShift-云原生容器应用设计原则"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-云原生容器应用设计原则</div></div><div class="info-2"><div class="info-item-1"> 引自：容器化应用的设计原则来源自RedHat云原生容器应用设计原则白皮书 本文来自于Red Hat咨询顾问Bilgin Ibryam所编写的一篇白皮书，名为《PRINCIPLES OF CONTAINER-BASED APPLICATION DESIGN》。这篇文章在作者的Blog上发表后，作者的twitter被Kubernetes官方twitter转发。白皮书在Red Hat官网的下载地址：https://www.redhat.com/en/resources/cloud-native-container-design-whitepaper 文本是对这篇文章的学习和整理。  先回顾经典的软件设计原则：   保持简单，愚蠢（KISS） 不要重复自己（DRY） 你不会需要它 （YAGNI） 关注点分离（SoC） Single responsibility, Open&#x2F;closed, Liskov substitution, Interface segregation, Dependency inversion （SOLID）   然后是Red Hat的云原生容器设计原则...</div></div></div></a><a class="pagination-related" href="/posts/34851936f0a3.html" title="Openshift管理project【译自官方文档】"><img class="cover" src="https://img.xhua.eu.org/88c27dd8885300805ea2a3eaa4fb011259b8fd10a01b70283ec22d01b89f73e5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift管理project【译自官方文档】</div></div><div class="info-2"><div class="info-item-1">概述在OpenShift容器平台中，项目用于对相关对象进行分组和隔离。作为管理员，您可以授予开发人员对某些项目的访问权限，允许他们创建自己的项目，并授予他们在各个项目中的管理权限。 创建一个新的Project可以允许开发人员创建自己的项目。开发人员可以通过web控制台或者oc new-project命令来创建新的project。 1$ oc new-project test-project 预定义projectAPI服务器根据master-config.yaml文件的projectRequestTemplate参数标识的模板自动配置新的项目。如果未定义该参数，API服务器将创建一个默认模板，该模板使用请求的名称创建一个项目，并赋予创建该项目的用户该项目的“admin”角色。 如何创建自定义的project模板呢？ 导出当前默认的模板  1$ oc adm create-bootstrap-project-template -o yaml &gt; template.yaml  使用文本编辑工具编辑template.yaml文件，对默认的配置进行更新 导入更改后的模板  1$ oc...</div></div></div></a><a class="pagination-related" href="/posts/6e5f72fcd352.html" title="Service-iptables实现原理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Service-iptables实现原理</div></div><div class="info-2"><div class="info-item-1"> </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</a><time datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</a><time datetime="2026-08-25T07:08:47.000Z" title="发表于 2026-08-25 15:08:47">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0f93fc59cf48.html" title="AI Coding Assistant Best Practices：从提示词到可验证工程闭环">AI Coding Assistant Best Practices：从提示词到可验证工程闭环</a><time datetime="2026-08-25T06:33:35.000Z" title="发表于 2026-08-25 14:33:35">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</a><time datetime="2026-05-11T02:07:39.000Z" title="发表于 2026-05-11 10:07:39">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Openshift-Route证书HTTPS配置 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openshift-Route证书HTTPS配置">
+<meta property="og:url" content="https://xhua.eu.org/posts/5a77edf030a8.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="后台应用为http服务Termination Type:  EdgeInsecure Traffic:     Allow 后台应用为https服务Termination Type:  PassthroughInsecure Traffic:     None">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-09-21T08:31:54.703Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Openshift-Route证书HTTPS配置",
+  "url": "https://xhua.eu.org/posts/5a77edf030a8.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-09-21T08:31:54.703Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/5a77edf030a8.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Openshift-Route证书HTTPS配置',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Openshift-Route证书HTTPS配置</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Openshift-Route证书HTTPS配置</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-21T08:31:54.703Z" title="更新于 2026-09-21 16:31:54">2026-09-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>后台应用为http服务<br>Termination Type:  Edge<br>Insecure Traffic:     Allow</p>
+<p>后台应用为https服务<br>Termination Type:  Passthrough<br>Insecure Traffic:     None</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/5a77edf030a8.html">https://xhua.eu.org/posts/5a77edf030a8.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/8b2b11346a0d.html" title="Openshift-Nginx-Router替换默认Haproxy-Router"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Openshift-Nginx-Router替换默认Haproxy-Router</div></div><div class="info-2"><div class="info-item-1"> 什么是Router Router在Openshift集群的一个不可非常重要的组件，它作为外部请求访问集群内部资源的入口，为Openshift上的应用提供边缘负载均衡。 Router可以为应用提供HTTP和websocket流量的负载均衡，同时支持HTTPS连接。Openshift上有一个特殊的资源叫Route，通过它可以方便地配置Router。 Openshift集群默认使用Haproxy应用作为Router的实现，它通过容器的形式运行在相应的Node上，同时Router Pod网络使用的宿主机的网络，即hostNetwork=true。 除了Haproxy,我们还可以使用Nginx来实现Router，这也是本文的重点。 不管是Haproxy还是Nginx方案都是使用了软件负载均衡器，还可以使用F5等硬件负载均衡器来替换Router，达到性能的提升。   Nginx Router与默认Router比较 如何替换Openshift默认Router卸载当前Router 用system:admin登录集群  1$ oc login -u system:admin  选择default...</div></div></div></a><a class="pagination-related" href="/posts/bfe4fac12931.html" title="Openshift-Network-QoS——Pod网络控制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Openshift-Network-QoS——Pod网络控制</div></div><div class="info-2"><div class="info-item-1"> Pod网络（速）控制的必要性高速公路上，当流量大时，如果汽车仍然不限制速度的话，将会很容易发生车祸，我们都会自觉地减速缓慢通过，只有减速才能安全行驶。在平台的集群中也是一样，一台主机上会有大量容器运行，容器相当于高速速上的汽车，对外的网络通信都使用主机出口这条高速路，如果某（几）个容器突然访问流量大增，而且没有作任何网络限速，会占用了主机的网络，严重影响其它容器的网络，进而影响其它业务。 前提 Openshift打开多租户网络模式修改&#x2F;etc&#x2F;origin&#x2F;master&#x2F;master-config.yaml将networkPluginName设置为redhat/openshift-ovs-multitenant  12345...  hostSubnetLength: 9  networkPluginName: redhat/openshift-ovs-multitenant  serviceNetworkCIDR: 172.30.0.0/16...  如果已存在的集群，切换网络策略，请参考Openshift网络插件动态切换  为Pod添...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/d190629849e1.html" title="Openshift各组件Master-Node-Etcd-Router-Registry证书维护"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift各组件Master-Node-Etcd-Router-Registry证书维护</div></div><div class="info-2"><div class="info-item-1">Openshift集群正常运行过程中，各个组件:Master、Node、Etcd、Router、Registry之前相互通信交互，它们之间都是通过加密协议通信。那么问题来了，对于tls证书是有有效期的，突然有一天，证书过期了怎么办？集群是不是就无法正常运行了呢？现在我们就来看下，怎么能够让加密证书持续有效。  安装时，将证书有效期设置为很长，100年够不够 快速查看当前集群所有证书的有效期 证书过期了，我们该如何进行更新证书  安装时指定证书的有效期默认情况下，etcd证书、openshift证书的有效期为5年，kubelet证书、私有镜像仓库registry证书、Route证书的有效期为2年。在集群安装时可以通过设置ansible&#x2F;hosts中的参数来指定证书的有效期 123456[OSEv3:vars]openshift_hosted_registry_cert_expire_days=730openshift_ca_cert_expire_days=1825openshift_node_cert_expire_days=730openshift_master_c...</div></div></div></a><a class="pagination-related" href="/posts/34e946b3354d.html" title="Openshift中集群ElasticSearch的运维"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift中集群ElasticSearch的运维</div></div><div class="info-2"><div class="info-item-1">大家都知道，Openshift集成了EFK(Elasticsearch + Fluentd + Kibana)作为集群的日志管理平台。我们该怎样去维护ElasticSearch.   找到ES所在的pod   1oc get pod -l component=es -o name -n logging | cut -d/ -f2   查看所有ES索引   1oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key --cacert /etc/elasticsearch/secret/admin-ca https://localhost:9200/_cat/indices?v   清理所有3月份的ES索引   1oc exec $es-pod-name -- curl -s --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearc...</div></div></div></a><a class="pagination-related" href="/posts/852e3377ec0a.html" title="OpenShift-通过Operator-SDK制作Operator"><img class="cover" src="https://img.xhua.eu.org/1e3540e03097e6e39533c694f37f7413e1e31478fa131788bedcc12f6a7d1165.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-通过Operator-SDK制作Operator</div></div><div class="info-2"><div class="info-item-1">制作Operator过程 下载安装operator-sdk 创建github仓库 operator-sdk创建应用  12345$ operator-sdk new memcached-go-operator --repo=github.com/example-inc/memcached-operator$ # or$ operator-sdk new memcached-ansible-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=ansible$ # or$ operator-sdk new memcached-helm-operator --api-version=fcloudy.com/v1alpha1 --kind=Memcached --type=helm operator-sdk new默认使用的type为go，必须在$GOPATH目录下创建项目。type为go时项目的目录结构如下：项目的目录结构 type的可选值还可以为：ansible与helm，如果是这两个，则还可以带参数...</div></div></div></a><a class="pagination-related" href="/posts/c6fbc7c6afa5.html" title="OpenShift中的Grafana监控界面无法完成登录"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift中的Grafana监控界面无法完成登录</div></div><div class="info-2"><div class="info-item-1"> 问题描述：访问OpenShift默认的grafana无法跳转到OpenShift console界面。报如下错误： 12&#123;&quot;error&quot;:&quot;invalid_request&quot;,&quot;error_description&quot;:&quot;The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.&quot;&#125; 解决办法： 1$ oc patch sa grafana -p &#x27;&#123;&quot;metadata&quot;:&#123;&quot;annotations&quot;:&#123;&quot;serviceaccounts.openshift.io/oauth-redirecturi.first&quot;:&quot;https://grafana.ap...</div></div></div></a><a class="pagination-related" href="/posts/9333fbeb9715.html" title="Openshift私有仓库爆了，怎么办？？！！"><img class="cover" src="https://img.xhua.eu.org/b6aaa930482afda181e6ff5514852de8501b13b613dfef6b9fc3c1e891803a2b.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift私有仓库爆了，怎么办？？！！</div></div><div class="info-2"><div class="info-item-1">背景像大家担心的那样，Openshift私有仓库磁盘爆了，使用率100%!!!使用oc adm prune来作对openshift集群的清理，你敢吗？会不会把需要的镜像也一并删了呢，要是如此，就只能像DBA一样走人了。今天就来探讨下oc adm prune的用法。 先给出答案如你所料，我们最终的清理镜像的办法是oc adm prune images 12oc login -u admin -p adminoc adm prune images --keep-younger-than=400m --confirm 注意以上oc adm prune images命令只能在普通用户下执行，无法在system:admin用户下执行，所以必须先登录普通用户，同时用户拥有system:image-pruner权限。 精减镜像命令oc adm prune images的用法为了让镜像不占用过多的磁盘空间，需要对它全精减。很多时候，比如重复地构建镜像，会留下很多不必要的镜像层，而这些镜像层会占用非常多的空间。 1oc adm prune images [&lt;options&gt;]  opt...</div></div></div></a><a class="pagination-related" href="/posts/2cba55920597.html" title="OpenShift-集群为项目提供专属节点"><img class="cover" src="https://img.xhua.eu.org/3299e2efc81f3bbe8d867a65b5ca9f7ff783b24bf3c86e0955cff604b399fe0e.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-集群为项目提供专属节点</div></div><div class="info-2"><div class="info-item-1">背景介绍在生产实践中，某些系统因一些特殊的要求，需要独占节点，即专属节点：具有特殊要求的应用POD必须运行在这些专属节点上；同时这些节点不为其它应用服务。本文将提供一种具体的配置策略，以满足这种特殊的调度需求。该策略主要使用到两种工具：  节点标签实现应用与节点的绑定 污点配置实现其它应用不会被调度到该节点。  设置步骤 为专属节点设置特定标签LABEL：dedicated&#x3D;sys0，及设置污点  12$ oc label node node-10 dedicated=sys0$ oc adm taint nodes node-10 dedicated=sys0:NoSchedule  在使用专属节点的应用编排中绑定的Node  123456789101112spec:  replicas: 1  template:    metadata:      name: nginx      labels:        app: nginx    spec:      nodeSelector:        dedicated: &quot;sys0&quot;     ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">270</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">136</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</a><time datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/be8ec4f39807.html" title="AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造">AI Coding 实战手册：从项目初始化到需求交付与遗留系统改造</a><time datetime="2026-08-25T07:08:47.000Z" title="发表于 2026-08-25 15:08:47">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/0f93fc59cf48.html" title="AI Coding Assistant Best Practices：从提示词到可验证工程闭环">AI Coding Assistant Best Practices：从提示词到可验证工程闭环</a><time datetime="2026-08-25T06:33:35.000Z" title="发表于 2026-08-25 14:33:35">2026-08-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/97039d3e71c2.html" title="NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）">NVIDIA NemoClaw：工作原理、使用场景与特性（翻译）</a><time datetime="2026-05-11T02:07:39.000Z" title="发表于 2026-05-11 10:07:39">2026-05-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
