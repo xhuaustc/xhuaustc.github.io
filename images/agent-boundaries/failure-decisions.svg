@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="1100" viewBox="0 0 500 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Agent 失败处理决策流程</title>
+  <desc id="desc">工具调用失败后先分类。写请求结果未知时查询原请求状态，不盲目重放；权限拒绝、目标变化或未授权时停止并申请具体授权；明确可重试的瞬态故障只在原目标和原权限下有界退避，预算耗尽即停止；无法分类时停止并报告。本文自建设计。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker>
+    <marker id="blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#175cd3"/></marker>
+  </defs>
+  <rect width="500" height="1100" rx="20" fill="#f8fafc"/>
+  <g font-family="system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" text-anchor="middle" fill="#172b4d">
+    <text x="250" y="44" font-size="25" font-weight="700">失败后，先分类再决定</text>
+    <rect x="60" y="76" width="380" height="80" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+    <text x="250" y="111" font-size="23" font-weight="700">工具调用未完成</text>
+    <text x="250" y="141" font-size="20">保留错误类别与请求 ID</text>
+    <path d="M250 156V190" fill="none" stroke="#175cd3" stroke-width="3" marker-end="url(#blue)"/>
+    <rect x="45" y="198" width="410" height="90" rx="12" fill="#eaf2ff" stroke="#175cd3" stroke-width="2"/>
+    <text x="250" y="233" font-size="23" font-weight="700" fill="#175cd3">识别失败类别</text>
+    <text x="250" y="267" font-size="20">结合工具语义，选择匹配路径</text>
+    <path d="M250 288V310H28V1008" fill="none" stroke="#64748b" stroke-width="2.5"/>
+    <path d="M28 400H54" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="62" y="334" width="393" height="144" rx="12" fill="#eaf2ff" stroke="#175cd3" stroke-width="2"/>
+    <text x="258" y="368" font-size="23" font-weight="700" fill="#175cd3">① 写请求结果未知</text>
+    <text x="258" y="402" font-size="21">先用原请求 ID 查询状态</text>
+    <text x="258" y="432" font-size="20">未确认结果：停止 / 人工核查</text>
+    <text x="258" y="460" font-size="21" font-weight="700" fill="#b42318">禁止盲目重放</text>
+    <path d="M28 590H54" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="62" y="520" width="393" height="154" rx="12" fill="#fff1f0" stroke="#b42318" stroke-width="2"/>
+    <text x="258" y="555" font-size="23" font-weight="700" fill="#b42318">② 拒绝 / 目标变化 / 未授权</text>
+    <text x="258" y="590" font-size="21">停止当前路径</text>
+    <text x="258" y="622" font-size="21">保留证据，申请具体授权</text>
+    <text x="258" y="654" font-size="20">不自动切换环境、账号或代理</text>
+    <path d="M28 785H54" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="62" y="716" width="393" height="154" rx="12" fill="#ecfdf3" stroke="#067647" stroke-width="2"/>
+    <text x="258" y="751" font-size="23" font-weight="700" fill="#067647">③ 可重试的瞬态故障</text>
+    <text x="258" y="786" font-size="21">原目标 + 原权限 + 有界退避</text>
+    <text x="258" y="818" font-size="20">预算 / 截止时间耗尽即停止</text>
+    <text x="258" y="850" font-size="20">每次重试仍经过执行入口</text>
+    <path d="M28 1008H54" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="62" y="946" width="393" height="92" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+    <text x="258" y="982" font-size="23" font-weight="700">无法分类 / 预算已耗尽</text>
+    <text x="258" y="1017" font-size="21">停止并报告已有证据</text>
+    <text x="250" y="1075" font-size="20" fill="#475569">本文自建设计 · 分支不代表串行重试</text>
+  </g>
+</svg>

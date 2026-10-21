@@ -1,0 +1,247 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>项目的通用结构 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="项目的通用结构，可根据真实情况进行删减 12345678910111213141516171819202122232425- src #代码- data #需要保存的文件，如安装包、镜像等- docs # 说明文档- scripts #相关的脚本文件- hack  - build    - Dockerfile  # 构建镜像  - Vagrantfile #Vagrant配置  - ansib">
+<meta property="og:type" content="article">
+<meta property="og:title" content="项目的通用结构">
+<meta property="og:url" content="https://xhua.eu.org/posts/70668969ef36.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="项目的通用结构，可根据真实情况进行删减 12345678910111213141516171819202122232425- src #代码- data #需要保存的文件，如安装包、镜像等- docs # 说明文档- scripts #相关的脚本文件- hack  - build    - Dockerfile  # 构建镜像  - Vagrantfile #Vagrant配置  - ansib">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-10-21T05:03:27.080Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "项目的通用结构",
+  "url": "https://xhua.eu.org/posts/70668969ef36.html",
+  "image": "https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-10-21T05:03:27.080Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/70668969ef36.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '项目的通用结构',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">273</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">142</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">项目的通用结构</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">项目的通用结构</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-21T05:03:27.080Z" title="更新于 2026-10-21 13:03:27">2026-10-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>项目的通用结构，可根据真实情况进行删减</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">- src #代码</span><br><span class="line">- data #需要保存的文件，如安装包、镜像等</span><br><span class="line">- docs # 说明文档</span><br><span class="line">- scripts #相关的脚本文件</span><br><span class="line">- hack</span><br><span class="line">  - build</span><br><span class="line">    - Dockerfile  # 构建镜像</span><br><span class="line">  - Vagrantfile #Vagrant配置</span><br><span class="line">  - ansible/    # ansible构建部署脚本</span><br><span class="line">    - site.yml</span><br><span class="line">    - hosts</span><br><span class="line">    - roles/</span><br><span class="line">    - group_vars/</span><br><span class="line">    - host_vars/</span><br><span class="line">    - library/</span><br><span class="line">  - kubernetes/  # Openshift平台构建部署脚本</span><br><span class="line">  - docker-compose # Docker compose部署</span><br><span class="line">    - conf</span><br><span class="line">    - docker-compose.yaml</span><br><span class="line">- Makefile # 不同环境构统一构建入口</span><br><span class="line">- Jenkinsfile # Jenkins构建流水线，可调用ansible脚本或Dockerfile脚本</span><br><span class="line">- README.md</span><br><span class="line">- CHANGELOG.md</span><br><span class="line">- LICENSE</span><br><span class="line">- .travis.yml</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/70668969ef36.html">https://xhua.eu.org/posts/70668969ef36.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/70447204be1ce46596b8f6c17bfa0b7de1665c3c72935a7963c1acbaaf3f604e.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/558c69203e45.html" title="Ansible的k8s模块完全兼容OpenShift资源"><img class="cover" src="https://img.xhua.eu.org/fc72af997388e4feba0fe78e3f5d658b0eab7b435848821d8d70366eab9bff10.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Ansible的k8s模块完全兼容OpenShift资源</div></div><div class="info-2"><div class="info-item-1">Ansible 的 k8s 模块完全兼容 openshift 资源 安装 使用 k8s 模块需要安装 openshift 的 python 扩展  1$ pip install --ignore-installed openshift  安装过程中报如下错误TypeError: find_packages() got an unexpected keyword argument include需要升级 setuptools 1$ pip install -U setuptools   在执行 k8s 命令的主机上登录 kubernetes&#x2F;openshift 平台  12$ oc login https://master.example.com:8443 -u admin -ppassword  测试 使用 ansible k8s 模块创建 namespace  1$ oc -i hosts all -m k8s -a &#x27;state=present name=testproject kind=Project&#x27;   使用 ansible k8s 模块基...</div></div></div></a><a class="pagination-related" href="/posts/f62135323f93.html" title="通过跳板机代理将本地文件传输到远端服务器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">通过跳板机代理将本地文件传输到远端服务器</div></div><div class="info-2"><div class="info-item-1"> 通过-J参数指定跳板机  123$ ssh -J user@&lt;bastion:port&gt; &lt;user@remote:port&gt;// scp$ scp -J user@&lt;bastion:port&gt; sourcefile &lt;user@remote:port&gt;:  在.ssh&#x2F;config中配置  123456789101112### The Bastion HostHost jump  HostName 10.2.3.2  Port 3022  User jump### The Remote HostHost remote  HostName 172.32.2.7  Port 22  User root  ProxyJump jump 使用普通参数就可以实现跳转 12$ ssh remote$ scp &lt;sourcefile&gt; remote:/data/ </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/10b4145e2f83.html" title="rclone使用教程"><img class="cover" src="https://img.xhua.eu.org/332c57aefdbdef51b6cdb74f116e0ed00b3986e4fae5fe4d5ea3f3e1714ee45c.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-14</div><div class="info-item-2">rclone使用教程</div></div><div class="info-2"><div class="info-item-1">rclone 是一款强大的命令行工具，支持在本地与多种云存储之间进行高效的数据同步和迁移。本文将介绍 rclone 的安装、配置及常用操作方法，帮助你快速上手。 一、安装 rclone1. 公网环境安装（以 Ubuntu 为例）12curl https://downloads.rclone.org/v1.67.0/rclone-v1.67.0-linux-amd64.deb -o rclone-v1.67.0-linux-amd64.debsudo dpkg -i rclone-v1.67.0-linux-amd64.deb  2. Mac 安装1brew install rclone  更多平台和安装方式可参考 rclone 官方下载页面。 二、配置 rclonerclone 的配置文件默认位于 ~/.config/rclone/rclone.conf。你可以手动创建和编辑该文件，或通过 rclone config 命令进行交互式配置。 1. 创建配置目录1mkdir -p ~/.config/rclone  2. 编辑配置文件以下是一个典型的配置示例，支持 swift 和 s...</div></div></div></a><a class="pagination-related" href="/posts/efe927f19448.html" title="ansible通过跳板机管理另一个网络下的主机集群"><img class="cover" src="https://img.xhua.eu.org/e9ec0000c53ae330c25fccfe87500ee684d72ebbc5a7a79d8bee56b5fecc95e0.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">ansible通过跳板机管理另一个网络下的主机集群</div></div><div class="info-2"><div class="info-item-1">原文地址：http://wooooe.com/2018/07/31/remote_forwarding&#x2F; ssh端口映射例子 因为公司的网络比较深所以经常需要跳转多次。所以这次做个记录    需求: 需要从your host跳到client中间隔了两层跳板机。 如果单纯用代理方法只能跳一层 所以如果用端口映射+代理方式就可以跳两层了 映射命令 1ssh -g -f -NL 127.0.0.1:44010:172.16.3.14:22 -p 3391 jump_host1_username@222.222.222.222  意思就是将172.16.3.14的22端口映射到127.0.0.1的44010端口,222.222.222.222是中间的代理机，3391是222.222.222.222的ssh端口。 映射完成之后。执行 1ssh -p 44010 jump_host2_username@127.0.0.1  就可以直接跳转到jump_host2上 ssh走代理方法 第一种: 1ssh -o ProxyCommand=&quot;ssh -W %h:%p -p 339...</div></div></div></a><a class="pagination-related" href="/posts/12c881755833.html" title="常用的Tcpdump命令"><img class="cover" src="https://img.xhua.eu.org/fc392f2a4ebadcdb4387802eaa425bb34ef954f0c64fcde5e999436a71872882.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-20</div><div class="info-item-2">常用的Tcpdump命令</div></div><div class="info-2"><div class="info-item-1"> 监控某一网络接口的数据包  1tcpdump -i eth0   查看dns解析的包 port domain  1tcpdump -i eth0 -nt  -s 500 port domain -t 不显示时间-n 不会将ip显示为hostname  过滤IP  12345tcpdump -i eth0 host 202.22.22.22tcpdump -i eth0 src host 202.22.22.22  ## 指定源地址tcpdump -i eth0 dst host 202.22.22.22  ## 指定目的地址tcpdump -i eth0 host 202.22.22.22 and \(202.22.22.21 or 202.22.22.20 \)  ## 获取202.22.22.22 与 202.22.22.21或202.22.22.20之间的包tcpdump -i eth0 host 202.22.22.22 and !202.22.22.21  ## 获取202.22.22.22 与 除了202.22.22.21 之外的ip之间的包   过滤端口 port...</div></div></div></a><a class="pagination-related" href="/posts/78c6906d0976.html" title="Mysql瓶颈分析方法"><img class="cover" src="https://img.xhua.eu.org/0b352156bc8be83c534d25e7aaffb0ef0a8cb2438c08549e084611b6c59d3928.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Mysql瓶颈分析方法</div></div><div class="info-2"><div class="info-item-1">数据库往往会成为应用的最终瓶颈，而Mysql是被使用得最多的开源关系型数据库。如何分析执行Mysql数据库语句的性能就非常重要。但是很多开发人员并没有相关的意识与能力，但其实掌握了一些简单的常用手段，就可以让我们自己分析出数据库语句的问题。曾经看到过有对数据库查询语句中出现7个Select的语句，当时完全被震惊到了，这根本就是往系统里注入了一个大雷呀，数据量一旦增多，数据库挂，应用挂，服务挂，客户挂，公司挂。。。。还是不做破了一个鸡蛋就想着毁了一个养鸡场的推断了。我们收集下常见的数据库的分析手段。  查看当前数据库执行命令  12mysql&gt; select count(*) from information_schema.processlist where COMMAND != &#x27;Sleep&#x27;;mysql&gt; select * from information_schema.processlist where COMMAND != &#x27;Sleep&#x27; limit 5;  慢查询查看慢查询时间定义  12345678910mysql&g...</div></div></div></a><a class="pagination-related" href="/posts/27114569557b.html" title="WSL2-+-microK8s-+-K8s"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">WSL2-+-microK8s-+-K8s</div></div><div class="info-2"><div class="info-item-1"> Windowns 10 (WSL2) + Ubuntu 20.04   enable systemd snapd microk8s  启动systemd，并使用snap安装   123$  sudo apt install daemonize$ sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target$ sudo nsenter -t $(pidof systemd) -a su - $LOGNAME  安装microk8s  12$ snap info microk8s$ sudo snap install microk8s --classic   使用microk8s  123$ microk8s status$ sudo usermod -a -G microk8s mpan$ sudo chown -f -R mpan ~/.kube   添加节点  1$ microk8s add-node   注意 每次使用micr...</div></div></div></a><a class="pagination-related" href="/posts/b4bb0e80ace4.html" title="Jenkins-Pipeline语法实例"><img class="cover" src="https://img.xhua.eu.org/65a7b96870c08bac993faf2fae2f8975faf58a4260edd90c0817d6d0f8398fa5.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Jenkins-Pipeline语法实例</div></div><div class="info-2"><div class="info-item-1">Jenkins Pipeline支持的指令   指令名 说明 作用域    agent 定义执行任务的代理 stage 或pipeline   environment 设置环境变量 stage或pipeline   tools 自动下载并安装指定的工具，并将其加入到PATH变量中 stage或pipeline   input 暂停pipeline,提示输入内容 stage   options 配置Jenkins pipeline本身，如options{retry(3}},指pipeline失败时再重试2次 stage 或 pipeline   parallel 并行执行多个step stage   parameters 执行pipeline前传入一些参数 pipeline   triggers 定义执行pipeline的触发器 pipeline   when 定义阶段执行的条件 stage   build 触发其他的job steps   options Jenkins Pipeline配置参数   参数名 说明 例子    buildDiscarder 保留最近历史构建记录的数...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">273</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">142</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务">Codex Subagent 入门：用三个角色完成一个小任务</a><time datetime="2026-10-21T04:56:33.000Z" title="发表于 2026-10-21 12:56:33">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/3923bb01ac9c.html" title="AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent">AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent</a><time datetime="2026-10-21T03:01:28.000Z" title="发表于 2026-10-21 11:01:28">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/58c53c032b4c.html" title="Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计">Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计</a><time datetime="2026-10-21T03:00:38.000Z" title="发表于 2026-10-21 11:00:38">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/08f5463789ff.html" title="Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南">Agent Skills 设计模式：从打包到多 Agent 编排的架构决策指南</a><time datetime="2026-09-01T03:25:34.000Z" title="发表于 2026-09-01 11:25:34">2026-09-01</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
