@@ -1,0 +1,261 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift通过EgressIP为Project设置对外的出口IP | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift通过EgressIP为Project设置对外的出口IP">
+<meta property="og:url" content="https://xhua.eu.org/posts/fa53403b8d6b.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。  将出口IP分配到指定的Node  支持指定特定的IP 1$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-17T08:01:21.006Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift通过EgressIP为Project设置对外的出口IP",
+  "url": "https://xhua.eu.org/posts/fa53403b8d6b.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-11-17T08:01:21.006Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/fa53403b8d6b.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift通过EgressIP为Project设置对外的出口IP',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift通过EgressIP为Project设置对外的出口IP</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift通过EgressIP为Project设置对外的出口IP</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-17T08:01:21.006Z" title="更新于 2026-11-17 16:01:21">2026-11-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>集群管理员可以为项目分配特定的静态IP，方便外部系统能够识别项目下的应用的出口流量。</p>
+<ol>
+<li>将出口IP分配到指定的Node</li>
+</ol>
+<p>支持指定特定的IP</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.2&quot;, &quot;192.168.1.3&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<p>支持指定特定的IP段</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch hostsubnet &lt;node-name&gt; -p &#x27;&#123;&quot;egressCIDRs&quot;: [&quot;192.168.1.0/24&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>为项目指定静态出口IP</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ oc patch netnamespace &lt;project-name&gt; -p &#x27;&#123;&quot;egressIPs&quot;: [&quot;192.168.1.100&quot;]&#125;&#x27;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>OpenShift容器平台会自动以平衡的方式将特定的出口IP地址分配给可用节点。 在这种情况下，它将出口IP地址192.168.1.100分配给<node-name>。</li>
+</ol>
+<p>一个Project只能指定一个EgressIP</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/fa53403b8d6b.html">https://xhua.eu.org/posts/fa53403b8d6b.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/1d3a207e5984.html" title="OpenShift部署时如何延长组件证书的有效期"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift部署时如何延长组件证书的有效期</div></div><div class="info-2"><div class="info-item-1"> 延长集群核心证书的有效期OpenShift集群正常运行中涉及到非常多的证书，有各节点通信的证书，有数据库的证书，有私有镜像仓库的证书，还有各种组件的证书（EFK、ClusterMonitor、Metrics等）。对于集群的相关证书可以通过在inventory文件中添加如下配置就可以非常方便地更改相关证书的默认有效期。 1234openshift_hosted_registry_cert_expire_days=3650openshift_ca_cert_expire_days=3650openshift_master_cert_expire_days=3650etcd_ca_default_days=3650 但是以上的几个配置对于一些组件并不起作用，如EFK等。 延长一些特殊组件证书的有效期openshift自签应用证书的有效期为2 or 5年。其中crt证书默认为两年，ca证书为5年。例如es中的证书中，admin-ca有效期为5年，admin-crt有效期为2年。 也就是说按照当前OpenShift安装的默认步骤安装的EFK组件，证书最短有效期为两年，两年后需要执行证书更...</div></div></div></a><a class="pagination-related" href="/posts/3bc605c0336e.html" title="OpenShift运维点汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift运维点汇总</div></div><div class="info-2"><div class="info-item-1">应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控    物理层 创建资源  负载均衡器NAS存储应用私有网络   监控  vpc负载均衡器主机状态监控（CPU与内存）    集群层 备份  etcd全量备份应用配置备份(Ark)应用备份（oc export)   集群版本管理  集群升级（每个大版本升级）   日志归档与清理  EFK日志清理hawkular-cassandra日志清理journal日志归档  1journalctl --vacuum-time=3days或者journalctl --vacuum-size=200M或者在/etc/systemd/journald.conf中设置日志大小  message日志归档   ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/82cffe541eda.html" title="Openshift之NetApp-SolidFire集成及测试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift之NetApp-SolidFire集成及测试</div></div><div class="info-2"><div class="info-item-1"> 什么是NetApp SolidFire?NetApp公司是一家存储和数据管理公司,主要提供软件，系统和服务来管理和存储数据，包括其专有的Data ONTAP操作系统。NetApp公司主要向全球数据密集型企业提供统一存储解决方案其 Data ONTAP是全球首屈一指的存储操作系统，公司存储解决方案涵盖了专业化的硬件、软件和服务，为开放网络环境提供了无缝的存储管理。——(来自搜狗百科)SolidFire成立于2010年，是一家全闪存阵列的存储厂商，其存储控制器基于标准的x86服务器，最大可扩展到100个节点，2015年12月，SolidFire被NetApp收购；2017年6月，NetApp基于SolidFire推出超融合一体机。SolidFire提供分布式块存储，类似于ceph rbd，非常灵活，支持动态扩缩容，具有良好的性能。同时具有很多企业特性：如快照，组快照，丰富的API，非常灵活的QOS配置等。  什么是Trident?NetApp是CNCF的金牌会员，它开发的Trident是一款开源存储配置程序和流程编排程序。在没有Trident的环境下，K8s&#x2F;Opensh...</div></div></div></a><a class="pagination-related" href="/posts/eb02cfa8b57d.html" title="Openshift实现Etcd一键备份与一键恢复脚本"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift实现Etcd一键备份与一键恢复脚本</div></div><div class="info-2"><div class="info-item-1"> 一键备份etcd脚本 123456789101112131415[root@master01 ~]# cat backup_etcd.sh#!/bin/bashexport ETCD_POD_MANIFEST=&quot;/etc/origin/node/pods/etcd.yaml&quot;export ETCD_EP=$(grep https $&#123;ETCD_POD_MANIFEST&#125; | cut -d &#x27;/&#x27; -f3)oc login -u system:adminexport ETCD_POD=$(oc get pods -n kube-system | grep -o -m 1 &#x27;\S*etcd\S*&#x27;)oc project kube-systemoc exec $&#123;ETCD_POD&#125; -c etcd -- /bin/sh -c &quot;ETCDCTL_API=3 etcdctl --cert /etc/etcd/peer.crt --key /etc/etcd/peer.key -...</div></div></div></a><a class="pagination-related" href="/posts/f6b6028b1b52.html" title="OpenShift生产集群物理机部署与虚拟机部署各自优缺点"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift生产集群物理机部署与虚拟机部署各自优缺点</div></div><div class="info-2"><div class="info-item-1"> OpenShift是物理机部署，还是虚拟机部署？这是企业在做容器平台架构选型时必须考虑的问题。尤其是大企业，有机器，有业务。今天我们就来列一列物理机与虚拟机部署各自的优缺点。 物理机部署 优点   性能好，无虚拟化层性能开销 小业务集群，节点少 配置高能够支持更大规模的容器数量 License成本更低 架构复杂度低（PaaS） 需要额外准备LB与存储 缺点   运维复杂度高 集群扩容周期长 如果出现故障，恢复周期长，需要及时去机房诊断修复 一台主机出现故障，影响业务范围更广 合规限制，需要更高要求的安全与隐私控制  虚拟机部署 优点   灵活部署、配置、维护简单 快速扩容 能与IaaS资源混合使用（LB、存储等） 一台虚拟机出现故障，影响业务范围小 虚拟机技术成熟，有热迁移技术，恢复快 IaaS高可用+PaaS高可用，两层保障 虚拟机支持虚拟快照，方便做主机回滚，集群可靠怀提升 IaaS目前已经有成熟的合规方案，在其上构建PaaS可以更方便地满足合规要求 缺点   性能较差（网络、计算等） 架构复杂度提升（IaaS + Paas） 配置较低，承载的容器容量更小（节点更多） 需要...</div></div></div></a><a class="pagination-related" href="/posts/dbbeaaab9bb5.html" title="OpenShift用户与组的管理功能如何在Kubernetes上实现"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift用户与组的管理功能如何在Kubernetes上实现</div></div><div class="info-2"><div class="info-item-1"> OpenShift中有用户及组的概念，并且提供了User与Group资源类型，可以非常方便地为OpenShift集群创建用户，创建组，以组给用户进行组管理，并授权。这也大大方便了集群账号的管理与权限的控制。 12345[openshift@master01 ~] oc create user dev-user # 创建用户dev-user[openshift@master01 ~] oc adm groups new my-group # 创建组my-group[openshift@master01 ~] oc adm groups new my-group dev-user # 创建组my-group，并添加dev-user到该组[openshift@master01 ~] oc adm groups add-users my-group dev-user # 为组my-group添加用户dev-user[openshift@master01 ~] oc adm groups remove-users my-group dev-user # 将用户dev-user从my-gr...</div></div></div></a><a class="pagination-related" href="/posts/3ea85377ce64.html" title="《Prometheus监控实战》读书笔记"><img class="cover" src="https://img.xhua.eu.org/8a25a774e85f4cee5a52f1b5a1866767ea695e09b6e57370d72b1a7bd0bc7e5f.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">《Prometheus监控实战》读书笔记</div></div><div class="info-2"><div class="info-item-1">   Prometheus是一个开源的监控系统。   一、监控简介监控不仅仅只是系统的技术指标，还可以是业务指标。确保为客户提供可靠恰当的产品。在生产系统中，监控是必须的，它应该和应用程序一起构建和部署。帮助我们了解系统的环境、进行诊断故障、制定容量计划，为组织提供系统的性能、成本和状态等信息。 监控模式 务必在项目最开始阶段就把监控考虑进去，它和安全性一样，都是应用的核心功能。 根据服务价值设计自上而下的监控系统是一个很好的方式。先是业务逻辑，再是应用程序，最后才是基础设施操作系统。 需要找准监控项，及时发现错误 通过多样化的数据，如查看数据窗口等更智能的技术分析指标与阀值 增加监控的频率 尽可能实现监控系统部署实施自动化  监控机制 探针与内省：监控应用程序的两种方法。探针：在应用程序的外部，查询应用程序的外部特征。如Nagios。内省：查看应用程序的内部内容，经过检测，返回其状态、内部组件等的度量。可用作健康检查接口，由监控工具收集。 拉取与推送：执行监控检查的两种方式。拉取：提取或检查远程应用程序。如Prometheus。推送：应用程序发送事件给监控系统接收。  监控数据...</div></div></div></a><a class="pagination-related" href="/posts/d5eceb7414d3.html" title="Openshift-GitLab安装及使用Nodeport支持ssh访问"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift-GitLab安装及使用Nodeport支持ssh访问</div></div><div class="info-2"><div class="info-item-1"> 部署Gitlab 创建gitlab项目  1oc new-project gitlab  创建cicd serviceaccount  1$ oc create serviceaccount cicd -n gitlab  导入Gitlab模板  12wget https://gitee.com/xhua/OpenshiftOneClick/raw/3.11/openshift-templates/gitlab-template.yamloc create -f openshift-template.json -n openshift  创建持久化存储（如果没有pv的情况下）  123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384$ cat gitlab-pv.yamlapiVersion: v1items:- ap...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/de9fb80ca58c.html" title="DeepSeek Harness 插件入门：五款社区插件怎么配合">DeepSeek Harness 插件入门：五款社区插件怎么配合</a><time datetime="2026-11-16T09:43:51.000Z" title="发表于 2026-11-16 17:43:51">2026-11-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务">Codex Subagent 入门：用三个角色完成一个小任务</a><time datetime="2026-10-21T04:56:33.000Z" title="发表于 2026-10-21 12:56:33">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/3923bb01ac9c.html" title="AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent">AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent</a><time datetime="2026-10-21T03:01:28.000Z" title="发表于 2026-10-21 11:01:28">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/58c53c032b4c.html" title="Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计">Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计</a><time datetime="2026-10-21T03:00:38.000Z" title="发表于 2026-10-21 11:00:38">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

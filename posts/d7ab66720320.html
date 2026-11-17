@@ -1,0 +1,267 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Kubespray安装Kubernates过程 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="准备机器，绑定好IP（请关闭ipv6功能），关闭防火墙，并配置好hostname  1   在bation机器上设置免密码登录，并下载好kubespray安装脚本  先安装python3与python3-pip，并将pip进行升级   12$ yum install python3 python3-pip -y$ pip3 install --upgrade pip   安装python依赖包">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubespray安装Kubernates过程">
+<meta property="og:url" content="https://xhua.eu.org/posts/d7ab66720320.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="准备机器，绑定好IP（请关闭ipv6功能），关闭防火墙，并配置好hostname  1   在bation机器上设置免密码登录，并下载好kubespray安装脚本  先安装python3与python3-pip，并将pip进行升级   12$ yum install python3 python3-pip -y$ pip3 install --upgrade pip   安装python依赖包">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-17T08:01:21.004Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Kubespray安装Kubernates过程",
+  "url": "https://xhua.eu.org/posts/d7ab66720320.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-11-17T08:01:21.004Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/d7ab66720320.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Kubespray安装Kubernates过程',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Kubespray安装Kubernates过程</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Kubespray安装Kubernates过程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-17T08:01:21.004Z" title="更新于 2026-11-17 16:01:21">2026-11-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><ol>
+<li>准备机器，绑定好IP（请关闭ipv6功能），关闭防火墙，并配置好hostname</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>在bation机器上设置免密码登录，并下载好kubespray安装脚本</p>
+</li>
+<li><p>先安装python3与python3-pip，并将pip进行升级</p>
+</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install python3 python3-pip -y</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">pip3 install --upgrade pip</span></span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>安装python依赖包</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">pip install -r requirements.txt  -i https://pypi.douban.com/simple</span></span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>更改镜像地址，特别是国内网络安装时</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">vim roles/download/defaults/main.yml</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/d7ab66720320.html">https://xhua.eu.org/posts/d7ab66720320.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/6103ce3be10c.html" title="OpenShift-3升级Docker服务"><img class="cover" src="https://img.xhua.eu.org/0e8580af838b70b51d9c7518927350d677678b626f85c527f0d12d54838d30b1.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift-3升级Docker服务</div></div><div class="info-2"><div class="info-item-1">背景介绍OpenShift是一个开源产品，自2015年3.0版本开始，它使用Kubernetes作为底层的编排引擎，已经有将近5年了。同时它也有企业级版本，服务了众多大中小企业。经过这些年生产上的实践，OpenShift 3不断完善，已经非常稳定了，但是它依赖组件多，不断增加新的功能，使用量不断增多，一些漏洞和问题会被发现。在生产环境中，运行着大量的生产级应用，我们该如何升级Docker等组件，把业务影响降到最小，这是每个企业都无法绕过的问题。Docker作为OpenShift 3默认的容器运行，它的可靠性也尤为重要。本篇就以Docker升级为例介绍如何对OpenShift组件进行升级。升级不同OpenShift组件的思路是一样，主要是如下两条。  逐个节点升级 升级前将业务应用迁走  升级Docker实操 更新yum源中的docker包  12$ cp docker-rpm/* ./extras/Packages/d/$ createrepo --update extras  迁移节点上的POD并将它设置为不可调度  1$ oc adm drain &lt;node_name&...</div></div></div></a><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/b60f02d69676.html" title="Ceph集群监控Prometheus+Grafana"><img class="cover" src="https://img.xhua.eu.org/38268682852617e4117c827bf3c30a367675017fefdc227971fab9682485a15d.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Ceph集群监控Prometheus+Grafana</div></div><div class="info-2"><div class="info-item-1"> Ceph是一个分布式存储系统。同时Ceph除了能提供块存储，还可以提供文件存储、对象存储。 这里不介绍如何搭建Ceph及原理，只记录使用Ceph_exporter + Prometheus + Grafana 来对Ceph集群作监控的部署过程 Ceph集群有三种节点：Admin + Monitor + Node  Admin节点上部署Ceph_exporter 安装需要的软件golang  1yum install golang git librados2-devel librbd1-devel -y  设置go的环境变量  12345# /etc/profile.d/go.shexport GOROOT=/usr/lib/golangexport GOBIN=$GOROOT/binexport GOPATH=/home/golangexport PATH=$PATH:$GOROOT/bin:$GOPATH/bin 1source /etc/profile.d/go.sh  安装ceph_exporter  1go get -u github.com/digitalocean/...</div></div></div></a><a class="pagination-related" href="/posts/17a022f7f345.html" title="Openshit-新的存储类型LocalVolume该如何使用"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshit-新的存储类型LocalVolume该如何使用</div></div><div class="info-2"><div class="info-item-1">  使用本地盘的方式的有三种：emptyDir、HostPath与Local Volume Openshift针对Local Volume提供了一个local volume provisioner方便PV的自动创建，但目前它需要创建的PV对应的目录必须是挂载点。否则无法创建PV。 除了自动创建PV的过程外，部分与正常使用Local Volume一样。  手动挂载目录使用Local Volume我们先来看下通过手动的方式创建PV使用Local Volume是如何操作的。 1. 创建StorageClass123456apiVersion: storage.k8s.io/v1kind: StorageClassmetadata:  name: local-hddprovisioner: kubernetes.io/no-provisionervolumeBindingMode: WaitForFirstConsumer 2. 创建PV1234567891011121314151617181920apiVersion: v1 kind: PersistentVolume metadat...</div></div></div></a><a class="pagination-related" href="/posts/0bd399c36cb8.html" title="OpenShift-Router配置重新加载机制"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Router配置重新加载机制</div></div><div class="info-2"><div class="info-item-1"> OpenShift的Router是几乎所有南北流量的入口，对它的运行机制的了解非常重要，尤其是Router的配置更新加载机制。在服务请求出现异常情况下，我们能够快速分析出问题的原因，及时修复，保证应用的连续性。本章主要介绍OpenShift Router的配置加载机制。 OpenShift路由默认是基于Haproxy实现的。当Pod有更新或者证书更新等情况时会重新加载Haproxy的配置，来保证集群的路由信息是最新的。重载配置是否会对当前在线业务产生影响，这是系统管理员担心的问题。 一、 Haproxy配置重载的过程Haproxy在重新加载配置过程分两步。  生成最新的配置 重启Haproxy进程  Haproxy生成最新的配置OpenShift上以下三种资源的改变会触发Haproxy配置的更新  Routes改变 Pod IP&#x2F;Endpoint 改变 证书改变  OpenShift Route有一个配置模板文件，最终的配置会根据这个模板文件来创建。该模板文件，默认路径为/var/lib/haproxy/conf/haproxy-config.template，也可以...</div></div></div></a><a class="pagination-related" href="/posts/7a15051d8249.html" title="OpenShift节点kubelet证书过期异常的解决步骤"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift节点kubelet证书过期异常的解决步骤</div></div><div class="info-2"><div class="info-item-1"> 环境：OpenShift 3.10 or 3.11问题:  重新部署了新的CA，节点不再处于就绪状态。 如何手动强制创建新证书。 节点无法更新其证书，并出现以下错误：  123atomic-openshift-node[3715]: I0313 11:40:48.864375    3715 bootstrap.go:56] Using bootstrap kubeconfig to generate TLS client cert, key and kubeconfig fileatomic-openshift-node[3715]: I0313 11:40:48.865525    3715 bootstrap.go:86] No valid private key and/or certificate found, reusing existing private key or creating a new oneatomic-openshift-node[3715]: F0313 11:40:48.893737    3715 server.go:262] failed...</div></div></div></a><a class="pagination-related" href="/posts/1f94b61afe3b.html" title="Openshift3-9部署手册"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift3-9部署手册</div></div><div class="info-2"><div class="info-item-1">说明：本文主要介绍通过Ansible来部署Openshift 3.9 一、准备系统准备   节点类型 说明    Masters 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 最少4vCPU最少16GB内存&#x2F;var&#x2F;最少40GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   Nodes 物理主机或者虚拟机 系统：Fedora 21, CentOS 7.3, 7.4或者7.5 NetworkManager版本1.0以上最少1vCPU最少8GB内存&#x2F;var&#x2F;最少15GB空间 &#x2F;usr&#x2F;local&#x2F;bin最少1GB空间容器临时目录最少1GB空间 &nbsp;   额外的etcd节点 最少20GB用来存储etcd数据 &nbsp;   注：在安装时可以通过ansible_inventory的配置忽略以上系统要求扩展：对于生产部署时，Master的配置要求计算规则如下：每1000个pods需要额外的1核...</div></div></div></a><a class="pagination-related" href="/posts/169c43378e6a.html" title="Openshift开启Calico-BGP-与-OVS性能PK"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift开启Calico-BGP-与-OVS性能PK</div></div><div class="info-2"><div class="info-item-1"> Openshift网络方案选择 大家都知道K8S在网络插件选择上有很多种，默认的是Flannel，但是它的性能一般，互联网中使用最多的是Calico BGP，因为它的性能非常好。 而对于Openshift，官方只支持ovs一种网络方案，同时RedHat也表示ovs在Openshift平台上运行是最合适的。但是ovs的网络性能怎样呢？因为ovs方案对数据需要进行加包，解包的过程，性能肯定是会受影响的。同时经过实测，在万兆网络中的损耗近50%，虽然在绝大部分场景下ovs已经够用了，但是但是跟几乎无损耗的Calico BGP比起来还是逊色不少。 很庆幸，Openshift虽然官方不作Calico网络方案的支持，但还是很体贴地把它加入到了Openshift的安装脚本中，从而让大家都能方便地使用Calico网络方案，包括IPIP及BGP方案。  安装步骤 在ansible hosts中设置关闭openshift默认的sdn方案，开启calico方案&#x2F;etc&#x2F;ansible&#x2F;hosts  1234[OSEv3:vars]os_sdn_network_plugi...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/de9fb80ca58c.html" title="DeepSeek Harness 插件入门：五款社区插件怎么配合">DeepSeek Harness 插件入门：五款社区插件怎么配合</a><time datetime="2026-11-16T09:43:51.000Z" title="发表于 2026-11-16 17:43:51">2026-11-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务">Codex Subagent 入门：用三个角色完成一个小任务</a><time datetime="2026-10-21T04:56:33.000Z" title="发表于 2026-10-21 12:56:33">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/3923bb01ac9c.html" title="AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent">AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent</a><time datetime="2026-10-21T03:01:28.000Z" title="发表于 2026-10-21 11:01:28">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/58c53c032b4c.html" title="Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计">Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计</a><time datetime="2026-10-21T03:00:38.000Z" title="发表于 2026-10-21 11:00:38">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

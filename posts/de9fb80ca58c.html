@@ -1,0 +1,420 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>DeepSeek Harness 插件入门：五款社区插件怎么配合 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="DeepSeek Harness（下文简称 DSH）装好以后，对话可以开始，文件树、技能、任务进度、外部工具和界面外观仍是出厂配置。社区插件分别补上这五块：侧边栏工作台、技能市场、任务板、MCP 连接器和换肤。profile 装错，或插件版本和宿主对不上，界面会保持原样。 本文面向已经能启动 dsh web 或桌面端的读者。读完可以决定这五款要不要装、装进哪个 profile，以及怎样确认已经生效">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DeepSeek Harness 插件入门：五款社区插件怎么配合">
+<meta property="og:url" content="https://xhua.eu.org/posts/de9fb80ca58c.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="DeepSeek Harness（下文简称 DSH）装好以后，对话可以开始，文件树、技能、任务进度、外部工具和界面外观仍是出厂配置。社区插件分别补上这五块：侧边栏工作台、技能市场、任务板、MCP 连接器和换肤。profile 装错，或插件版本和宿主对不上，界面会保持原样。 本文面向已经能启动 dsh web 或桌面端的读者。读完可以决定这五款要不要装、装进哪个 profile，以及怎样确认已经生效">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/106983f6793b95c040c793202cb69fb0083c49ffa3b55acdf5b77af080671de5.jpg">
+<meta property="article:published_time" content="2026-11-16T09:43:51.000Z">
+<meta property="article:modified_time" content="2026-11-17T08:01:20.996Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="Agent Skill">
+<meta property="article:tag" content="DSH">
+<meta property="article:tag" content="DeepSeek Harness">
+<meta property="article:tag" content="侧边栏">
+<meta property="article:tag" content="插件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/106983f6793b95c040c793202cb69fb0083c49ffa3b55acdf5b77af080671de5.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "DeepSeek Harness 插件入门：五款社区插件怎么配合",
+  "url": "https://xhua.eu.org/posts/de9fb80ca58c.html",
+  "image": "https://img.xhua.eu.org/106983f6793b95c040c793202cb69fb0083c49ffa3b55acdf5b77af080671de5.jpg",
+  "datePublished": "2026-11-16T09:43:51.000Z",
+  "dateModified": "2026-11-17T08:01:20.996Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/de9fb80ca58c.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'DeepSeek Harness 插件入门：五款社区插件怎么配合',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/106983f6793b95c040c793202cb69fb0083c49ffa3b55acdf5b77af080671de5.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">DeepSeek Harness 插件入门：五款社区插件怎么配合</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">DeepSeek Harness 插件入门：五款社区插件怎么配合</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-16T09:43:51.000Z" title="发表于 2026-11-16 17:43:51">2026-11-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-17T08:01:20.996Z" title="更新于 2026-11-17 16:01:20">2026-11-17</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ai/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>DeepSeek Harness（下文简称 DSH）装好以后，对话可以开始，文件树、技能、任务进度、外部工具和界面外观仍是出厂配置。社区插件分别补上这五块：侧边栏工作台、技能市场、任务板、MCP 连接器和换肤。profile 装错，或插件版本和宿主对不上，界面会保持原样。</p>
+<p>本文面向已经能启动 <code>dsh web</code> 或桌面端的读者。读完可以决定这五款要不要装、装进哪个 profile，以及怎样确认已经生效。前四款的安装命令来自官方文档和各插件 2026-11-16 的说明；MCP 连接器来自 2026-11-17 的仓库说明与 npm。<strong>本文没有在当前环境执行这些命令。</strong></p>
+<p>五款都是社区项目，不随 <code>@deepseek-ai/dsh</code> 内核发布。安装前先看各自仓库的许可证和安全说明。</p>
+<h2 id="先分清插件和技能"><a href="#先分清插件和技能" class="headerlink" title="先分清插件和技能"></a>先分清插件和技能</h2><p>插件和技能的安装位置不同。放错目录时，其中一种不会出现。</p>
+<p>插件以 <strong>bundle</strong> 分发。bundle 是声明了 <code>dsh.bundle</code> 的 npm 包，包内的 <code>cordis.patch.yml</code> 用来插入或覆盖插件行。</p>
+<p>实际启动的是一个 <strong>profile</strong>，目录在 <code>$DSH_HOME/profiles/&lt;名字&gt;/</code>。命令 <code>dsh plugin --profile &lt;名字&gt; add &lt;包&gt;</code> 把参数交给该目录里的 pnpm。包若声明了 bundle，会被写入 <code>dsh.profile.bundles</code>。层按列表顺序叠加，后面的层可以按 <code>id</code> 整行替换前面的配置。官方教程先用 <code>dsh --profile &lt;名字&gt; --dump-config</code> 确认层已经出现，再启动这个 profile。<a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/develop/basic/publish.md">打包与安装说明</a></p>
+<p>技能是另一条路径。一份技能可以是带 <code>name</code> 和 <code>description</code> 的 <code>SKILL.md</code>，也可以是扫描根目录顶层的一个 Markdown 文件。本地发现会查看：</p>
+<ul>
+<li>项目里的 <code>.dsh/skills</code> 和 <code>.agents/skills</code></li>
+<li>用户目录下的 <code>$DSH_HOME/skills</code> 和 <code>~/.agents/skills</code></li>
+<li>配置里追加的目录</li>
+</ul>
+<p>未设置 <code>DSH_HOME</code> 时，用户技能根是 <code>~/.dsh/skills</code>。官方文件系统提供方会监视这些目录，下一次读取目录时就能看见文件变化。<a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.zh.md">技能子系统说明</a>、<a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/skill/skill-filesystem/README.md">文件系统技能提供方</a></p>
+<p>技能市场的说明更具体：安装技能后要重启 DeepSeek Harness。一场对话使用的是开始时确定的技能清单，所以新技能在重启之后的<strong>新会话</strong>里调用。官方的目录监视和插件要求的重启，两步都要做。</p>
+<p>下图只画安装之后的两条落点。箭头表示数据落到哪里，不表示启动顺序。</p>
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart TD
+    Profile[&quot;当前 profile&quot;] --&gt; Bundle[&quot;五个 bundle&quot;]
+    Bundle --&gt; Ui[&quot;界面与宿主能力&quot;]
+    Market[&quot;技能市场或手写技能&quot;] --&gt; SkillRoot[&quot;$DSH_HOME&#x2F;skills&quot;]
+    SkillRoot --&gt; NewSession[&quot;重启后再开新会话&quot;]
+  </pre></div>
+
+<h2 id="五款插件各管一件事"><a href="#五款插件各管一件事" class="headerlink" title="五款插件各管一件事"></a>五款插件各管一件事</h2><p>2026-11-16 查询 npm 时，<code>@deepseek-ai/dsh</code> 的 <code>latest</code> 是 <code>0.2.2-rc.1</code>，<code>next</code> 是 <code>0.2.2-rc.3</code>。下表前四款是当天各包的 <code>latest</code>；<code>dsh-mcp-connector</code> 是 2026-11-17 查询到的 <code>0.2.110</code>。这些号会变，安装前用 <code>npm view &lt;包名&gt; version</code> 再对一次。</p>
+<table>
+<thead>
+<tr>
+<th>插件</th>
+<th>当天 npm 版本</th>
+<th>主要补上的能力</th>
+<th>装完先看哪里</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/omdsh-dev/DSH-better-sidebar">dsh-better-sidebar</a></td>
+<td>0.32.1</td>
+<td>右侧栏与底部工作台：文件、可编辑预览、Git、任务、侧边对话</td>
+<td>硬刷新后的侧边栏；设置里的侧边卡片</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/montersy123/dsh-skill-market">@montersy123&#x2F;dsh-skill-market</a></td>
+<td>2.1.0</td>
+<td>浏览 SkillHub，把技能装进本机技能根</td>
+<td>侧边栏中的 Skill Market</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/FeatherHunter/dsh-mattpocock-skills-deck">dsh-mattpocock-skills-deck</a></td>
+<td>1.9.0-beta.33</td>
+<td>内置一套 mattpocock&#x2F;skills，并提供任务板</td>
+<td>任务板、对话框胶囊栏</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector">dsh-mcp-connector</a></td>
+<td>0.2.110</td>
+<td>连接 MCP Server：目录、授权、工具查找和排障</td>
+<td>左侧「MCP连接器」</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://www.npmjs.com/package/dsh-dream-skin">dsh-dream-skin</a></td>
+<td>11.16.0</td>
+<td>8 套 Mirage 皮肤、壁纸、强调色、主题包</td>
+<td>设置 → 个性化皮肤</td>
+</tr>
+</tbody></table>
+<p>五款可以分开装。只需要可编辑文件树时，装侧边栏。只需要换外观时，装 dream-skin。只需要接入外部 MCP 时，装连接器，它不依赖 better-sidebar。技能市场从 SkillHub 另装技能；任务板按作者说明自带 mattpocock 的一套，并把任务铺开。两者可以同时安装。</p>
+<h3 id="侧边栏：dsh-better-sidebar"><a href="#侧边栏：dsh-better-sidebar" class="headerlink" title="侧边栏：dsh-better-sidebar"></a>侧边栏：dsh-better-sidebar</h3><p>出厂右侧栏能看文件，预览通常是只读的，也没有与当前对话绑在一起的 Git 视图和底部终端布局。<code>dsh-better-sidebar</code> 在宿主原生右栏之外增加底部工作台，内置文件树、可编辑的 CodeMirror、Markdown &#x2F; Mermaid 预览、Git 变更与只读提交图、子代理任务，以及仍标记为 beta 的侧边对话。终端来自 DSH 自己，这个插件不自带 PTY。作者开放了 <code>ctx.betterSidebar</code>，其他插件可以用同一套接口注册页面和文件查看器。<a target="_blank" rel="noopener" href="https://github.com/omdsh-dev/DSH-better-sidebar">项目说明</a></p>
+<p>侧边栏版本要和宿主线对齐。<code>0.32.1</code> 需要 DSH <strong>0.2.2-rc.2 或同线更新版本</strong>；停在 <code>0.2.2-rc.1</code> 时钉 <code>dsh-better-sidebar@0.32.0</code>。作者说明，0.x 的一个构建只服务一条宿主线。市场安装器会选择插件自己的 <code>latest</code>，旧宿主因此收到版本拒绝。</p>
+<table>
+<thead>
+<tr>
+<th>你的 DSH（2026-11-16）</th>
+<th>应安装的侧边栏</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>0.2.2-rc.2</code> 及以上，含当天 <code>next</code> 的 <code>0.2.2-rc.3</code></td>
+<td><code>dsh-better-sidebar@0.32.1</code></td>
+</tr>
+<tr>
+<td>npm <code>latest</code>，当天是 <code>0.2.2-rc.1</code></td>
+<td><code>dsh-better-sidebar@0.32.0</code></td>
+</tr>
+<tr>
+<td>0.2.1、0.2.0，以及 0.1.7 的 rc 和 stable</td>
+<td>仓库 README 对照表中的钉版</td>
+</tr>
+<tr>
+<td>0.1.7-alpha</td>
+<td>没有兼容发布，先升级宿主</td>
+</tr>
+</tbody></table>
+<p>更老的宿主以 <a target="_blank" rel="noopener" href="https://www.npmjs.com/package/dsh-better-sidebar">npm 上的同一份说明</a> 和仓库 README 为准。</p>
+<p>自 v0.23.0 起，它的文件路由不做工作区边界检查，能读写当前系统用户可以访问的路径。这些路由只有操作系统权限，没有额外的工作区围栏。HTML 预览默认放在不透明源的 sandbox iframe 里。设置中可以关闭这层 sandbox；该开关默认不启用，并带有警告，所以预览默认仍在 sandbox 中。插件不执行 git push、pull、fetch。</p>
+<h3 id="技能从哪来：dsh-skill-market"><a href="#技能从哪来：dsh-skill-market" class="headerlink" title="技能从哪来：dsh-skill-market"></a>技能从哪来：dsh-skill-market</h3><p>侧边栏负责看见项目文件。技能市场负责把技能装到本机，省去逐个复制。<code>@montersy123/dsh-skill-market</code> 在侧边栏放一个 Skill Market：按分类和关键词浏览 SkillHub，查看文件、版本、权限、指标和第三方安全扫描，再把选中的技能下载到 <code>$DSH_HOME/skills/&lt;handle&gt;--&lt;slug&gt;/</code>。装好的技能由 Harness 自己发现。停用这个插件之后，已经启用的技能仍留在原处。<a target="_blank" rel="noopener" href="https://github.com/montersy123/dsh-skill-market">插件说明</a></p>
+<p>启用和停用靠搬目录完成。停用时，整个技能目录被移到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$DSH_HOME/storages/@montersy123/dsh-skill-market/data/skills/</span><br></pre></td></tr></table></figure>
+
+<p>同级的 <code>panel.json</code> 保存收藏、已安装账本和类目偏好。<code>installed.json</code> 记录每个技能安装的版本。当前版本只读 <code>$DSH_HOME/storages/...</code>。从更早的 Local Storage 或 profile 目录升级时，要把旧的 <code>data</code> 目录搬过来，否则面板状态从空开始。已启用的技能仍在 <code>$DSH_HOME/skills</code>。</p>
+<p>绿色「安全」标记只在 SkillHub 列出的检测方全部报告安全时出现。有一家给出可疑结论，面板就不显示标记。没有标记，表示检测方没有统一结论。插件作者写明：该项目与 SkillHub、腾讯、DeepSeek 没有隶属或背书关系；技能版权归原作者，插件的 MIT 许可不覆盖技能正文。浏览和安装需要访问 <code>api.skillhub.cn</code>。启用、停用和卸载不需要这台机器能访问该地址。宿主侧要求 Node.js 20 或更新。</p>
+<h3 id="任务板：dsh-mattpocock-skills-deck"><a href="#任务板：dsh-mattpocock-skills-deck" class="headerlink" title="任务板：dsh-mattpocock-skills-deck"></a>任务板：dsh-mattpocock-skills-deck</h3><p>技能装上之后，还需要看见这一轮做到哪一步。插件作者在仓库简介和 README 中写明，<code>dsh-mattpocock-skills-deck</code> 内置 <a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills">mattpocock&#x2F;skills</a> v1.3.2 的 27 个技能。本文没有逐个清点。仓库简介里的「520 亿 token」「10 倍效率」是作者的宣传说法，不是本文的测量结果。</p>
+<p>技能作者 Matt Pocock 在 AI Hero 上说明了这套技能的用法。入口是每个仓库先运行一次的 <a target="_blank" rel="noopener" href="https://www.aihero.dev/skills-setup-matt-pocock-skills"><code>/setup-matt-pocock-skills</code></a>。它确认三件事：issue 放在哪里、分诊标签叫什么、领域文档放在哪里，然后写成 <code>docs/agents/</code> 下的 Markdown。后面的 triage、to-spec、to-tickets 和 wayfinder 都读这些文件。</p>
+<p>插件界面包括任务板、地图卡片、单票详情、对话框胶囊栏，以及探索、实施两类新建需求。后端有 GitHub、GitLab 和本地 Markdown。本地 Markdown 在仓库简介里标为预览。插件作者写过，GitLab 后端目前缺少维护人力。GitHub 后端改 issue、建标签时，使用本机 <code>gh</code> 已登录账号在目标仓库中的权限：改票和建标签需要 <code>push</code>，改指派和流转标签需要 <code>triage</code>。只有只读权限的账号会被标成只读，浏览和刷新仍然可用。<a target="_blank" rel="noopener" href="https://github.com/FeatherHunter/dsh-mattpocock-skills-deck">项目说明</a></p>
+<p>版本号和 README 不一致，安装时要当场核对。2026-11-16，npm <code>latest</code> 是 <code>1.9.0-beta.33</code>，发布于 2026-11-01。同一天 GitHub <code>main</code> 的 <code>package.json</code> 写着 <code>1.9.0-beta.34</code>，且根包是 <code>&quot;private&quot;: true</code>。README 中的安装命令写的是 <code>@1.9.0-beta.34</code>。应以 <code>npm view dsh-mattpocock-skills-deck version</code> 的结果为准。这是 beta 包，界面和流程还会变。</p>
+<p><code>dsh-better-sidebar</code> 当前的生态目录把它列为侧边栏页面插件。更早的 <a target="_blank" rel="noopener" href="https://github.com/FeatherHunter/dsh-mattpocock-skills-deck/issues/646">issue #646</a> 记录过：当时面板通过 <code>ctx.betterSidebar</code> 注册，未安装 better-sidebar 时侧边栏模式不可用。该 issue 后来关闭，讨论里出现过改接原生右栏的记录。本文没有在 <code>1.9.0-beta.33</code> 的源码里复核当前入口。建议先装侧边栏，再装任务板。页面没有出现时，先确认侧边栏层已经加载。</p>
+<h3 id="MCP-连接器：dsh-mcp-connector"><a href="#MCP-连接器：dsh-mcp-connector" class="headerlink" title="MCP 连接器：dsh-mcp-connector"></a>MCP 连接器：dsh-mcp-connector</h3><p>DSH 要调用外部数据和服务时，需要接上 MCP Server。<code>dsh-mcp-connector</code> 提供一个连接器市场：浏览目录，用 OAuth 2.0 PKCE、API Key、Streamable HTTP、stdio 或 <code>mcpServers</code> JSON 建立连接，再按名称查找当前范围内已启用连接的工具，并做连接诊断。作者写明，这里的「技能扩展」指 MCP 工具和 Prompt，它是连接器能力，不是一份独立的 DSH Skill。<a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector">项目说明</a></p>
+<p>2026-11-17，npm <code>latest</code>、GitHub <code>main</code> 的 <code>package.json</code> 和 Release 都是 <code>0.2.110</code>。作者在同一天的说明里写明：公共 Registry 已发布 118 条连接器描述，与随包的 4 张企查查卡片合并去重后，市场页可浏览 122 张卡片，覆盖 9 类。目录随 <a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector-registry">dsh-mcp-connector-registry</a> 更新，不必等插件发版；页面上的数量以客户端刷新后的市场为准。首页推荐是固定的数据场景卡片，不是使用量排行。社区卡片不代表数据机构提供了官方 MCP。保存连接、发现工具和业务调用成功，要分开验证。</p>
+<p>入口在左侧「MCP连接器」。DSH <code>0.2.0-rc.2</code> 及以上使用官方 <code>sidebar.panellist</code>；<code>0.1.x</code> 使用兼容入口。侧栏可以隐藏，隐藏后从「设置 → 插件 → 插件配置 → MCP连接器」打开。它不依赖 <code>dsh-better-sidebar</code>。安装或升级后要完全重启：Desktop 退出应用再打开，<code>dsh web</code> 先停掉原进程再启动。只刷新网页不会加载新的后端插件。宿主侧要求 Node.js 20 或更高。<code>package.json</code> 里官方 MCP 客户端的 peer 范围是 <code>^0.1.1-rc.2 || &gt;=0.2.0-rc.1 &lt;0.3.0-0</code>。</p>
+<p>默认目录从 jsDelivr 读取公共 Registry；主源失败时再试 GitHub raw，然后回退到缓存或随包目录。把 <code>catalogUrl</code> 设成空字符串可以停用远程目录。stdio 会在本机启动进程，只连接可信命令。作者说明凭据写在本机 DSH storage，不进入市场目录、Git 仓库、页面、日志或对话历史。当前没有工具试运行。完整步骤见<a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector/blob/main/docs/USER-GUIDE.md">用户手册</a>。</p>
+<h3 id="换肤：dsh-dream-skin"><a href="#换肤：dsh-dream-skin" class="headerlink" title="换肤：dsh-dream-skin"></a>换肤：dsh-dream-skin</h3><p>前面几款改变工作方式，这个插件改变外观。<code>dsh-dream-skin</code> 11.16.0 通过宿主的主题扩展点注册皮肤，包含 8 套 Mirage 预设：abyss、aurora、nebula、ember、midnight、ivory、mist、rose。同时提供壁纸、强调色叠加层、可导入导出的 <code>*.dsh-theme.json</code> 主题包，以及关闭玻璃模糊的低功耗模式。入口在 <strong>设置 → 个性化皮肤</strong>。作者把低功耗开关写成给多窗口掉帧准备的开关，并在说明里引用了自己的测量。那些 GPU 数字不是本文复测的。<a target="_blank" rel="noopener" href="https://www.npmjs.com/package/dsh-dream-skin">npm 包 11.16.0 的说明</a></p>
+<p>安装来源以这个已发布的 npm 包为准。该版本的 homepage 和仓库字段指向 <a target="_blank" rel="noopener" href="https://gitcode.com/LLLAAAAA/dsh-dream-skin">GitCode 上的 dsh-dream-skin</a>。说明中写着原 GitHub 账号已被封禁，<code>github:</code> 简写不能再解析。本文没有另调 GitHub API 复核账号状态，安装时按插件说明避开旧的 GitHub 坐标。</p>
+<p>npm 上的 peer 依赖覆盖到 <code>0.3.0</code> 之前的客户端包。宿主进入 0.3 时要重新核对兼容范围。这个包在 2026-11-16 当天发布，两种情况都要写死版本号：发布后的 24 小时内，pnpm 的 <code>minimumReleaseAge</code> 可能把不带版本号的安装静默解成上一版；从 9.x 升上来的旧 profile 中，<code>^9</code> 覆盖不到 11.x。</p>
+<p>桌面端还有一条单独限制。插件说明记录：官方 Electron 桌面应用独占名为 <code>desktop</code> 的 profile，CLI 会拒绝 <code>dsh plugin --profile desktop ...</code>，报错大意是该 profile 只能由应用管理。技能市场和任务板的 README 仍然写了 <code>--profile desktop</code>。先确认自己启动的是哪一个入口。命令被拒绝时，改用应用内的插件安装界面，或按 dream-skin 文档在该 profile 目录里安装指定版本。</p>
+<h2 id="按这个顺序安装"><a href="#按这个顺序安装" class="headerlink" title="按这个顺序安装"></a>按这个顺序安装</h2><p>任务板和技能市场的界面都落在侧边区域，所以先装侧边栏。MCP 连接器和换肤可以单独安装，顺序不限。下图是建议的安装顺序。</p>
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart TD
+    Check[&quot;核对 profile 与版本&quot;] --&gt; Pin{&quot;已到 0.2.2-rc.2?&quot;}
+    Pin --&gt;|是| NewSb[&quot;侧边栏 0.32.1&quot;]
+    Pin --&gt;|仍是 rc.1| OldSb[&quot;侧边栏 0.32.0&quot;]
+    NewSb --&gt; Rest[&quot;安装其余插件&quot;]
+    OldSb --&gt; Rest
+    Rest --&gt; Dump[&quot;dump-config 见新层&quot;]
+    Dump --&gt; Restart[&quot;重启并硬刷新&quot;]
+    Restart --&gt; Session[&quot;再开新会话&quot;]
+  </pre></div>
+
+<p>下面的命令以 Web 入口 <code>dsh web</code> 为例，profile 名是 <code>web</code>。桌面应用若拒绝这个名字，改走应用内安装；MCP 连接器的作者另外说明，Desktop 应使用应用配套的 CLI，并在安装前完全退出应用。五条命令都会修改 <code>$DSH_HOME/profiles/web</code> 的依赖和 bundle 列表。卸载使用官方文档中的 <code>dsh plugin --profile web remove &lt;包名&gt;</code>。已下载的技能、连接凭据和主题包不一定随插件卸载一起消失。<strong>这些命令未在当前环境执行。</strong></p>
+<p>先看版本，再决定侧边栏钉哪一版：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">dsh --version</span><br><span class="line">npm view @deepseek-ai/dsh dist-tags --json</span><br><span class="line">npm view dsh-better-sidebar version</span><br><span class="line">npm view @montersy123/dsh-skill-market version</span><br><span class="line">npm view dsh-mattpocock-skills-deck version</span><br><span class="line">npm view dsh-mcp-connector version</span><br><span class="line">npm view dsh-dream-skin version</span><br></pre></td></tr></table></figure>
+
+<p>宿主已经是 <code>0.2.2-rc.2</code> 或同线更新版本时：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">dsh plugin --profile web add dsh-better-sidebar@0.32.1</span><br><span class="line">dsh plugin --profile web add @montersy123/dsh-skill-market@2.1.0</span><br><span class="line">dsh plugin --profile web add dsh-mattpocock-skills-deck@1.9.0-beta.33</span><br><span class="line">dsh plugin --profile web add dsh-mcp-connector@0.2.110</span><br><span class="line">dsh plugin --profile web add dsh-dream-skin@11.16.0</span><br></pre></td></tr></table></figure>
+
+<p>宿主仍是 2026-11-16 的 npm <code>latest</code>，也就是 <code>0.2.2-rc.1</code> 时，把第一行换成：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dsh plugin --profile web add dsh-better-sidebar@0.32.0</span><br></pre></td></tr></table></figure>
+
+<p>其余几行不变。<code>0.2.2-rc.2</code> 及以上用 <code>0.32.1</code>，<code>0.2.2-rc.1</code> 用 <code>0.32.0</code>。更老的宿主按 README 另选版本，不要沿用这两行。MCP 连接器的 <code>0.2.110</code> 是 2026-11-17 的 npm <code>latest</code>，安装前用上面的 <code>npm view</code> 再对一次。</p>
+<p>装完先确认层已经出现，再重启。<code>dump-config</code> 的输出里应有各包名字构成的层标记，官方示例的形式是 <code># == &lt;包名&gt;</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dsh --profile web --dump-config</span><br><span class="line">dsh --profile web</span><br></pre></td></tr></table></figure>
+
+<p>better-sidebar 还要求浏览器硬刷新，macOS 上是 Command+Shift+R。如果 <code>dsh web</code> 在安装前已经运行，旧进程仍使用安装前的组合：先停掉，再启动，然后刷新。技能市场写入 <code>$DSH_HOME/skills</code> 的技能，按该插件说明重启对应 profile，再开一个新会话。</p>
+<p>从 git 地址安装时，pnpm 10 及以上默认不运行依赖的 <code>prepare</code> 脚本，源码包可能没有构建产物。官方说明把放行构建脚本视为在本机安装期执行对方代码，并建议钉住 commit。这五款都有已发布的 npm 包，日常安装使用上面的版本号。MCP 连接器作者另外提供一条从 GitHub 拉取的安装脚本；采用它之前先阅读脚本内容。本文示例使用钉好的 npm 版本。<a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/develop/basic/publish.md">官方对 git 安装的说明</a></p>
+<h2 id="使用时的边界"><a href="#使用时的边界" class="headerlink" title="使用时的边界"></a>使用时的边界</h2><p>这五款插件装上之后，DSH 进程会执行第三方代码。只从 npm 上的确定版本安装，并在 <code>--dump-config</code> 里确认层名与包名一致。</p>
+<ul>
+<li>侧边栏的文件接口能访问工作区以外、当前系统用户有权限的路径。本机 DSH 只给可信任的网络和会话使用。</li>
+<li>技能市场安装的是 SkillHub 上的他人作品。绿色标记表示列出的检测方当时都报告了安全，安装前仍要阅读技能自己的 <code>SKILL.md</code>。卸载和版本回退会删除技能目录，恢复时需要重新下载。</li>
+<li>任务板的 GitHub 后端使用本机 <code>gh</code> 的身份修改 issue。只在账号拥有该仓库权限，并且接受插件代为改票时启用。</li>
+<li>MCP 连接器会保存第三方服务的凭据，并用 stdio 启动本机进程。只连接可信的 Server 和命令。默认会向 jsDelivr 请求公共目录。作者说明当前没有工具试运行，发现到工具不等于业务调用已经成功。</li>
+<li>换肤可以请求图片 URL，出厂说明里预填了必应每日壁纸接口。使用本地图或渐变时，可以避开外网图片。低功耗模式会关闭玻璃模糊。作者给出的 GPU 占用数字没有在本文环境复测。</li>
+</ul>
+<p>同名技能谁生效，要看官方注册表的合并结果：离当前 scope 更近的层胜出；同一层内部再按发现顺序决定。后安装的技能不一定覆盖先安装的技能。<a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.zh.md">技能子系统说明</a></p>
+<h2 id="装完没有变化时先查这几项"><a href="#装完没有变化时先查这几项" class="headerlink" title="装完没有变化时先查这几项"></a>装完没有变化时先查这几项</h2><h3 id="侧边栏报版本不兼容"><a href="#侧边栏报版本不兼容" class="headerlink" title="侧边栏报版本不兼容"></a>侧边栏报版本不兼容</h3><p>对照 <code>dsh --version</code>。<code>0.2.2-rc.1</code> 配 <code>dsh-better-sidebar@0.32.1</code> 会按作者的兼容表被拒绝。改钉 <code>0.32.0</code>，或把宿主升到 <code>0.2.2-rc.2</code> 及以上再装 <code>0.32.1</code>。</p>
+<h3 id="命令成功，界面仍是旧的"><a href="#命令成功，界面仍是旧的" class="headerlink" title="命令成功，界面仍是旧的"></a>命令成功，界面仍是旧的</h3><p>看 <code>--dump-config</code> 里有没有新层。没有层，说明包已经装进依赖，但没有 <code>dsh.bundle</code>，或装到了另一个 profile。有层而页面没变，常见原因是旧的 <code>dsh web</code> 进程仍在运行，或浏览器保留了旧的前端资源。重启进程并硬刷新。</p>
+<h3 id="技能市场里的技能，当前对话不会用"><a href="#技能市场里的技能，当前对话不会用" class="headerlink" title="技能市场里的技能，当前对话不会用"></a>技能市场里的技能，当前对话不会用</h3><p>技能文件可以已经在 <code>$DSH_HOME/skills</code>。按插件说明重启对应 profile，再新开一轮。浏览失败时，先确认这台机器能访问 <code>api.skillhub.cn</code>。</p>
+<h3 id="任务板不在侧边栏里"><a href="#任务板不在侧边栏里" class="headerlink" title="任务板不在侧边栏里"></a>任务板不在侧边栏里</h3><p>确认 better-sidebar 已装进同一个 profile，并且该页面没有在它的设置里被关掉。本文没有验证 <code>1.9.0-beta.33</code> 在缺少 better-sidebar 时是否还有别的入口。</p>
+<h3 id="左侧没有-MCP连接器"><a href="#左侧没有-MCP连接器" class="headerlink" title="左侧没有 MCP连接器"></a>左侧没有 MCP连接器</h3><p>先完全重启对应的 Desktop 或 <code>dsh web</code> 进程，只刷新网页不够。然后看左侧导航，或打开「设置 → 插件 → 插件配置 → MCP连接器」。目录为空时，检查这台机器能否访问 jsDelivr 和 GitHub；远程目录失败时，作者说明会回退到缓存或随包目录。</p>
+<h3 id="换肤被装成旧版，或报插件不兼容"><a href="#换肤被装成旧版，或报插件不兼容" class="headerlink" title="换肤被装成旧版，或报插件不兼容"></a>换肤被装成旧版，或报插件不兼容</h3><p><code>11.16.0</code> 发布不满 24 小时时，不带版本号的安装可能静默落到 9.x。用 <code>dsh-dream-skin@11.16.0</code> 重装。按作者说明，避开已经声明失效的 <code>github:RevolutionLA/dsh-dream-skin</code>。</p>
+<h3 id="桌面端-CLI-拒绝安装"><a href="#桌面端-CLI-拒绝安装" class="headerlink" title="桌面端 CLI 拒绝安装"></a>桌面端 CLI 拒绝安装</h3><p>这是 dream-skin 文档记录的 Electron 行为。改到应用内的「添加插件」，包名仍用上表。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/develop/basic/publish.md">DeepSeek Harness：把插件打包并装进 profile</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/subsystems/skills.zh.md">DeepSeek Harness 技能子系统</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/omdsh-dev/DSH-better-sidebar">dsh-better-sidebar</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/montersy123/dsh-skill-market">dsh-skill-market</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/FeatherHunter/dsh-mattpocock-skills-deck">dsh-mattpocock-skills-deck</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.aihero.dev/skills-setup-matt-pocock-skills">Matt Pocock：<code>/setup-matt-pocock-skills</code> 的用法</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector">dsh-mcp-connector</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/duhu2000/dsh-mcp-connector/blob/main/docs/USER-GUIDE.md">dsh-mcp-connector 用户手册</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.npmjs.com/package/dsh-dream-skin">dsh-dream-skin（npm 11.16.0；源码说明指向 GitCode）</a></li>
+</ul>
+<blockquote>
+<p>本文由 AI 辅助生成，如有错误或建议，欢迎指出。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/de9fb80ca58c.html">https://xhua.eu.org/posts/de9fb80ca58c.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/deepseek-harness/">DeepSeek Harness</a><a class="post-meta__tags" href="/tags/dsh/">DSH</a><a class="post-meta__tags" href="/tags/%E6%8F%92%E4%BB%B6/">插件</a><a class="post-meta__tags" href="/tags/agent-skill/">Agent Skill</a><a class="post-meta__tags" href="/tags/%E4%BE%A7%E8%BE%B9%E6%A0%8F/">侧边栏</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/106983f6793b95c040c793202cb69fb0083c49ffa3b55acdf5b77af080671de5.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务"><img class="cover" src="https://img.xhua.eu.org/1c62afa84de6a3e3eaef495a30a9a9e4a5512fff2b22f252d7259f9593b83b0b.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Codex Subagent 入门：用三个角色完成一个小任务</div></div><div class="info-2"><div class="info-item-1">想学习多 Agent 协作，可以从一个很小的任务开始：让 Codex 实现购物车总价函数，依次交给三个角色做需求分析、代码实现和独立验证。 这个任务用一个 Agent 也能完成。拆成三个角色，是为了看清楚如何定义职责、传递结果，以及在发现问题后返回修复。 本文整理自一次 Codex 学习会话中的购物车示例，并按 2026 年 10 月 21 日查阅的官方文档核对配置。原会话只展示了方案，没有实际运行这三个 Subagent；下面也不把教学示例当作已经跑通的结果。 先看三个角色怎样协作主 Agent 接收用户需求并协调流程，三个 Subagent 分别负责：  analyst：明确输入、输出和验收用例。 implementer：按方案修改指定文件，并运行测试。 verifier：对照原始需求检查实际代码、补查边界，并独立运行测试。  下图中的箭头表示主 Agent 安排的执行顺序，每一阶段完成后才开始下一阶段。三个角色之间的交接由主 Agent 组织。      flowchart TD     M[&quot;主 Agent 接收需求&quot;] --&gt; A[&quot;...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E5%88%86%E6%B8%85%E6%8F%92%E4%BB%B6%E5%92%8C%E6%8A%80%E8%83%BD"><span class="toc-text">先分清插件和技能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E6%AC%BE%E6%8F%92%E4%BB%B6%E5%90%84%E7%AE%A1%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="toc-text">五款插件各管一件事</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%A7%E8%BE%B9%E6%A0%8F%EF%BC%9Adsh-better-sidebar"><span class="toc-text">侧边栏：dsh-better-sidebar</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E4%BB%8E%E5%93%AA%E6%9D%A5%EF%BC%9Adsh-skill-market"><span class="toc-text">技能从哪来：dsh-skill-market</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%BB%E5%8A%A1%E6%9D%BF%EF%BC%9Adsh-mattpocock-skills-deck"><span class="toc-text">任务板：dsh-mattpocock-skills-deck</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP-%E8%BF%9E%E6%8E%A5%E5%99%A8%EF%BC%9Adsh-mcp-connector"><span class="toc-text">MCP 连接器：dsh-mcp-connector</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8D%A2%E8%82%A4%EF%BC%9Adsh-dream-skin"><span class="toc-text">换肤：dsh-dream-skin</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%89%E8%BF%99%E4%B8%AA%E9%A1%BA%E5%BA%8F%E5%AE%89%E8%A3%85"><span class="toc-text">按这个顺序安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%97%B6%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-text">使用时的边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A3%85%E5%AE%8C%E6%B2%A1%E6%9C%89%E5%8F%98%E5%8C%96%E6%97%B6%E5%85%88%E6%9F%A5%E8%BF%99%E5%87%A0%E9%A1%B9"><span class="toc-text">装完没有变化时先查这几项</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%A7%E8%BE%B9%E6%A0%8F%E6%8A%A5%E7%89%88%E6%9C%AC%E4%B8%8D%E5%85%BC%E5%AE%B9"><span class="toc-text">侧边栏报版本不兼容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E6%88%90%E5%8A%9F%EF%BC%8C%E7%95%8C%E9%9D%A2%E4%BB%8D%E6%98%AF%E6%97%A7%E7%9A%84"><span class="toc-text">命令成功，界面仍是旧的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E5%B8%82%E5%9C%BA%E9%87%8C%E7%9A%84%E6%8A%80%E8%83%BD%EF%BC%8C%E5%BD%93%E5%89%8D%E5%AF%B9%E8%AF%9D%E4%B8%8D%E4%BC%9A%E7%94%A8"><span class="toc-text">技能市场里的技能，当前对话不会用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%BB%E5%8A%A1%E6%9D%BF%E4%B8%8D%E5%9C%A8%E4%BE%A7%E8%BE%B9%E6%A0%8F%E9%87%8C"><span class="toc-text">任务板不在侧边栏里</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A6%E4%BE%A7%E6%B2%A1%E6%9C%89-MCP%E8%BF%9E%E6%8E%A5%E5%99%A8"><span class="toc-text">左侧没有 MCP连接器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8D%A2%E8%82%A4%E8%A2%AB%E8%A3%85%E6%88%90%E6%97%A7%E7%89%88%EF%BC%8C%E6%88%96%E6%8A%A5%E6%8F%92%E4%BB%B6%E4%B8%8D%E5%85%BC%E5%AE%B9"><span class="toc-text">换肤被装成旧版，或报插件不兼容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%8C%E9%9D%A2%E7%AB%AF-CLI-%E6%8B%92%E7%BB%9D%E5%AE%89%E8%A3%85"><span class="toc-text">桌面端 CLI 拒绝安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

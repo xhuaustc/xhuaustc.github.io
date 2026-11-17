@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>OpenShift访问外部需要认证的镜像仓库 | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="docker login登录成功后，会在~&#x2F;.docker&#x2F;中创建config.json文件，内容格式如下： 123456&#123;          &quot;auths&quot;: &#123;                  &quot;https:&#x2F;&#x2F;registry.example.com&quot;: &#123;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenShift访问外部需要认证的镜像仓库">
+<meta property="og:url" content="https://xhua.eu.org/posts/e607688e15ca.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="docker login登录成功后，会在~&#x2F;.docker&#x2F;中创建config.json文件，内容格式如下： 123456&#123;          &quot;auths&quot;: &#123;                  &quot;https:&#x2F;&#x2F;registry.example.com&quot;: &#123;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-17T08:01:21.006Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="openshift">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenShift访问外部需要认证的镜像仓库",
+  "url": "https://xhua.eu.org/posts/e607688e15ca.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-11-17T08:01:21.006Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/e607688e15ca.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'OpenShift访问外部需要认证的镜像仓库',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">OpenShift访问外部需要认证的镜像仓库</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">OpenShift访问外部需要认证的镜像仓库</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-17T08:01:21.006Z" title="更新于 2026-11-17 16:01:21">2026-11-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>docker login登录成功后，会在~&#x2F;.docker&#x2F;中创建config.json文件，内容格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">          &quot;auths&quot;: &#123;</span><br><span class="line">                  &quot;https://registry.example.com&quot;: &#123;</span><br><span class="line">                          &quot;auth&quot;: &quot;c2xmams6c2RmbGtq&quot;</span><br><span class="line">                  &#125;</span><br><span class="line">&#125;      </span><br></pre></td></tr></table></figure>
+<p>两种方式：</p>
+<ol>
+<li>认证信息必须存放在OpenShift的NameSpace中的Secret下。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">oc -n &lt;test-namespace&gt; create secret docker-registry &lt;pull-secret&gt; --docker-server=registry.example.com --docker-username=&lt;username&gt; --docker-email=test@example.com --docker-password=&lt;password&gt;</span><br><span class="line">oc -n &lt;test-namespace&gt; secrets link &lt;serviceaccount&gt; &lt;pull-secret&gt; --for=pull</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在Master节点与Node节点的 <code>/var/lib/origin/.docker/config.json</code>文件中添加认证TOKEN</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cp ~/.docker/config.json /var/lib/origin/.docker/config.json; systemctl restart atomic-openshift-node</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/e607688e15ca.html">https://xhua.eu.org/posts/e607688e15ca.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/openshift/">openshift</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/3bc605c0336e.html" title="OpenShift运维点汇总"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">OpenShift运维点汇总</div></div><div class="info-2"><div class="info-item-1">应用 部署  镜像同步（UAT-&gt;PRO） 应用部署配置   New Project&#x2F;New App环境变量cpu与内存资源限制健康检查复本数量创建router特殊Node节点绑定pod的亲和与互斥pod网速限速（特别是对外提供服务的pod）  应用配置中心(gitlab)   更新  镜像同步应用新版本部署   监控  Pod EFKRegistry与Router等重要服务的监控    物理层 创建资源  负载均衡器NAS存储应用私有网络   监控  vpc负载均衡器主机状态监控（CPU与内存）    集群层 备份  etcd全量备份应用配置备份(Ark)应用备份（oc export)   集群版本管理  集群升级（每个大版本升级）   日志归档与清理  EFK日志清理hawkular-cassandra日志清理journal日志归档  1journalctl --vacuum-time=3days或者journalctl --vacuum-size=200M或者在/etc/systemd/journald.conf中设置日志大小  message日志归档   ...</div></div></div></a><a class="pagination-related" href="/posts/8cbac354b58c.html" title="OpenShift解决Route-Https--Http无法跳转的问题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenShift解决Route-Https--Http无法跳转的问题</div></div><div class="info-2"><div class="info-item-1"> 问题现象通过Route创建的edge类型的HTTPS，后端应用使用的是HTTP服务。但在某些情况下，后端应用使用Location时，Location地址为HTTP地址。这时浏览器将因为无法访问HTTP服务而无法实现跳转。 原理Haproxy在返回客户端时，检查返回Head，将Location地址中的HTTP替换为HTTPS，从而让浏览器获取正确的跳转链接。 解决办法更新haproxy-config.template，为edge请求的应用添加标注判断haproxy.router.openshift.io/location-scheme，如果它为https，则将Location请求中的http替换为https。具体配置如下：搜索 ssl_fc_alpn -i h2在其后添加如下配置 1234&#123;&#123;- if eq &quot;https&quot; (index $cfg.Annotaions &quot;haproxy.router.openshift.io/location-scheme&quot;)&#125;&#125;  acl check_locatio...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/ce0c8fadaa8b.html" title="OpenShift容器云平台建设之部署前准备"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift容器云平台建设之部署前准备</div></div><div class="info-2"><div class="info-item-1"> 在企业级部署OpenShift前，需要先考虑以下几个问题：  使用的主机架构是什么?IBM Power还是x86。 集群多大的容量，运行多少个Pod?     Limit Type 3.7 Limit 3.9 Limit 3.10 Limit 3.11 Limit    节点数 [1] 2,000 2,000 2,000 2,000   pod数 [2] 120,000 120,000 150,000 150,000   每台节点支持的pod数 250 250 250 250   每核支持的pod数 默认为10. 最大值为主机支持的pod数 默认为10. 最大值为主机支持的pod数 无默认值. 最大值为主机支持的pod数 无默认值. 最大值为主机支持的pod数   namespaces数量 10,000 10,000 10,000 10,000   Pipeline构建策略数量 N&#x2F;A 10,000 (默认pod内存为512Mi) 10,000 (默认pod内存为512Mi) 10,000 (默认pod内存为512Mi)   每个namespace下创建的pod数...</div></div></div></a><a class="pagination-related" href="/posts/a33a393500a3.html" title="OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift-Prometheus使用集群外部Prometheus级联的方法实现多集群统一监控告警</div></div><div class="info-2"><div class="info-item-1"> 背景大家知道OpenShfit官方通过Prometheus Operator可以快速构建高可用的监控告警平台，它不仅能够收集集群本身的监控指标，还可以通过ServiceMonitor扩展以监控应用自身的指标，实现单集群内部的统一监控。但是生产实践中，我们并不会只采用一个OpenShift部署应用，还会部署非容器应用，在非容器环境下也可能会部署Prometheus来监控相关服务（特别是现在Prometheus已经成为了监控的一个标配），甚至有可能会在不同的网络区部署多个集群，由于不同网络的隔离特性显然一组Prometheus是无法满足所有平台及应用的监控的。这就使得生产中会有很多套Prometheus集群需要管理与维护，查看监控指标也很分散，也就让我们想到必须采用一种办法能够将各处的指标统一收集，实现多集群多Prometheus服务的统一监控。目前实现这种要求的方法主要有两个，一个是通过Prometheus联邦 Federate，另一个是通过Thanos。今天主要介绍集群外部如何使用Prometheus联邦机制收集OpenShift内部Prometheus服务的监控指标。 操作实...</div></div></div></a><a class="pagination-related" href="/posts/f5c1675e23d0.html" title="Kubernetes更新etcd证书"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Kubernetes更新etcd证书</div></div><div class="info-2"><div class="info-item-1">在三台etcd所在的主机上执行以下操作 123456789$ cd /etc/kubernetes/pki$ mv etcd etcd.bak$ mkdir apiserver-etcd-client$ mv apiserver-etcd-client.* apiserver-etcd-client/$ kubeadm alpha phase certs etcd-ca$ kubeadm alpha phase certs etcd-server --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-peer --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs etcd-healthcheck-client --config=/etc/kubernetes/kubeadmcfg.yaml$ kubeadm alpha phase certs apiserver-etcd-client --config=/e...</div></div></div></a><a class="pagination-related" href="/posts/4f92c76453ff.html" title="通过curl访问OpenShift上部署的Prometheus获取监控数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">通过curl访问OpenShift上部署的Prometheus获取监控数据</div></div><div class="info-2"><div class="info-item-1"> Prometheus作为最常用的集群的监控组件，它收集了集群最全的状态信息。那么当我们需要将它与现有的监控告警平台打通，或者根据它开发一个自己的监控展示平台时，就不得不需要获得Prometheus的监控数据了。这时就不得不访问Prometheus的API接口。根据场景的不同有两种方式能够获取到Prometheus的数据  集群外部，通过访问Prometheus UI的链接来获取指标数据 集群内部，进入Prometheus容器中，获取指标数据  1. 集群外部，curl访问Prometheus UI地址由于OpenShift上部署的Prometheus应用对接了OpenShift的用户认证oauth-proxy，所以必须先获取用户的Token后再通过curl访问prometheus服务获取数据，具体操作如下。 123456789101112# #登录[root@master ~]# oc login -u adminAuthentication required for https://master.example.com:8443 (openshift)Username: ad...</div></div></div></a><a class="pagination-related" href="/posts/470695cf24c2.html" title="OpenShift日志审计功能与策略配置"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">OpenShift日志审计功能与策略配置</div></div><div class="info-2"><div class="info-item-1"> OpenShift支持审计功能，它可以记录下所有API服务的请求。如果将所有请求记录下来，它的量非常庞大，同时也是没有太大意义的。所以OpenShift审计记录当然出会支持请求的过滤，通过方便地策略配置，可以有选择地记录下请求的内容。通常我们会记录对集群资源作更改的请求。 打开审计功能在部署OpenShift时可以打开审计功能 12openshift_master_audit_config=&#123;&quot;enabled&quot;: true, &quot;auditFilePath&quot;: &quot;/var/lib/origin/audit-ocp.log&quot;, &quot;maximumFileRetentionDays&quot;: 14, &quot;maximumFileSizeMegabytes&quot;: 500, &quot;maximumRetainedFiles&quot;: 5, &quot;policyFile&quot;: &quot;/etc/origin/master/adv-audit.yaml&quot;, &qu...</div></div></div></a><a class="pagination-related" href="/posts/d5518b697fca.html" title="Openshift中Elasticsearch索引自动清理工具：Curator"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Openshift中Elasticsearch索引自动清理工具：Curator</div></div><div class="info-2"><div class="info-item-1">Openshift 3.11版本Openshift 3.10版本参考文档Openshift官方文档curator配置 </div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/de9fb80ca58c.html" title="DeepSeek Harness 插件入门：五款社区插件怎么配合">DeepSeek Harness 插件入门：五款社区插件怎么配合</a><time datetime="2026-11-16T09:43:51.000Z" title="发表于 2026-11-16 17:43:51">2026-11-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务">Codex Subagent 入门：用三个角色完成一个小任务</a><time datetime="2026-10-21T04:56:33.000Z" title="发表于 2026-10-21 12:56:33">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/3923bb01ac9c.html" title="AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent">AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent</a><time datetime="2026-10-21T03:01:28.000Z" title="发表于 2026-10-21 11:01:28">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/58c53c032b4c.html" title="Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计">Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计</a><time datetime="2026-10-21T03:00:38.000Z" title="发表于 2026-10-21 11:00:38">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

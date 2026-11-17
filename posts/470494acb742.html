@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Elasticsearch-+-Kibana添加到Systemctl | Michael Blog</title><meta name="author" content="Michael Pan"><meta name="copyright" content="Michael Pan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service 1234567891011[Unit]Description&#x3D;Elasticsearch[Service]PIDFile&#x3D;&#x2F;home&#x2F;vagrant&#x2F;kibana-5.1.1-linux-x86_64&#x2F;kibana.pidExecStart&#x3D;&#x2F;home&#x2F;vagrant&#x2F;k">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch-+-Kibana添加到Systemctl">
+<meta property="og:url" content="https://xhua.eu.org/posts/470494acb742.html">
+<meta property="og:site_name" content="Michael Blog">
+<meta property="og:description" content="&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service 1234567891011[Unit]Description&#x3D;Elasticsearch[Service]PIDFile&#x3D;&#x2F;home&#x2F;vagrant&#x2F;kibana-5.1.1-linux-x86_64&#x2F;kibana.pidExecStart&#x3D;&#x2F;home&#x2F;vagrant&#x2F;k">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg">
+<meta property="article:published_time" content="2020-05-20T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-17T08:01:20.999Z">
+<meta property="article:author" content="Michael Pan">
+<meta property="article:tag" content="devops">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Elasticsearch-+-Kibana添加到Systemctl",
+  "url": "https://xhua.eu.org/posts/470494acb742.html",
+  "image": "https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg",
+  "datePublished": "2020-05-20T12:30:00.000Z",
+  "dateModified": "2026-11-17T08:01:20.999Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Michael Pan",
+      "url": "https://xhua.eu.org"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://img.xhua.eu.org/ee7822a9c1b896de5649988ed5a9dc89c8f46fb54dd442f2d9c74721a05fa708.jpg"><link rel="canonical" href="https://xhua.eu.org/posts/470494acb742.html"><link rel="preconnect"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="/pluginsSrc/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/pluginsSrc/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: true,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Elasticsearch-+-Kibana添加到Systemctl',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/preloader-frosted-glass.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://img.xhua.eu.org/39706589682fac9daeaa8ba2cf96caf19cdb3fed710550ed9556afb848742d95.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Michael Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Elasticsearch-+-Kibana添加到Systemctl</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> 友情链接</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Elasticsearch-+-Kibana添加到Systemctl</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-05-20T12:30:00.000Z" title="发表于 2020-05-20 20:30:00">2020-05-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-17T08:01:20.999Z" title="更新于 2026-11-17 16:01:20">2026-11-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;kibana.service</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Elasticsearch</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">PIDFile=/home/vagrant/kibana-5.1.1-linux-x86_64/kibana.pid</span><br><span class="line">ExecStart=/home/vagrant/kibana-5.1.1-linux-x86_64/bin/kibana</span><br><span class="line">User=vagrant</span><br><span class="line">Restart=always</span><br><span class="line">LimitMEMLOCK=infinity</span><br><span class="line">LimitNOFILE=1048576</span><br><span class="line">LimitNPROC=1048576</span><br></pre></td></tr></table></figure>
+
+<p>&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;elasticsearch.service</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Elasticsearch</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">PIDFile=/home/vagrant/elasticsearch-rtf/elasticsearch.pid</span><br><span class="line">ExecStart=/home/vagrant/elasticsearch-rtf/bin/elasticsearch</span><br><span class="line">User=vagrant</span><br><span class="line">Restart=always</span><br><span class="line">LimitMEMLOCK=infinity</span><br><span class="line">LimitNOFILE=1048576</span><br><span class="line">LimitNPROC=1048576</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xhua.eu.org">Michael Pan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xhua.eu.org/posts/470494acb742.html">https://xhua.eu.org/posts/470494acb742.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xhua.eu.org" target="_blank">Michael Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/devops/">devops</a></div><div class="post-share"><div class="social-share" data-image="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="/pluginsSrc/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="/pluginsSrc/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/ef3675d1c305.html" title="Git-+-Jenkins-提交Git-触发Jenkins-Job"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Git-+-Jenkins-提交Git-触发Jenkins-Job</div></div><div class="info-2"><div class="info-item-1">利用git的Hook机制  .git&#x2F;hooks&#x2F;pre-push  123#!/bin/bashecho ====== trigger jenkins job: maglev-verify in 10s  =======(sleep 10 &amp;&amp; .git/hooks/post-push) &amp;  .git&#x2F;hooks&#x2F;post-push  123#!/bin/bashbranch=$(git rev-parse --abbrev-ref @&#123;upstream&#125;)curl -k --user $&#123;USER&#125;=$&#123;TOKEN&#125; http://$&#123;JENKINS_URL&#125;/job/$&#123;JOB_NAME&#125;/buildWithParameters --data-urlencode TAG=$branch</div></div></div></a><a class="pagination-related" href="/posts/d1a90c6e8453.html" title="CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式"><img class="cover" src="https://img.xhua.eu.org/02c300ae74aa07d1b945e64f2afe3899b96a9638cc87741acd13bcd5866daee6.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式</div></div><div class="info-2"><div class="info-item-1"> 命令行模式 环境准备   克隆代码  1git clone  启动私有docker hub  12 docker run -d -p 5000:5000 -v /data/registry:/var/lib/registry --name registry --restart=always registry  制作建置环境  1docker build -t localhost:5000/maven dockers/maven  dockers&#x2F;maven&#x2F;Dockerfile 1234FROM ## 安装openjdk## 安装MavenCMD [&quot;mvn&quot;]  集成、测试、验证  进行自动化测试   1docker-compose run --rm test docker-compose.yaml 123456789101112131415161718192021222324data：  image: alpine  volumes:    - ~/.m2:/root/.m2  command: &quot;/bin/bash&quo...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/3430a8b4b6e5.html" title="持续交付发布可靠软件的系统方法（基础篇）第二章：配置管理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">持续交付发布可靠软件的系统方法（基础篇）第二章：配置管理</div></div><div class="info-2"><div class="info-item-1">《持续交付发布可靠软件的系统方法》读书笔记 配置管理指一个过程，通过该过程，所有与项目有关的产物，以及它们之间的关系都被唯一定义、修改、存储与检索。 使用版本控制 对所有内容进行版本控制（所需的支撑软件配置信息，操作系统配置信息、DNS区域文件和防火墙配置等）  配置管理是持续集成交付过程的基础。 软件配置管理灵活性：先专注于提供具有高价值且可配置程度低的功能，冒烟测试就是一种缓解配置验证问题的方法配置分类 推荐应使构建打包生成的包，面向所有环境，并不植入配置信息  应用程序的配置管理 将特定于测试环境或生产环境的实际配置信息存放于与源代码分离的单独代码库，需要注意配置信息的版本，一定要与相应的应用软件的版本相切尔西 不要把密码放在版本控制系统中 获取配置信息：文件系统、从某个中心仓库中获取配置信息 配置信息：区分应用、版本、环境，都需要满足以下： 新增一个环境，能为这个配置应用的新环境指定一套新的配置信息 新建应用程序的一个新版本，确保在部署新版本时，使用新的配置，但是一量需要回滚时，还能够使用旧版本的配置 将新版本从一个环境移到另一个环境，确保新环境上的新配置里有效 重定向到...</div></div></div></a><a class="pagination-related" href="/posts/6c2c2ce8b77c.html" title="Vagrant常用操作"><img class="cover" src="https://img.xhua.eu.org/dbdae12659719bbc8950b11f32a73f7e3b19c5b6ea04569b246faa257db88a96.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">Vagrant常用操作</div></div><div class="info-2"><div class="info-item-1">查看安装的插件列表1$ vagrant plugin list 安装vagrant插件1$ vagrant plugin install vagrant-disksize vagrant-ignition vagrant-vbguest 查看box列表1$ vagrant box list 添加一个新的box1$ vagrant box add centos-76 centos-76.box 将一个虚拟机导出为box1$ vagrant package --output  centos-7.6.box 删除一个box1$ vagrant box remove centos-76 </div></div></div></a><a class="pagination-related" href="/posts/0b2e9fb9bf3f.html" title="selenium+Xvfb+ffmpeg实现服务器录屏"><img class="cover" src="https://img.xhua.eu.org/3699f0dc0039aa39a20cdf12a48352920020a72ece5829eadc646dc32f50f9e2.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-28</div><div class="info-item-2">selenium+Xvfb+ffmpeg实现服务器录屏</div></div><div class="info-2"><div class="info-item-1">在现代软件开发中，自动化测试变得越来越重要，而录屏功能则为测试结果的验证提供了直观的方式。通过结合Selenium、Xvfb和FFmpeg这三个强大的工具，我们可以在服务器上实现无头(headless)的录屏环境，这对于没有图形界面的服务器尤其有用。 Selenium是一个自动化测试工具，它可以模拟用户对网页的操作，如点击、输入文本等。Xvfb（X虚拟帧缓冲）提供了一个虚拟的显示环境，使得我们可以在不需要实际显示器的情况下运行图形应用程序。FFmpeg是一个强大的多媒体框架，能够处理视频和音频的录制、转换和流式传输。 将这三个工具结合起来，我们可以创建一个自动化的录屏流程，这个流程可以在后台运行，录制Selenium驱动的浏览器会话。这样，无论是进行自动化测试验证，还是生成用户操作教程，都可以通过这种方式来实现。 例如，我们可以使用Selenium启动一个浏览器会话，然后用Xvfb创建一个虚拟的显示环境来捕获这个会话的屏幕。接着，使用FFmpeg开始录制屏幕内容，直到测试完成。这个过程完全自动化，可以集成到持续集成&#x2F;持续部署（CI&#x2F;CD）的流程中，提高开发效率...</div></div></div></a><a class="pagination-related" href="/posts/f8f8c2afa37e.html" title="Lego签SSL证书"><img class="cover" src="https://img.xhua.eu.org/eba62c951952f299eeedb3f6702830b357fc69cd5bdc99b18c79decb952f06e7.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-16</div><div class="info-item-2">Lego签SSL证书</div></div><div class="info-2"><div class="info-item-1">HTTPS已经成为当今网站的标准配置,为网站提供加密和身份验证功能。但是申请和维护SSL证书一直是一个繁琐的过程。幸运的是,Lego这个强大的工具可以帮助我们轻松地自动化获取和更新Let’s Encrypt免费SSL证书。 Lego 简介Lego是一个用Go语言编写的Let’s Encrypt客户端,它可以帮助我们自动化完成SSL证书的申请、验证和更新过程。相比于其他工具,Lego的优势在于:  支持多种验证方式,包括HTTP和DNS验证 集成了众多DNS服务商的API,可以自动完成DNS验证 使用简单,只需几个命令即可完成证书申请 支持通配符证书  安装 Lego mac  1brew install lego  docker  1docker run goacme/lego -h  签发rout53证书 配置AWS密钥  123export AWS_ACCESS_KEY_ID=xxxexport AWS_SECRET_ACCESS_KEY=xxxexport AWS_REGION=us-east-1  生成ssl证书  1lego --email xhuaustc@gmail...</div></div></div></a><a class="pagination-related" href="/posts/884e03ef9a57.html" title="Bash中的换行"><img class="cover" src="https://img.xhua.eu.org/0d4ec5bcd584cd7e23a2cad78e2fed7e0f521a55cb76db042b4b4c230cddc588.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-07</div><div class="info-item-2">Bash中的换行</div></div><div class="info-2"><div class="info-item-1">换行在平常的shell编程中是经常遇到的，但是有时也会忽略掉一些问题。本篇中将会介绍多种方式实现输出换行的方法。 使用 echoecho 自带换行echo 命令输出字符串，在最后后会添加一个换行 123root@Michael:~# echo hello worldhello worldroot@Michael:~# 添加 -n 可以禁用echo最后的换行 12root@Michael:~# echo -n hello worldhello worldroot@Michael:~# 换行符”\n”但是当我们使用bash执行以下命令时，发现它并没有换行 123root@Michael:~#  bash -c &quot;echo \&quot;\n\&quot;&quot;\nroot@Michael:~# 而是需要加一个 -e 1234root@Michael:~# bash -c &quot;echo -e \&quot;\n\&quot;&quot;root@Michael:~# 从echo的说明中可以看到 -e 指的是让转义符生效，其中有： 1234567891011121...</div></div></div></a><a class="pagination-related" href="/posts/d1a90c6e8453.html" title="CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式"><img class="cover" src="https://img.xhua.eu.org/02c300ae74aa07d1b945e64f2afe3899b96a9638cc87741acd13bcd5866daee6.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2020-05-20</div><div class="info-item-2">CI-CD流程-命令行方式与Jenkins-Blue-Ocean方式</div></div><div class="info-2"><div class="info-item-1"> 命令行模式 环境准备   克隆代码  1git clone  启动私有docker hub  12 docker run -d -p 5000:5000 -v /data/registry:/var/lib/registry --name registry --restart=always registry  制作建置环境  1docker build -t localhost:5000/maven dockers/maven  dockers&#x2F;maven&#x2F;Dockerfile 1234FROM ## 安装openjdk## 安装MavenCMD [&quot;mvn&quot;]  集成、测试、验证  进行自动化测试   1docker-compose run --rm test docker-compose.yaml 123456789101112131415161718192021222324data：  image: alpine  volumes:    - ~/.m2:/root/.m2  command: &quot;/bin/bash&quo...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://img.xhua.eu.org/87ab7c10242ff1ab32f46f7c7b335d0581d3885fa40b8e3dc1d97014e67ea56d.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Michael Pan</div><div class="author-info-description">日积硅步以致千里，记录日常工作与学习</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">274</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">147</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xhuaustc"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/de9fb80ca58c.html" title="DeepSeek Harness 插件入门：五款社区插件怎么配合">DeepSeek Harness 插件入门：五款社区插件怎么配合</a><time datetime="2026-11-16T09:43:51.000Z" title="发表于 2026-11-16 17:43:51">2026-11-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/563f24871546.html" title="Codex Subagent 入门：用三个角色完成一个小任务">Codex Subagent 入门：用三个角色完成一个小任务</a><time datetime="2026-10-21T04:56:33.000Z" title="发表于 2026-10-21 12:56:33">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/3923bb01ac9c.html" title="AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent">AI 生成之后谁来验证：借鉴 Deep Review 构建技术文档审查 Agent</a><time datetime="2026-10-21T03:01:28.000Z" title="发表于 2026-10-21 11:01:28">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/58c53c032b4c.html" title="Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计">Agent 为什么会“越帮越忙”：从真实越界案例到权限与执行边界设计</a><time datetime="2026-10-21T03:00:38.000Z" title="发表于 2026-10-21 11:00:38">2026-10-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/2d8828fcaa9b.html" title="Agent evaluation 入门：理解 dev、validation 与 held-out test">Agent evaluation 入门：理解 dev、validation 与 held-out test</a><time datetime="2026-09-11T09:33:13.000Z" title="发表于 2026-09-11 17:33:13">2026-09-11</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By Michael Pan</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/pluginsSrc/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
